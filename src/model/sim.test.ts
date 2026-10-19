@@ -36,13 +36,18 @@ describe('mechanisms', () => {
     expect(s.gini).toBeLessThan(b.gini - 0.01)
   })
 
-  it('cancelling debt held abroad does not lower the debt for long: rates rise', () => {
-    const { s, b } = at({ cancelShare: 0.5, cancelHolder: 'monde' })
+  it('defaulting on foreign holders costs growth and raises deficits for years', () => {
+    const run = simulate({ decisions: [{ year: 2026, patch: { cancelShare: 0.5, cancelHolder: 'monde' } }], events: [], until: 2035 })
+    const s = run[run.length - 1]
+    const b = base.find((x) => x.year === 2035)!
     const cancelled = (base[1].holders.monde * 0.5) / base[1].gdp
-    // La dette baisse moins que ce qui a été effacé, le déficit et les taux montent, le PIB recule.
+    const avgDeficit = (states: typeof base) => states.filter((x) => x.year >= 2026 && x.year <= 2030).reduce((acc, x) => acc + x.deficit / x.gdp, 0) / 5
+    // La dette baisse moins que ce qui a été effacé ; les premières années, taux et déficit montent et le PIB recule.
     expect(b.debtRatio - s.debtRatio).toBeLessThan(cancelled * 0.8)
-    expect(s.deficit / s.gdp).toBeGreaterThan(b.deficit / b.gdp)
-    expect(s.gdpReal).toBeLessThan(b.gdpReal)
+    expect(avgDeficit(run)).toBeGreaterThan(avgDeficit(base))
+    expect(run[1].gdpReal).toBeLessThan(base[1].gdpReal * 0.985)
+    expect(run[3].rate).toBeGreaterThan(base[3].rate + 0.01)
+    expect(s.debtRatio).toBeLessThan(b.debtRatio)
   })
 
   it('cancelling central-bank debt brings almost no budget gain', () => {

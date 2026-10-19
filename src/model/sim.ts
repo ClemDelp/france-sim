@@ -373,6 +373,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       trend *
       clamp(1 + 0.6 * growthSignal - 2 * (loanRate - baseRate) - 0.6 * (policy.corporateTax - BASE_POLICY.corporateTax) + 0.5 * policy.savingsToFirms - capitalFlight, 0.4, 1.6) *
       (1 - creditCrunch) *
+      // Après un défaut, les entreprises investissent moins : tout actif français paraît plus risqué.
+      (1 - 0.04 * stigma) *
       (1 - 1.5 * world.demandShock) +
       // Électrifier coûte : bornes, pompes à chaleur, réseaux, véhicules (≈ 15 Md€ par point de rythme en plus).
       15 * 100 * Math.max(0, policy.electrification - BASE_POLICY.electrification) * trend
