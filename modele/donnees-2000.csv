@@ -1,0 +1,80 @@
+﻿id;valeur;unite;bloc;nom;source
+startYear;2000;année;Simulation;Année de départ du rejeu;
+initialGrowth;0,039;taux;Économie;Croissance de 2000;INSEE
+reformPauseUntil;2000;année;Population;Pas de pause des réformes des retraites pendant le rejeu;
+gdp;1485;Md€;Économie;PIB de 2000;INSEE, comptes nationaux (ordre de grandeur)
+consumption;790;Md€;Économie;Consommation des ménages;INSEE
+housing;85;Md€;Économie;Investissement des ménages en logement;INSEE
+investment;225;Md€;Économie;Investissement des entreprises;INSEE
+exports;426;Md€;Commerce;Exportations;INSEE
+importsNonEnergy;395;Md€;Commerce;Importations hors énergie;INSEE, douanes
+energyImports;24;Md€;Énergie;Facture énergétique;SDES
+vatRevenue;105;Md€;Impôts;Recettes de TVA;Loi de règlement 2000
+grossWages;550;Md€;Revenus;Salaires bruts;INSEE
+employerContribRate;0,28;taux;Revenus;Taux moyen des cotisations patronales;INSEE, Urssaf (avant le CICE et les allègements des années 2010)
+mixedIncome;120;Md€;Revenus;Revenus des indépendants;INSEE
+corporateTaxRevenue;40;Md€;Impôts;Impôt sur les sociétés;Loi de règlement 2000
+firmDebt;820;Md€;Entreprises;Dette des entreprises;Banque de France
+firmLoanSpread;0,015;taux;Banques;Écart entre crédit aux entreprises et taux BCE;Banque de France
+dividendPayout;0,42;part;Entreprises;Part des profits distribuée;INSEE
+dividendsAbroad;0,2;part;Entreprises;Part des dividendes versée à l’étranger;Banque de France
+foreignIncome;55;Md€;Commerce;Revenus reçus de l’étranger;Banque de France
+bankCapital;160;Md€;Banques;Fonds propres des banques;Commission bancaire
+householdDebt;510;Md€;Banques;Dette des ménages;Banque de France
+deposits;750;Md€;Banques;Dépôts et livrets;Banque de France
+pensions;178;Md€;Sécurité sociale;Pensions de retraite;DREES, COR
+unemploymentBenefits;22;Md€;Sécurité sociale;Allocations chômage;Unédic
+familyBenefits;33;Md€;Sécurité sociale;Prestations familiales;CNAF
+minima;25;Md€;Sécurité sociale;Minima sociaux et aides au logement;DREES
+otherTransfers;40;Md€;Sécurité sociale;Autres aides;DREES
+employeeContribRate;0,175;taux;Revenus;Taux moyen des cotisations salariales (cotisations chômage et maladie encore payées par les salariés);Urssaf
+incomeTaxRevenue;53;Md€;Impôts;Impôt sur le revenu;Loi de règlement 2000
+csgRevenue;58;Md€;Impôts;CSG;LFSS
+csgPensionShare;0,8;part;Impôts;Part des pensions soumise à la CSG;LFSS
+otherHouseholdTaxes;22;Md€;Impôts;Autres impôts des ménages;DGFiP
+ifiRevenue;0;Md€;Impôts;Impôt sur la fortune (compté dans le levier « impôt sur la fortune » pendant le rejeu);
+inheritanceFlows;110;Md€;Patrimoine;Patrimoine transmis chaque année;Conseil d’analyse économique, ordre de grandeur
+householdFinancialWealth;2600;Md€;Patrimoine;Patrimoine financier des ménages;Banque de France
+nonTaxRevenue;27;Md€;État;Recettes non fiscales et autres prélèvements;Calé pour retrouver le déficit de 2000
+euContribution;14;Md€;État;Contribution au budget européen;Loi de règlement 2000
+debt;870;Md€;Dette;Dette publique;INSEE
+holderMonde;0,35;part;Dette;Part détenue par des étrangers;Banque de France, ordre de grandeur
+holderBce;0;part;Dette;Part détenue par la Banque de France;Avant les rachats de 2015
+holderAssureurs;0,38;part;Dette;Part détenue par les assureurs;Banque de France, ordre de grandeur
+holderBanques;0,27;part;Dette;Part détenue par les banques;Banque de France, ordre de grandeur
+effectiveRate;0,05;taux;Dette;Taux moyen payé sur la dette;AFT
+termPremium;0,6;points;Dette;Écart normal entre taux à 10 ans et taux BCE;AFT
+deficitRatio;0,013;part du PIB;Dette;Déficit public de 2000;INSEE
+population;60,9;millions;Population;Population;INSEE
+workingAge;33,6;millions;Population;Personnes de 20 à 59 ans;INSEE
+participation;0,79;part;Population;Taux d’activité;INSEE, enquête Emploi
+unemployment;0,086;part;Population;Taux de chômage;INSEE
+retirees;13;millions;Population;Retraités;DREES
+retirementEntrants;0,66;millions/an;Population;Nouveaux retraités (générations creuses nées pendant la guerre);INSEE, pyramide des âges
+youthEntrants;0,76;millions/an;Population;Jeunes arrivant à 20 ans;INSEE
+births;0,81;millions/an;Population;Naissances;INSEE
+retirementAgeEffective;60;ans;Population;Âge légal de départ;Ordonnance de 1982
+lifeExpectancy;79,2;ans;Santé;Espérance de vie à la naissance;INSEE
+lifeGap;12,5;ans;Santé;Écart d’espérance de vie riches/pauvres;INSEE
+avgPension;13,7;k€/an;Sécurité sociale;Pension moyenne;DREES
+poverty;0,136;part;Inégalités;Taux de pauvreté;INSEE
+incomeRatioTopBottom;4,4;rapport;Inégalités;Rapport des niveaux de vie haut/bas;INSEE
+oil;28,5;$/baril;Énergie;Prix du pétrole;EIA
+fossilShare;0,7;part;Énergie;Part du pétrole et du gaz;SDES
+inflationAnchor;0,019;taux;Prix;Cible d’inflation de la BCE (« proche de 2 % »);BCE
+productivityGrowth;0,007;taux;Productivité;Gains de productivité tendanciels;INSEE (≈ 1,2 % dans les années 2000, ≈ 0,6 % dans les années 2010)
+naturalUnemployment;0,085;part;Emploi;Chômage d’équilibre;OCDE (NAIRU des années 2000)
+smic;1050;€/mois;Revenus;SMIC brut mensuel;INSEE
+worldGrowth;0,035;taux;Monde;Croissance du commerce mondial (non utilisée : année par année dans monde.csv);
+worldInflation;0,018;taux;Monde;Inflation chez nos partenaires;BCE
+oilLongRun;80;$/baril;Monde;Prix du pétrole au-delà de 2024 (non utilisé);
+ecbLongRun;0,03;taux;Monde;Taux BCE au-delà de 2024 (non utilisé);
+retirementCohortGrowth;0,06;part/an;Comportements 2000-2024;Arrivée des générations du baby-boom à la retraite (à partir de 2006);INSEE
+babyBoomYears;6;ans;Comportements 2000-2024;Années avant l’arrivée du baby-boom à la retraite;INSEE
+retirementCohortDecline;0;millions/an;Comportements 2000-2024;Pas de baisse des générations pendant la période;INSEE
+retirementCohortLongRun;0,66;millions/an;Comportements 2000-2024;Taille plancher d’une génération;INSEE
+youthDecline;0;millions/an;Comportements 2000-2024;Les générations de 20 ans restent stables;INSEE
+lifeTrend;0,17;an/an;Comportements 2000-2024;Gain d’espérance de vie observé de 2000 à 2024;INSEE
+exportShareLoss;0,015;part/an;Comportements 2000-2024;Perte de parts de marché à l’exportation (forte dans les années 2000);Douanes
+otherTaxes;85;Md€;Impôts;Autres impôts (carburants, taxe foncière, droits de mutation, taxes diverses);INSEE : calé pour retrouver le déficit de 2000
+pensionRealGain;0,012;taux/an;Comportements 2000-2024;Hausse de la pension moyenne due aux carrières plus complètes des nouveaux retraités (effet noria, fort dans les années 2000);COR, rapports annuels

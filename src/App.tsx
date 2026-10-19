@@ -4,7 +4,7 @@ import { EVENTS } from './model/events'
 import type { Overrides } from './model/params'
 import { policyAt, simulate } from './model/sim'
 import type { Actor, Decision, FiredEvent, Policy, PolicyKey } from './model/types'
-import { Brain, type Impact } from './ui/Brain'
+import { Brain, type Impact, type View } from './ui/Brain'
 import { FlowMap } from './ui/FlowMap'
 import { num, sbn } from './ui/format'
 import { Kpis } from './ui/Kpis'
@@ -14,6 +14,8 @@ import { MISSIONS, type Mission } from './ui/missions'
 import { BudgetPanel, DebtPanel, FirmsPanel, GroupsPanel, JournalPanel, WorldPanel } from './ui/Panels'
 import { ENDINGS } from './ui/endings'
 import { focusLine } from './ui/story'
+import { Robustness } from './ui/Robustness'
+import { FOCUS_METRICS, KPI_FOCUS } from './ui/robustnessMetrics'
 import { Trajectory } from './ui/Trajectory'
 
 const START = 2025
@@ -64,7 +66,7 @@ function App() {
   const [target, setTarget] = useState<number | null>(linked ? START + 1 + MISSION_YEARS : null)
   const [leversOpen, setLeversOpen] = useState(false)
   const [overrides, setOverrides] = useState<Overrides>({})
-  const [brain, setBrain] = useState<{ focus: string | null } | null>(null)
+  const [brain, setBrain] = useState<{ focus: string | null; view?: View; query?: string } | null>(null)
   const [intro, setIntro] = useState(() => !linked && !introSeen())
   /** Les années de crise de la dette auxquelles le joueur a déjà répondu. */
   const [handled, setHandled] = useState<number[]>([])
@@ -431,7 +433,25 @@ function App() {
             ))}
           </nav>
           {tab === 'groupes' ? <GroupsPanel s={s} b={b} changed={changed} /> : null}
-          {tab === 'courbes' ? <Trajectory states={states} base={base} decisions={decisions} events={events} reliableUntil={RELIABLE_UNTIL} /> : null}
+          {tab === 'courbes' ? (
+            <Trajectory
+              states={states}
+              base={base}
+              decisions={decisions}
+              events={events}
+              reliableUntil={RELIABLE_UNTIL}
+              extra={(kpiId) =>
+                changed && KPI_FOCUS[kpiId] && year > START ? (
+                  <Robustness
+                    key={`${kpiId}-${year}-${decisions.length}`}
+                    input={{ decisions, events, until: year, params }}
+                    metrics={[FOCUS_METRICS[KPI_FOCUS[kpiId]]]}
+                    onInspect={(id) => setBrain({ focus: null, view: 'parametres', query: id })}
+                  />
+                ) : null
+              }
+            />
+          ) : null}
           {tab === 'budget' ? <BudgetPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'dette' ? <DebtPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'entreprises' ? <FirmsPanel s={s} b={b} changed={changed} /> : null}
@@ -640,6 +660,11 @@ function App() {
             ) : null}
             <p className="note">Écarts par rapport à la même France sans cette décision. Pour voir toute la trajectoire, continuez la partie et ouvrez l’onglet « Courbes ».</p>
             {verdict.mission.limits ? <p className="limits">⚠️ {verdict.mission.limits}</p> : null}
+            <Robustness
+              input={{ decisions: [{ year: verdict.start, patch: verdict.mission.patch }], events, until: verdict.start + MISSION_YEARS, params }}
+              metrics={verdict.mission.focus.map((f) => FOCUS_METRICS[f])}
+              onInspect={(id) => setBrain({ focus: null, view: 'parametres', query: id })}
+            />
             <div className="verdict-actions">
               <button type="button" className="primary" onClick={() => setVerdict(null)}>
                 Continuer la partie
@@ -669,6 +694,8 @@ function App() {
           state={s}
           baseState={changed ? b : null}
           policy={policyAt(decisions, year)}
+          initialView={brain.view}
+          initialQuery={brain.query}
           onClose={() => setBrain(null)}
         />
       ) : null}

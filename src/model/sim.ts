@@ -2,6 +2,7 @@ import { BASE, BASE_POLICY, FIRM_PARAMS as FS, GROUP_PARAMS as GP, P } from './c
 import { distribution } from './distribution'
 import { EVENTS } from './events'
 import { withParams, type Overrides } from './params'
+import { WORLD_PATH } from './world'
 import {
   GROUPS,
   HOLDERS,
@@ -18,7 +19,7 @@ import {
   type YearState,
 } from './types'
 
-const basePublicGoods = () => BASE_POLICY.health + BASE_POLICY.prevention + BASE_POLICY.education + BASE_POLICY.defence + BASE_POLICY.investment + BASE_POLICY.otherServices
+const basePublicGoods = () => REF.health + REF.prevention + REF.education + REF.defence + REF.investment + REF.otherServices
 /** Taux d'activité des 20–59 ans, calé pour retrouver 31,1 millions d'actifs en 2025. */
 const coreParticipation = () => {
   const seniors = BASE.retirementEntrants * (BASE.retirementAgeEffective - 60)
@@ -41,12 +42,20 @@ const aidShares = (smeShare: number): BySize => {
   return { pme: smeShare, eti: ((1 - smeShare) * FS.firmAidShare.eti) / rest, ge: ((1 - smeShare) * FS.firmAidShare.ge) / rest }
 }
 
-/** Ce que le monde fait sans nous : la crise d'Ormuz de 2026, puis un retour progressif au calme. */
+/** Ce que le monde fait sans nous (modele/monde.csv) : l'histoire jusqu'en 2024, la crise d'Ormuz de 2026, puis la tendance de long terme. */
 export function baseWorld(year: number): World {
-  const oil: Record<number, number> = { 2025: 70, 2026: 100, 2027: 90, 2028: 82 }
-  const ecb: Record<number, number> = { 2025: 0.02, 2026: 0.024, 2027: 0.025, 2028: 0.024 }
-  return { growth: BASE.worldGrowth, oil: oil[year] ?? BASE.oilLongRun, ecbRate: ecb[year] ?? BASE.ecbLongRun, panic: 0, demandShock: 0 }
+  const known = WORLD_PATH[year]
+  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0 }
 }
+
+/**
+ * Un point de départ : la politique en vigueur l'année de départ, et les données de cette année-là
+ * (par défaut 2025 ; pour rejouer le passé, 2000).
+ */
+export type Scenario = { reference: Policy; params: Overrides }
+
+/** La politique de référence de la simulation en cours (celle de l'année de départ). */
+let REF: Policy = BASE_POLICY
 
 /** Ce qu'on garde d'une année à l'autre (les stocks et la mémoire). */
 type Carry = {
@@ -91,6 +100,10 @@ type Carry = {
   healthStock: number
   capitalFlight: number
   consumption: ByGroup
+  /** Prix du pétrole et de l'énergie fossile au détail, l'an dernier. */
+  fossilPrice: number
+  /** Le taux de la BCE que les marchés attendent en moyenne pour les années à venir. */
+  ecbExpected: number
   /** Tension sur la dette, lissée sur les années. */
   marketStress: number
   /** Années avant qu'une nouvelle crise de la dette puisse éclater. */
@@ -122,9 +135,9 @@ function initialCarry(): Carry {
     avgPension: BASE.avgPension,
     smic: BASE.smic,
     smicBoost: 0,
-    vat: BASE_POLICY.vat,
-    tariffs: BASE_POLICY.tariffs,
-    tariffChinaEV: BASE_POLICY.tariffChinaEV,
+    vat: REF.vat,
+    tariffs: REF.tariffs,
+    tariffChinaEV: REF.tariffChinaEV,
     inflation: BASE.inflationAnchor,
     unemployment: BASE.unemployment,
     gap: 0,
@@ -154,6 +167,8 @@ function initialCarry(): Carry {
     healthStock: 0,
     capitalFlight: 0,
     consumption: byGroup(() => 0),
+    fossilPrice: 1,
+    ecbExpected: 0,
     marketStress: 0,
     crisisCooldown: 0,
     rescueYears: 0,
@@ -169,7 +184,8 @@ function initialCarry(): Carry {
 }
 
 /** Le revenu disponible « normal » de 2025 par tranche, qui sert de repère aux comportements. */
-type Anchors = { yd: ByGroup; c: ByGroup; ydTotal: number }
+/** Les repères de l'année de départ : revenus et consommation « normaux », taux d'impôt implicites (calés pour retrouver les recettes de cette année-là). */
+type Anchors = { yd: ByGroup; c: ByGroup; ydTotal: number; irRate: ByGroup; isRatio: number }
 
 /** Une année de la France. `init` = l'année de départ, calée sur les chiffres de 2025. */
 function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null, cancel: { share: number; holder: Holder } | null): { state: YearState; carry: Carry; anchors: Anchors } {
@@ -248,13 +264,13 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
 
   // — 1. Démographie et espérance de vie
   const yearsIn = year - BASE.year
-  const healthRatio = (policy.health + policy.prevention) / (BASE_POLICY.health + BASE_POLICY.prevention)
+  const healthRatio = (policy.health + policy.prevention) / (REF.health + REF.prevention)
   const healthStock = prev.healthStock + P.healthStockSpeed * (Math.log(healthRatio) - prev.healthStock)
-  const preventionStock = prev.preventionStock + P.preventionStockSpeed * ((policy.prevention - BASE_POLICY.prevention) - prev.preventionStock)
+  const preventionStock = prev.preventionStock + P.preventionStockSpeed * ((policy.prevention - REF.prevention) - prev.preventionStock)
   const lifeTrend = BASE.lifeExpectancy + P.lifeTrend * yearsIn
   // L'âge effectif rejoint la cible progressivement : +3 mois par an au plus (la réforme de 2023 reprend en 2028), −1 an par an au plus.
-  const ageFloor = year < 2028 ? Math.min(prev.retirementAge, policy.retirementAge) : prev.retirementAge - 1
-  const retirementAge = init ? BASE.retirementAgeEffective : clamp(policy.retirementAge, ageFloor, year < 2028 ? prev.retirementAge : prev.retirementAge + P.retirementPhaseIn)
+  const ageFloor = year < BASE.reformPauseUntil ? Math.min(prev.retirementAge, policy.retirementAge) : prev.retirementAge - 1
+  const retirementAge = init ? BASE.retirementAgeEffective : clamp(policy.retirementAge, ageFloor, year < BASE.reformPauseUntil ? prev.retirementAge : prev.retirementAge + P.retirementPhaseIn)
   const ageChange = retirementAge - prev.retirementAge
   // Les générations du baby-boom finissent de partir vers 2040 ; ensuite, les générations qui arrivent à la retraite sont un peu moins nombreuses.
   const cohort = Math.max(
@@ -282,16 +298,18 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
 
   // — 2. Énergie, prix et salaires
   // Des droits de douane élevés sur les voitures électriques chinoises ralentissent un peu l'électrification (véhicules plus chers).
-  const electrifyPace = policy.electrification * (1 - P.evTariffSlowdown * Math.max(0, policy.tariffChinaEV - BASE_POLICY.tariffChinaEV))
+  const electrifyPace = policy.electrification * (1 - P.evTariffSlowdown * Math.max(0, policy.tariffChinaEV - REF.tariffChinaEV))
   const fossilShare = init ? prev.fossilShare : prev.fossilShare * (1 - electrifyPace)
-  const electricityPrice = 1 + P.nuclearElectricityPrice * (BASE_POLICY.nuclearShare - policy.nuclearShare) + P.electrificationElectricityPrice * (BASE.fossilShare - fossilShare) + P.oilElectricityPrice * (world.oil / BASE.oil - 1)
-  const energyPrice = (fossilShare * (world.oil / BASE.oil) + (1 - fossilShare) * electricityPrice) / (BASE.fossilShare + (1 - BASE.fossilShare))
+  const electricityPrice = 1 + P.nuclearElectricityPrice * (REF.nuclearShare - policy.nuclearShare) + P.electrificationElectricityPrice * (BASE.fossilShare - fossilShare) + P.oilElectricityPrice * (world.oil / BASE.oil - 1)
+  // Le prix payé pour le carburant et le gaz ne suit qu'une partie du baril : taxes fixes par litre, transport, distribution.
+  const fossilPrice = 1 + P.oilRetailPass * (world.oil / BASE.oil - 1)
+  const energyPrice = (fossilShare * fossilPrice + (1 - fossilShare) * electricityPrice) / (BASE.fossilShare + (1 - BASE.fossilShare))
   const energyInflation = init ? 0 : energyPrice / prev.energyPrice - 1
   const productivityGrowth = init
     ? 0
     : BASE.productivityGrowth +
       P.educationProductivity * clamp(prev.educationStock, -1, 1) +
-      P.investmentProductivity * (policy.investment - BASE_POLICY.investment) -
+      P.investmentProductivity * (policy.investment - REF.investment) -
       P.flightProductivity * prev.capitalFlight
   const productivity = prev.productivity * (1 + productivityGrowth)
   const smicStep = policy.smicBoost - prev.smicBoost
@@ -316,14 +334,19 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const priceLevel = init ? 1 : prev.priceLevel * (1 + inflation)
   const avgWage = init ? prev.avgWage : prev.avgWage * (1 + wageGrowth)
   const smic = init ? prev.smic : prev.smic * (1 + Math.max(0, inflation)) * (1 + smicStep)
-  const worldPrice = init ? 1 : prev.worldPrice * (1 + BASE.worldInflation)
+  // Un choc pétrolier touche aussi nos partenaires : leurs prix montent comme les nôtres (seul notre électricité nucléaire fait la différence).
+  const fossilShock = init ? 0 : fossilPrice / prev.fossilPrice - 1
+  const worldPrice = init ? 1 : prev.worldPrice * (1 + BASE.worldInflation + P.energyInflationPass * BASE.fossilShare * fossilShock)
   const worldIndex = init ? 1 : prev.worldIndex * (1 + world.growth - P.exportShareLoss)
 
   // — 3. Taux d'intérêt : le prix de la confiance
   const debtPct = prev.debtRatio * 100
   const riskPremium = Math.max(0, P.premiumBase + P.premiumPerDebtPoint * Math.max(0, debtPct - P.debtThreshold) + P.premiumPerDeficitPoint * Math.max(0, prev.deficitRatio * 100 - P.deficitThreshold) + panic + stigma - P.monetizationCredibility * policy.monetization + P.monetizationFear * policy.monetization * policy.monetization) / 100
   const premium = rescueYears > 0 ? Math.min(riskPremium, P.rescueSpread / 100) : riskPremium
-  const rate = world.ecbRate + BASE.termPremium / 100 + premium + P.inflationRatePass * Math.max(0, prev.inflation - P.inflationRateThreshold)
+  // Le taux à 10 ans reflète les taux de la BCE attendus pour les années à venir : il ne suit qu'en partie un changement soudain.
+  const ecbExpected = init ? world.ecbRate : prev.ecbExpected + P.rateExpectationSpeed * (world.ecbRate - prev.ecbExpected)
+  // Quand la BCE rachète massivement de la dette, les taux longs baissent.
+  const rate = ecbExpected + (BASE.termPremium - P.qeTermPremium * world.qe) / 100 + premium + P.inflationRatePass * Math.max(0, prev.inflation - P.inflationRateThreshold)
   const effectiveRate = init ? prev.effectiveRate : prev.effectiveRate + (rate - prev.effectiveRate) / P.debtRollover
   const loanRate = world.ecbRate + BASE.firmLoanSpread + P.firmPremiumPass * premium
   const baseRate = P.neutralLoanRate
@@ -348,8 +371,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const rescueTax = P.rescueTaxShare * rescueBase
   const foodTransfer = (policy.foodSecurity * 12 * population) / 1000 * priceLevel
   const minimaBoost = g(policy.minima)
-  const vatRatio = BASE.vatRevenue / BASE.consumption / BASE_POLICY.vat
-  const isRatio = BASE.corporateTaxRevenue / (BASE_POLICY.corporateTax * BASE.corporateTaxBase)
+  const vatRatio = BASE.vatRevenue / BASE.consumption / REF.vat
   const wealthTaxBase = (w: number) => w * P.wealthTaxBase * Math.exp(-P.wealthTaxAvoidance * policy.wealthTax)
   // Quand les prélèvements dépassent de beaucoup ceux de 2025, la fraude et le travail au noir progressent.
   const evasion = init ? 0 : clamp(P.taxEvasion * Math.max(0, prev.taxBurden - prev.taxBurden0), 0, P.taxEvasionMax)
@@ -397,6 +419,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const gos = nominal - vatRevenue - otherProd - grossWages - employerContrib - mixed + firmAid
     // Les entreprises mobiles (surtout les grands groupes) déclarent une partie de leurs bénéfices ailleurs quand les capitaux fuient.
     const shifting = P.profitShifting * capitalFlight * sumSize(bySize((c) => FS.valueAdded[c] * mobilityRel[c]))
+    // Le taux effectif de l'impôt sur les sociétés est calé sur les recettes de l'année de départ.
+    const isRatio = anchors ? anchors.isRatio : BASE.corporateTaxRevenue / Math.max(1, REF.corporateTax * gos)
     const corporateTax = Math.max(0, policy.corporateTax * isRatio * gos * (1 - shifting) * declared)
     const firmInterest = prev.firmDebt * loanRate
     const foreignIncome = BASE.foreignIncome * worldIndex * worldPrice
@@ -420,7 +444,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     // Sécurité sociale et transferts
     const unemployed = laborForce - employment
     const pensions = retirees * prev.avgPension * (1 + inflation * policy.pensionIndexation)
-    const unemploymentBenefits = (BASE.unemploymentBenefits / (BASE.workingAge * BASE.participation * BASE.unemployment)) * unemployed * (policy.unemploymentReplacement / BASE_POLICY.unemploymentReplacement) * (avgWage / initialCarry().avgWage)
+    const unemploymentBenefits = (BASE.unemploymentBenefits / (BASE.workingAge * BASE.participation * BASE.unemployment)) * unemployed * (policy.unemploymentReplacement / REF.unemploymentReplacement) * (avgWage / initialCarry().avgWage)
     const family = BASE.familyBenefits * trend * popIndex
     const minima = BASE.minima * trend + minimaBoost
     const otherTransfers = BASE.otherTransfers * trend
@@ -438,19 +462,18 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const wagesOf = (k: keyof ByGroup) => (grossWages * wageShare[k]) / wageNorm
     const employeeContrib = byGroup((k) => wagesOf(k) * BASE.employeeContribRate)
     const csgBase = byGroup((k) => wagesOf(k) + mixed * GP.mixed[k] + pensions * GP.pensions[k] * BASE.csgPensionShare)
-    const csgRatio = BASE.csgRevenue / (BASE.grossWages + BASE.mixedIncome + BASE.pensions * BASE.csgPensionShare) / BASE_POLICY.csg
+    const csgRatio = BASE.csgRevenue / (BASE.grossWages + BASE.mixedIncome + BASE.pensions * BASE.csgPensionShare) / REF.csg
     const csg = byGroup((k) => csgBase[k] * policy.csg * csgRatio * declared)
-    const irBase = BASE.incomeTaxRevenue / (BASE.grossWages + BASE.mixedIncome + BASE.pensions + BASE.taxableCapitalIncome)
-    const incomeTax = byGroup((k) => {
-      const taxable = wagesOf(k) + mixed * GP.mixed[k] + pensions * GP.pensions[k] + (dividendsHome + bankDividends) * GP.dividends[k]
-      const rate = irBase * 5 * GP.incomeTax[k] / GP.population[k] * 0.2
-      const top = policy.incomeTaxTop * GP.topRate[k]
-      return taxable * (rate + top) * declared
-    })
+    const taxable = byGroup((k) => wagesOf(k) + mixed * GP.mixed[k] + pensions * GP.pensions[k] + (dividendsHome + bankDividends) * GP.dividends[k])
+    // Le taux moyen d'impôt sur le revenu de chaque tranche est calé pour retrouver la recette et sa répartition de l'année de départ.
+    const irRate = anchors ? anchors.irRate : byGroup((k) => (BASE.incomeTaxRevenue * GP.incomeTax[k]) / Math.max(1, taxable[k]))
+    const incomeTax = byGroup((k) => taxable[k] * (irRate[k] + policy.incomeTaxTop * GP.topRate[k]) * declared)
     const wealthTax = policy.wealthTax * wealthTaxBase(wealth.g5) + (BASE.ifiRevenue * trend)
     const inheritance = BASE.inheritanceFlows * trend
     const inheritanceTax = inheritance * policy.inheritanceTax * (1 - P.inheritanceErosion * Math.max(0, policy.inheritanceTax - P.inheritanceErosionThreshold))
     const otherHouseholdTaxes = BASE.otherHouseholdTaxes * trend
+    // Les autres impôts (carburants, taxe foncière, droits de mutation…) suivent la consommation, et pèsent selon les revenus.
+    const otherTaxes = (BASE.otherTaxes / BASE.consumption) * lastConsumption * declared
     const foodContribution = foodTransfer
     const disposable = byGroup((k) => {
       const share = GP.population[k]
@@ -460,7 +483,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
         incomeTax[k] +
         (k === 'g5' ? wealthTax : 0) +
         otherHouseholdTaxes * share +
-        (foodContribution + rescueTax) * (csgBase[k] / sum(csgBase)) +
+        (foodContribution + rescueTax + otherTaxes) * (csgBase[k] / sum(csgBase)) +
         mortgageInterest * GP.wages[k]
       return income[k] - taxes
     })
@@ -468,7 +491,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const inheritanceTaxBy = byGroup((k) => inheritanceTax * GP.inheritanceTax[k])
 
     // Consommation : la tendance, plus la réaction à un revenu au-dessus ou en dessous de la normale
-    const anchorsNow: Anchors = anchors ?? { yd: disposable, c: byGroup(() => 0), ydTotal: sum(disposable) }
+    const anchorsNow = anchors ?? { yd: disposable }
     const normal = (k: keyof ByGroup) => anchorsNow.yd[k] * trend * scale
     const baseC = anchors ? anchors.c : byGroup(() => 0)
     const consumption = byGroup((k) => {
@@ -494,7 +517,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
         1 +
           P.accelerator * growthSignal -
           P.investmentRateSensitivity * bankRel[c] * (loanRate - baseRate) -
-          P.investmentCorporateTax * (policy.corporateTax - BASE_POLICY.corporateTax) +
+          P.investmentCorporateTax * (policy.corporateTax - REF.corporateTax) +
           P.savingsToFirmsEffect * bankRel[c] * policy.savingsToFirms -
           capitalFlight * mobilityRel[c],
         P.investmentMin,
@@ -507,17 +530,17 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     )
     // Une aide en plus (ou en moins) se transforme en partie en investissement : beaucoup pour une PME, peu pour un grand groupe.
     const aidNow = aidShares(policy.firmAidSmeShare)
-    const aidRef = aidShares(BASE_POLICY.firmAidSmeShare)
-    const aidInvestment = bySize((c) => FS.cashFlowInvestment[c] * (firmAid * aidNow[c] - g(BASE_POLICY.firmAid) * aidRef[c]))
+    const aidRef = aidShares(REF.firmAidSmeShare)
+    const aidInvestment = bySize((c) => FS.cashFlowInvestment[c] * (firmAid * aidNow[c] - g(REF.firmAid) * aidRef[c]))
     // Électrifier coûte : bornes, pompes à chaleur, réseaux, véhicules (≈ 15 Md€ par point de rythme en plus).
-    const electrifyInvestment = P.electrificationInvestment * 100 * Math.max(0, policy.electrification - BASE_POLICY.electrification) * trend
+    const electrifyInvestment = P.electrificationInvestment * 100 * Math.max(0, policy.electrification - REF.electrification) * trend
     const investmentBy = bySize((c) => BASE.investment * trend * FS.investment[c] * firmFactor[c] + aidInvestment[c] + electrifyInvestment * FS.investment[c])
     const investment = sumSize(investmentBy)
     const housing = BASE.housing * trend * scale * clamp(1 - P.housingRateSensitivity * (rate - baseRate), P.housingMin, P.housingMax) * (1 - creditCrunch)
 
     // Commerce extérieur et énergie
     const competitiveness = Math.pow(priceLevel / worldPrice, -P.priceCompetitiveness)
-    const retaliation = P.tariffRetaliation * policy.tariffs + P.evRetaliation * (policy.tariffChinaEV - BASE_POLICY.tariffChinaEV)
+    const retaliation = P.tariffRetaliation * policy.tariffs + P.evRetaliation * (policy.tariffChinaEV - REF.tariffChinaEV)
     const exports = BASE.exports * worldIndex * worldPrice * competitiveness * (1 - retaliation) * (1 - P.electricityExportLoss * (electricityPrice - 1))
     const absorption = totalConsumption + housing + investment + publicGoods + exports
     const importRatio = BASE.importsNonEnergy / (BASE.consumption + BASE.housing + BASE.investment + basePublicGoods() + BASE.exports)
@@ -543,6 +566,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       wealthTax,
       inheritanceTax,
       otherHouseholdTaxes,
+      otherTaxes,
       foodContribution,
       rescueTax,
       nonTax,
@@ -590,6 +614,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       spending,
       revenue,
       firmAid,
+      irRate,
+      isRatio,
       aidNow,
       investmentBy,
       retaliation,
@@ -601,15 +627,17 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
 
   const d = detail!
   // L'année de départ fixe les repères de comportement.
-  const anchorsOut: Anchors = anchors ?? { yd: d.disposable, c: d.consumption, ydTotal: sum(d.disposable) }
+  const anchorsOut: Anchors = anchors ?? { yd: d.disposable, c: d.consumption, ydTotal: sum(d.disposable), irRate: d.irRate, isRatio: d.isRatio }
   const deficit = d.spending - d.revenue
 
   // — 5. Financement de la dette : qui prête à l'État cette année ?
   const debtBefore = sumRecord(holders)
   const shareAbroad = P.foreignBuyerShare * Math.exp(-P.foreignBuyerFlight * (panic + stigma + 2 * shun))
-  const qt = init ? 0 : holders.bce * P.qtPace
-  const fromBce = policy.monetization * deficit - qt
-  const fromAbroad = shareAbroad * (deficit - policy.monetization * deficit)
+  // La BCE rachète une part de la dette nouvelle (planche à billets décidée par la France, ou rachats décidés à Francfort) ; sinon elle réduit peu à peu son stock.
+  const bought = Math.min(1, policy.monetization + world.qe)
+  const qt = init || world.qe > 0 ? 0 : holders.bce * P.qtPace
+  const fromBce = bought * deficit - qt
+  const fromAbroad = shareAbroad * (deficit - bought * deficit)
   const fromBanks = P.bankBuyerShare * deficit * (1 - creditCrunch)
   holders.bce += init ? 0 : fromBce
   holders.monde += init ? 0 : fromAbroad
@@ -632,7 +660,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // Prix vus par chaque tranche : la TVA et l'énergie pèsent plus lourd quand on dépense tout son revenu.
   const groupPrice = byGroup((k) => {
     const spendShare = d.consumption[k] / Math.max(1, d.disposable[k])
-    return priceLevel * (1 + ((P.vatPassThrough * (policy.vat - BASE_POLICY.vat)) / 1.2) * (spendShare - 0.83) + P.energyGroupPrice * (energyPrice - 1) * GP.energyExposure[k])
+    return priceLevel * (1 + ((P.vatPassThrough * (policy.vat - REF.vat)) / 1.2) * (spendShare - 0.83) + P.energyGroupPrice * (energyPrice - 1) * GP.energyExposure[k])
   })
   const perCapita = byGroup((k) => (d.disposable[k] / (population * GP.population[k])) * (1000 / groupPrice[k]))
   const dist = distribution(perCapita, GP.population, GP.sigma)
@@ -646,7 +674,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const flowsList = ([
     { from: 'menages', to: 'entreprises', amount: d.totalConsumption + d.housing, label: 'Consommation et logement' },
     { from: 'entreprises', to: 'menages', amount: d.grossWages + d.mixed + d.dividendsHome, label: 'Salaires, revenus d’indépendants, dividendes' },
-    { from: 'menages', to: 'etat', amount: t.incomeTax + t.wealthTax + t.inheritanceTax + t.otherHouseholdTaxes + t.rescueTax, label: 'Impôts des ménages' },
+    { from: 'menages', to: 'etat', amount: t.incomeTax + t.wealthTax + t.inheritanceTax + t.otherHouseholdTaxes + t.otherTaxes + t.rescueTax, label: 'Impôts des ménages' },
     { from: 'menages', to: 'secu', amount: t.employeeContributions + t.csg + t.foodContribution, label: 'Cotisations salariales et CSG' },
     { from: 'entreprises', to: 'secu', amount: t.employerContributions, label: 'Cotisations patronales' },
     { from: 'entreprises', to: 'etat', amount: t.tva + t.productionTaxes + t.corporateTax + t.nonTax, label: 'TVA, impôts de production, impôt sur les sociétés' },
@@ -676,7 +704,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const closure = households + firms + banks + government + world_
 
   const gdpReal = d.real
-  const growth = init ? 0.008 : gdpReal / prev.gdpReal - 1
+  const growth = init ? BASE.initialGrowth : gdpReal / prev.gdpReal - 1
 
   // — 9. Tension sur la dette : de combien le solde public est-il loin de ce qui stabiliserait la dette ?
   // Il faudrait un excédent primaire (hors intérêts) de (taux − croissance) × dette ; tout écart fait grossir la dette.
@@ -685,7 +713,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const stabilizing = ((effectiveRate - nominalGrowth) / (1 + nominalGrowth)) * (debt / gdp)
   const stabilityGap = stabilizing - primaryBalance
   const rawStress = Math.max(0, debt / gdp - P.crisisDebtThreshold) / P.crisisDebtRange + Math.max(0, stabilityGap) / P.crisisGapRange
-  const marketStress = init ? rawStress : P.crisisSmoothing * rawStress + (1 - P.crisisSmoothing) * prev.marketStress
+  // Quand la BCE rachète massivement de la dette, elle sert de filet : les marchés s'affolent beaucoup moins.
+  const shielded = rawStress * (1 - P.qeStressRelief * world.qe)
+  const marketStress = init ? shielded : P.crisisSmoothing * shielded + (1 - P.crisisSmoothing) * prev.marketStress
 
   // — 9 bis. La société : prélèvements, colère, et ce qui rendrait la situation intenable
   const taxBurden = d.revenue / gdp
@@ -781,9 +811,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       'Impôt sur les sociétés': t.corporateTax,
       'Impôts de production': t.productionTaxes,
       'Patrimoine et succession': t.wealthTax + t.inheritanceTax,
+      'Autres impôts (carburants, foncier…)': t.otherTaxes + t.otherHouseholdTaxes,
       'Cotisation alimentation': t.foodContribution,
       'Plan d’aide : impôts en plus': t.rescueTax,
-      'Autres recettes': t.otherHouseholdTaxes + t.nonTax + t.bceDividend,
+      'Autres recettes': t.nonTax + t.bceDividend,
     },
     secu: {
       Retraite: { revenue: (t.employerContributions + t.employeeContributions) * 0.55 + t.csg * 0.1, spending: d.transfers.pensions },
@@ -865,11 +896,13 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     deposits,
     bankCapital,
     wealth,
-    educationStock: prev.educationStock + P.educationStockSpeed * ((policy.education - BASE_POLICY.education) / BASE_POLICY.education - prev.educationStock),
+    educationStock: prev.educationStock + P.educationStockSpeed * ((policy.education - REF.education) / REF.education - prev.educationStock),
     preventionStock,
     healthStock,
     capitalFlight,
     consumption: d.consumption,
+    fossilPrice,
+    ecbExpected,
     marketStress,
     crisisCooldown,
     rescueYears,
@@ -895,11 +928,13 @@ export type SimulationInput = {
   until: number
   /** D'autres valeurs pour certains paramètres du modèle (essai d'une variante). */
   params?: Overrides
+  /** Un autre point de départ (par défaut, la France de 2025). */
+  scenario?: Scenario
 }
 
 /** La politique en vigueur une année donnée : la politique de 2025, puis les décisions dans l'ordre. */
-export function policyAt(decisions: Decision[], year: number): Policy {
-  let policy = { ...BASE_POLICY }
+export function policyAt(decisions: Decision[], year: number, reference: Policy = BASE_POLICY): Policy {
+  let policy = { ...reference }
   for (const d of [...decisions].sort((a, b) => a.year - b.year)) {
     if (d.year <= year) {
       const { cancelShare: _ignored, ...rest } = d.patch
@@ -923,13 +958,21 @@ export function worldAt(events: FiredEvent[], year: number): World {
     world.ecbRate += effect.ecbRate ?? 0
     world.panic += effect.panic ?? 0
     world.demandShock += effect.demandShock ?? 0
+    world.qe += effect.qe ?? 0
   }
   return world
 }
 
 /** Simule la France de 2025 jusqu'à `until`, en appliquant les décisions et les événements. */
-export function simulate({ decisions, events, until, params }: SimulationInput): YearState[] {
-  return withParams(params, () => run(decisions, events, until))
+export function simulate({ decisions, events, until, params, scenario }: SimulationInput): YearState[] {
+  return withParams({ ...scenario?.params, ...params }, () => {
+    REF = scenario?.reference ?? BASE_POLICY
+    try {
+      return run(decisions, events, until)
+    } finally {
+      REF = BASE_POLICY
+    }
+  })
 }
 
 function run(decisions: Decision[], events: FiredEvent[], until: number): YearState[] {
@@ -937,7 +980,7 @@ function run(decisions: Decision[], events: FiredEvent[], until: number): YearSt
   let carry = initialCarry()
   let anchors: Anchors | null = null
   for (let year = BASE.year; year <= until; year += 1) {
-    const policy = policyAt(decisions, year)
+    const policy = policyAt(decisions, year, REF)
     const cancelDecision = decisions.find((d) => d.year === year && (d.patch.cancelShare ?? 0) > 0)
     const cancel = cancelDecision ? { share: cancelDecision.patch.cancelShare ?? 0, holder: cancelDecision.patch.cancelHolder ?? policy.cancelHolder } : null
     const result = step(carry, policy, worldAt(events, year), anchors, year === BASE.year ? null : cancel)

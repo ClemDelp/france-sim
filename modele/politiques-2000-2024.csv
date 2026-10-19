@@ -1,0 +1,92 @@
+﻿annee;levier;valeur;commentaire
+2000;vat;0,196;TVA ramenée à 19,6 % en avril 2000
+2000;incomeTaxTop;0;
+2000;csg;0,075;
+2000;corporateTax;0,3667;33,3 % plus la contribution exceptionnelle de 10 %
+2000;wealthTax;0,005;Impôt de solidarité sur la fortune (ISF)
+2000;inheritanceTax;0,065;
+2000;productionTaxes;85;Dont la taxe professionnelle
+2000;health;100;
+2000;prevention;3;
+2000;education;90;
+2000;defence;30;
+2000;investment;55;
+2000;otherServices;100;
+2000;firmAid;20;
+2000;firmAidSmeShare;0,45;
+2000;retirementAge;60;
+2000;pensionIndexation;1;
+2000;unemploymentReplacement;0,57;
+2000;minima;0;
+2000;foodSecurity;0;
+2000;smicBoost;0;
+2000;electrification;0,006;
+2000;nuclearShare;0,77;
+2000;tariffs;0;
+2000;tariffChinaEV;0,1;Droit de douane européen standard sur les voitures
+2000;netMigration;70;
+2000;monetization;0;
+2000;savingsToFirms;0;
+2000;crisisResponse;0;
+2002;corporateTax;0,3543;Baisse de la contribution exceptionnelle
+2003;smicBoost;0,04;Convergence des SMIC après les 35 heures
+2004;smicBoost;0,08;
+2005;smicBoost;0,11;
+2006;corporateTax;0,3443;
+2006;netMigration;100;
+2005;health;108;Dépenses d’assurance maladie (Ondam) plus rapides que la richesse
+2005;otherServices;106;Montée en charge des collectivités locales (décentralisation)
+2009;investment;62;Plan de relance
+2009;firmAid;26;Plan de relance
+2009;minima;1,5;Revenu de solidarité active (RSA)
+2010;productionTaxes;78;Suppression de la taxe professionnelle
+2010;netMigration;50;
+2010;health;116;
+2010;otherServices;110;
+2010;education;84;
+2011;investment;55;Fin du plan de relance
+2011;firmAid;22;
+2011;retirementAge;62;Réforme de 2010 : départ à 62 ans, appliqué progressivement
+2011;corporateTax;0,36;Surtaxe des grandes entreprises
+2012;incomeTaxTop;0,02;Hausses d’impôts de 2011-2013 (tranche à 45 %, contribution exceptionnelle)
+2013;incomeTaxTop;0,03;
+2015;health;120;
+2013;firmAid;28;Crédit d’impôt pour la compétitivité et l’emploi (CICE)
+2014;vat;0,2;TVA à 20 %
+2015;firmAid;34;CICE et pacte de responsabilité
+2016;minima;4;Prime d’activité
+2016;netMigration;60;
+2018;csg;0,092;Hausse de la CSG (en échange de la baisse des cotisations salariales)
+2018;incomeTaxTop;0,02;Prélèvement forfaitaire unique sur les revenus du capital
+2018;wealthTax;0,002;L’ISF devient l’impôt sur la fortune immobilière (IFI)
+2018;corporateTax;0,344;
+2018;pensionIndexation;0,6;Retraites quasi gelées
+2019;corporateTax;0,32;
+2019;pensionIndexation;0,7;
+2019;minima;9;Hausse de la prime d’activité après les gilets jaunes
+2019;unemploymentReplacement;0,55;Réforme de l’assurance chômage
+2019;defence;28;
+2019;health;122;
+2020;pensionIndexation;1;
+2020;health;134;Covid : dépenses de santé exceptionnelles
+2020;firmAid;60;Covid : fonds de solidarité, activité partielle
+2020;netMigration;120;
+2020;corporateTax;0,31;
+2021;firmAid;52;Plan de relance
+2021;health;132;
+2021;productionTaxes;68;Baisse des impôts de production
+2021;corporateTax;0,284;
+2022;firmAid;45;Bouclier tarifaire sur l’énergie
+2022;nuclearShare;0,63;Réacteurs arrêtés (corrosion)
+2022;netMigration;170;
+2022;corporateTax;0,25;
+2022;health;124;
+2023;firmAid;35;
+2023;nuclearShare;0,65;
+2023;retirementAge;64;Réforme de 2023 : départ à 64 ans, appliqué progressivement
+2023;unemploymentReplacement;0,53;
+2023;productionTaxes;64;
+2024;firmAid;30;
+2024;nuclearShare;0,67;
+2024;tariffChinaEV;0,3;Droits européens sur les voitures électriques chinoises
+2024;health;122;

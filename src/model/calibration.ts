@@ -7,21 +7,21 @@ import { type ByGroup, type BySize, type Holder, type Policy } from './types'
  */
 const DATA = view([
   'gdp', 'consumption', 'housing', 'investment', 'exports', 'importsNonEnergy', 'energyImports', 'vatRevenue', 'grossWages', 'employerContribRate',
-  'mixedIncome', 'corporateTaxRevenue', 'corporateTaxBase', 'firmDebt', 'firmLoanSpread', 'dividendPayout', 'dividendsAbroad', 'foreignIncome',
+  'mixedIncome', 'corporateTaxRevenue', 'firmDebt', 'firmLoanSpread', 'dividendPayout', 'dividendsAbroad', 'foreignIncome',
   'bankCapital', 'householdDebt', 'deposits', 'pensions', 'unemploymentBenefits', 'familyBenefits', 'minima', 'otherTransfers',
-  'employeeContribRate', 'incomeTaxRevenue', 'taxableCapitalIncome', 'csgRevenue', 'csgPensionShare', 'otherHouseholdTaxes', 'ifiRevenue',
+  'employeeContribRate', 'incomeTaxRevenue', 'csgRevenue', 'csgPensionShare', 'otherHouseholdTaxes', 'ifiRevenue',
   'inheritanceFlows', 'householdFinancialWealth', 'nonTaxRevenue', 'euContribution', 'debt', 'holderMonde', 'holderBce', 'holderAssureurs',
   'holderBanques', 'effectiveRate', 'termPremium', 'deficitRatio', 'population', 'workingAge', 'participation', 'unemployment', 'retirees',
   'retirementEntrants', 'youthEntrants', 'births', 'retirementAgeEffective', 'lifeExpectancy', 'lifeGap', 'avgPension', 'poverty',
   'incomeRatioTopBottom', 'oil', 'fossilShare', 'inflationAnchor', 'productivityGrowth', 'naturalUnemployment', 'smic', 'worldGrowth',
-  'worldInflation', 'oilLongRun', 'ecbLongRun',
+  'worldInflation', 'oilLongRun', 'ecbLongRun', 'startYear', 'otherTaxes', 'initialGrowth', 'reformPauseUntil',
 ] as const)
 
 export const BASE_YEAR = 2025
 
 /** Les données de 2025, plus la répartition de la dette entre ses détenteurs. */
 export const BASE = Object.create(DATA, {
-  year: { value: BASE_YEAR, enumerable: true },
+  year: { get: () => DATA.startYear, enumerable: true },
   holders: {
     get: (): Record<Holder, number> => ({ monde: DATA.holderMonde, bce: DATA.holderBce, assureurs: DATA.holderAssureurs, banques: DATA.holderBanques }),
     enumerable: true,
@@ -49,7 +49,7 @@ export const P = view([
   'smicJobLoss', 'maxEmployment', 'consumptionSmoothing', 'wealthEffect', 'consumptionSplitMpc', 'accelerator',
   'acceleratorTrend', 'investmentRateSensitivity', 'investmentCorporateTax', 'savingsToFirmsEffect', 'investmentMin', 'investmentMax',
   'stigmaInvestment', 'demandShockInvestment', 'housingRateSensitivity', 'housingMin', 'housingMax', 'housingDebtShare', 'mortgageRepayment',
-  'priceCompetitiveness', 'importPriceElasticity', 'exportShareLoss', 'tariffRetaliation', 'evRetaliation', 'tariffImportCut', 'overheatingImports', 'overheatingThreshold', 'profitShifting', 'crisisDebtThreshold', 'crisisDebtRange', 'crisisGapRange', 'crisisSmoothing', 'crisisPanic', 'crisisShun', 'crisisBondLoss', 'crisisDemandShock', 'crisisCooldown', 'rescueYears', 'rescueSpread', 'rescueEffort', 'rescueTaxShare', 'rescueEffortMax', 'taxEvasion', 'taxEvasionMax', 'flightIncomeTax', 'unrestMemory', 'unrestIncomeDrop', 'unrestTaxRange', 'unrestUnemployment', 'unrestUnemploymentRange', 'unrestInflation', 'unrestInflationRange', 'unrestPovertyRange', 'unrestAusterityRange', 'bankruptcyPremium', 'bankruptcyInterestShare', 'hyperinflation', 'depressionUnemployment',
+  'priceCompetitiveness', 'importPriceElasticity', 'exportShareLoss', 'tariffRetaliation', 'evRetaliation', 'tariffImportCut', 'overheatingImports', 'overheatingThreshold', 'qeTermPremium', 'rateExpectationSpeed', 'qeStressRelief', 'oilRetailPass', 'profitShifting', 'crisisDebtThreshold', 'crisisDebtRange', 'crisisGapRange', 'crisisSmoothing', 'crisisPanic', 'crisisShun', 'crisisBondLoss', 'crisisDemandShock', 'crisisCooldown', 'rescueYears', 'rescueSpread', 'rescueEffort', 'rescueTaxShare', 'rescueEffortMax', 'taxEvasion', 'taxEvasionMax', 'flightIncomeTax', 'unrestMemory', 'unrestIncomeDrop', 'unrestTaxRange', 'unrestUnemployment', 'unrestUnemploymentRange', 'unrestInflation', 'unrestInflationRange', 'unrestPovertyRange', 'unrestAusterityRange', 'bankruptcyPremium', 'bankruptcyInterestShare', 'hyperinflation', 'depressionUnemployment',
 ] as const)
 
 /** La politique de 2025 : le point de départ de toute partie. */

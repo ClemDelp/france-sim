@@ -106,3 +106,12 @@ describe('le long terme', () => {
     expect(s2070.retirees).toBeGreaterThan(19)
   })
 })
+
+describe('format des fichiers', () => {
+  const files = import.meta.glob('../../modele/*.csv', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+  test.each(Object.entries(files))('%s : chaque ligne a autant de colonnes que l’en-tête (pas de « ; » dans les textes)', (_, text) => {
+    const lines = text.replace(/^﻿/, '').trimEnd().split(/\r?\n/)
+    const n = lines[0].split(';').length
+    expect(lines.filter((l) => l.split(';').length !== n)).toEqual([])
+  })
+})

@@ -75,6 +75,8 @@ export type ParamRow = {
   explanation: string
   reliability: string
   source: string
+  /** Plage plausible (colonnes min et max), quand elle est renseignée. */
+  range?: [number, number]
 }
 
 function rowsOf(csv: string, kind: ParamKind): ParamRow[] {
@@ -88,6 +90,7 @@ function rowsOf(csv: string, kind: ParamKind): ParamRow[] {
     explanation: r.explication ?? '',
     reliability: r.fiabilite ?? (kind === 'donnee' ? 'mesuré' : ''),
     source: r.source ?? '',
+    range: r.min && r.max ? ([parseNumber(r.min), parseNumber(r.max)] as [number, number]) : undefined,
   }))
 }
 

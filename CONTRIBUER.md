@@ -6,13 +6,21 @@ corriger une hypothèse ou ajouter un mécanisme. Pas besoin de savoir programme
 ## Les fichiers du modèle (`modele/`)
 
 Ouvrez-les dans Excel, LibreOffice ou Google Sheets : séparateur « ; », virgule décimale, encodage UTF-8.
+N’écrivez pas de « ; » dans les textes (un test le vérifie) : utilisez une virgule.
+
+Les colonnes `min` et `max` de `comportements.csv` donnent la **plage plausible** d’une hypothèse : l’analyse « Ce résultat est-il solide ? » la parcourt.
 
 | Fichier | Contenu | Colonnes |
 | --- | --- | --- |
 | `donnees-2025.csv` | La France de 2025 : PIB, budget, dette, population… | `id ; valeur ; unite ; bloc ; nom ; source` |
-| `comportements.csv` | Comment chacun réagit : élasticités, délais, seuils | `id ; valeur ; unite ; bloc ; nom ; explication ; fiabilite ; source` |
+| `comportements.csv` | Comment chacun réagit : élasticités, délais, seuils | `id ; valeur ; unite ; bloc ; nom ; explication ; fiabilite ; source ; min ; max` |
 | `tranches.csv` | Qui reçoit quoi, qui paie quoi, par tranche de revenu | `id ; nom ; g1 … g5 ; explication ; source` |
+| `entreprises.csv` | PME, ETI, grands groupes : poids et sensibilités | `id ; nom ; pme ; eti ; ge ; explication ; fiabilite ; source` |
 | `variables.csv` | Les variables du graphe des causes | `id ; nom ; bloc ; colonne ; explication` |
+| `donnees-2000.csv` | La France de 2000, pour rejouer le passé | comme `donnees-2025.csv` |
+| `politiques-2000-2024.csv` | Les décisions réellement prises de 2000 à 2024 | `annee ; levier ; valeur ; commentaire` |
+| `monde.csv` | Le monde année par année (pétrole, BCE, croissance, crises) | `annee ; petrole ; tauxBce ; croissanceMonde ; panique ; chocDemande ; rachatsBce ; commentaire` |
+| `historique.csv` | Ce qui s’est vraiment passé de 2000 à 2024 | `annee ; croissance ; chomage ; inflation ; deficit ; dette ; taux10ans ; pauvrete` |
 | `liens.csv` | Les liens de cause à effet | `de ; vers ; sens ; parametres ; explication` |
 
 La colonne `fiabilite` vaut :
@@ -45,7 +53,8 @@ et sa source dans l’*issue*, quelqu’un pourra s’en charger.
 - **stabilité** : jusqu’en 2075, sans rien changer et avec chaque idée reçue, rien ne s’emballe (inflation, chômage, croissance) ;
 - **cohérence du graphe** : chaque lien relie des variables qui existent et cite des paramètres qui existent,
   chaque paramètre des fichiers est utilisé par le moteur, chaque levier du jeu est dans le graphe ;
-- **mécanismes** : taxer les riches réduit la pauvreté, annuler la dette de la BCE ne rapporte presque rien, etc.
+- **mécanismes** : taxer les riches réduit la pauvreté, annuler la dette de la BCE ne rapporte presque rien, tous les impôts au maximum font perdre la partie, etc. ;
+- **le passé** : rejoué de 2000 à 2024, le modèle doit rester proche de l’histoire (écarts moyens plafonnés). Si votre modification améliore ce rejeu, c’est un excellent argument.
 
 ## Ajouter un levier ou un mécanisme (développeurs)
 

@@ -5,6 +5,7 @@ import { BASE_POLICY } from '../model/calibration'
 import type { Policy, PolicyKey, YearState } from '../model/types'
 import { formatLever, LEVER_GROUPS, type LeverDef } from './levers'
 import { readNode } from './nodeValues'
+import { ReplayView } from './ReplayView'
 
 export type Impact = { year: number; rows: { label: string; withChanges: string; original: string; tone: 'good' | 'bad' | 'flat' }[] }
 
@@ -20,10 +21,13 @@ type Props = {
   baseState: YearState | null
   /** La politique en vigueur, pour montrer les leviers que le joueur a bougés. */
   policy: Policy
+  /** Ouvrir directement un onglet, avec une recherche (par exemple depuis l'analyse de solidité). */
+  initialView?: View
+  initialQuery?: string
   onClose: () => void
 }
 
-type View = 'graphe' | 'parametres' | 'participer'
+export type View = 'graphe' | 'parametres' | 'passe' | 'participer'
 
 const LEVER_BY_KEY: Partial<Record<string, LeverDef>> = Object.fromEntries(LEVER_GROUPS.flatMap((g) => g.levers.map((l) => [l.key, l])))
 const ROW_BY_ID: Record<string, ParamRow> = Object.fromEntries(PARAM_ROWS.map((r) => [r.id, r]))
@@ -266,8 +270,8 @@ function Overview({ highlight, onFocus }: { highlight: Set<string> | null; onFoc
 }
 
 /** Le tableau de tous les paramètres, modifiable, exportable en CSV pour proposer une correction. */
-function ParamTable({ overrides, onOverride, onReset }: { overrides: Overrides; onOverride: Props['onOverride']; onReset: () => void }) {
-  const [query, setQuery] = useState('')
+function ParamTable({ overrides, onOverride, onReset, initialQuery }: { overrides: Overrides; onOverride: Props['onOverride']; onReset: () => void; initialQuery?: string }) {
+  const [query, setQuery] = useState(initialQuery ?? '')
   const [kind, setKind] = useState<ParamKind | 'tous' | 'modifies'>('tous')
   const q = normalize(query)
   const rows = PARAM_ROWS.filter(
@@ -352,8 +356,8 @@ function Contribute() {
 }
 
 /** Le cerveau du modèle : le graphe des interactions, tous les paramètres, et comment participer. */
-export function Brain({ focus, onFocus, overrides, onOverride, onReset, impact, state, baseState, policy, onClose }: Props) {
-  const [view, setView] = useState<View>('graphe')
+export function Brain({ focus, onFocus, overrides, onOverride, onReset, impact, state, baseState, policy, initialView, initialQuery, onClose }: Props) {
+  const [view, setView] = useState<View>(initialView ?? 'graphe')
   const [trail, setTrail] = useState<string[]>(focus ? [focus] : [])
   const go = (id: string | null) => {
     setTrail((t) => (id === null ? [] : t.includes(id) ? t.slice(0, t.indexOf(id) + 1) : [...t, id]))
@@ -381,6 +385,7 @@ export function Brain({ focus, onFocus, overrides, onOverride, onReset, impact, 
             [
               ['graphe', 'Graphe des interactions'],
               ['parametres', 'Tous les paramètres'],
+              ['passe', 'Face au passé (2000–2024)'],
               ['participer', 'Participer'],
             ] as const
           ).map(([id, label]) => (
@@ -481,7 +486,8 @@ export function Brain({ focus, onFocus, overrides, onOverride, onReset, impact, 
           </section>
         </div>
       ) : null}
-      {view === 'parametres' ? <ParamTable overrides={overrides} onOverride={onOverride} onReset={onReset} /> : null}
+      {view === 'parametres' ? <ParamTable overrides={overrides} onOverride={onOverride} onReset={onReset} initialQuery={initialQuery} /> : null}
+      {view === 'passe' ? <ReplayView overrides={overrides} /> : null}
       {view === 'participer' ? <Contribute /> : null}
     </div>
   )

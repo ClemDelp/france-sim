@@ -14,7 +14,8 @@ flowchart LR
     subgraph modele["📂 modele/ (modifiable dans Excel)"]
         D["donnees-2025.csv<br/>la France de 2025<br/>(PIB, dette, population…)"]
         C["comportements.csv<br/>comment chacun réagit<br/>(élasticités, délais, seuils)"]
-        T["tranches.csv<br/>qui reçoit et qui paie<br/>(5 tranches de revenu)"]
+        T["tranches.csv + entreprises.csv<br/>qui reçoit et qui paie<br/>(5 tranches, 3 tailles d’entreprise)"]
+        H["donnees-2000.csv, politiques-2000-2024.csv,<br/>monde.csv, historique.csv<br/>le passé, pour rejouer 2000–2024"]
         V["variables.csv + liens.csv<br/>le graphe des causes<br/>(ce qui fait bouger quoi)"]
     end
     subgraph moteur["⚙️ src/model/"]
@@ -22,16 +23,21 @@ flowchart LR
         CAL["calibration.ts<br/>BASE, P, GROUP_PARAMS"]
         SIM["sim.ts<br/>simule une année,<br/>puis la suivante"]
         G["graph.ts<br/>le graphe des causes"]
+        R["replay.ts<br/>rejoue 2000–2024"]
+        ROB["robustness.ts<br/>teste la solidité<br/>d’un résultat"]
     end
     subgraph ui["🖥️ src/ui/ + App.tsx"]
         GAME["Le jeu<br/>leviers, carte des flux,<br/>idées reçues, courbes"]
-        BRAIN["🧠 Le modèle<br/>graphe, paramètres,<br/>variantes"]
+        BRAIN["🧠 Le modèle<br/>graphe, paramètres, variantes,<br/>face au passé"]
     end
     D --> P
     C --> P
     T --> P
     P --> CAL --> SIM
     V --> G
+    H --> R
+    SIM --> R --> BRAIN
+    SIM --> ROB --> GAME
     SIM --> GAME
     G --> BRAIN
     CAL --> BRAIN
@@ -74,7 +80,7 @@ qui dépend des revenus, qui dépendent de la production. Le moteur tâtonne (ju
 
 ```mermaid
 flowchart TD
-    A0["0. Annulation de dette ?<br/>qui perd, panique des prêteurs"] --> A1
+    A0["0. Annulation de dette ? Crise de la dette ?<br/>qui perd, panique des prêteurs, plan d’aide"] --> A1
     A1["1. Démographie<br/>naissances, immigration, départs en retraite,<br/>espérance de vie, nombre d’actifs"] --> A2
     A2["2. Énergie, prix, salaires<br/>pétrole, électricité, inflation,<br/>salaires, productivité"] --> A3
     A3["3. Taux d’intérêt<br/>BCE + prime de risque<br/>(dette, déficit, confiance)"] --> A4
@@ -82,8 +88,10 @@ flowchart TD
     A5["5. Qui finance le déficit ?<br/>étrangers, BCE, assureurs, banques"] --> A6
     A6["6. Bilans de fin d’année<br/>dette, patrimoine, fonds propres"] --> A7
     A7["7. Inégalités et santé<br/>pauvreté, Gini, espérance de vie"] --> A8
-    A8["8. Contrôle comptable<br/>la somme des soldes = 0"]
-    A8 -. "les stocks passent à l’année suivante" .-> A0
+    A8["8. Contrôle comptable<br/>la somme des soldes = 0"] --> A9
+    A9["9. Tension sur la dette, colère sociale<br/>la partie est-elle perdue ?"] --> A10
+    A10["10. Entreprises par taille<br/>PME, ETI, grands groupes"]
+    A10 -. "les stocks passent à l’année suivante" .-> A0
 
     subgraph boucle["4. la boucle d’équilibre"]
         direction LR
@@ -137,7 +145,7 @@ flowchart LR
 
 ## 5. Le graphe des causes, en version simplifiée
 
-Le graphe complet (75 variables, plus de 150 liens) est dans l’application, onglet « 🧠 Le modèle ».
+Le graphe complet (85 variables, 200 liens) est dans l’application, onglet « 🧠 Le modèle ».
 Voici ses grandes boucles. Un lien « + » veut dire « quand l’un monte, l’autre monte » ; « − » : « quand l’un monte, l’autre baisse ».
 
 ```mermaid
@@ -230,7 +238,78 @@ flowchart LR
     POV --> LE["Espérance de vie"]
 ```
 
-## 7. Participer : du tableur au modèle
+## 7. Crise de la dette et fin de partie
+
+Une partie peut mal finir. Le moteur suit deux jauges, et quatre façons de perdre.
+
+```mermaid
+flowchart LR
+    subgraph dette["Tension sur la dette"]
+        D1["Niveau de la dette<br/>au-delà de 100 % du PIB"] --> TS["Tension"]
+        D2["Écart entre le solde public<br/>et ce qui stabiliserait la dette<br/>(taux payé − croissance) × dette"] --> TS
+        QE["Rachats de la BCE"] -. "protègent" .-> TS
+    end
+    TS -- "≥ 1" --> CR["💥 Crise de la dette<br/>taux qui bondissent, obligations<br/>qui perdent de la valeur"]
+    CR --> CH{"Le joueur choisit"}
+    CH -- "accepter" --> PL["🇪🇺 Plan d’aide européen<br/>taux plafonnés 3 ans,<br/>économies imposées"]
+    CH -- "refuser" --> RF["Emprunter au prix fort"]
+    CH -- "défaut" --> DF["Effacer une partie de la dette<br/>(étrangers ou épargnants)"]
+    subgraph colere["Mécontentement social"]
+        C1["Baisse du niveau de vie"] --> MC["Colère"]
+        C2["Hausse des prélèvements"] --> MC
+        C3["Chômage, inflation,<br/>pauvreté"] --> MC
+        PL --> C4["Austérité imposée"] --> MC
+    end
+    MC -- "≥ 1" --> E1["🔥 Révolte"]
+    RF -- "prime ≥ 8 points ou<br/>intérêts ≥ 25 % des recettes" --> E2["💥 Faillite de l’État"]
+    E3["🌀 Hyperinflation<br/>(inflation ≥ 25 %)"]
+    E4["📉 Dépression<br/>(chômage ≥ 20 %)"]
+```
+
+Quand les impôts s’envolent, une partie échappe au fisc (fraude, travail au noir) et les hauts revenus partent :
+chaque hausse rapporte de moins en moins. Tous les seuils sont dans `modele/comportements.csv`, avec leur plage plausible.
+
+## 8. Les entreprises : PME, ETI, grands groupes
+
+Le moteur garde une seule économie, mais chaque taille d’entreprise réagit à sa façon (`modele/entreprises.csv`) :
+les PME dépendent de leur banque et emploient plus de salariés au SMIC ; les ETI portent l’industrie qui consomme de l’énergie ;
+les grands groupes exportent et peuvent déclarer leurs bénéfices ailleurs. Une aide publique est en partie investie :
+beaucoup par une PME qui manque de trésorerie, peu par un grand groupe. Le levier « Part des aides allant aux PME » le montre.
+
+## 9. Le test de vérité : rejouer 2000–2024
+
+Le même moteur repart de la France de 2000 (`donnees-2000.csv`), avec les décisions réellement prises
+(`politiques-2000-2024.csv`) et le monde tel qu’il a été (`monde.csv`). On compare à ce qui s’est passé (`historique.csv`).
+
+```mermaid
+flowchart LR
+    A["France de 2000"] --> M["Même moteur,<br/>mêmes comportements"]
+    B["Décisions réelles<br/>35 h, retraites, CICE,<br/>aides Covid…"] --> M
+    C["Monde réel<br/>2008, crise de l’euro,<br/>Covid, Ukraine"] --> M
+    M --> R["Trajectoire rejouée"]
+    H["Ce qui s’est vraiment passé"] --> CMP{"Écarts"}
+    R --> CMP
+    CMP --> T["Test automatique :<br/>une contribution ne doit pas<br/>dégrader le rejeu"]
+```
+
+Aujourd’hui, l’écart moyen est d’environ 1,7 point sur la croissance et le chômage, 1,2 sur l’inflation, 1,5 sur le déficit,
+0,4 sur le taux à 10 ans ; la dette de 2024 est retrouvée à une dizaine de points près. Ce rejeu a permis de corriger
+plusieurs défauts : un impôt sur le revenu deux fois et demie trop lourd, des chocs pétroliers qui ne touchaient que la France,
+des taux longs qui suivaient trop vite la BCE. L’onglet « Face au passé » du modèle montre les courbes, et dit si votre variante
+de paramètres reproduit mieux ou moins bien l’histoire.
+
+## 10. Ce résultat est-il solide ?
+
+Pour une décision et un indicateur, on refait le calcul en faisant varier chaque **hypothèse** du modèle (les paramètres
+dont la fiabilité est « hypothèse ») dans sa plage plausible (colonnes `min` et `max`, sinon ± 30 %). Verdict :
+
+- **solide** : le sens et l’ampleur de l’effet tiennent ;
+- **à nuancer** : le sens tient, l’ampleur dépend d’hypothèses ;
+- **fragile** : l’effet peut changer de sens selon une hypothèse incertaine.
+
+L’analyse nomme les hypothèses qui décident : ce sont elles qu’il faut documenter en priorité.
+
+## 11. Participer : du tableur au modèle
 
 ```mermaid
 flowchart LR
@@ -245,7 +324,7 @@ flowchart LR
 
 Voir [CONTRIBUER.md](../CONTRIBUER.md) pour le détail.
 
-## 8. Ce que le modèle ne sait pas faire (limites connues)
+## 12. Ce que le modèle ne sait pas faire (limites connues)
 
 Un simulateur honnête dit où il s’arrête. Les principales limites aujourd’hui :
 
@@ -253,12 +332,15 @@ Un simulateur honnête dit où il s’arrête. Les principales limites aujourd�
   la démographie et la dette y sont crédibles, l’innovation, le climat ou la géopolitique non.
 - **La Banque centrale européenne ne réagit pas à la France.** Son taux est fixé par le scénario mondial :
   une politique très inflationniste en France n’entraîne pas de hausse des taux de la BCE.
-- **Pas de crise de la dette automatique.** La prime de risque monte avec la dette, mais rien ne déclenche une crise brutale
-  quand la dette dépasse 200 % du PIB : en réalité, les prêteurs refuseraient bien avant. Le journal signale l’effet boule de neige.
-- **Les entreprises forment un seul bloc.** Pas encore de distinction entre PME, ETI et grands groupes, ni entre secteurs.
-- **La pauvreté de départ est un peu sous-estimée** (≈ 13 % contre 15,4 % mesurés par l’INSEE), car on reconstitue
-  la distribution à partir de 5 tranches.
-- **Les comportements sont des moyennes stables.** Le modèle ne capte pas les changements d’habitudes brutaux
-  (fuite massive des capitaux, révolte fiscale, effondrement de la confiance), au-delà de plafonds prudents.
-- **Pas de calage sur 2000–2024.** Le modèle part de 2025 ; le rejouer sur le passé est la prochaine étape pour le valider.
-- **Beaucoup de comportements sont des hypothèses.** Leur colonne `fiabilite` le dit : c’est là que les contributions sont les plus utiles.
+- **Les crises et la colère sociale suivent des seuils.** Ce sont des ordres de grandeur tirés de l’histoire (Grèce, Italie,
+  gilets jaunes), pas des lois : leurs paramètres sont des hypothèses, à discuter.
+- **Les entreprises ne forment qu’une économie.** Les trois tailles ont des sensibilités différentes, mais pas de secteurs
+  (industrie, services, agriculture) ni de faillites d’entreprises.
+- **Les inégalités sont reconstituées à partir de 5 tranches.** La pauvreté de départ (≈ 14,7 %) est proche de l’INSEE (15,4 %),
+  mais l’indice de Gini (≈ 0,33) est plus élevé que celui de l’INSEE (0,29), car les tranches viennent des comptes nationaux
+  « distribués », qui comptent plus largement les revenus du capital.
+- **Le rejeu 2000–2024 rate certaines périodes** : le chômage de 2014-2018, la croissance de 2022-2024 (le bouclier tarifaire
+  et l’énigme de la productivité ne sont pas modélisés). Les données de 2000 et l’historique sont des ordres de grandeur arrondis,
+  à vérifier.
+- **Beaucoup de comportements sont des hypothèses.** Leur colonne `fiabilite` le dit, et l’analyse de solidité montre
+  lesquelles comptent : c’est là que les contributions sont les plus utiles.

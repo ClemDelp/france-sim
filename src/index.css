@@ -2014,3 +2014,156 @@ button.kpi:focus-visible {
 .ending-facts {
   margin: 12px 0;
 }
+
+/* — Face au passé */
+
+.replay {
+  padding: 14px 18px;
+  max-width: 1200px;
+}
+
+.replay-intro p {
+  max-width: 820px;
+  line-height: 1.5;
+}
+
+.replay-table {
+  width: 100%;
+  max-width: 720px;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.replay-table th,
+.replay-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--rule);
+  text-align: right;
+}
+
+.replay-table th:first-child,
+.replay-table td:first-child {
+  text-align: left;
+}
+
+.replay-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.replay-grid > div {
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.replay-grid h4 {
+  margin: 0 0 4px;
+}
+
+.line-variant {
+  stroke: #c58cff;
+  stroke-width: 1.8;
+  stroke-dasharray: 5 3;
+}
+
+.key-variant::before {
+  border-top: 2px dashed #c58cff;
+}
+
+.replay-limits {
+  max-width: 820px;
+  line-height: 1.5;
+}
+
+.replay-notes {
+  margin-top: 10px;
+}
+
+/* — Solidité d’un résultat */
+
+.robust {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.robust h4 {
+  margin: 0;
+}
+
+.robust-progress {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+
+.robust-progress span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.1s;
+}
+
+.robust-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.robust-list li {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--rule);
+  background: var(--bg-2);
+}
+
+.robust-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.robust-head span {
+  flex: 1;
+}
+
+.robust-solide .badge {
+  background: rgba(47, 191, 113, 0.18);
+  color: var(--good);
+}
+
+.robust-a-nuancer .badge {
+  background: rgba(245, 183, 10, 0.16);
+  color: var(--gold);
+}
+
+.robust-fragile {
+  border-color: var(--bad) !important;
+}
+
+.robust-fragile .badge {
+  background: rgba(255, 93, 98, 0.18);
+  color: var(--bad);
+}
+
+.robust-list small {
+  color: var(--muted);
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  font-size: inherit;
+}

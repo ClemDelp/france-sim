@@ -6,7 +6,7 @@ incomeTaxTop;taxes;+;topRate.g5 topRate.g4;Les plus hauts revenus paient davanta
 incomeTaxTop;gini;-;topRate.g5;Les revenus du haut baissent : les écarts se resserrent.
 csg;taxes;+;csgRevenue csgPensionShare;La CSG touche salaires, pensions et revenus d’indépendants.
 csg;disposableIncome;-;csgRevenue;Chacun garde un peu moins de son revenu.
-corporateTax;taxes;+;corporateTaxBase;Plus d’impôt sur les bénéfices.
+corporateTax;taxes;+;corporateTaxRevenue;Plus d’impôt sur les bénéfices.
 corporateTax;privateInvestment;-;investmentCorporateTax;Moins de bénéfice après impôt : les entreprises investissent moins.
 corporateTax;capitalFlight;+;flightCorporate corporateThreshold;Au-delà de 33 %, des entreprises déplacent leurs bénéfices.
 wealthTax;taxes;+;wealthTaxBase wealthTaxAvoidance;Rapporte, mais moins que « taux × patrimoine » : l’assiette fond.
@@ -105,7 +105,7 @@ creditCrunch;privateInvestment;-;;
 creditCrunch;housing;-;;
 capitalFlight;privateInvestment;-;flightMax;
 capitalFlight;productivity;-;flightProductivity;
-disposableIncome;consumption;+;consumptionSmoothing mpc.g1 mpc.g5;Un euro donné aux modestes est presque tout dépensé ; aux riches, surtout épargné.
+disposableIncome;consumption;+;consumptionSmoothing mpc.g1 mpc.g5;Un euro donné aux modestes est presque tout dépensé, aux riches, surtout épargné.
 disposableIncome;savings;+;;Ce qui n’est pas dépensé est épargné.
 disposableIncome;lowIncome;+;wages.g1 pensions.g1;Quand le revenu de tous augmente, celui des modestes aussi, en général.
 disposableIncome;gini;±;sigma.g5;Dépend de qui gagne et qui perd.

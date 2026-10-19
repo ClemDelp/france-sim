@@ -88,6 +88,8 @@ export type World = {
   panic: number
   /** Choc de demande (fraction de PIB perdue cette année, pandémie, crise). */
   demandShock: number
+  /** Rachats de dette publique par la BCE (part du déficit rachetée, assouplissement quantitatif). */
+  qe: number
 }
 
 /** Une décision prise une année donnée (le joueur bouge des leviers puis avance). */

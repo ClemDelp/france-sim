@@ -1,4 +1,4 @@
-import { useState, type PointerEvent } from 'react'
+import { useState, type PointerEvent, type ReactNode } from 'react'
 import type { Decision, FiredEvent, YearState } from '../model/types'
 import { HISTORY } from './history'
 import { KPIS } from './indicators'
@@ -10,6 +10,8 @@ type Props = {
   events: FiredEvent[]
   /** Au-delà de cette année, le modèle donne des tendances, pas des prévisions. */
   reliableUntil: number
+  /** Un encart sous la courbe pour l'indicateur choisi (l'analyse de solidité). */
+  extra?: (kpiId: string) => ReactNode
 }
 
 const W = 360
@@ -17,7 +19,7 @@ const H = 200
 const PAD = { left: 40, right: 10, top: 12, bottom: 24 }
 
 /** La trajectoire d'un indicateur sur toute la partie : le passé, vos choix, et « si on n'avait rien changé ». */
-export function Trajectory({ states, base, decisions, events, reliableUntil }: Props) {
+export function Trajectory({ states, base, decisions, events, reliableUntil, extra }: Props) {
   const [kpiId, setKpiId] = useState('debt')
   const [hover, setHover] = useState<number | null>(null)
   const kpi = KPIS.find((k) => k.id === kpiId) ?? KPIS[0]
@@ -110,6 +112,7 @@ export function Trajectory({ states, base, decisions, events, reliableUntil }: P
           </>
         )}
       </div>
+      {extra ? extra(kpi.id) : null}
     </div>
   )
 }

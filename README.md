@@ -20,14 +20,19 @@ npm run dev
 - **Carte des flux** : l’argent qui circule entre ménages, entreprises, État, Sécu, banques, Banque de France,
   énergie importée et reste du monde.
 - **Le monde réagit** : choc d’Ormuz, crise financière, pandémie, récession, hausse des taux de la BCE.
+- **Perdre la partie** : révolte sociale, faillite de l’État, hyperinflation ou dépression. Une crise de la dette met le jeu en pause :
+  accepter le plan d’aide européen, le refuser, faire défaut… On peut revenir avant sa dernière décision.
 - **Idées reçues** : 16 idées testées sur 10 ans, avec « ce qui se passe vraiment » à 2 ans et à 10 ans,
   et ce que le modèle ne capte pas. Lien direct : `#idee=tax-rich`, `#idee=cancel-foreign`, etc.
 - **Onglets** : qui gagne et qui perd (5 tranches de revenu, pauvreté, Gini, espérance de vie), courbes sur toute la partie,
   budget et Sécu par branche, dette et ses détenteurs, énergie et commerce, journal de la partie.
   Les montants sont en euros de 2025 (inflation retirée).
-- **🧠 Le modèle** : le graphe de toutes les interactions (75 variables, plus de 150 liens), ce qui fait bouger chaque indicateur
-  dans votre partie, et les 274 paramètres avec leur source et leur fiabilité. On peut essayer d’autres valeurs :
+- **🧠 Le modèle** : le graphe de toutes les interactions (85 variables, 200 liens), ce qui fait bouger chaque indicateur
+  dans votre partie, et près de 350 paramètres avec leur source et leur fiabilité. On peut essayer d’autres valeurs :
   toute la partie se recalcule. Un clic sur un indicateur ouvre directement ce qui le fait bouger.
+- **Face au passé** : le modèle rejoue 2000–2024 avec les décisions réellement prises, et on compare à l’histoire.
+- **Ce résultat est-il solide ?** : on refait le calcul en faisant varier chaque hypothèse du modèle ; verdict solide,
+  à nuancer ou fragile, avec les hypothèses qui décident.
 
 ## Un modèle ouvert
 
