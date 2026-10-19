@@ -350,7 +350,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     // Consommation : la tendance, plus la réaction à un revenu au-dessus ou en dessous de la normale
     const anchorsNow: Anchors = anchors ?? { yd: disposable, c: byGroup(() => 0), ydTotal: sum(disposable) }
     const normal = (k: keyof ByGroup) => anchorsNow.yd[k] * trend * (popIndex)
-    const baseC = anchors ? anchors.c : byGroup((k) => (disposable[k] / sum(disposable)) * BASE.consumption * 0 + 0)
+    const baseC = anchors ? anchors.c : byGroup(() => 0)
     const consumption = byGroup((k) => {
       if (!anchors) {
         // Répartition de la consommation de 2025 selon la propension à consommer de chaque tranche.
