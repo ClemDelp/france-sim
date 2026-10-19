@@ -1,0 +1,18 @@
+﻿id;nom;g1;g2;g3;g4;g5;explication;source
+population;Part de la population;0,2;0,2;0,2;0,3;0,1;Les tranches : 20 % les plus modestes (D1-D2), D3-D4, D5-D6, D7-D9, 10 % les plus aisés (D10).;Définition
+wages;Part des salaires;0,041;0,108;0,167;0,405;0,279;;INSEE, comptes nationaux distribués 2022
+mixed;Part des revenus d’indépendants;0,065;0,109;0,14;0,331;0,355;;INSEE, comptes nationaux distribués
+dividends;Part des dividendes;0,03;0,051;0,076;0,261;0,582;;INSEE, comptes nationaux distribués
+wealth;Part du patrimoine financier;0,005;0,02;0,06;0,315;0,6;;INSEE, enquête Patrimoine
+pensions;Part des retraites;0,084;0,177;0,208;0,364;0,167;;DREES ; INSEE, comptes distribués
+unemployment;Part des allocations chômage;0,3;0,24;0,18;0,2;0,08;;Unédic
+family;Part des prestations familiales;0,276;0,208;0,17;0,241;0,105;;DREES
+minima;Part des minima sociaux;0,68;0,23;0,06;0,03;0;;DREES
+incomeTax;Part de l’impôt sur le revenu;0;0,005;0,037;0,29;0,668;;DGFiP
+mpc;Propension à consommer;0,97;0,9;0,82;0,72;0,45;Part d’un euro de revenu en plus qui est dépensée.;Banque de France ; INSEE
+sigma;Dispersion dans la tranche;0,62;0,1;0,1;0,2;0,6;Écart-type du logarithme du revenu à l’intérieur de la tranche (calé sur le taux de pauvreté et le Gini).;Calage
+lifeOffset;Écart d’espérance de vie;-4,5;-1,5;0;1,5;3,5;En années, par rapport à la moyenne.;INSEE, espérance de vie par niveau de vie
+smicGain;Effet d’une hausse du SMIC sur la part des salaires;0,6;0,25;-0,08;-0,08;-0,12;;DARES
+energyExposure;Exposition au prix de l’énergie;1;0,6;0;0;-0,6;Les modestes dépensent une plus grande part de leur budget en énergie.;INSEE, budget des familles
+inheritanceTax;Part des droits de succession payés;0,0166667;0,0166667;0,0166667;0,35;0,6;;DGFiP
+topRate;Part de la hausse de la tranche haute de l’impôt;0;0;0;0,25;1;;Hypothèse

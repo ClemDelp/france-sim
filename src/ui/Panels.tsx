@@ -23,12 +23,14 @@ export function GroupsPanel({ s, b, changed }: PanelProps) {
             <li key={g}>
               <div className="group-head">
                 <strong>{GROUP_LABEL[g]}</strong>
-                <span>{num(monthly, 0)} € / mois</span>
+                <span>
+                  {num(monthly, 0)} € / mois
+                  {changed ? <em className={d >= 0 ? 'good' : 'bad'}>{` ${signed(d * 100, 1)} %`}</em> : null}
+                </span>
               </div>
               {changed ? (
-                <div className="group-bar">
+                <div className="group-bar" title="La barre part du milieu : à droite on gagne, à gauche on perd, par rapport à « si on n’avait rien changé ».">
                   <span className={d >= 0 ? 'pos' : 'neg'} style={{ width: `${(Math.abs(d) / max) * 50}%`, [d >= 0 ? 'left' : 'right']: '50%' }} />
-                  <em className={d >= 0 ? 'good' : 'bad'}>{`${signed(d * 100, 1)} %`}</em>
                 </div>
               ) : null}
               <small>Espérance de vie ≈ {num(life, 1)} ans</small>
@@ -91,14 +93,20 @@ function Bars({ items, total, gdp }: { items: [string, number][]; total: number;
 
 /** Où va l'argent public, d'où il vient, et les comptes de la Sécu. */
 export function BudgetPanel({ s }: PanelProps) {
+  // Tous les montants en euros de 2025 : on retire l'inflation pour comparer les années entre elles.
+  const k = 1 / s.priceLevel
+  const real = (r: Record<string, number>) => Object.entries(r).map(([label, v]) => [label, v * k] as [string, number])
   return (
     <div className="panel">
+      <p className="panel-lead">En milliards d’euros de 2025 (inflation retirée), et en part de la richesse produite.</p>
       <h3>Dépenses publiques</h3>
-      <Bars items={Object.entries(s.budget)} total={s.spending} gdp={s.gdp} />
+      <Bars items={real(s.budget)} total={s.spending * k} gdp={s.gdp * k} />
       <h3>Recettes</h3>
-      <Bars items={Object.entries(s.taxes)} total={s.revenue} gdp={s.gdp} />
+      <Bars items={real(s.taxes)} total={s.revenue * k} gdp={s.gdp * k} />
       <p className={s.deficit > 0 ? 'callout bad' : 'callout good'}>
-        {s.deficit > 0 ? `Il manque ${num(s.deficit, 0)} Md€ : c’est le déficit, emprunté et ajouté à la dette.` : `Il reste ${num(-s.deficit, 0)} Md€ : la dette peut baisser.`}
+        {s.deficit > 0
+          ? `Il manque ${num(s.deficit * k, 0)} Md€ (${num((s.deficit / s.gdp) * 100, 1)} % du PIB) : c’est le déficit, emprunté et ajouté à la dette.`
+          : `Il reste ${num(-s.deficit * k, 0)} Md€ : la dette peut baisser.`}
       </p>
       <h3>Sécurité sociale, par branche</h3>
       <table className="secu">
@@ -114,14 +122,14 @@ export function BudgetPanel({ s }: PanelProps) {
           {Object.entries(s.secu).map(([branch, v]) => (
             <tr key={branch}>
               <td>{branch}</td>
-              <td>{num(v.revenue, 0)}</td>
-              <td>{num(v.spending, 0)}</td>
-              <td className={v.revenue - v.spending < 0 ? 'bad' : 'good'}>{signed(v.revenue - v.spending, 0)}</td>
+              <td>{num(v.revenue * k, 0)}</td>
+              <td>{num(v.spending * k, 0)}</td>
+              <td className={v.revenue - v.spending < 0 ? 'bad' : 'good'}>{signed((v.revenue - v.spending) * k, 0)}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p className="note">En Md€. Répartition des cotisations entre branches simplifiée ; l’État comble les écarts.</p>
+      <p className="note">En Md€ de 2025. Répartition des cotisations entre branches simplifiée ; l’État comble les écarts.</p>
     </div>
   )
 }
@@ -154,10 +162,10 @@ export function DebtPanel({ s }: PanelProps) {
             <path key={a.h} d={a.d} fill={HOLDER_COLOR[a.h]} />
           ))}
           <text x="70" y="68" textAnchor="middle" className="donut-value">
-            {num(total, 0)}
+            {num(total / s.priceLevel, 0)}
           </text>
           <text x="70" y="84" textAnchor="middle" className="donut-unit">
-            Md€
+            Md€ de 2025
           </text>
         </svg>
         <dl className="facts">
@@ -175,7 +183,9 @@ export function DebtPanel({ s }: PanelProps) {
           </div>
           <div>
             <dt>Charge des intérêts</dt>
-            <dd>{num(s.interest, 0)} Md€ par an</dd>
+            <dd>
+              {num(s.interest / s.priceLevel, 0)} Md€ par an ({num((s.interest / s.gdp) * 100, 1)} % du PIB)
+            </dd>
           </div>
         </dl>
       </div>
@@ -205,6 +215,7 @@ export function DebtPanel({ s }: PanelProps) {
 export function WorldPanel({ s }: PanelProps) {
   return (
     <div className="panel">
+      <p className="panel-lead">Montants en milliards d’euros de 2025 (inflation retirée).</p>
       <dl className="facts">
         <div>
           <dt>Prix du pétrole</dt>
@@ -212,7 +223,7 @@ export function WorldPanel({ s }: PanelProps) {
         </div>
         <div>
           <dt>Pétrole et gaz importés</dt>
-          <dd>{num(s.energyImports, 0)} Md€ par an</dd>
+          <dd>{num(s.energyImports / s.priceLevel, 0)} Md€ par an</dd>
         </div>
         <div>
           <dt>Part du pétrole et du gaz dans l’énergie</dt>
@@ -224,15 +235,17 @@ export function WorldPanel({ s }: PanelProps) {
         </div>
         <div>
           <dt>Exportations</dt>
-          <dd>{num(s.exports, 0)} Md€</dd>
+          <dd>{num(s.exports / s.priceLevel, 0)} Md€</dd>
         </div>
         <div>
           <dt>Importations (hors énergie)</dt>
-          <dd>{num(s.imports, 0)} Md€</dd>
+          <dd>{num(s.imports / s.priceLevel, 0)} Md€</dd>
         </div>
         <div>
           <dt>Solde avec le reste du monde</dt>
-          <dd className={s.currentAccount < 0 ? 'bad' : 'good'}>{signed(s.currentAccount, 0)} Md€</dd>
+          <dd className={s.currentAccount < 0 ? 'bad' : 'good'}>
+            {signed(s.currentAccount / s.priceLevel, 0)} Md€ ({signed((s.currentAccount / s.gdp) * 100, 1)} % du PIB)
+          </dd>
         </div>
       </dl>
       <p className="note">

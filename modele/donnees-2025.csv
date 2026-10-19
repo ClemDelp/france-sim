@@ -1,0 +1,70 @@
+﻿id;valeur;unite;bloc;nom;source
+gdp;2990;Md€;Économie;PIB de 2025;INSEE, comptes nationaux (prévision 2025)
+consumption;1531;Md€;Économie;Consommation des ménages;INSEE, comptes nationaux
+housing;160;Md€;Économie;Investissement des ménages en logement;INSEE, comptes nationaux
+investment;473;Md€;Économie;Investissement des entreprises;INSEE, comptes nationaux (FBCF des SNF et EI)
+exports;1009;Md€;Commerce;Exportations;INSEE, comptes nationaux
+importsNonEnergy;978;Md€;Commerce;Importations hors énergie;INSEE, comptes nationaux ; douanes
+energyImports;46;Md€;Énergie;Facture de pétrole et de gaz importés;SDES, bilan énergétique (facture énergétique hors électricité)
+vatRevenue;209;Md€;Impôts;Recettes de TVA;PLF 2025, voies et moyens
+grossWages;1180;Md€;Revenus;Salaires bruts versés;INSEE, comptes nationaux (D11)
+employerContribRate;0,24;taux;Revenus;Taux moyen des cotisations patronales (après allègements);INSEE ; Urssaf
+mixedIncome;330;Md€;Revenus;Revenus des indépendants (revenu mixte);INSEE, comptes nationaux
+corporateTaxRevenue;70;Md€;Impôts;Recettes de l’impôt sur les sociétés;PLF 2025
+corporateTaxBase;690;Md€;Impôts;Bénéfice imposable des sociétés (base de l’IS);DGFiP, ordre de grandeur
+firmDebt;2100;Md€;Entreprises;Dette des entreprises;Banque de France
+firmLoanSpread;0,012;taux;Banques;Écart entre le taux des crédits aux entreprises et le taux BCE;Banque de France, taux des crédits nouveaux
+dividendPayout;0,42;part;Entreprises;Part des profits nets distribuée en dividendes;INSEE, comptes des SNF
+dividendsAbroad;0,25;part;Entreprises;Part des dividendes versée à des actionnaires étrangers;Banque de France, balance des paiements
+foreignIncome;160;Md€;Commerce;Revenus reçus de l’étranger (filiales, placements);Banque de France, balance des paiements
+bankCapital;420;Md€;Banques;Fonds propres des banques françaises;ACPR
+householdDebt;1400;Md€;Banques;Dette des ménages (surtout immobilière);Banque de France
+deposits;2000;Md€;Banques;Dépôts et livrets des ménages;Banque de France
+pensions;418;Md€;Sécurité sociale;Pensions de retraite versées;DREES ; COR
+unemploymentBenefits;49;Md€;Sécurité sociale;Allocations chômage;Unédic
+familyBenefits;60;Md€;Sécurité sociale;Prestations familiales;CNAF ; DREES
+minima;65;Md€;Sécurité sociale;Minima sociaux et aides au logement;DREES
+otherTransfers;100;Md€;Sécurité sociale;Autres aides (prime d’activité, bourses, etc.);DREES ; PLF
+employeeContribRate;0,137;taux;Revenus;Taux moyen des cotisations salariales;Urssaf
+incomeTaxRevenue;104;Md€;Impôts;Recettes de l’impôt sur le revenu;PLF 2025
+taxableCapitalIncome;180;Md€;Impôts;Revenus du capital imposables à l’impôt sur le revenu;DGFiP, ordre de grandeur
+csgRevenue;166;Md€;Impôts;Recettes de CSG;LFSS 2025
+csgPensionShare;0,8;part;Impôts;Part des pensions soumise à la CSG;LFSS (taux réduits et exonérations)
+otherHouseholdTaxes;40;Md€;Impôts;Autres impôts des ménages (taxe foncière, etc.);DGFiP
+ifiRevenue;2,7;Md€;Impôts;Recettes de l’impôt sur la fortune immobilière;PLF 2025
+inheritanceFlows;300;Md€;Patrimoine;Patrimoine transmis chaque année (héritages et donations);Conseil d’analyse économique, 2021
+householdFinancialWealth;6300;Md€;Patrimoine;Patrimoine financier des ménages;Banque de France, comptes financiers
+nonTaxRevenue;115;Md€;État;Recettes non fiscales et autres prélèvements;INSEE, comptes des APU
+euContribution;25;Md€;État;Contribution au budget de l’Union européenne;PLF 2025, PSR-UE
+debt;3460;Md€;Dette;Dette publique (Maastricht);INSEE, fin 2025
+holderMonde;0,56;part;Dette;Part de la dette détenue par des étrangers;AFT ; Banque de France
+holderBce;0,2;part;Dette;Part détenue par la Banque de France (pour l’Eurosystème);Banque de France
+holderAssureurs;0,135;part;Dette;Part détenue par les assureurs (assurance-vie);Banque de France
+holderBanques;0,105;part;Dette;Part détenue par les banques françaises;Banque de France
+effectiveRate;0,019;taux;Dette;Taux moyen payé sur l’ensemble de la dette;AFT
+termPremium;0,6;points;Dette;Écart normal entre le taux à 10 ans et le taux de la BCE;AFT, moyenne historique
+deficitRatio;0,051;part du PIB;Dette;Déficit public de 2025;INSEE ; PLF 2026
+population;69,1;millions;Population;Population;INSEE, bilan démographique
+workingAge;37,5;millions;Population;Personnes en âge de travailler (20 ans à l’âge de la retraite);INSEE
+participation;0,83;part;Population;Taux d’activité des personnes en âge de travailler;INSEE, enquête Emploi
+unemployment;0,077;part;Population;Taux de chômage de 2025;INSEE, enquête Emploi
+retirees;17;millions;Population;Retraités;DREES
+retirementEntrants;0,84;millions/an;Population;Nouveaux retraités par an (taille d’une génération);DREES ; COR
+youthEntrants;0,8;millions/an;Population;Jeunes qui arrivent à l’âge de travailler chaque année;INSEE, pyramide des âges
+births;0,64;millions/an;Population;Naissances par an;INSEE, bilan démographique 2025
+retirementAgeEffective;62,75;ans;Population;Âge légal de départ en 2025 (réforme de 2023 en cours);Loi de 2023 ; suspension 2025
+lifeExpectancy;83,2;ans;Santé;Espérance de vie à la naissance;INSEE
+lifeGap;13;ans;Santé;Écart d’espérance de vie entre les 5 % les plus riches et les 5 % les plus pauvres (hommes);INSEE, 2018
+avgPension;24,6;k€/an;Sécurité sociale;Pension moyenne par retraité;DREES
+poverty;0,154;part;Inégalités;Taux de pauvreté (60 % du niveau de vie médian);INSEE, 2023
+incomeRatioTopBottom;4,6;rapport;Inégalités;Rapport des niveaux de vie entre les 10 % les plus aisés et les 20 % les plus modestes;INSEE, ordre de grandeur
+oil;70;$/baril;Énergie;Prix du pétrole de 2025;EIA
+fossilShare;0,6;part;Énergie;Part du pétrole et du gaz dans l’énergie finale;SDES, bilan énergétique
+inflationAnchor;0,02;taux;Prix;Cible d’inflation de la BCE;BCE
+productivityGrowth;0,008;taux;Productivité;Gains de productivité tendanciels par an;France Stratégie ; Banque de France
+naturalUnemployment;0,07;part;Emploi;Chômage d’équilibre (sous lequel les salaires accélèrent);OFCE ; Commission européenne (NAWRU)
+smic;1823;€/mois;Revenus;SMIC brut mensuel;Décret 2025
+worldGrowth;0,022;taux;Monde;Croissance du commerce mondial (en volume) à partir de 2026;FMI, hypothèse
+worldInflation;0,02;taux;Monde;Inflation chez nos partenaires;BCE, hypothèse
+oilLongRun;78;$/baril;Monde;Prix du pétrole après la crise d’Ormuz (2029 et après);Hypothèse
+ecbLongRun;0,0225;taux;Monde;Taux de la BCE à long terme;Hypothèse

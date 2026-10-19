@@ -1,0 +1,155 @@
+﻿de;vers;sens;parametres;explication
+vat;inflation;+;vatPassThrough;Une hausse de TVA est en grande partie répercutée dans les prix.
+vat;taxes;+;vatRevenue;Plus de TVA collectée sur chaque achat.
+vat;lowIncome;-;vatPassThrough;Les modestes dépensent tout leur revenu : la TVA pèse plus lourd sur eux.
+incomeTaxTop;taxes;+;topRate.g5 topRate.g4;Les plus hauts revenus paient davantage.
+incomeTaxTop;gini;-;topRate.g5;Les revenus du haut baissent : les écarts se resserrent.
+csg;taxes;+;csgRevenue csgPensionShare;La CSG touche salaires, pensions et revenus d’indépendants.
+csg;disposableIncome;-;csgRevenue;Chacun garde un peu moins de son revenu.
+corporateTax;taxes;+;corporateTaxBase;Plus d’impôt sur les bénéfices.
+corporateTax;privateInvestment;-;investmentCorporateTax;Moins de bénéfice après impôt : les entreprises investissent moins.
+corporateTax;capitalFlight;+;flightCorporate corporateThreshold;Au-delà de 33 %, des entreprises déplacent leurs bénéfices.
+wealthTax;taxes;+;wealthTaxBase wealthTaxAvoidance;Rapporte, mais moins que « taux × patrimoine » : l’assiette fond.
+wealthTax;capitalFlight;+;flightWealthTax wealthTaxThreshold;Une partie des fortunes part ou se cache.
+wealthTax;gini;-;wealth.g5;Le revenu des plus riches baisse.
+inheritanceTax;taxes;+;inheritanceFlows inheritanceErosion inheritanceErosionThreshold;Rapporte sur les 300 Md€ transmis chaque année, moins l’optimisation.
+inheritanceTax;capitalFlight;+;flightInheritance inheritanceThreshold;Au-delà de 30 % en moyenne, des familles s’expatrient.
+inheritanceTax;savings;-;inheritanceTax.g5 inheritanceTax.g4;Le patrimoine transmis aux héritiers aisés diminue.
+productionTaxes;taxes;+;;Impôts payés même sans bénéfice.
+productionTaxes;profits;-;;Ils réduisent directement la marge des entreprises.
+health;healthStock;+;healthStockSpeed;Plus de soins améliorent l’état de santé, lentement.
+health;publicDemand;+;;Des soignants payés et des achats publics en plus.
+prevention;lifeExpectancy;+;preventionLifeGain preventionStockSpeed;La prévention évite des maladies : effet lent mais durable.
+prevention;publicDemand;+;;
+education;productivity;+;educationProductivity educationStockSpeed;Mieux formés, les actifs produisent plus, au bout d’une génération.
+education;publicDemand;+;;
+defence;publicDemand;+;;
+otherServices;publicDemand;+;;
+investment;productivity;+;investmentProductivity;Routes, réseaux et recherche rendent l’économie plus efficace.
+investment;publicDemand;+;;
+firmAid;profits;+;;Les aides augmentent la marge des entreprises.
+firmAid;spending;+;;
+retirementAge;laborForce;+;seniorParticipation retirementPhaseIn;Plus de seniors restent actifs… mais moins de la moitié travaillent vraiment.
+retirementAge;retirees;-;retirementCohortGrowth;Moins de nouveaux retraités chaque année.
+pensionIndexation;pensions;+;;Les pensions suivent plus ou moins l’inflation.
+unemploymentReplacement;socialBenefits;+;;Chaque chômeur touche plus.
+minima;socialBenefits;+;;
+minima;lowIncome;+;minima.g1;Les minima vont surtout aux 20 % les plus modestes.
+foodSecurity;disposableIncome;±;;Chacun reçoit la même somme, financée par une cotisation proportionnelle au revenu : les modestes gagnent, les aisés paient.
+foodSecurity;lowIncome;+;;Un revenu garanti pour se nourrir : les plus modestes reçoivent plus qu’ils ne cotisent.
+smicBoost;wages;+;smicWageSpillover;La hausse du SMIC se diffuse un peu aux salaires voisins.
+smicBoost;unemployment;+;smicJobLoss;Un travail peu qualifié plus cher : un peu moins d’embauches.
+smicBoost;gini;-;smicGain.g1 smicGain.g2;Les salaires du bas progressent plus vite que ceux du haut.
+electrification;fossilShare;-;;On remplace pétrole et gaz par l’électricité.
+electrification;privateInvestment;+;electrificationInvestment;Il faut acheter bornes, pompes à chaleur, véhicules, réseaux.
+nuclearShare;electricityPrice;-;nuclearElectricityPrice;Le parc nucléaire existant produit une électricité bon marché.
+tariffs;imports;-;tariffImportCut;Les produits étrangers deviennent plus chers.
+tariffs;inflation;+;tariffInflation tariffPriceShare;Les consommateurs paient une grande partie des droits de douane.
+tariffs;exports;-;tariffRetaliation;Les autres pays répliquent en taxant nos produits.
+tariffChinaEV;fossilShare;+;evTariffSlowdown;Des voitures électriques plus chères retardent l’électrification.
+tariffChinaEV;exports;-;evRetaliation;La Chine riposte (cognac, porc, avions…).
+netMigration;workingAge;+;migrantWorkingShare;La plupart des immigrés arrivent en âge de travailler.
+netMigration;population;+;migrantYoungShare;
+monetization;rate;±;monetizationCredibility monetizationFear;Un acheteur garanti rassure… jusqu’à ce que l’excès fasse craindre l’inflation.
+monetization;inflation;+;monetizationInflation;Créer de la monnaie pour financer l’État pousse les prix.
+savingsToFirms;privateInvestment;+;savingsToFirmsEffect;Plus d’épargne disponible pour les entreprises.
+cancelDebt;debt;-;;La dette baisse d’un coup.
+cancelDebt;riskPremium;+;defaultPanic defaultStigma foreignDefaultPanic foreignDefaultStigma cancelBcePanic;Un défaut fait fuir les prêteurs, pour des années.
+cancelDebt;savings;-;;Si on efface la dette des assureurs, ce sont les contrats d’assurance-vie qui perdent.
+cancelDebt;bankCapital;-;;Si on efface la dette des banques, leurs fonds propres fondent.
+oil;energyPrice;+;;Le pétrole et le gaz renchérissent toute l’énergie.
+oil;energyImports;+;oilElasticity;La facture payée aux pays producteurs gonfle.
+oil;electricityPrice;+;oilElectricityPrice;Le gaz fixe souvent le prix de l’électricité en Europe.
+ecbRate;rate;+;termPremium;Tous les taux partent de celui de la BCE.
+ecbRate;loanRate;+;firmLoanSpread;
+worldGrowth;exports;+;exportShareLoss;Quand nos clients vont bien, ils achètent plus… mais la France perd des parts de marché.
+crisis;riskPremium;+;panicMemory;Les marchés paniquent.
+crisis;consumption;-;;Confinement, peur, chômage : on achète moins.
+crisis;privateInvestment;-;demandShockInvestment;Les entreprises gèlent leurs projets.
+workingAge;laborForce;+;participationTrend participationMax;
+workingAge;population;+;;
+retirees;population;+;;
+retirees;pensions;+;avgPension pensionRealGain;Plus de retraités, plus de pensions à verser.
+lifeExpectancy;retirees;+;retirementExtraYears;On vit plus longtemps à la retraite.
+laborForce;gdp;+;naturalUnemployment;Plus d’actifs, plus de production possible.
+laborForce;unemployment;+;;Si l’activité ne suit pas, les nouveaux actifs grossissent le chômage.
+population;publicDemand;+;;Plus d’habitants, plus d’écoles et d’hôpitaux.
+healthStock;lifeExpectancy;+;healthLifeGain;
+fossilShare;energyImports;+;;
+fossilShare;electricityPrice;-;electrificationElectricityPrice;Moins de fossiles, plus d’électricité à produire et de réseaux à payer.
+electricityPrice;energyPrice;+;;
+electricityPrice;exports;-;electricityExportLoss;L’industrie perd en compétitivité.
+energyPrice;inflation;+;energyInflationPass;L’énergie entre dans le prix de tout.
+energyPrice;lowIncome;-;energyGroupPrice energyExposure.g1;Les modestes consacrent une plus grande part de leur budget à l’énergie.
+productivity;wages;+;;Les salaires suivent la productivité.
+productivity;gdp;+;productivityGrowth;
+productivity;unemployment;+;;À production égale, il faut moins de travail.
+wages;inflation;+;priceWagePass;Les entreprises répercutent la hausse du coût du travail.
+wages;disposableIncome;+;employeeContribRate;
+inflation;wages;+;wageInertia;Les salaires rattrapent les prix, avec retard.
+inflation;rate;+;inflationRatePass inflationRateThreshold;Les prêteurs veulent être protégés contre l’inflation.
+inflation;exports;-;priceCompetitiveness;Nos produits deviennent plus chers que ceux des concurrents.
+inflation;imports;+;importPriceElasticity;Les produits étrangers deviennent relativement moins chers.
+inflation;pensions;+;;Les pensions sont indexées sur les prix.
+unemployment;wages;-;wageUnemployment;Quand le chômage est élevé, les salariés négocient moins bien.
+riskPremium;rate;+;premiumBase;
+riskPremium;loanRate;+;firmPremiumPass;Les entreprises françaises paient aussi la défiance envers l’État.
+riskPremium;privateInvestment;-;stigmaInvestment;Tout actif français paraît plus risqué.
+riskPremium;inflation;+;panicInflation;
+rate;effectiveRate;+;debtRollover;La dette se renouvelle peu à peu au nouveau taux.
+rate;housing;-;housingRateSensitivity;Crédit immobilier plus cher, moins de logements construits.
+effectiveRate;interest;+;;
+loanRate;privateInvestment;-;investmentRateSensitivity;
+bankCapital;creditCrunch;-;bankCapitalMin creditCrunchSensitivity;Des banques fragiles prêtent moins.
+creditCrunch;privateInvestment;-;;
+creditCrunch;housing;-;;
+capitalFlight;privateInvestment;-;flightMax;
+capitalFlight;productivity;-;flightProductivity;
+disposableIncome;consumption;+;consumptionSmoothing mpc.g1 mpc.g5;Un euro donné aux modestes est presque tout dépensé ; aux riches, surtout épargné.
+disposableIncome;savings;+;;Ce qui n’est pas dépensé est épargné.
+disposableIncome;lowIncome;+;wages.g1 pensions.g1;Quand le revenu de tous augmente, celui des modestes aussi, en général.
+disposableIncome;gini;±;sigma.g5;Dépend de qui gagne et qui perd.
+savings;consumption;+;wealthEffect;Plus riche, on dépense un peu plus.
+consumption;gdp;+;;
+consumption;taxes;+;vatRevenue;La TVA est prélevée sur ce qu’on achète.
+consumption;imports;+;importsNonEnergy;Une partie de ce qu’on achète vient de l’étranger.
+privateInvestment;gdp;+;;
+housing;gdp;+;;
+publicDemand;gdp;+;;
+publicDemand;spending;+;;
+exports;gdp;+;;
+exports;currentAccount;+;;
+imports;gdp;-;;Acheter à l’étranger ne crée pas d’activité en France.
+imports;currentAccount;-;;
+energyImports;gdp;-;;L’argent part chez les pays producteurs.
+energyImports;currentAccount;-;;
+gdp;privateInvestment;+;accelerator acceleratorTrend;Les entreprises investissent quand les carnets se remplissent.
+gdp;imports;+;overheatingImports overheatingThreshold;Une économie qui tourne à plein importe plus.
+gdp;energyImports;+;energyGdpElasticity;
+gdp;inflation;+;gapInflation;Une économie en surchauffe fait monter les prix.
+gdp;unemployment;-;maxEmployment;Plus d’activité, plus d’emplois.
+gdp;profits;+;;
+gdp;taxes;+;;Presque tous les impôts suivent l’activité.
+profits;taxes;+;corporateTaxRevenue;
+profits;disposableIncome;+;dividendPayout dividendsAbroad dividends.g5;Une partie des profits revient aux ménages en dividendes, surtout aux plus aisés.
+unemployment;socialBenefits;+;unemploymentBenefits;
+unemployment;disposableIncome;-;;
+taxes;deficit;-;;
+pensions;spending;+;;
+pensions;disposableIncome;+;pensions.g4;
+socialBenefits;spending;+;;
+socialBenefits;disposableIncome;+;minima.g1 family.g1;
+interest;spending;+;;
+interest;savings;+;holderAssureurs;Une partie des intérêts revient aux épargnants via l’assurance-vie.
+spending;deficit;+;;
+deficit;debt;+;;Chaque déficit s’ajoute à la dette.
+deficit;riskPremium;+;premiumPerDeficitPoint deficitThreshold;Les prêteurs regardent la trajectoire.
+debt;riskPremium;+;premiumPerDebtPoint debtThreshold;Plus de dette, plus de doute.
+debt;interest;+;;Plus de dette, plus d’intérêts à payer.
+lowIncome;poverty;-;sigma.g1;Le seuil de pauvreté est 60 % du revenu médian : ce qui compte, c’est le revenu des modestes par rapport au milieu, pas la moyenne.
+gini;poverty;+;sigma.g1 sigma.g5;À revenu moyen égal, des écarts plus grands laissent plus de gens sous le seuil.
+smicBoost;lowIncome;+;smicGain.g1;Les salaires du bas progressent.
+unemployment;lowIncome;-;unemployment.g1;Le chômage frappe d’abord les plus modestes.
+socialBenefits;lowIncome;+;family.g1 minima.g1;
+poverty;lifeExpectancy;-;povertyLifeLoss;La pauvreté abîme la santé.
+gini;lifeGap;+;lifeGapElasticity incomeRatioTopBottom;Plus les revenus s’écartent, plus les espérances de vie s’écartent.

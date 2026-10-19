@@ -1,0 +1,76 @@
+﻿id;nom;bloc;colonne;explication
+vat;TVA;Leviers;0;Taux normal de TVA, payé sur presque tout ce qu’on achète.
+incomeTaxTop;Impôt sur le revenu des plus aisés;Leviers;0;Taux supplémentaire sur les plus hauts revenus.
+csg;CSG;Leviers;0;Contribution sociale généralisée, prélevée sur les salaires, pensions et revenus du capital.
+corporateTax;Impôt sur les sociétés;Leviers;0;Taux d’impôt sur les bénéfices des entreprises.
+wealthTax;Impôt sur la fortune;Leviers;0;Taux annuel sur le patrimoine des plus riches.
+inheritanceTax;Droits de succession;Leviers;0;Taux moyen prélevé sur les héritages et donations.
+productionTaxes;Impôts de production;Leviers;0;Impôts payés par les entreprises quel que soit leur bénéfice.
+health;Dépenses de santé;Leviers;0;Hôpitaux, médecins, médicaments remboursés.
+prevention;Prévention;Leviers;0;Dépistage, vaccination, santé au travail, alimentation.
+education;Éducation;Leviers;0;Écoles, collèges, lycées, universités.
+defence;Défense;Leviers;0;Armées et équipements militaires.
+investment;Investissement public;Leviers;0;Routes, réseaux, bâtiments publics, recherche.
+otherServices;Autres services publics;Leviers;0;Justice, police, collectivités, culture…
+firmAid;Aides aux entreprises;Leviers;0;Subventions et allègements accordés aux entreprises.
+retirementAge;Âge de départ à la retraite;Leviers;0;Âge légal visé ; il bouge de 3 mois par an au plus.
+pensionIndexation;Indexation des retraites;Leviers;0;Part de l’inflation compensée sur les pensions.
+unemploymentReplacement;Indemnisation du chômage;Leviers;0;Part du salaire versée aux chômeurs.
+minima;Minima sociaux;Leviers;0;Milliards en plus pour le RSA, le minimum vieillesse et les aides au logement.
+foodSecurity;Sécurité sociale de l’alimentation;Leviers;0;Montant mensuel versé à chaque personne pour se nourrir, financé par une cotisation.
+smicBoost;Hausse du SMIC;Leviers;0;Hausse du salaire minimum au-delà de l’inflation.
+electrification;Rythme d’électrification;Leviers;0;Vitesse à laquelle on remplace pétrole et gaz par l’électricité.
+nuclearShare;Part du nucléaire;Leviers;0;Part du nucléaire dans la production d’électricité.
+tariffs;Droits de douane;Leviers;0;Taxe sur toutes les importations.
+tariffChinaEV;Droits sur les voitures chinoises;Leviers;0;Taxe sur les voitures électriques importées de Chine.
+netMigration;Immigration nette;Leviers;0;Arrivées moins départs, en milliers de personnes par an.
+monetization;Planche à billets;Leviers;0;Part du déficit financée directement par la banque centrale.
+savingsToFirms;Épargne vers les entreprises;Leviers;0;Orienter le Livret A et l’assurance-vie vers l’investissement des entreprises.
+cancelDebt;Annulation de dette;Leviers;0;Effacer d’un coup une partie de la dette, selon qui la détient.
+oil;Prix du pétrole;Monde;1;Fixé par le marché mondial : on le subit.
+ecbRate;Taux de la BCE;Monde;1;Fixé à Francfort pour toute la zone euro.
+worldGrowth;Croissance mondiale;Monde;1;La demande de nos clients étrangers.
+crisis;Crises;Monde;1;Pandémie, crise financière, récession : les chocs qu’on déclenche dans le jeu.
+population;Population;Population;1;Jeunes, actifs et retraités.
+workingAge;Personnes en âge de travailler;Population;1;De 20 ans à l’âge de la retraite.
+retirees;Retraités;Population;1;Nombre de personnes qui touchent une pension.
+laborForce;Actifs;Population;2;Personnes qui travaillent ou cherchent un emploi.
+healthStock;État de santé;Santé;1;Effet cumulé des dépenses de santé, qui met des années à se construire.
+fossilShare;Part du pétrole et du gaz;Énergie;1;Part des énergies fossiles importées dans ce qu’on consomme.
+electricityPrice;Prix de l’électricité;Énergie;2;Dépend du nucléaire, des réseaux à construire et du marché européen.
+energyPrice;Prix de l’énergie;Énergie;2;Moyenne du pétrole, du gaz et de l’électricité.
+productivity;Productivité;Production;2;Ce que produit une heure de travail : éducation, investissement, innovation.
+wages;Salaires;Prix et salaires;2;Salaire moyen.
+inflation;Inflation;Prix et salaires;2;Hausse des prix sur un an.
+riskPremium;Défiance des prêteurs;Taux et confiance;2;Prime de risque : ce que les prêteurs exigent en plus quand ils doutent.
+rate;Taux à 10 ans;Taux et confiance;2;Prix auquel l’État emprunte aujourd’hui.
+effectiveRate;Taux moyen payé sur la dette;Taux et confiance;3;Il rejoint le taux du marché au fil des renouvellements.
+loanRate;Taux du crédit aux entreprises;Taux et confiance;3;Ce que paient les entreprises pour emprunter.
+bankCapital;Fonds propres des banques;Taux et confiance;2;Le coussin qui permet aux banques de prêter.
+creditCrunch;Pénurie de crédit;Taux et confiance;3;Quand les banques sont fragiles, elles prêtent moins.
+capitalFlight;Fuite des capitaux;Taux et confiance;2;Fortunes et entreprises qui partent ou se cachent.
+disposableIncome;Revenu disponible des ménages;Ménages;4;Ce qui reste après impôts et cotisations, aides comprises.
+lowIncome;Revenu des 20 % les plus modestes;Ménages;6;Niveau de vie moyen des 20 % les plus modestes, aides comprises, en euros de 2025.
+savings;Patrimoine financier des ménages;Ménages;5;Livrets, assurance-vie, actions.
+consumption;Consommation;Demande;3;Ce que les ménages achètent.
+privateInvestment;Investissement des entreprises;Demande;3;Machines, bâtiments, logiciels.
+housing;Construction de logements;Demande;3;Achats de logements neufs et travaux.
+publicDemand;Achats et services publics;Demande;3;Santé, éducation, défense, investissement public.
+exports;Exportations;Commerce;3;Ce qu’on vend à l’étranger.
+imports;Importations;Commerce;4;Ce qu’on achète à l’étranger (hors énergie).
+energyImports;Facture énergétique;Commerce;4;Pétrole et gaz achetés à l’étranger.
+gdp;PIB (croissance);Production;4;Richesse produite en un an. La croissance est sa progression hors hausse des prix.
+unemployment;Chômage;Production;5;Part des actifs sans emploi.
+profits;Profits des entreprises;Production;5;Ce qui reste aux entreprises après salaires et impôts de production.
+currentAccount;Solde avec l’étranger;Commerce;5;Ce que le pays gagne ou perd dans ses échanges avec le reste du monde.
+taxes;Recettes publiques;Finances publiques;5;Impôts, cotisations, CSG, TVA…
+pensions;Retraites versées;Finances publiques;5;Le premier poste de dépense sociale.
+socialBenefits;Prestations sociales;Finances publiques;5;Chômage, famille, minima sociaux, aides.
+interest;Charge de la dette;Finances publiques;5;Intérêts payés chaque année aux prêteurs.
+spending;Dépenses publiques;Finances publiques;6;Toutes les dépenses de l’État, de la Sécu et des collectivités.
+deficit;Déficit;Finances publiques;6;Dépenses moins recettes : ce qu’il faut emprunter.
+debt;Dette publique;Finances publiques;7;Somme des déficits passés.
+poverty;Pauvreté;Résultats;7;Part des personnes sous 60 % du niveau de vie médian.
+gini;Inégalités;Résultats;7;Indice de Gini des niveaux de vie.
+lifeExpectancy;Espérance de vie;Résultats;7;À la naissance.
+lifeGap;Écart d’espérance de vie riches/pauvres;Résultats;7;Entre les 5 % les plus riches et les 5 % les plus pauvres.

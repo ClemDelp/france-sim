@@ -1,0 +1,121 @@
+﻿id;valeur;unite;bloc;nom;explication;fiabilite;source
+panicMemory;0,6;part;Confiance;Mémoire de la panique des marchés;Part de la panique d’une année qui reste l’année suivante.;hypothèse;Durée typique des crises de dette (2011-2012)
+shunMemory;0,85;part;Confiance;Mémoire de la fuite des prêteurs étrangers;Part de la défiance des étrangers qui reste l’année suivante.;hypothèse;
+stigmaMemory;0,8;part;Confiance;Mémoire d’un défaut;Part de la « tache » d’un défaut qui reste l’année suivante : les prêteurs se souviennent 3 à 5 ans.;estimé;Cruces et Trebesch (2013)
+cancelBcePanic;0,6;points;Confiance;Panique après une annulation de la dette BCE;Prime de risque ajoutée parce que la France rompt les traités européens.;hypothèse;
+defaultPanic;1;points;Confiance;Panique après un défaut sur des prêteurs français;Prime de risque ajoutée l’année du défaut.;hypothèse;
+defaultStigma;2;points;Confiance;Tache d’un défaut sur des prêteurs français;Prime de risque durable après le défaut.;estimé;Cruces et Trebesch (2013)
+foreignDefaultPanic;1,5;points;Confiance;Panique après un défaut sur les étrangers;Prime de risque ajoutée l’année du défaut.;hypothèse;
+foreignDefaultStigma;2,5;points;Confiance;Tache d’un défaut sur les étrangers;Prime de risque durable après le défaut.;estimé;Cruces et Trebesch (2013)
+foreignDefaultShun;1;indice;Confiance;Fuite des prêteurs étrangers après un défaut;Les étrangers achètent moins de dette française nouvelle.;hypothèse;
+foreignBuyerShare;0,55;part;Dette;Part de la dette nouvelle achetée par les étrangers;Quand tout va bien, environ la moitié des nouveaux titres partent à l’étranger.;mesuré;AFT
+foreignBuyerFlight;0,35;sensibilité;Dette;Recul des acheteurs étrangers quand la confiance baisse;Plus la panique et la tache d’un défaut sont fortes, moins les étrangers prêtent.;hypothèse;
+qtPace;0,08;part/an;Dette;Rythme auquel la BCE revend ou laisse arriver à échéance sa dette;La BCE réduit son bilan d’environ 8 % par an.;mesuré;BCE, resserrement quantitatif
+bankBuyerShare;0,1;part;Dette;Part de la dette nouvelle achetée par les banques françaises;;mesuré;Banque de France
+premiumBase;0,2;points;Taux;Prime de risque de base de la France;Écart de taux avec l’Allemagne quand tout va bien.;mesuré;AFT, historique
+premiumPerDebtPoint;0,006;points;Taux;Prime de risque par point de dette au-dessus du seuil;Chaque point de dette en plus coûte 0,006 point de taux.;estimé;Laubach (2009) ; Commission européenne
+debtThreshold;60;% du PIB;Taux;Seuil de dette au-delà duquel les prêteurs s’inquiètent;;hypothèse;Critère de Maastricht
+premiumPerDeficitPoint;0,06;points;Taux;Prime de risque par point de déficit au-dessus du seuil;;estimé;Laubach (2009)
+deficitThreshold;3;% du PIB;Taux;Seuil de déficit au-delà duquel les prêteurs s’inquiètent;;hypothèse;Critère de Maastricht
+monetizationCredibility;0,6;points;Taux;Baisse du taux quand la banque centrale achète la dette;Un acheteur garanti rassure (effet des rachats de la BCE).;estimé;BCE, évaluations du PSPP
+monetizationFear;1,2;points;Taux;Hausse du taux quand la planche à billets devient massive;Au-delà d’un certain point, les prêteurs craignent l’inflation et la perte de valeur.;hypothèse;
+inflationRatePass;0,4;part;Taux;Part de l’inflation au-dessus de 3 % qui passe dans les taux;;estimé;Effet Fisher partiel
+inflationRateThreshold;0,03;taux;Taux;Inflation au-delà de laquelle les taux montent;;hypothèse;
+debtRollover;8;ans;Dette;Durée moyenne de la dette;Le taux moyen payé rejoint le taux du marché en 8 ans environ, au fil des renouvellements.;mesuré;AFT (durée de vie moyenne 8,5 ans)
+firmPremiumPass;0,5;part;Banques;Part de la prime de risque de l’État répercutée sur les crédits aux entreprises;;estimé;Banque de France
+neutralLoanRate;0,034;taux;Investissement;Taux du crédit aux entreprises de 2025;;mesuré;Banque de France
+bankCapitalMin;0,09;ratio;Banques;Ratio de fonds propres sous lequel les banques prêtent moins;;estimé;Bâle III
+creditCrunchSensitivity;6;sensibilité;Banques;Vitesse à laquelle le crédit se raréfie quand les banques sont fragiles;;hypothèse;
+creditCrunchMax;0,5;part;Banques;Restriction maximale du crédit;;hypothèse;
+mortgageSpread;0,006;taux;Banques;Écart entre le taux immobilier et le taux à 10 ans;;mesuré;Banque de France
+depositRateShare;0,5;part;Banques;Part du taux BCE versée aux épargnants sur leurs dépôts;;estimé;Livret A, comptes à terme
+bankPayout;0,5;part;Banques;Part des profits bancaires distribuée en temps normal;;mesuré;ACPR
+bankCapitalAdjust;0,3;part/an;Banques;Vitesse à laquelle les banques reconstituent ou distribuent leurs fonds propres;Elles gardent leurs bénéfices quand leur coussin est trop mince, et distribuent le surplus sinon.;hypothèse;ACPR, ratios de solvabilité
+payoutLeverage;0,5;sensibilité;Entreprises;Hausse des dividendes quand les entreprises sont peu endettées;Les entreprises gardent une dette proportionnée à leur activité.;hypothèse;
+lifeTrend;0,1;an/an;Santé;Gain tendanciel d’espérance de vie par an;;mesuré;INSEE, tendance 2000-2024
+healthStockSpeed;0,2;part/an;Santé;Vitesse à laquelle les dépenses de santé changent l’état de santé;;hypothèse;
+preventionStockSpeed;0,25;part/an;Santé;Vitesse à laquelle la prévention produit ses effets;;hypothèse;
+healthLifeGain;1,5;ans;Santé;Années de vie gagnées si les dépenses de santé augmentent de 100 % (échelle log);;estimé;OCDE, rendements des dépenses de santé
+preventionLifeGain;0,05;an par Md€;Santé;Années de vie gagnées par milliard de prévention en plus;;hypothèse;
+povertyLifeLoss;0,015;an par point;Santé;Espérance de vie perdue par point de pauvreté en plus;;estimé;INSEE (écarts de mortalité selon le revenu)
+lifeGapElasticity;0,35;élasticité;Santé;Sensibilité de l’écart d’espérance de vie riches/pauvres aux écarts de revenu;;hypothèse;
+retirementPhaseIn;0,25;an/an;Population;Rythme de relèvement de l’âge de départ;La réforme de 2023 relève l’âge de 3 mois par génération.;mesuré;Loi de 2023
+retirementCohortGrowth;0,004;part/an;Population;Croissance des générations qui partent en retraite jusqu’à la fin du baby-boom;;mesuré;INSEE, pyramide des âges
+babyBoomYears;15;ans;Population;Années avant la fin des départs en retraite du baby-boom (vers 2040);Les générations nombreuses nées jusqu’en 1974 partent jusque vers 2040.;mesuré;INSEE, pyramide des âges
+retirementCohortDecline;0,006;millions/an;Population;Baisse annuelle des générations qui partent en retraite après le baby-boom;;estimé;INSEE, naissances 1975-2010
+retirementCohortLongRun;0,76;millions/an;Population;Taille d’une génération qui part en retraite à long terme;Naissances des années 1980-2000, moins les décès avant la retraite.;estimé;INSEE
+youthDecline;0,005;millions/an;Population;Baisse annuelle des jeunes qui arrivent à l’âge de travailler;Conséquence de la baisse des naissances.;mesuré;INSEE
+migrantWorkingShare;0,85;part;Population;Part des immigrés nets en âge de travailler;;mesuré;INSEE, flux migratoires
+migrantYoungShare;0,15;part;Population;Part des immigrés nets de moins de 20 ans;;mesuré;INSEE
+workingAgeOutflow;0,12;millions/an;Population;Décès et départs à l’étranger des 20-64 ans;;estimé;INSEE
+youngOutflow;0,01;millions/an;Population;Décès des moins de 20 ans;;estimé;INSEE
+retirementExtraYears;3,5;ans;Population;Années de vie en plus une fois arrivé à l’âge de la retraite;L’espérance de vie à 60 ans dépasse ce que dit l’espérance de vie à la naissance.;estimé;INSEE, tables de mortalité
+seniorParticipation;0,45;part;Emploi;Taux d’activité des 60 ans et plus pas encore à la retraite;Les seniors sont souvent malades, au chômage ou déjà sortis de l’emploi.;mesuré;DARES, emploi des seniors
+participationTrend;0,0015;part/an;Emploi;Hausse tendancielle du taux d’activité;;mesuré;INSEE
+participationMax;0,89;part;Emploi;Taux d’activité maximum des moins de 60 ans;;hypothèse;
+evTariffSlowdown;0,15;sensibilité;Énergie;Ralentissement de l’électrification par les droits de douane sur les voitures chinoises;Des voitures électriques plus chères retardent le passage à l’électrique.;hypothèse;
+nuclearElectricityPrice;0,8;sensibilité;Énergie;Hausse du prix de l’électricité quand la part du nucléaire baisse;;estimé;CRE ; RTE, Futurs énergétiques 2050
+electrificationElectricityPrice;0,35;sensibilité;Énergie;Hausse du prix de l’électricité quand la demande d’électricité monte;Il faut construire des réseaux et des centrales.;estimé;RTE, Futurs énergétiques 2050
+oilElectricityPrice;0,08;sensibilité;Énergie;Effet du prix du pétrole et du gaz sur le prix de l’électricité;;estimé;CRE (marché européen)
+electrificationInvestment;15;Md€ par point;Énergie;Investissement en plus par point de rythme d’électrification;Bornes, pompes à chaleur, réseaux, véhicules.;estimé;I4CE, panorama des financements climat
+electricityExportLoss;0,12;sensibilité;Commerce;Perte d’exportations quand l’électricité renchérit;;hypothèse;
+oilElasticity;0,8;élasticité;Énergie;Sensibilité de la facture pétrolière au prix du baril;On consomme un peu moins quand le pétrole est cher.;estimé;Élasticité-prix de court terme ≈ −0,2
+energyGdpElasticity;0,6;élasticité;Énergie;Sensibilité de la consommation d’énergie à la production;;estimé;SDES
+energyInflationPass;0,06;part;Prix;Part de la hausse du prix de l’énergie qui passe dans l’inflation;;estimé;INSEE (poids de l’énergie dans les prix)
+energyGroupPrice;0,04;sensibilité;Inégalités;Poids de l’énergie dans les prix vus par chaque tranche;Les modestes dépensent une plus grande part de leur budget en énergie.;estimé;INSEE, budget des familles
+educationProductivity;0,006;taux;Productivité;Gain de productivité si l’éducation double;;hypothèse;Hanushek et Woessmann
+investmentProductivity;0,00005;taux par Md€;Productivité;Gain de productivité par milliard d’investissement public en plus;;estimé;FMI (2014), rendement de l’investissement public
+flightProductivity;0,01;sensibilité;Productivité;Perte de productivité quand les capitaux partent;;hypothèse;
+educationStockSpeed;0,1;part/an;Productivité;Vitesse à laquelle l’éducation produit ses effets;Il faut une génération pour former une population.;hypothèse;
+wageInertia;0,6;part;Salaires;Part de l’inflation passée rattrapée par les salaires;Le reste suit la cible de 2 %.;estimé;Banque de France, modèle FR-BDF
+wageUnemployment;0,3;sensibilité;Salaires;Accélération des salaires quand le chômage est sous son niveau d’équilibre;Courbe de Phillips.;estimé;Banque de France
+smicWageSpillover;0,12;part;Salaires;Diffusion d’une hausse du SMIC au salaire moyen;;estimé;DARES, diffusion des hausses du SMIC
+priceWagePass;0,6;part;Prix;Part de la hausse du coût du travail répercutée dans les prix;;estimé;Banque de France
+tariffPriceShare;0,45;part;Prix;Part des importations touchées par un droit de douane général;;hypothèse;
+evTariffPrice;0,004;sensibilité;Prix;Effet des droits de douane sur les voitures chinoises sur les prix;;estimé;
+tariffInflation;0,6;part;Prix;Part des droits de douane payée par les consommateurs;;estimé;Amiti, Redding et Weinstein (2019)
+vatPassThrough;0,7;part;Prix;Part d’une hausse de TVA répercutée dans les prix;;estimé;Benzarti et al. (2020)
+gapInflation;0,25;sensibilité;Prix;Inflation en plus quand l’économie tourne au-dessus de ses capacités;;estimé;Banque de France
+monetizationInflation;0,02;sensibilité;Prix;Inflation en plus quand la banque centrale finance le déficit;;hypothèse;
+panicInflation;0,003;sensibilité;Prix;Inflation en plus quand les marchés paniquent (fuite devant la monnaie);;hypothèse;
+pensionRealGain;0,003;taux/an;Sécurité sociale;Hausse de la pension moyenne due aux carrières plus favorables des nouveaux retraités;;mesuré;COR, effet noria
+assetInflationShare;0,5;part;Patrimoine;Part de l’inflation qui revalorise le patrimoine financier;;hypothèse;
+wealthTaxBase;0,35;part;Fiscalité du capital;Part du patrimoine des 10 % les plus riches taxable par un impôt sur la fortune;Exonérations (biens professionnels, œuvres d’art…).;estimé;Conseil des prélèvements obligatoires
+wealthTaxAvoidance;6;sensibilité;Fiscalité du capital;Fonte de l’assiette quand le taux d’impôt sur la fortune monte;Optimisation, sous-évaluation, départs.;estimé;Zucman ; Jakobsen et al. (2020)
+flightMemory;0,85;part;Fiscalité du capital;Persistance des capitaux partis;;hypothèse;
+flightWealthTax;0,3;sensibilité;Fiscalité du capital;Départ de capitaux par point d’impôt sur la fortune au-dessus de 1 %;;hypothèse;
+wealthTaxThreshold;0,01;taux;Fiscalité du capital;Taux d’impôt sur la fortune au-delà duquel les capitaux partent;;hypothèse;
+flightInheritance;0,03;sensibilité;Fiscalité du capital;Départ de capitaux quand les droits de succession dépassent 30 %;;hypothèse;
+inheritanceThreshold;0,3;taux;Fiscalité du capital;Taux moyen de succession au-delà duquel les capitaux partent;;hypothèse;
+flightCorporate;0,15;sensibilité;Fiscalité du capital;Départ de capitaux quand l’impôt sur les sociétés dépasse 33 %;;hypothèse;
+corporateThreshold;0,33;taux;Fiscalité du capital;Taux d’impôt sur les sociétés au-delà duquel les capitaux partent;;hypothèse;
+flightMax;0,15;part;Fiscalité du capital;Fuite des capitaux maximale;;hypothèse;
+inheritanceErosion;0,5;sensibilité;Fiscalité du capital;Fonte de l’assiette quand les droits de succession montent;Donations anticipées, assurance-vie, départs.;hypothèse;
+inheritanceErosionThreshold;0,1;taux;Fiscalité du capital;Taux moyen de succession au-delà duquel l’assiette fond;;hypothèse;
+smicJobLoss;0,06;sensibilité;Emploi;Emplois perdus quand le SMIC augmente (par 100 % de hausse);Élasticité modeste, débattue.;estimé;Conseil d’analyse économique (2013) ; Cahuc
+maxEmployment;0,985;part;Emploi;Part maximale des actifs en emploi;;hypothèse;
+consumptionSmoothing;0,55;part;Consommation;Part d’une variation de revenu dépensée tout de suite;Les ménages lissent leur consommation.;estimé;Friedman (revenu permanent)
+wealthEffect;0,01;part;Consommation;Part d’un surplus de patrimoine dépensée chaque année;;estimé;Banque de France
+consumptionSplitMpc;0,6;part;Consommation;Poids de la propension à consommer dans le partage initial de la consommation;;hypothèse;
+accelerator;0,6;sensibilité;Investissement;Réaction de l’investissement à la croissance;Les entreprises investissent quand les carnets se remplissent.;estimé;Banque de France
+acceleratorTrend;0,003;taux;Investissement;Croissance « normale » au-delà de la productivité;;hypothèse;
+investmentRateSensitivity;2;sensibilité;Investissement;Recul de l’investissement quand les taux montent;;estimé;Banque de France
+investmentCorporateTax;0,6;sensibilité;Investissement;Recul de l’investissement quand l’impôt sur les sociétés monte;;estimé;OCDE
+savingsToFirmsEffect;0,5;sensibilité;Investissement;Investissement en plus quand l’épargne réglementée est orientée vers les entreprises;;hypothèse;
+investmentMin;0,4;part;Investissement;Investissement minimal (en part de la normale);;hypothèse;
+investmentMax;1,6;part;Investissement;Investissement maximal (en part de la normale);;hypothèse;
+stigmaInvestment;0,04;sensibilité;Investissement;Recul de l’investissement après un défaut;;hypothèse;
+demandShockInvestment;1,5;sensibilité;Investissement;Recul de l’investissement lors d’un choc de demande;;estimé;
+housingRateSensitivity;4;sensibilité;Investissement;Recul de la construction quand les taux montent;;estimé;Banque de France, 2023
+housingMin;0,4;part;Investissement;Construction minimale (en part de la normale);;hypothèse;
+housingMax;1,4;part;Investissement;Construction maximale (en part de la normale);;hypothèse;
+housingDebtShare;0,2;part;Banques;Part de la construction financée à crédit chaque année;;hypothèse;
+mortgageRepayment;0,05;part/an;Banques;Part de la dette immobilière remboursée chaque année;;mesuré;Banque de France
+priceCompetitiveness;1;élasticité;Commerce;Perte d’exportations quand nos prix montent plus vite que ceux des autres;;estimé;Banque de France
+importPriceElasticity;1;élasticité;Commerce;Importations en plus quand nos prix montent plus vite que ceux des autres;Les produits étrangers deviennent relativement moins chers.;estimé;Banque de France
+exportShareLoss;0,012;part/an;Commerce;Perte annuelle de parts de marché à l’exportation;La France perd des parts de marché depuis 2000 (montée de la Chine, de l’Allemagne, de l’Europe de l’Est).;estimé;Douanes ; Banque de France
+tariffRetaliation;0,2;sensibilité;Commerce;Exportations perdues par représailles quand on taxe les importations;;hypothèse;
+evRetaliation;0,01;sensibilité;Commerce;Représailles chinoises aux droits de douane sur les voitures;;hypothèse;
+tariffImportCut;0,54;sensibilité;Commerce;Recul des importations sous l’effet d’un droit de douane;;estimé;
+overheatingImports;2;sensibilité;Commerce;Importations en plus quand la demande dépasse les capacités;;hypothèse;
+overheatingThreshold;1,02;ratio;Commerce;Niveau d’activité au-delà duquel on importe plus;;hypothèse;

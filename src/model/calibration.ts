@@ -1,81 +1,56 @@
-import type { ByGroup, Holder, Policy } from './types'
+import { groupView, view } from './params'
+import { type ByGroup, type Holder, type Policy } from './types'
 
 /**
  * La France de 2025, en ordres de grandeur (Md€ courants, millions de personnes).
- * Sources principales : INSEE (comptes nationaux base 2020), Banque de France, AFT, DREES, COR.
- * Chaque valeur est un point de départ ; le simulateur raisonne ensuite en dynamique.
+ * Les valeurs et leurs sources sont dans modele/donnees-2025.csv : on peut les vérifier et les corriger dans un tableur.
  */
-export const BASE = {
-  year: 2025,
-  gdp: 2990,
-  // Demande
-  consumption: 1531,
-  housing: 160,
-  investment: 473,
-  exports: 1009,
-  importsNonEnergy: 978,
-  energyImports: 46,
-  // Partage de la valeur ajoutée
-  productionTaxesOther: 190,
-  vatRevenue: 209,
-  grossWages: 1180,
-  employerContribRate: 0.24,
-  mixedIncome: 330,
-  // Entreprises
-  corporateTaxRevenue: 70,
-  firmDebt: 2100,
-  firmLoanSpread: 0.012,
-  dividendPayout: 0.42,
-  dividendsAbroad: 0.25,
-  foreignIncome: 160,
-  // Banques
-  bankCapital: 420,
-  householdDebt: 1400,
-  deposits: 2000,
-  // Ménages : transferts (Md€)
-  pensions: 418,
-  unemploymentBenefits: 49,
-  familyBenefits: 60,
-  minima: 65,
-  otherTransfers: 100,
-  employeeContribRate: 0.137,
-  incomeTaxRevenue: 104,
-  csgRevenue: 166,
-  otherHouseholdTaxes: 40,
-  ifiRevenue: 2.7,
-  inheritanceFlows: 300,
-  inheritanceTaxRevenue: 21,
-  householdFinancialWealth: 6300,
-  // État : dépenses de biens et services (Md€ 2025)
-  nonTaxRevenue: 115,
-  euContribution: 25,
-  // Dette
-  debt: 3460,
-  holders: { monde: 0.56, bce: 0.2, assureurs: 0.135, banques: 0.105 } as Record<Holder, number>,
-  effectiveRate: 0.019,
-  ecbRate: 0.02,
-  termPremium: 0.6,
-  // Population
-  population: 69.1,
-  workingAge: 37.5,
-  participation: 0.83,
-  retirees: 17.0,
-  retirementEntrants: 0.84,
-  youthEntrants: 0.8,
-  lifeExpectancy: 83.2,
-  lifeGap: 13,
-  avgPension: 24.6,
-  // Énergie
-  oil: 70,
-  fossilShare: 0.6,
-  electricityPrice: 1,
-  energyWeightCPI: 0.09,
-  // Prix et salaires
-  inflationAnchor: 0.02,
-  productivityGrowth: 0.008,
-  naturalUnemployment: 0.07,
-  smic: 1823,
-}
+const DATA = view([
+  'gdp', 'consumption', 'housing', 'investment', 'exports', 'importsNonEnergy', 'energyImports', 'vatRevenue', 'grossWages', 'employerContribRate',
+  'mixedIncome', 'corporateTaxRevenue', 'corporateTaxBase', 'firmDebt', 'firmLoanSpread', 'dividendPayout', 'dividendsAbroad', 'foreignIncome',
+  'bankCapital', 'householdDebt', 'deposits', 'pensions', 'unemploymentBenefits', 'familyBenefits', 'minima', 'otherTransfers',
+  'employeeContribRate', 'incomeTaxRevenue', 'taxableCapitalIncome', 'csgRevenue', 'csgPensionShare', 'otherHouseholdTaxes', 'ifiRevenue',
+  'inheritanceFlows', 'householdFinancialWealth', 'nonTaxRevenue', 'euContribution', 'debt', 'holderMonde', 'holderBce', 'holderAssureurs',
+  'holderBanques', 'effectiveRate', 'termPremium', 'deficitRatio', 'population', 'workingAge', 'participation', 'unemployment', 'retirees',
+  'retirementEntrants', 'youthEntrants', 'births', 'retirementAgeEffective', 'lifeExpectancy', 'lifeGap', 'avgPension', 'poverty',
+  'incomeRatioTopBottom', 'oil', 'fossilShare', 'inflationAnchor', 'productivityGrowth', 'naturalUnemployment', 'smic', 'worldGrowth',
+  'worldInflation', 'oilLongRun', 'ecbLongRun',
+] as const)
+
+export const BASE_YEAR = 2025
+
+/** Les données de 2025, plus la répartition de la dette entre ses détenteurs. */
+export const BASE = Object.create(DATA, {
+  year: { value: BASE_YEAR, enumerable: true },
+  holders: {
+    get: (): Record<Holder, number> => ({ monde: DATA.holderMonde, bce: DATA.holderBce, assureurs: DATA.holderAssureurs, banques: DATA.holderBanques }),
+    enumerable: true,
+  },
+}) as typeof DATA & { year: number; holders: Readonly<Record<Holder, number>> }
+
+/**
+ * Les comportements : comment chacun réagit (élasticités, délais, seuils).
+ * Valeurs, explications, fiabilité et sources dans modele/comportements.csv.
+ */
+export const P = view([
+  'panicMemory', 'shunMemory', 'stigmaMemory', 'cancelBcePanic', 'defaultPanic', 'defaultStigma', 'foreignDefaultPanic', 'foreignDefaultStigma',
+  'foreignDefaultShun', 'foreignBuyerShare', 'foreignBuyerFlight', 'qtPace', 'bankBuyerShare', 'premiumBase', 'premiumPerDebtPoint', 'debtThreshold',
+  'premiumPerDeficitPoint', 'deficitThreshold', 'monetizationCredibility', 'monetizationFear', 'inflationRatePass', 'inflationRateThreshold',
+  'debtRollover', 'firmPremiumPass', 'neutralLoanRate', 'bankCapitalMin', 'creditCrunchSensitivity', 'creditCrunchMax', 'mortgageSpread',
+  'depositRateShare', 'bankPayout', 'bankCapitalAdjust', 'payoutLeverage', 'lifeTrend', 'healthStockSpeed', 'preventionStockSpeed', 'healthLifeGain', 'preventionLifeGain',
+  'povertyLifeLoss', 'lifeGapElasticity', 'retirementPhaseIn', 'retirementCohortGrowth', 'babyBoomYears', 'retirementCohortDecline', 'retirementCohortLongRun', 'youthDecline', 'migrantWorkingShare', 'migrantYoungShare',
+  'workingAgeOutflow', 'youngOutflow', 'retirementExtraYears', 'seniorParticipation', 'participationTrend', 'participationMax', 'evTariffSlowdown',
+  'nuclearElectricityPrice', 'electrificationElectricityPrice', 'oilElectricityPrice', 'electrificationInvestment', 'electricityExportLoss',
+  'oilElasticity', 'energyGdpElasticity', 'energyInflationPass', 'energyGroupPrice', 'educationProductivity', 'investmentProductivity',
+  'flightProductivity', 'educationStockSpeed', 'wageInertia', 'wageUnemployment', 'smicWageSpillover', 'priceWagePass', 'tariffPriceShare',
+  'evTariffPrice', 'tariffInflation', 'vatPassThrough', 'gapInflation', 'monetizationInflation', 'panicInflation', 'pensionRealGain',
+  'assetInflationShare', 'wealthTaxBase', 'wealthTaxAvoidance', 'flightMemory', 'flightWealthTax', 'wealthTaxThreshold', 'flightInheritance',
+  'inheritanceThreshold', 'flightCorporate', 'corporateThreshold', 'flightMax', 'inheritanceErosion', 'inheritanceErosionThreshold',
+  'smicJobLoss', 'maxEmployment', 'consumptionSmoothing', 'wealthEffect', 'consumptionSplitMpc', 'accelerator',
+  'acceleratorTrend', 'investmentRateSensitivity', 'investmentCorporateTax', 'savingsToFirmsEffect', 'investmentMin', 'investmentMax',
+  'stigmaInvestment', 'demandShockInvestment', 'housingRateSensitivity', 'housingMin', 'housingMax', 'housingDebtShare', 'mortgageRepayment',
+  'priceCompetitiveness', 'importPriceElasticity', 'exportShareLoss', 'tariffRetaliation', 'evRetaliation', 'tariffImportCut', 'overheatingImports', 'overheatingThreshold',
+] as const)
 
 /** La politique de 2025 : le point de départ de toute partie. */
 export const BASE_POLICY: Policy = {
@@ -111,24 +86,12 @@ export const BASE_POLICY: Policy = {
 }
 
 /**
- * Les ménages en cinq tranches de niveau de vie. Parts de chaque revenu reçu ou impôt payé,
- * propension à consommer un euro de plus, dispersion à l'intérieur de la tranche.
+ * Les ménages en cinq tranches de niveau de vie : parts de chaque revenu reçu ou impôt payé,
+ * propension à consommer, dispersion à l'intérieur de la tranche (modele/tranches.csv).
  */
-export const GROUP_PARAMS: Record<string, ByGroup> = {
-  population: { g1: 0.2, g2: 0.2, g3: 0.2, g4: 0.3, g5: 0.1 },
-  wages: { g1: 0.041, g2: 0.108, g3: 0.167, g4: 0.405, g5: 0.279 },
-  mixed: { g1: 0.065, g2: 0.109, g3: 0.14, g4: 0.331, g5: 0.355 },
-  dividends: { g1: 0.03, g2: 0.051, g3: 0.076, g4: 0.261, g5: 0.582 },
-  wealth: { g1: 0.005, g2: 0.02, g3: 0.06, g4: 0.315, g5: 0.6 },
-  pensions: { g1: 0.084, g2: 0.177, g3: 0.208, g4: 0.364, g5: 0.167 },
-  unemployment: { g1: 0.3, g2: 0.24, g3: 0.18, g4: 0.2, g5: 0.08 },
-  family: { g1: 0.276, g2: 0.208, g3: 0.17, g4: 0.241, g5: 0.105 },
-  minima: { g1: 0.68, g2: 0.23, g3: 0.06, g4: 0.03, g5: 0 },
-  incomeTax: { g1: 0, g2: 0.005, g3: 0.037, g4: 0.29, g5: 0.668 },
-  /** Part supplémentaire de chaque euro qui part en consommation. */
-  mpc: { g1: 0.97, g2: 0.9, g3: 0.82, g4: 0.72, g5: 0.45 },
-  /** Dispersion des revenus à l'intérieur de la tranche (écart-type du logarithme). */
-  sigma: { g1: 0.62, g2: 0.1, g3: 0.1, g4: 0.2, g5: 0.6 },
-  /** Espérance de vie : écart à la moyenne (ans). */
-  lifeOffset: { g1: -4.5, g2: -1.5, g3: 0, g4: 1.5, g5: 3.5 },
-}
+const GROUP_KEYS = [
+  'population', 'wages', 'mixed', 'dividends', 'wealth', 'pensions', 'unemployment', 'family', 'minima', 'incomeTax', 'mpc', 'sigma', 'lifeOffset',
+  'smicGain', 'energyExposure', 'inheritanceTax', 'topRate',
+] as const
+
+export const GROUP_PARAMS = Object.fromEntries(GROUP_KEYS.map((k) => [k, groupView(k)])) as Record<(typeof GROUP_KEYS)[number], Readonly<ByGroup>>

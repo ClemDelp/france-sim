@@ -84,6 +84,16 @@ export function yearStory(s: YearState, prev: YearState | undefined, b: YearStat
   if (b && s.debtRatio - b.debtRatio > 0.05) {
     lines.push(`La dette atteint ${pct(s.debtRatio, 0)} du PIB, ${num((s.debtRatio - b.debtRatio) * 100, 0)} points de plus que si l’on n’avait rien changé.`)
   }
+  // Chaque palier de 25 points franchi au-delà de 125 % du PIB.
+  const step = (r: number) => Math.floor((r - 1.25) / 0.25)
+  if (s.debtRatio > 1.25 && step(s.debtRatio) > step(prev.debtRatio)) {
+    const nominalGrowth = s.gdp / prev.gdp - 1
+    lines.push(
+      s.effectiveRate > nominalGrowth
+        ? `La dette franchit ${pct(s.debtRatio, 0)} du PIB. Le taux payé (${pct(s.effectiveRate, 1)}) dépasse la croissance (${pct(nominalGrowth, 1)}) : les intérêts font grossir la dette d’eux-mêmes, c’est l’effet boule de neige.`
+        : `La dette franchit ${pct(s.debtRatio, 0)} du PIB, mais la croissance dépasse encore le taux payé : elle reste supportable.`,
+    )
+  }
   if (s.creditCrunch > 0.05) {
     lines.push('Les banques, fragilisées, rationnent le crédit : les entreprises et les ménages investissent moins.')
   }

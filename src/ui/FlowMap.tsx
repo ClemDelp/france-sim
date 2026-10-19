@@ -49,7 +49,7 @@ export function FlowMap({ state, onPick }: FlowMapProps) {
         const speed = Math.max(1.2, 14 - 12 * Math.sqrt(f.amount / max))
         return (
           <g key={`${f.from}-${f.to}-${f.label}`} className={`flow flow-${f.from}`}>
-            <title>{`${f.label} : ${num(f.amount, 0)} Md€ par an`}</title>
+            <title>{`${f.label} : ${num(f.amount / state.priceLevel, 0)} Md€ par an (euros de 2025)`}</title>
             <path d={`M${sx} ${sy} Q${cx} ${cy} ${ex} ${ey}`} strokeWidth={width} className="flow-base" />
             <path d={`M${sx} ${sy} Q${cx} ${cy} ${ex} ${ey}`} strokeWidth={Math.max(1, width * 0.45)} className="flow-dots" style={{ animationDuration: `${speed}s` }} markerEnd="url(#flow-arrow)" />
           </g>
@@ -69,7 +69,7 @@ export function FlowMap({ state, onPick }: FlowMapProps) {
             </text>
             {b !== undefined ? (
               <text className={b < 0 ? 'node-balance bad' : 'node-balance good'} y="68" textAnchor="middle">
-                {b < 0 ? `déficit ${num(-b, 0)} Md€` : `excédent ${num(b, 0)} Md€`}
+                {b < 0 ? `déficit ${num((-b / state.gdp) * 100, 1)} % du PIB` : `excédent ${num((b / state.gdp) * 100, 1)} % du PIB`}
               </text>
             ) : null}
           </g>

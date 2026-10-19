@@ -1,23 +1,32 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BASE_POLICY } from './model/calibration'
 import { EVENTS } from './model/events'
+import type { Overrides } from './model/params'
 import { policyAt, simulate } from './model/sim'
 import type { Actor, Decision, FiredEvent, Policy, PolicyKey } from './model/types'
+import { Brain, type Impact } from './ui/Brain'
 import { FlowMap } from './ui/FlowMap'
 import { num, sbn } from './ui/format'
 import { Kpis } from './ui/Kpis'
+import { KPIS } from './ui/indicators'
 import { formatLever, LEVER_GROUPS } from './ui/levers'
 import { MISSIONS, type Mission } from './ui/missions'
 import { BudgetPanel, DebtPanel, GroupsPanel, JournalPanel, WorldPanel } from './ui/Panels'
 import { focusLine } from './ui/story'
+import { Trajectory } from './ui/Trajectory'
 
 const START = 2025
-const END = 2050
+const END = 2075
+/** Au-delà, le simulateur montre des tendances (démographie, dette), pas des prévisions. */
+const RELIABLE_UNTIL = 2040
+const LONG_RUN = 2050
 const MISSION_YEARS = 10
+const INTRO_KEY = 'france-sim:intro-vue'
 
-type Tab = 'groupes' | 'budget' | 'dette' | 'monde' | 'journal'
+type Tab = 'groupes' | 'courbes' | 'budget' | 'dette' | 'monde' | 'journal'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'groupes', label: 'Qui gagne, qui perd' },
+  { id: 'courbes', label: 'Courbes' },
   { id: 'budget', label: 'Budget' },
   { id: 'dette', label: 'Dette' },
   { id: 'monde', label: 'Énergie et monde' },
@@ -31,6 +40,17 @@ type Verdict = { mission: Mission; start: number }
 /** Un lien #idee=<id> lance directement une idée reçue (pratique pour la partager). */
 const linked = MISSIONS.find((m) => m.id === new URLSearchParams(window.location.hash.slice(1)).get('idee'))
 
+function introSeen(): boolean {
+  try {
+    return window.localStorage.getItem(INTRO_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** Les quatre chiffres qui résument l'effet d'une variante du modèle. */
+const IMPACT_KPIS = ['gdp', 'unemployment', 'debt', 'poverty']
+
 function App() {
   const [decisions, setDecisions] = useState<Decision[]>(linked ? [{ year: START + 1, patch: linked.patch }] : [])
   const [events, setEvents] = useState<FiredEvent[]>([])
@@ -41,9 +61,26 @@ function App() {
   const [verdict, setVerdict] = useState<Verdict | null>(linked ? { mission: linked, start: START + 1 } : null)
   const [target, setTarget] = useState<number | null>(linked ? START + 1 + MISSION_YEARS : null)
   const [leversOpen, setLeversOpen] = useState(false)
+  const [overrides, setOverrides] = useState<Overrides>({})
+  const [brain, setBrain] = useState<{ focus: string | null } | null>(null)
+  const [intro, setIntro] = useState(() => !linked && !introSeen())
 
-  const states = useMemo(() => simulate({ decisions, events, until: year }), [decisions, events, year])
-  const base = useMemo(() => simulate({ decisions: [], events, until: year }), [events, year])
+  const params = overrides
+  const states = useMemo(() => simulate({ decisions, events, until: year, params }), [decisions, events, year, params])
+  const base = useMemo(() => simulate({ decisions: [], events, until: year, params }), [events, year, params])
+  const variant = Object.keys(overrides).length > 0
+  // Avec une variante du modèle : la même partie avec le modèle d'origine, pour montrer l'effet de la variante.
+  const original = useMemo(() => (variant ? simulate({ decisions, events, until: year }) : null), [variant, decisions, events, year])
+  const impact: Impact | null = original
+    ? {
+        year,
+        rows: KPIS.filter((k) => IMPACT_KPIS.includes(k.id)).map((k) => {
+          const a = k.value(states.at(-1)!)
+          const o = k.value(original.at(-1)!)
+          return { label: k.label, withChanges: k.show(a), original: k.show(o), tone: Math.abs(a - o) < 1e-4 ? 'flat' : a > o === k.goodWhenUp ? 'good' : 'bad' }
+        }),
+      }
+    : null
   const s = states[states.length - 1]
   const b = base[base.length - 1]
   const changed = decisions.length > 0
@@ -55,24 +92,57 @@ function App() {
     if (!hasDraft || year >= END) {
       return null
     }
-    const without = simulate({ decisions, events, until: year + 1 }).at(-1)!
-    const withDraft = simulate({ decisions: [...decisions, { year: year + 1, patch: draft }], events, until: year + 1 }).at(-1)!
+    const without = simulate({ decisions, events, until: year + 1, params }).at(-1)!
+    const withDraft = simulate({ decisions: [...decisions, { year: year + 1, patch: draft }], events, until: year + 1, params }).at(-1)!
     return {
       deficit: withDraft.deficit - without.deficit,
       unemployment: withDraft.unemployment - without.unemployment,
       poverty: withDraft.poverty - without.poverty,
     }
-  }, [hasDraft, decisions, events, year, draft])
+  }, [hasDraft, decisions, events, year, draft, params])
 
   // Avancer le temps, une année à la fois, pour voir la France changer.
   const running = target !== null && year < target
+  // Les longs voyages vont plus vite : on voit défiler les années sans attendre.
+  const delay = target !== null && target - year > 6 ? 140 : 380
   useEffect(() => {
     if (!running) {
       return
     }
-    const id = window.setTimeout(() => setYear((y) => y + 1), 380)
+    const id = window.setTimeout(() => setYear((y) => y + 1), delay)
     return () => window.clearTimeout(id)
-  }, [running, year])
+  }, [running, year, delay])
+
+  // Une idée reçue jouée : le même scénario prolongé jusqu'en 2050, pour voir le long terme.
+  const longRun = useMemo(() => {
+    if (!verdict) {
+      return null
+    }
+    return {
+      s: simulate({ decisions: [{ year: verdict.start, patch: verdict.mission.patch }], events, until: LONG_RUN, params }).at(-1)!,
+      b: simulate({ decisions: [], events, until: LONG_RUN, params }).at(-1)!,
+    }
+  }, [verdict, events, params])
+
+  const closeIntro = () => {
+    setIntro(false)
+    try {
+      window.localStorage.setItem(INTRO_KEY, '1')
+    } catch {
+      // Le navigateur refuse le stockage : on reverra simplement l'introduction.
+    }
+  }
+
+  const setOverride = (id: string, value: number | null) =>
+    setOverrides((o) => {
+      const next = { ...o }
+      if (value === null) {
+        delete next[id]
+      } else {
+        next[id] = value
+      }
+      return next
+    })
 
   const advance = (years: number) => {
     if (hasDraft) {
@@ -132,16 +202,33 @@ function App() {
           </div>
         </div>
         <div className="clock">
-          <span className="year">{year}</span>
+          <span className="year" title={year > RELIABLE_UNTIL ? 'Au-delà de 2040, le simulateur montre des tendances, pas des prévisions.' : undefined}>
+            {year}
+            {year > RELIABLE_UNTIL ? <small className="year-tag">tendance</small> : null}
+          </span>
           <div className="time-buttons">
-            <button type="button" onClick={() => advance(1)} disabled={year >= END || running}>
-              ▶ 1 an
-            </button>
-            <button type="button" onClick={() => advance(5)} disabled={year >= END || running}>
-              ⏩ 5 ans
-            </button>
-            <button type="button" className="ghost" onClick={reset}>
-              ↺ Recommencer
+            {running ? (
+              <button type="button" onClick={() => setTarget(year)}>
+                ⏸ Pause
+              </button>
+            ) : (
+              <>
+                <button type="button" onClick={() => advance(1)} disabled={year >= END}>
+                  ▶ 1 an
+                </button>
+                <button type="button" onClick={() => advance(5)} disabled={year >= END}>
+                  ⏩ 5 ans
+                </button>
+                <button type="button" onClick={() => advance(10)} disabled={year >= END}>
+                  ⏩ 10 ans
+                </button>
+                <button type="button" onClick={() => advance(END - year)} disabled={year >= END} title={`Avancer jusqu’en ${END}`}>
+                  ⏭ {END}
+                </button>
+              </>
+            )}
+            <button type="button" className="ghost" onClick={reset} title="Recommencer en 2025">
+              ↺
             </button>
           </div>
         </div>
@@ -149,11 +236,27 @@ function App() {
           <button type="button" className="primary" onClick={() => setMissionsOpen(true)}>
             💡 Idées reçues
           </button>
+          <button type="button" className="ghost" onClick={() => setBrain({ focus: null })}>
+            🧠 Le modèle
+          </button>
           <button type="button" className="ghost levers-toggle" onClick={() => setLeversOpen(!leversOpen)}>
             🎛️ Leviers
           </button>
         </div>
       </header>
+
+      {variant ? (
+        <div className="variant-bar">
+          🧪 Vous jouez avec une variante du modèle ({Object.keys(overrides).length} paramètre{Object.keys(overrides).length > 1 ? 's' : ''} modifié
+          {Object.keys(overrides).length > 1 ? 's' : ''}).
+          <button type="button" className="ghost small" onClick={() => setBrain({ focus: null })}>
+            Voir
+          </button>
+          <button type="button" className="ghost small" onClick={() => setOverrides({})}>
+            Revenir au modèle d’origine
+          </button>
+        </div>
+      ) : null}
 
       <main className="layout">
         <aside className={leversOpen ? 'levers is-open' : 'levers'}>
@@ -214,7 +317,32 @@ function App() {
         </aside>
 
         <section className="center">
-          <Kpis states={states} base={base} changed={changed} />
+          {intro ? (
+            <div className="intro">
+              <div>
+                <h2>Bienvenue : vous gouvernez la France à partir de 2025</h2>
+                <ol>
+                  <li>
+                    <strong>Décidez</strong> : bougez les leviers (impôts, dépenses, retraites, énergie…), ou testez une <em>idée reçue</em>.
+                  </li>
+                  <li>
+                    <strong>Avancez</strong> d’un an, de 5, de 10, ou jusqu’en {END} : le pays réagit, année après année.
+                  </li>
+                  <li>
+                    <strong>Comprenez</strong> : chaque chiffre est comparé à « si on n’avait rien changé ». Cliquez sur un indicateur pour voir ce qui le fait bouger.
+                  </li>
+                </ol>
+                <p className="note">
+                  Un simulateur, pas une boule de cristal : il montre des mécanismes et des ordres de grandeur. Toutes ses hypothèses sont visibles et modifiables dans « 🧠 Le
+                  modèle ».
+                </p>
+              </div>
+              <button type="button" className="primary" onClick={closeIntro}>
+                C’est parti
+              </button>
+            </div>
+          ) : null}
+          <Kpis states={states} base={base} changed={changed} onPick={(node) => setBrain({ focus: node })} />
           <div className="map-card">
             <div className="map-head">
               <h2>Où circule l’argent en {year}</h2>
@@ -244,6 +372,7 @@ function App() {
             ))}
           </nav>
           {tab === 'groupes' ? <GroupsPanel s={s} b={b} changed={changed} /> : null}
+          {tab === 'courbes' ? <Trajectory states={states} base={base} decisions={decisions} events={events} reliableUntil={RELIABLE_UNTIL} /> : null}
           {tab === 'budget' ? <BudgetPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'dette' ? <DebtPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'monde' ? <WorldPanel s={s} b={b} changed={changed} /> : null}
@@ -322,7 +451,23 @@ function App() {
                 </div>
               ))}
             </div>
-            <p className="note">Écarts par rapport à la même France sans cette décision.</p>
+            {longRun ? (
+              <div className="long-run">
+                <h4>Et en {LONG_RUN} ? (tendance)</h4>
+                <ul className="lines">
+                  {verdict.mission.focus.map((f) => {
+                    const line = focusLine(f, longRun.s, longRun.b)
+                    return (
+                      <li key={f} className={`tone-${line.tone}`}>
+                        <span>{line.label}</span>
+                        <strong>{line.delta}</strong>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ) : null}
+            <p className="note">Écarts par rapport à la même France sans cette décision. Pour voir toute la trajectoire, continuez la partie et ouvrez l’onglet « Courbes ».</p>
             {verdict.mission.limits ? <p className="limits">⚠️ {verdict.mission.limits}</p> : null}
             <div className="verdict-actions">
               <button type="button" className="primary" onClick={() => setVerdict(null)}>
@@ -341,6 +486,20 @@ function App() {
             </div>
           </div>
         </div>
+      ) : null}
+      {brain ? (
+        <Brain
+          focus={brain.focus}
+          onFocus={(focus) => setBrain({ focus })}
+          overrides={overrides}
+          onOverride={setOverride}
+          onReset={() => setOverrides({})}
+          impact={impact}
+          state={s}
+          baseState={changed ? b : null}
+          policy={policyAt(decisions, year)}
+          onClose={() => setBrain(null)}
+        />
       ) : null}
     </div>
   )
