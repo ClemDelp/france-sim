@@ -41,6 +41,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
       { key: 'investment', label: 'Investissement public, grands chantiers', min: 60, max: 300, step: 5, unit: 'bn', hint: 'Routes, rail, logement, réseaux. Soutient l’activité et un peu la productivité.' },
       { key: 'otherServices', label: 'Autres services publics', min: 180, max: 340, step: 5, unit: 'bn', hint: 'Police, justice, collectivités, administration.' },
       { key: 'firmAid', label: 'Aides aux entreprises', min: 0, max: 150, step: 5, unit: 'bn', hint: 'Subventions et aides directes (≈ 75 Md€ dans ce modèle ; 112 à 272 Md€ selon les définitions larges).' },
+      { key: 'firmAidSmeShare', label: 'Part des aides allant aux PME', min: 0, max: 1, step: 0.05, unit: 'pct', hint: 'Aujourd’hui ≈ 45 %. Une PME manque souvent de trésorerie : elle investit une plus grande part de l’aide qu’un grand groupe.' },
     ],
   },
   {

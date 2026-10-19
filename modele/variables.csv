@@ -13,6 +13,7 @@ defence;Défense;Leviers;0;Armées et équipements militaires.
 investment;Investissement public;Leviers;0;Routes, réseaux, bâtiments publics, recherche.
 otherServices;Autres services publics;Leviers;0;Justice, police, collectivités, culture…
 firmAid;Aides aux entreprises;Leviers;0;Subventions et allègements accordés aux entreprises.
+firmAidSmeShare;Part des aides allant aux PME;Leviers;0;Aujourd’hui environ 45 % ; le reste va aux ETI et aux grands groupes.
 retirementAge;Âge de départ à la retraite;Leviers;0;Âge légal visé ; il bouge de 3 mois par an au plus.
 pensionIndexation;Indexation des retraites;Leviers;0;Part de l’inflation compensée sur les pensions.
 unemploymentReplacement;Indemnisation du chômage;Leviers;0;Part du salaire versée aux chômeurs.
@@ -26,6 +27,7 @@ tariffChinaEV;Droits sur les voitures chinoises;Leviers;0;Taxe sur les voitures 
 netMigration;Immigration nette;Leviers;0;Arrivées moins départs, en milliers de personnes par an.
 monetization;Planche à billets;Leviers;0;Part du déficit financée directement par la banque centrale.
 savingsToFirms;Épargne vers les entreprises;Leviers;0;Orienter le Livret A et l’assurance-vie vers l’investissement des entreprises.
+crisisResponse;Réponse à une crise de la dette;Leviers;0;Accepter le plan d’aide européen (taux plafonnés, économies imposées) ou le refuser.
 cancelDebt;Annulation de dette;Leviers;0;Effacer d’un coup une partie de la dette, selon qui la détient.
 oil;Prix du pétrole;Monde;1;Fixé par le marché mondial : on le subit.
 ecbRate;Taux de la BCE;Monde;1;Fixé à Francfort pour toute la zone euro.
@@ -74,3 +76,11 @@ poverty;Pauvreté;Résultats;7;Part des personnes sous 60 % du niveau de vie mé
 gini;Inégalités;Résultats;7;Indice de Gini des niveaux de vie.
 lifeExpectancy;Espérance de vie;Résultats;7;À la naissance.
 lifeGap;Écart d’espérance de vie riches/pauvres;Résultats;7;Entre les 5 % les plus riches et les 5 % les plus pauvres.
+sme;PME et TPE;Entreprises;4;Moins de 250 salariés : 46 % des emplois salariés, très dépendantes de leur banque. Valeur : leur investissement.
+midcaps;Entreprises de taille intermédiaire (ETI);Entreprises;4;De 250 à 4 999 salariés : un quart des emplois, un tiers des exportations. Valeur : leur investissement.
+largeFirms;Grandes entreprises;Entreprises;4;5 000 salariés et plus : la moitié des exportations, et la possibilité de déclarer leurs bénéfices ailleurs. Valeur : leur investissement.
+marketStress;Tension sur la dette;Taux et confiance;8;Combine le niveau de la dette et l’écart entre le solde public et ce qui la stabiliserait. À 1, la crise éclate.
+rescue;Plan d’aide européen;Finances publiques;8;Après une crise : le MES et la BCE prêtent à taux modéré, en échange d’économies imposées.
+evasion;Fraude et travail au noir;Finances publiques;6;Part des impôts qui échappe au fisc : elle monte quand les prélèvements s’envolent.
+discontent;Mécontentement social;Résultats;8;Colère accumulée : baisse du niveau de vie, impôts, chômage, inflation, pauvreté, austérité. À 1, le pays se soulève.
+ending;Fin de partie;Résultats;9;La situation devient intenable : révolte, faillite de l’État, hyperinflation ou dépression.

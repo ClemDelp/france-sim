@@ -247,14 +247,34 @@ button:disabled {
 }
 
 .lever small {
-  display: none;
+  display: block;
   color: var(--muted);
   font-size: 0.76rem;
 }
 
-.lever:focus-within small,
-.lever:hover small {
-  display: block;
+.lever-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint-toggle {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 20px;
+}
+
+.hint-toggle:hover,
+.hint-toggle:focus-visible,
+.lever.show-hint .hint-toggle {
+  color: var(--ink);
+  background: var(--accent);
 }
 
 .lever-note {
@@ -1737,4 +1757,260 @@ button.kpi:focus-visible {
 
 .crumb.is-on {
   color: var(--ink);
+}
+
+/* — Tension sur la dette */
+
+.stress {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--panel-2);
+}
+
+.stress-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.stress-tendu .stress-head span {
+  color: var(--gold);
+}
+
+.stress-crise {
+  border-color: var(--bad);
+}
+
+.stress-crise .stress-head span {
+  color: var(--bad);
+  font-weight: 800;
+}
+
+.stress-track {
+  position: relative;
+  height: 10px;
+  margin: 8px 0 4px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(47, 191, 113, 0.25), rgba(245, 183, 10, 0.25) 55%, rgba(255, 93, 98, 0.35));
+}
+
+.stress-track span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 5px;
+  background: linear-gradient(90deg, var(--good), var(--gold) 60%, var(--bad));
+}
+
+.stress-track i {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: var(--ink);
+}
+
+/* — Entreprises */
+
+.firms {
+  display: grid;
+  gap: 10px;
+}
+
+.firm-card {
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--panel-2);
+}
+
+.firm-card h3 {
+  margin-top: 0;
+}
+
+.firm-card dd em {
+  margin-left: 6px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+/* — Crise de la dette */
+
+.crisis .eyebrow {
+  color: var(--bad);
+}
+
+.crisis-options {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.crisis-option {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  text-align: left;
+}
+
+.crisis-option:hover,
+.crisis-option:focus-visible {
+  border-color: var(--gold);
+}
+
+.crisis-option small {
+  color: var(--muted);
+}
+
+.crisis-banner {
+  margin-bottom: 12px;
+}
+
+/* — Carte des flux interactive */
+
+.flow-legend {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.key-up {
+  color: var(--good);
+  font-weight: 800;
+}
+
+.key-down {
+  color: var(--bad);
+  font-weight: 800;
+}
+
+.flow-hit {
+  fill: none;
+  stroke: transparent;
+  cursor: help;
+}
+
+.flow.is-up .flow-base {
+  stroke: rgba(47, 191, 113, 0.35);
+}
+
+.flow.is-down .flow-base {
+  stroke: rgba(255, 93, 98, 0.35);
+}
+
+.flow.is-up .flow-dots {
+  stroke: var(--good);
+}
+
+.flow.is-down .flow-dots {
+  stroke: var(--bad);
+}
+
+.flow.is-dim {
+  opacity: 0.12;
+}
+
+.flow,
+.node {
+  transition: opacity 0.15s;
+}
+
+.node.is-dim {
+  opacity: 0.45;
+}
+
+.node.is-selected circle {
+  stroke: var(--gold);
+  stroke-width: 3;
+}
+
+.flow-tag rect {
+  fill: var(--bg-2);
+  stroke: var(--rule);
+}
+
+.flow.is-up .flow-tag text {
+  fill: var(--good);
+}
+
+.flow.is-down .flow-tag text {
+  fill: var(--bad);
+}
+
+.flow-tag text {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.flow-detail {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--gold);
+  background: var(--bg-2);
+}
+
+.flow-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.flow-detail h4 {
+  margin: 10px 0 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.flow-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 0.86rem;
+}
+
+.flow-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.flow-list small {
+  color: var(--muted);
+}
+
+.flow-list strong {
+  white-space: nowrap;
+}
+
+.flow-list em {
+  margin-left: 6px;
+  font-style: normal;
+}
+
+.flow-list em.up {
+  color: var(--good);
+}
+
+.flow-list em.down {
+  color: var(--bad);
+}
+
+.ending .eyebrow {
+  color: var(--bad);
+}
+
+.ending-facts {
+  margin: 12px 0;
 }

@@ -21,6 +21,7 @@ export function Trajectory({ states, base, decisions, events, reliableUntil }: P
   const [kpiId, setKpiId] = useState('debt')
   const [hover, setHover] = useState<number | null>(null)
   const kpi = KPIS.find((k) => k.id === kpiId) ?? KPIS[0]
+  const fmt = kpi.axis ?? kpi.show
   const past = kpi.history ? (HISTORY[kpi.history] ?? []) : []
   const sim = states.map((s) => ({ year: s.year, value: kpi.value(s) }))
   const ref = base.map((s) => ({ year: s.year, value: kpi.value(s) }))
@@ -71,7 +72,7 @@ export function Trajectory({ states, base, decisions, events, reliableUntil }: P
           <g key={t}>
             <line className="grid" x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} />
             <text className="axis" x={PAD.left - 4} y={y(t) + 3} textAnchor="end">
-              {kpi.show(t)}
+              {fmt(t)}
             </text>
           </g>
         ))}
@@ -95,9 +96,9 @@ export function Trajectory({ states, base, decisions, events, reliableUntil }: P
         {hovered ? (
           <span>
             <strong>{hovered.year}</strong>
-            {hovered.past ? ` · observé ${kpi.show(hovered.past.value)}` : null}
-            {hovered.sim ? ` · vos choix ${kpi.show(hovered.sim.value)}` : null}
-            {hovered.ref && changed ? ` · sans rien changer ${kpi.show(hovered.ref.value)}` : null}
+            {hovered.past ? ` · observé ${fmt(hovered.past.value)}` : null}
+            {hovered.sim ? ` · vos choix ${fmt(hovered.sim.value)}` : null}
+            {hovered.ref && changed ? ` · sans rien changer ${fmt(hovered.ref.value)}` : null}
           </span>
         ) : (
           <>

@@ -12,6 +12,15 @@ export const GROUP_LABEL: Record<Group, string> = {
 
 export type ByGroup = Record<Group, number>
 
+/** Les entreprises selon leur taille : PME (microentreprises comprises), ETI, grandes entreprises. */
+export type Size = 'pme' | 'eti' | 'ge'
+export const SIZES: Size[] = ['pme', 'eti', 'ge']
+export const SIZE_LABEL: Record<Size, string> = { pme: 'PME et TPE', eti: 'Entreprises de taille intermédiaire', ge: 'Grandes entreprises' }
+export type BySize = Record<Size, number>
+
+/** Ce qu'on suit pour chaque taille d'entreprise (Md€ courants, millions d'emplois). */
+export type FirmSize = { employment: number; investment: number; exports: number; profits: number; corporateTax: number }
+
 /** Qui détient la dette publique. */
 export type Holder = 'monde' | 'bce' | 'assureurs' | 'banques'
 export const HOLDERS: Holder[] = ['monde', 'bce', 'assureurs', 'banques']
@@ -40,6 +49,8 @@ export type Policy = {
   investment: number
   otherServices: number
   firmAid: number
+  /** Part des aides aux entreprises qui va aux PME (le reste se répartit entre ETI et grands groupes). */
+  firmAidSmeShare: number
   // Sécurité sociale
   retirementAge: number
   pensionIndexation: number
@@ -59,6 +70,8 @@ export type Policy = {
   // Monnaie et dette
   monetization: number
   savingsToFirms: number
+  /** Face à une crise de la dette : 0 = accepter le plan d'aide européen (et ses économies imposées), 1 = le refuser. */
+  crisisResponse: number
   /** Annulation ponctuelle : part de la dette détenue par `cancelHolder` effacée cette année-là. */
   cancelShare: number
   cancelHolder: Holder
@@ -96,6 +109,9 @@ export type FiredEvent = { year: number; id: string }
 export type Flow = { from: Actor; to: Actor; amount: number; label: string }
 
 export type Actor = 'menages' | 'entreprises' | 'etat' | 'secu' | 'banques' | 'bce' | 'monde' | 'energie'
+
+/** Les façons de perdre la partie. */
+export type Ending = 'revolte' | 'faillite' | 'hyperinflation' | 'depression'
 
 /** L'état de la France à la fin d'une année. Montants en milliards d'euros courants. */
 export type YearState = {
@@ -160,6 +176,25 @@ export type YearState = {
   firmDebt: number
   bankCapital: number
   creditCrunch: number
+  firms: Record<Size, FirmSize>
+  // Dette : tension sur les marchés
+  /** Indice de tension sur la dette : à partir de 1, les marchés paniquent (crise de la dette). */
+  marketStress: number
+  /** Une crise de la dette a éclaté cette année. */
+  debtCrisis: boolean
+  /** Années restantes du plan d'aide européen (0 = pas de plan en cours). */
+  rescueYears: number
+  /** Effort imposé par les plans d'aide, cumulé (part du PIB). */
+  rescueEffort: number
+  // Société
+  /** Recettes publiques en part du PIB. */
+  taxBurden: number
+  /** Part des impôts qui échappe au fisc (fraude, travail au noir). */
+  evasion: number
+  /** Mécontentement social : à 1, le pays se soulève. */
+  discontent: number
+  /** Ce qui rend la situation intenable cette année (la partie est perdue), ou null. */
+  ending: Ending | null
   // Carte
   flows: Flow[]
   /** Somme des soldes de tous les acteurs : nulle si les comptes bouclent. */

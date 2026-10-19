@@ -1,5 +1,5 @@
 import { GROUP_PARAMS } from '../model/calibration'
-import { GROUPS, GROUP_LABEL, HOLDERS, HOLDER_LABEL, type Holder, type YearState } from '../model/types'
+import { GROUPS, GROUP_LABEL, HOLDERS, HOLDER_LABEL, SIZES, SIZE_LABEL, type Holder, type YearState } from '../model/types'
 import { num, pct, signed } from './format'
 import { yearStory } from './story'
 
@@ -189,6 +189,7 @@ export function DebtPanel({ s }: PanelProps) {
           </div>
         </dl>
       </div>
+      <StressGauge s={s} />
       <h3>Qui nous prête, et qui perdrait si on annulait</h3>
       <ul className="holders">
         {HOLDERS.map((h) => (
@@ -277,6 +278,84 @@ export function JournalPanel({ states, base }: { states: YearState[]; base: Year
           </li>
         ))}
       </ol>
+    </div>
+  )
+}
+
+/** La tension sur la dette : à 1, les prêteurs paniquent et la crise éclate. */
+function StressGauge({ s }: { s: YearState }) {
+  const level = s.marketStress
+  const zone = level >= 1 ? 'crise' : level >= 0.7 ? 'tendu' : 'calme'
+  return (
+    <div className={`stress stress-${zone}`}>
+      <div className="stress-head">
+        <strong>Tension sur la dette</strong>
+        <span>{zone === 'crise' ? 'Crise' : zone === 'tendu' ? 'Les marchés s’inquiètent' : 'Calme'}</span>
+      </div>
+      <div className="stress-track" role="meter" aria-valuemin={0} aria-valuemax={1.5} aria-valuenow={level} aria-label="Tension sur la dette">
+        <span style={{ width: `${Math.min(100, (level / 1.5) * 100)}%` }} />
+        <i style={{ left: `${(1 / 1.5) * 100}%` }} />
+      </div>
+      <p className="note">
+        Les prêteurs regardent deux choses : le niveau de la dette, et l’écart entre le solde public et ce qu’il faudrait pour qu’elle cesse d’augmenter (compte tenu du taux payé
+        et de la croissance). Quand l’indice atteint 1, la crise éclate.
+      </p>
+      {s.rescueYears > 0 ? (
+        <p className="callout bad">
+          Plan d’aide européen en cours ({s.rescueYears} an{s.rescueYears > 1 ? 's' : ''} restant{s.rescueYears > 1 ? 's' : ''}) : taux plafonnés, économies imposées ({num(s.rescueEffort * 100, 1)} point
+          {s.rescueEffort > 0.015 ? 's' : ''} de PIB au total).
+        </p>
+      ) : s.rescueEffort > 0 ? (
+        <p className="note">Économies imposées par les plans d’aide passés : {num(s.rescueEffort * 100, 1)} points de PIB.</p>
+      ) : null}
+    </div>
+  )
+}
+
+/** Les entreprises par taille : qui emploie, investit, exporte, et comment chacune réagit aux décisions. */
+export function FirmsPanel({ s, b, changed }: PanelProps) {
+  const k = 1 / s.priceLevel
+  const kb = 1 / b.priceLevel
+  const rows: { label: string; get: (f: YearState['firms']['pme']) => number; unit: 'jobs' | 'bn' }[] = [
+    { label: 'Emplois salariés', get: (f) => f.employment, unit: 'jobs' },
+    { label: 'Investissement', get: (f) => f.investment, unit: 'bn' },
+    { label: 'Exportations', get: (f) => f.exports, unit: 'bn' },
+    { label: 'Profits avant impôt', get: (f) => f.profits, unit: 'bn' },
+    { label: 'Impôt sur les sociétés', get: (f) => f.corporateTax, unit: 'bn' },
+  ]
+  return (
+    <div className="panel">
+      <p className="panel-lead">
+        Montants en milliards d’euros de 2025{changed ? ', et l’écart avec « si on n’avait rien changé »' : ''}. Les PME dépendent de leur banque et emploient beaucoup de
+        salariés au SMIC ; les grands groupes exportent et peuvent déplacer leurs bénéfices.
+      </p>
+      <div className="firms">
+        {SIZES.map((c) => (
+          <div key={c} className="firm-card">
+            <h3>{SIZE_LABEL[c]}</h3>
+            <dl className="facts">
+              {rows.map((r) => {
+                const v = r.get(s.firms[c])
+                const ref = r.get(b.firms[c])
+                const d = r.unit === 'jobs' ? v / ref - 1 : (v * k) / (ref * kb) - 1
+                return (
+                  <div key={r.label}>
+                    <dt>{r.label}</dt>
+                    <dd>
+                      {r.unit === 'jobs' ? `${num(v, 2)} M` : `${num(v * k, 0)} Md€`}
+                      {changed && Math.abs(d) > 0.0005 ? <em className={d > 0 === (r.label !== 'Impôt sur les sociétés') ? 'good' : 'bad'}>{` ${signed(d * 100, 1)} %`}</em> : null}
+                    </dd>
+                  </div>
+                )
+              })}
+            </dl>
+          </div>
+        ))}
+      </div>
+      <p className="note">
+        PME et TPE : moins de 250 salariés. ETI : de 250 à 4 999. Grandes entreprises : 5 000 et plus. Le modèle répartit l’activité totale selon le poids de chaque taille et
+        ses sensibilités propres (modele/entreprises.csv).
+      </p>
     </div>
   )
 }

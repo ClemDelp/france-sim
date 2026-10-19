@@ -1,5 +1,5 @@
-import { groupView, view } from './params'
-import { type ByGroup, type Holder, type Policy } from './types'
+import { groupView, sizeView, view } from './params'
+import { type ByGroup, type BySize, type Holder, type Policy } from './types'
 
 /**
  * La France de 2025, en ordres de grandeur (Md€ courants, millions de personnes).
@@ -49,7 +49,7 @@ export const P = view([
   'smicJobLoss', 'maxEmployment', 'consumptionSmoothing', 'wealthEffect', 'consumptionSplitMpc', 'accelerator',
   'acceleratorTrend', 'investmentRateSensitivity', 'investmentCorporateTax', 'savingsToFirmsEffect', 'investmentMin', 'investmentMax',
   'stigmaInvestment', 'demandShockInvestment', 'housingRateSensitivity', 'housingMin', 'housingMax', 'housingDebtShare', 'mortgageRepayment',
-  'priceCompetitiveness', 'importPriceElasticity', 'exportShareLoss', 'tariffRetaliation', 'evRetaliation', 'tariffImportCut', 'overheatingImports', 'overheatingThreshold',
+  'priceCompetitiveness', 'importPriceElasticity', 'exportShareLoss', 'tariffRetaliation', 'evRetaliation', 'tariffImportCut', 'overheatingImports', 'overheatingThreshold', 'profitShifting', 'crisisDebtThreshold', 'crisisDebtRange', 'crisisGapRange', 'crisisSmoothing', 'crisisPanic', 'crisisShun', 'crisisBondLoss', 'crisisDemandShock', 'crisisCooldown', 'rescueYears', 'rescueSpread', 'rescueEffort', 'rescueTaxShare', 'rescueEffortMax', 'taxEvasion', 'taxEvasionMax', 'flightIncomeTax', 'unrestMemory', 'unrestIncomeDrop', 'unrestTaxRange', 'unrestUnemployment', 'unrestUnemploymentRange', 'unrestInflation', 'unrestInflationRange', 'unrestPovertyRange', 'unrestAusterityRange', 'bankruptcyPremium', 'bankruptcyInterestShare', 'hyperinflation', 'depressionUnemployment',
 ] as const)
 
 /** La politique de 2025 : le point de départ de toute partie. */
@@ -68,6 +68,7 @@ export const BASE_POLICY: Policy = {
   investment: 130,
   otherServices: 260,
   firmAid: 75,
+  firmAidSmeShare: 0.45,
   retirementAge: 64,
   pensionIndexation: 1,
   unemploymentReplacement: 0.57,
@@ -81,6 +82,7 @@ export const BASE_POLICY: Policy = {
   netMigration: 176,
   monetization: 0,
   savingsToFirms: 0,
+  crisisResponse: 0,
   cancelShare: 0,
   cancelHolder: 'bce',
 }
@@ -95,3 +97,13 @@ const GROUP_KEYS = [
 ] as const
 
 export const GROUP_PARAMS = Object.fromEntries(GROUP_KEYS.map((k) => [k, groupView(k)])) as Record<(typeof GROUP_KEYS)[number], Readonly<ByGroup>>
+
+/**
+ * Les entreprises par taille : poids dans l'économie et sensibilités relatives (1 = moyenne), dans modele/entreprises.csv.
+ */
+const SIZE_KEYS = [
+  'valueAdded', 'employment', 'exports', 'investment', 'corporateTaxShare', 'firmAidShare', 'bankDependence', 'mobility', 'lowWageExposure',
+  'energyIntensity', 'tariffExposure', 'cashFlowInvestment',
+] as const
+
+export const FIRM_PARAMS = Object.fromEntries(SIZE_KEYS.map((k) => [k, sizeView(k)])) as Record<(typeof SIZE_KEYS)[number], Readonly<BySize>>

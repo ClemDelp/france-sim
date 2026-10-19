@@ -12,6 +12,8 @@ export type Kpi = {
   /** Série historique 2017–2024, quand elle existe. */
   history?: string
   hint: string
+  /** Format des graduations quand `show` donne un mot (calme, tendu…). */
+  axis?: (v: number) => string
   /** La variable correspondante dans le graphe du modèle. */
   node: string
 }
@@ -26,4 +28,6 @@ export const KPIS: Kpi[] = [
   { id: 'poverty', label: 'Pauvreté', value: (s) => s.poverty, show: (v) => pct(v), delta: (d) => pts(d), goodWhenUp: false, history: 'poverty', hint: 'Part de la population sous 60 % du niveau de vie médian.', node: 'poverty' },
   { id: 'gini', label: 'Inégalités', value: (s) => s.gini, show: (v) => num(v, 3), delta: (d) => signed(d, 3), goodWhenUp: false, hint: 'Indice de Gini des niveaux de vie : 0 = égalité parfaite, 1 = une seule personne a tout.', node: 'gini' },
   { id: 'life', label: 'Espérance de vie', value: (s) => s.lifeExpectancy, show: (v) => `${num(v, 1)} ans`, delta: (d) => `${signed(d, 1)} an`, goodWhenUp: true, hint: 'À la naissance. Écart de 13 ans entre les 5 % les plus riches et les 5 % les plus pauvres (hommes).', node: 'lifeExpectancy' },
+  { id: 'social', label: 'Climat social', value: (s) => s.discontent, show: (v) => (v >= 1 ? 'explosif' : v >= 0.6 ? 'tendu' : 'calme'), delta: (d) => signed(d, 2), goodWhenUp: false, axis: (v) => num(v, 2), hint: 'Mécontentement accumulé : baisse du niveau de vie, impôts, chômage, inflation, pauvreté, austérité. À 1, le pays se soulève et la partie est perdue.', node: 'discontent' },
+  { id: 'stress', label: 'Tension sur la dette', value: (s) => s.marketStress, show: (v) => (v >= 1 ? 'crise' : v >= 0.7 ? 'tendue' : 'calme'), delta: (d) => signed(d, 2), goodWhenUp: false, axis: (v) => num(v, 2), hint: 'Ce que regardent les prêteurs : niveau de la dette et écart à l’effort qui la stabiliserait. À 1, crise de la dette.', node: 'marketStress' },
 ]

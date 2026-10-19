@@ -1,7 +1,8 @@
 import comportementsCsv from '../../modele/comportements.csv?raw'
 import donneesCsv from '../../modele/donnees-2025.csv?raw'
+import entreprisesCsv from '../../modele/entreprises.csv?raw'
 import tranchesCsv from '../../modele/tranches.csv?raw'
-import { GROUPS, type ByGroup } from './types'
+import { GROUPS, SIZES, type BySize, type ByGroup } from './types'
 
 /**
  * Les paramètres du modèle vivent dans des fichiers CSV du dossier `modele/`, lisibles et modifiables
@@ -61,7 +62,7 @@ export function parseNumber(v: string): number {
   return n
 }
 
-export type ParamKind = 'donnee' | 'comportement' | 'tranche'
+export type ParamKind = 'donnee' | 'comportement' | 'tranche' | 'entreprise'
 
 /** Un paramètre tel qu'on le montre et qu'on l'édite. */
 export type ParamRow = {
@@ -90,24 +91,36 @@ function rowsOf(csv: string, kind: ParamKind): ParamRow[] {
   }))
 }
 
-/** Les paramètres par tranche deviennent un paramètre par case : `mpc.g1`, `mpc.g2`… */
-function groupRows(csv: string): ParamRow[] {
+/** Les fichiers en tableau : une ligne par paramètre, une colonne par tranche de ménages ou par taille d'entreprise. */
+const TABLES = {
+  tranche: { csv: tranchesCsv, columns: GROUPS as readonly string[], block: 'Tranches de ménages' },
+  entreprise: { csv: entreprisesCsv, columns: SIZES as readonly string[], block: 'Tailles d’entreprises' },
+} as const
+
+/** Un tableau devient un paramètre par case : `mpc.g1`, `bankDependence.pme`… */
+function tableRows(kind: keyof typeof TABLES): ParamRow[] {
+  const { csv, columns, block } = TABLES[kind]
   return parseCsv(csv).flatMap((r) =>
-    GROUPS.map((g) => ({
-      id: `${r.id}.${g}`,
-      kind: 'tranche' as const,
-      value: parseNumber(r[g]),
+    columns.map((c) => ({
+      id: `${r.id}.${c}`,
+      kind,
+      value: parseNumber(r[c]),
       unit: 'part',
-      block: 'Tranches de ménages',
-      name: `${r.nom} (${g})`,
+      block,
+      name: `${r.nom} (${c})`,
       explanation: r.explication ?? '',
-      reliability: r.source?.toLowerCase().startsWith('hypoth') ? 'hypothèse' : 'mesuré',
+      reliability: r.fiabilite || (r.source?.toLowerCase().startsWith('hypoth') ? 'hypothèse' : 'mesuré'),
       source: r.source ?? '',
     })),
   )
 }
 
-export const PARAM_ROWS: ParamRow[] = [...rowsOf(donneesCsv, 'donnee'), ...rowsOf(comportementsCsv, 'comportement'), ...groupRows(tranchesCsv)]
+export const PARAM_ROWS: ParamRow[] = [
+  ...rowsOf(donneesCsv, 'donnee'),
+  ...rowsOf(comportementsCsv, 'comportement'),
+  ...tableRows('tranche'),
+  ...tableRows('entreprise'),
+]
 export const DEFAULTS: Readonly<Record<string, number>> = Object.fromEntries(PARAM_ROWS.map((r) => [r.id, r.value]))
 
 /** Les valeurs en vigueur : celles des fichiers, ou une variante en cours d'essai. */
@@ -140,22 +153,27 @@ export function view<K extends string>(keys: readonly K[]): Readonly<Record<K, n
   return out
 }
 
-/** Une ligne du fichier des tranches, vue comme une valeur par tranche. */
-export function groupView(id: string): Readonly<ByGroup> {
-  const out = {} as ByGroup
-  for (const g of GROUPS) {
-    const key = `${id}.${g}`
+function rowView<T>(id: string, columns: readonly string[], file: string): Readonly<T> {
+  const out = {} as Record<string, number>
+  for (const c of columns) {
+    const key = `${id}.${c}`
     if (!(key in DEFAULTS)) {
-      throw new Error(`Paramètre « ${key} » absent de modele/tranches.csv`)
+      throw new Error(`Paramètre « ${key} » absent de modele/${file}`)
     }
-    Object.defineProperty(out, g, { get: () => active[key], enumerable: true })
+    Object.defineProperty(out, c, { get: () => active[key], enumerable: true })
   }
-  return out
+  return out as T
 }
+
+/** Une ligne du fichier des tranches, vue comme une valeur par tranche. */
+export const groupView = (id: string) => rowView<ByGroup>(id, GROUPS, 'tranches.csv')
+
+/** Une ligne du fichier des entreprises, vue comme une valeur par taille d'entreprise. */
+export const sizeView = (id: string) => rowView<BySize>(id, SIZES, 'entreprises.csv')
 
 /** Réécrit un fichier de paramètres avec d'autres valeurs (pour proposer une modification). */
 export function exportCsv(kind: ParamKind, overrides: Overrides): string {
-  const source = kind === 'donnee' ? donneesCsv : kind === 'comportement' ? comportementsCsv : tranchesCsv
+  const source = kind === 'donnee' ? donneesCsv : kind === 'comportement' ? comportementsCsv : TABLES[kind].csv
   const fmt = (n: number) => String(n).replace('.', ',')
   const lines = source.replace(/^﻿/, '').split(/\r?\n/)
   const head = lines[0].split(';')
@@ -168,11 +186,11 @@ export function exportCsv(kind: ParamKind, overrides: Overrides): string {
         }
         const cells = line.split(';')
         const id = cells[0]
-        if (kind === 'tranche') {
-          for (const g of GROUPS) {
-            const key = `${id}.${g}`
+        if (kind === 'tranche' || kind === 'entreprise') {
+          for (const c of TABLES[kind].columns) {
+            const key = `${id}.${c}`
             if (key in overrides) {
-              cells[head.indexOf(g)] = fmt(overrides[key])
+              cells[head.indexOf(c)] = fmt(overrides[key])
             }
           }
         } else if (id in overrides) {

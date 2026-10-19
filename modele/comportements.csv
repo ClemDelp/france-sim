@@ -119,3 +119,34 @@ evRetaliation;0,01;sensibilité;Commerce;Représailles chinoises aux droits de d
 tariffImportCut;0,54;sensibilité;Commerce;Recul des importations sous l’effet d’un droit de douane;;estimé;
 overheatingImports;2;sensibilité;Commerce;Importations en plus quand la demande dépasse les capacités;;hypothèse;
 overheatingThreshold;1,02;ratio;Commerce;Niveau d’activité au-delà duquel on importe plus;;hypothèse;
+profitShifting;0,5;sensibilité;Fiscalité du capital;Bénéfices déclarés ailleurs quand les capitaux fuient;Quand l’impôt est jugé trop lourd, les entreprises mobiles (surtout les grands groupes) déclarent leurs bénéfices dans d’autres pays.;hypothèse;Tørsløv, Wier et Zucman (2023)
+crisisDebtThreshold;1;part du PIB;Crise de la dette;Niveau de dette à partir duquel les marchés commencent à s’inquiéter;;hypothèse;FMI, cadre d’analyse de la soutenabilité de la dette (seuils indicatifs)
+crisisDebtRange;1;part du PIB;Crise de la dette;Dette en plus du seuil qui suffit, seule, à déclencher une crise;Avec un seuil de 100 % et cette marge de 100 %, une dette de 200 % du PIB déclenche une crise même si le déficit est maîtrisé.;hypothèse;
+crisisGapRange;0,06;part du PIB;Crise de la dette;Écart à l’effort qui stabiliserait la dette suffisant, seul, à déclencher une crise;L’écart mesure de combien le solde public est loin de ce qu’il faudrait pour que la dette cesse d’augmenter (en tenant compte du taux et de la croissance).;hypothèse;Blanchard, Fiscal Dominance (2023), ordre de grandeur
+crisisSmoothing;0,5;part;Crise de la dette;Poids de l’année en cours dans la tension (le reste vient des années passées);Les marchés regardent la tendance, pas une seule année.;hypothèse;
+crisisPanic;3;points;Crise de la dette;Prime de risque ajoutée quand une crise éclate;Grèce 2010 : + 10 points ; Italie 2011 : + 4 points ; France 2011 : + 1,5 point.;estimé;BCE, écarts de taux souverains 2010-2012
+crisisShun;1;indice;Crise de la dette;Fuite des prêteurs étrangers quand une crise éclate;;hypothèse;
+crisisBondLoss;0,1;part;Crise de la dette;Perte de valeur des titres de dette détenus en France pendant une crise;Banques et assureurs voient fondre la valeur de leurs obligations.;estimé;Italie 2011, ordre de grandeur
+crisisDemandShock;0,015;part;Crise de la dette;Recul de la demande l’année d’une crise (peur, épargne de précaution);;hypothèse;
+crisisCooldown;4;ans;Crise de la dette;Délai avant qu’une nouvelle crise puisse éclater;;hypothèse;
+rescueYears;3;ans;Crise de la dette;Durée d’un plan d’aide européen;Le Mécanisme européen de stabilité prête à l’État pendant quelques années, en échange d’économies.;mesuré;Programmes Grèce, Irlande, Portugal (2010-2018)
+rescueSpread;1,5;points;Crise de la dette;Prime de risque payée pendant un plan d’aide;Le MES et la BCE prêtent ou rachètent la dette : les taux redescendent, mais pas au niveau d’avant.;estimé;MES ; BCE (OMT, TPI)
+rescueEffort;0,01;part du PIB;Crise de la dette;Économies imposées chaque année du plan;Portugal 2011-2014 : environ 1 à 2 points de PIB par an.;estimé;Commission européenne, programmes d’ajustement
+rescueTaxShare;0,5;part;Crise de la dette;Part de l’effort obtenue par des hausses d’impôts (le reste par des baisses de dépenses);;hypothèse;
+taxEvasion;1,5;sensibilité;Consentement à l’impôt;Fraude et travail au noir quand les prélèvements montent;Part des impôts qui échappe au fisc par point de PIB de prélèvements au-delà de 2025 (×100). Au-delà d’un certain niveau, chaque hausse d’impôt rapporte de moins en moins.;hypothèse;Schneider (économie souterraine) ; courbe de Laffer, ordre de grandeur
+taxEvasionMax;0,3;part;Consentement à l’impôt;Fraude maximale;;hypothèse;
+flightIncomeTax;0,3;sensibilité;Fiscalité du capital;Départ des hauts revenus quand leur impôt dépasse 5 points de plus qu’en 2025;;hypothèse;Kleven, Landais, Saez (2013)
+unrestMemory;0,5;part;Mécontentement social;Mémoire du mécontentement;Part de la colère d’une année qui reste l’année suivante.;hypothèse;
+unrestIncomeDrop;0,08;part;Mécontentement social;Baisse du niveau de vie médian en un an qui, seule, ferait descendre le pays dans la rue;Les gilets jaunes (2018) sont partis d’une hausse de la taxe sur les carburants de quelques centimes.;hypothèse;
+unrestTaxRange;0,15;part du PIB;Mécontentement social;Hausse des prélèvements qui, seule, provoquerait une révolte fiscale;;hypothèse;
+unrestUnemployment;0,08;part;Mécontentement social;Chômage à partir duquel la colère monte;;hypothèse;
+unrestUnemploymentRange;0,1;part;Mécontentement social;Chômage en plus qui, seul, provoquerait une révolte;;hypothèse;Grèce 2011-2013 : chômage à 25 %
+unrestInflation;0,03;part;Mécontentement social;Inflation à partir de laquelle la colère monte;;hypothèse;
+unrestInflationRange;0,12;part;Mécontentement social;Inflation en plus qui, seule, provoquerait une révolte;;hypothèse;
+unrestPovertyRange;0,05;part;Mécontentement social;Hausse de la pauvreté qui, seule, provoquerait une révolte;;hypothèse;
+unrestAusterityRange;0,1;part du PIB;Mécontentement social;Économies imposées qui, seules, provoqueraient une révolte;Grèce 2010-2015 : environ 15 points de PIB d’efforts, grèves générales.;hypothèse;
+bankruptcyPremium;0,08;taux;Fin de partie;Prime de risque à laquelle l’État ne trouve plus de prêteurs (faillite);Grèce 2011 : plus de 10 points d’écart avec l’Allemagne.;estimé;BCE, écarts de taux 2011-2012
+bankruptcyInterestShare;0,25;part;Fin de partie;Part des recettes publiques absorbée par les intérêts à partir de laquelle l’État fait faillite;;hypothèse;
+hyperinflation;0,25;taux;Fin de partie;Inflation à partir de laquelle la monnaie perd la confiance;;hypothèse;
+depressionUnemployment;0,2;part;Fin de partie;Chômage qui signe une dépression;États-Unis 1933 : 25 % ; Grèce 2013 : 27 %.;estimé;
+rescueEffortMax;0,02;part du PIB;Crise de la dette;Économies maximales imposées par an pendant un plan d’aide;Grèce 2010-2012 : jusqu’à 4 points par an, avec une récession de 25 %.;estimé;Commission européenne, programmes d’ajustement

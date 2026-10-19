@@ -74,3 +74,49 @@ describe('mechanisms', () => {
     expect(Math.abs(s.closure)).toBeLessThan(0.5)
   })
 })
+
+describe('crises, colère et fin de partie', () => {
+  const run = (patch: Parameters<typeof simulate>[0]['decisions'][0]['patch'], until = 2075) => simulate({ decisions: [{ year: 2026, patch }], events: [], until })
+
+  it('sans rien changer, une crise de la dette finit par éclater, le plan d’aide contient la dette, et la partie n’est pas perdue', () => {
+    const s = simulate({ decisions: [], events: [], until: 2075 })
+    const first = s.find((x) => x.debtCrisis)
+    expect(first?.year).toBeGreaterThan(2040)
+    expect(Math.max(...s.map((x) => x.debtRatio))).toBeLessThan(2.3)
+    expect(s.some((x) => x.ending)).toBe(false)
+  })
+
+  it('la rigueur évite la crise de la dette', () => {
+    expect(run({ otherServices: 230, investment: 120, pensionIndexation: 0.8 }).some((x) => x.debtCrisis)).toBe(false)
+  })
+
+  it('tous les impôts au maximum : le pays se soulève dès la première année', () => {
+    const s = run({ vat: 0.3, incomeTaxTop: 0.15, csg: 0.14, corporateTax: 0.4 }, 2030)
+    expect(s.find((x) => x.ending)?.ending).toBe('revolte')
+    expect(s.find((x) => x.ending)?.year).toBe(2026)
+  })
+
+  it('des impôts massifs rapportent moins que prévu : la fraude progresse', () => {
+    const s = run({ vat: 0.3, csg: 0.14 }, 2030).at(-1)!
+    expect(s.evasion).toBeGreaterThan(0.05)
+  })
+
+  it('refuser toute aide européenne en creusant les déficits mène à la faillite', () => {
+    expect(run({ crisisResponse: 1, retirementAge: 60 }).find((x) => x.ending)?.ending).toBe('faillite')
+  })
+
+  it('orienter les aides vers les PME fait investir davantage, à budget égal', () => {
+    const base = simulate({ decisions: [], events: [], until: 2030 }).at(-1)!
+    const s = run({ firmAidSmeShare: 0.9 }, 2030).at(-1)!
+    expect(s.firms.pme.investment).toBeGreaterThan(base.firms.pme.investment * 1.02)
+    expect(s.firms.ge.investment).toBeLessThan(base.firms.ge.investment)
+    expect(s.investment / s.priceLevel).toBeGreaterThan(base.investment / base.priceLevel)
+  })
+
+  it('un resserrement du crédit frappe d’abord les PME', () => {
+    const base = simulate({ decisions: [], events: [], until: 2028 }).at(-1)!
+    const s = run({ cancelShare: 1, cancelHolder: 'banques' }, 2028).at(-1)!
+    const drop = (c: 'pme' | 'ge') => s.firms[c].investment / base.firms[c].investment - 1
+    expect(drop('pme')).toBeLessThan(drop('ge'))
+  })
+})

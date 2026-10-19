@@ -153,3 +153,49 @@ unemployment;lowIncome;-;unemployment.g1;Le chômage frappe d’abord les plus m
 socialBenefits;lowIncome;+;family.g1 minima.g1;
 poverty;lifeExpectancy;-;povertyLifeLoss;La pauvreté abîme la santé.
 gini;lifeGap;+;lifeGapElasticity incomeRatioTopBottom;Plus les revenus s’écartent, plus les espérances de vie s’écartent.
+firmAidSmeShare;sme;+;cashFlowInvestment.pme firmAidShare.pme;Une PME manque souvent de trésorerie : elle investit une bonne part de l’aide reçue.
+firmAidSmeShare;largeFirms;-;cashFlowInvestment.ge firmAidShare.ge;Moins d’aide aux grands groupes, qui en investissaient peu et la distribuaient surtout.
+firmAid;sme;+;firmAidShare.pme cashFlowInvestment.pme;
+firmAid;largeFirms;+;firmAidShare.ge cashFlowInvestment.ge;
+creditCrunch;sme;-;bankDependence.pme;Les PME empruntent presque tout à leur banque : quand le crédit se raréfie, elles investissent moins.
+loanRate;sme;-;bankDependence.pme;
+loanRate;largeFirms;-;bankDependence.ge;Les grands groupes se financent aussi sur les marchés : ils sentent moins la hausse du crédit bancaire.
+capitalFlight;largeFirms;-;mobility.ge;Les grands groupes peuvent investir ailleurs.
+capitalFlight;taxes;-;profitShifting mobility.ge;Des bénéfices déclarés à l’étranger : l’impôt sur les sociétés rapporte moins.
+smicBoost;sme;-;lowWageExposure.pme;Plus de salariés au SMIC dans les petites entreprises (commerce, hôtellerie, services).
+electricityPrice;midcaps;-;energyIntensity.eti;L’industrie qui consomme beaucoup d’énergie est surtout dans les ETI et les grands groupes.
+tariffs;largeFirms;-;tariffExposure.ge;Les représailles frappent d’abord les grands exportateurs.
+corporateTax;largeFirms;-;corporateTaxShare.ge mobility.ge;
+sme;privateInvestment;+;investment.pme;
+midcaps;privateInvestment;+;investment.eti;
+largeFirms;privateInvestment;+;investment.ge;
+midcaps;exports;+;exports.eti;
+largeFirms;exports;+;exports.ge;
+sme;unemployment;-;employment.pme;Près de la moitié des emplois salariés sont dans les PME.
+debt;marketStress;+;crisisDebtThreshold crisisDebtRange;Au-delà de 100 % du PIB, chaque point de dette inquiète un peu plus.
+deficit;marketStress;+;crisisGapRange crisisSmoothing;Ce qui compte : l’écart entre le solde public et ce qu’il faudrait pour que la dette cesse d’augmenter.
+effectiveRate;marketStress;+;;Plus le taux payé dépasse la croissance, plus il faut d’excédent pour stabiliser la dette.
+gdp;marketStress;-;;La croissance aide à stabiliser la dette.
+marketStress;riskPremium;+;crisisPanic crisisCooldown;À 1, la crise éclate : les prêteurs exigent beaucoup plus.
+marketStress;bankCapital;-;crisisBondLoss;Les obligations françaises perdent de leur valeur.
+marketStress;savings;-;crisisBondLoss;Les contrats d’assurance-vie aussi.
+marketStress;consumption;-;crisisDemandShock;Peur et épargne de précaution.
+marketStress;rescue;+;rescueYears;Une crise déclenche un plan d’aide européen, sauf si la France le refuse.
+crisisResponse;rescue;-;;Refuser l’aide met fin au plan.
+rescue;rate;-;rescueSpread;Le MES et la BCE prêtent ou rachètent la dette : les taux redescendent.
+rescue;publicDemand;-;rescueEffort rescueTaxShare;Économies imposées sur les dépenses publiques.
+rescue;taxes;+;rescueEffort rescueTaxShare;Hausses d’impôts imposées.
+taxes;evasion;+;taxEvasion taxEvasionMax;Au-delà des prélèvements de 2025, la fraude et le travail au noir progressent.
+evasion;taxes;-;taxEvasion;Chaque hausse d’impôt rapporte de moins en moins.
+incomeTaxTop;capitalFlight;+;flightIncomeTax;Au-delà de 5 points de plus, des hauts revenus s’expatrient.
+taxes;discontent;+;unrestTaxRange;Trop d’impôts d’un coup : révolte fiscale (gilets jaunes, bonnets rouges).
+disposableIncome;discontent;-;unrestIncomeDrop;Une baisse du niveau de vie fait descendre le pays dans la rue.
+unemployment;discontent;+;unrestUnemployment unrestUnemploymentRange;
+inflation;discontent;+;unrestInflation unrestInflationRange;
+poverty;discontent;+;unrestPovertyRange;
+rescue;discontent;+;unrestAusterityRange;L’austérité imposée nourrit la colère.
+discontent;ending;+;unrestMemory;À 1, le gouvernement tombe : la partie est perdue.
+riskPremium;ending;+;bankruptcyPremium;Plus personne ne prête : l’État fait faillite.
+interest;ending;+;bankruptcyInterestShare;Quand les intérêts absorbent un quart des recettes, l’État ne peut plus payer.
+inflation;ending;+;hyperinflation;La monnaie perd la confiance.
+unemployment;ending;+;depressionUnemployment;Un actif sur cinq sans emploi : dépression.

@@ -35,8 +35,8 @@ const SIGN_HINT: Record<GraphLink['sign'], string> = {
   '-': 'quand l’un monte, l’autre baisse',
   '±': 'l’effet dépend de la situation',
 }
-const KIND_LABEL: Record<ParamKind, string> = { donnee: 'Données de 2025', comportement: 'Comportements', tranche: 'Tranches de ménages' }
-const FILE_OF: Record<ParamKind, string> = { donnee: 'donnees-2025.csv', comportement: 'comportements.csv', tranche: 'tranches.csv' }
+const KIND_LABEL: Record<ParamKind, string> = { donnee: 'Données de 2025', comportement: 'Comportements', tranche: 'Tranches de ménages', entreprise: 'Tailles d’entreprises' }
+const FILE_OF: Record<ParamKind, string> = { donnee: 'donnees-2025.csv', comportement: 'comportements.csv', tranche: 'tranches.csv', entreprise: 'entreprises.csv' }
 
 const fmt = (v: number) => (Math.abs(v) >= 100 ? v.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : v.toLocaleString('fr-FR', { maximumFractionDigits: 6 }))
 const normalize = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
@@ -281,7 +281,7 @@ function ParamTable({ overrides, onOverride, onReset }: { overrides: Overrides; 
       <div className="params-tools">
         <input type="search" placeholder="Chercher un paramètre (ex. : dette, SMIC, pétrole)" value={query} onChange={(e) => setQuery(e.target.value)} />
         <div className="chips">
-          {(['tous', 'donnee', 'comportement', 'tranche', 'modifies'] as const).map((k) => (
+          {(['tous', 'donnee', 'comportement', 'tranche', 'entreprise', 'modifies'] as const).map((k) => (
             <button key={k} type="button" className={kind === k ? 'chip small is-on' : 'chip small'} onClick={() => setKind(k)}>
               {k === 'tous' ? `Tous (${PARAM_ROWS.length})` : k === 'modifies' ? `Modifiés (${count})` : KIND_LABEL[k]}
             </button>
@@ -289,7 +289,7 @@ function ParamTable({ overrides, onOverride, onReset }: { overrides: Overrides; 
         </div>
       </div>
       <div className="params-actions">
-        {(['donnee', 'comportement', 'tranche'] as const).map((k) => (
+        {(['donnee', 'comportement', 'tranche', 'entreprise'] as const).map((k) => (
           <button key={k} type="button" className="ghost small" onClick={() => download(FILE_OF[k], exportCsv(k, overrides))}>
             ⬇ {FILE_OF[k]}
           </button>

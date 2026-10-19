@@ -1,12 +1,15 @@
-import { BASE, BASE_POLICY, GROUP_PARAMS as GP, P } from './calibration'
+import { BASE, BASE_POLICY, FIRM_PARAMS as FS, GROUP_PARAMS as GP, P } from './calibration'
 import { distribution } from './distribution'
 import { EVENTS } from './events'
 import { withParams, type Overrides } from './params'
 import {
   GROUPS,
   HOLDERS,
+  SIZES,
   type ByGroup,
+  type BySize,
   type Decision,
+  type Ending,
   type FiredEvent,
   type Flow,
   type Holder,
@@ -24,6 +27,19 @@ const coreParticipation = () => {
 const sum = (g: ByGroup) => GROUPS.reduce((acc, k) => acc + g[k], 0)
 const byGroup = (f: (g: keyof ByGroup) => number): ByGroup => ({ g1: f('g1'), g2: f('g2'), g3: f('g3'), g4: f('g4'), g5: f('g5') })
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
+const bySize = (f: (c: keyof BySize) => number): BySize => ({ pme: f('pme'), eti: f('eti'), ge: f('ge') })
+const fr = (v: number, digits: number) => v.toLocaleString('fr-FR', { maximumFractionDigits: digits })
+const sumSize = (r: BySize) => r.pme + r.eti + r.ge
+/** Une sensibilité par taille, ramenée à 1 en moyenne (pondérée par `weights`) : l'effet total reste celui du modèle agrégé. */
+const relative = (x: Readonly<BySize>, weights: Readonly<BySize>) => {
+  const avg = sumSize(bySize((c) => x[c] * weights[c])) / sumSize(weights)
+  return bySize((c) => x[c] / avg)
+}
+/** Part des aides aux entreprises qui va à chaque taille : `smeShare` aux PME, le reste aux ETI et aux grands groupes comme aujourd'hui. */
+const aidShares = (smeShare: number): BySize => {
+  const rest = FS.firmAidShare.eti + FS.firmAidShare.ge
+  return { pme: smeShare, eti: ((1 - smeShare) * FS.firmAidShare.eti) / rest, ge: ((1 - smeShare) * FS.firmAidShare.ge) / rest }
+}
 
 /** Ce que le monde fait sans nous : la crise d'Ormuz de 2026, puis un retour progressif au calme. */
 export function baseWorld(year: number): World {
@@ -75,6 +91,24 @@ type Carry = {
   healthStock: number
   capitalFlight: number
   consumption: ByGroup
+  /** Tension sur la dette, lissée sur les années. */
+  marketStress: number
+  /** Années avant qu'une nouvelle crise de la dette puisse éclater. */
+  crisisCooldown: number
+  /** Années restantes du plan d'aide européen. */
+  rescueYears: number
+  /** Économies imposées par les plans d'aide, cumulées (part du PIB). */
+  rescueEffort: number
+  /** Recettes publiques en part du PIB, l'an dernier et en 2025. */
+  taxBurden: number
+  taxBurden0: number
+  poverty0: number
+  medianIncome: number
+  discontent: number
+  /** Écart entre le solde public et celui qui stabiliserait la dette (part du PIB). */
+  stabilityGap: number
+  /** Économies demandées chaque année par le plan d'aide en cours (part du PIB). */
+  rescueStep: number
 }
 
 function initialCarry(): Carry {
@@ -120,6 +154,17 @@ function initialCarry(): Carry {
     healthStock: 0,
     capitalFlight: 0,
     consumption: byGroup(() => 0),
+    marketStress: 0,
+    crisisCooldown: 0,
+    rescueYears: 0,
+    rescueEffort: 0,
+    taxBurden: 0,
+    taxBurden0: 0,
+    poverty0: 0,
+    medianIncome: 0,
+    discontent: 0,
+    stabilityGap: 0,
+    rescueStep: 0,
   }
 }
 
@@ -166,6 +211,40 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       notes.push(`${bn} Md€ de dette détenue par les étrangers sont effacés. La France fait défaut : les investisseurs étrangers fuient, et il faut trouver en France l’argent qu’ils prêtaient.`)
     }
   }
+
+  // — 0 bis. Crise de la dette : quand la tension accumulée atteint 1, les prêteurs paniquent.
+  let crisisCooldown = Math.max(0, prev.crisisCooldown - 1)
+  const debtCrisis = !init && prev.marketStress >= 1 && crisisCooldown === 0
+  if (debtCrisis) {
+    panic += P.crisisPanic
+    shun += P.crisisShun
+    // Les obligations françaises perdent de leur valeur : banques et contrats d'assurance-vie encaissent la perte.
+    bankCapital -= holders.banques * P.crisisBondLoss
+    for (const g of GROUPS) {
+      wealth[g] -= holders.assureurs * P.crisisBondLoss * GP.wealth[g]
+    }
+    crisisCooldown = P.crisisCooldown
+    notes.push(
+      `Crise de la dette : les prêteurs doutent que la France puisse stabiliser sa dette (${Math.round(prev.debtRatio * 100)} % du PIB). Ils exigent ${fr(P.crisisPanic, 1)} points de plus, les étrangers achètent moins de titres, les banques et l’assurance-vie perdent ${fr(P.crisisBondLoss * 100, 0)} % de la valeur de leurs obligations.`,
+    )
+  }
+  // Le plan d'aide européen : le MES et la BCE prêtent à taux modéré, en échange d'économies imposées chaque année.
+  let rescueYears = policy.crisisResponse === 1 ? 0 : Math.max(0, prev.rescueYears - 1)
+  let rescueStep = prev.rescueStep
+  // Le plan démarre l'année qui suit la crise : le temps de le négocier (et pour la France, de l'accepter ou non).
+  const crisisLastYear = !init && prev.crisisCooldown === P.crisisCooldown && prev.rescueYears === 0
+  if (crisisLastYear && policy.crisisResponse !== 1) {
+    rescueYears = P.rescueYears
+    // Le plan vise à combler, en quelques années, l'écart qui fait grossir la dette.
+    rescueStep = clamp(prev.stabilityGap / P.rescueYears, P.rescueEffort, P.rescueEffortMax)
+    notes.push(
+      `La France accepte le plan d’aide européen : pendant ${fr(P.rescueYears, 0)} ans, le Mécanisme européen de stabilité lui prête et la BCE rachète sa dette, mais en échange d’économies imposées de ${fr(rescueStep * 100, 1)} point de PIB par an (moins de dépenses, plus d’impôts).`,
+    )
+  } else if (crisisLastYear) {
+    notes.push('La France refuse l’aide européenne : elle garde la main sur son budget, mais doit emprunter au prix fort.')
+  }
+  const rescueEffort = prev.rescueEffort + (rescueYears > 0 ? rescueStep : 0)
+  const demandShock = world.demandShock + (debtCrisis ? P.crisisDemandShock : 0)
 
   // — 1. Démographie et espérance de vie
   const yearsIn = year - BASE.year
@@ -243,9 +322,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // — 3. Taux d'intérêt : le prix de la confiance
   const debtPct = prev.debtRatio * 100
   const riskPremium = Math.max(0, P.premiumBase + P.premiumPerDebtPoint * Math.max(0, debtPct - P.debtThreshold) + P.premiumPerDeficitPoint * Math.max(0, prev.deficitRatio * 100 - P.deficitThreshold) + panic + stigma - P.monetizationCredibility * policy.monetization + P.monetizationFear * policy.monetization * policy.monetization) / 100
-  const rate = world.ecbRate + BASE.termPremium / 100 + riskPremium + P.inflationRatePass * Math.max(0, prev.inflation - P.inflationRateThreshold)
+  const premium = rescueYears > 0 ? Math.min(riskPremium, P.rescueSpread / 100) : riskPremium
+  const rate = world.ecbRate + BASE.termPremium / 100 + premium + P.inflationRatePass * Math.max(0, prev.inflation - P.inflationRateThreshold)
   const effectiveRate = init ? prev.effectiveRate : prev.effectiveRate + (rate - prev.effectiveRate) / P.debtRollover
-  const loanRate = world.ecbRate + BASE.firmLoanSpread + P.firmPremiumPass * riskPremium
+  const loanRate = world.ecbRate + BASE.firmLoanSpread + P.firmPremiumPass * premium
   const baseRate = P.neutralLoanRate
   const creditCrunch = clamp((P.bankCapitalMin - bankCapital / (prev.firmDebt + prev.householdDebt)) * P.creditCrunchSensitivity, 0, P.creditCrunchMax)
 
@@ -260,20 +340,32 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const scale = laborForce / (BASE.workingAge * BASE.participation)
   /** Une dépense publique fixée en Md€ de 2025 suit la croissance de l'économie et des prix : à politique inchangée, son poids dans le PIB reste stable. */
   const g = (bn: number) => bn * trend * scale
-  const publicGoods = g(policy.health + policy.prevention + policy.education + policy.defence + policy.investment + policy.otherServices)
+  const plannedPublicGoods = g(policy.health + policy.prevention + policy.education + policy.defence + policy.investment + policy.otherServices)
+  // Les économies imposées par un plan d'aide : une part en dépenses publiques en moins, une part en impôts en plus.
+  const rescueBase = rescueEffort * BASE.gdp * trend * scale
+  const publicGoods = Math.max(0, plannedPublicGoods - (1 - P.rescueTaxShare) * rescueBase)
+  const publicFactor = plannedPublicGoods > 0 ? publicGoods / plannedPublicGoods : 1
+  const rescueTax = P.rescueTaxShare * rescueBase
   const foodTransfer = (policy.foodSecurity * 12 * population) / 1000 * priceLevel
   const minimaBoost = g(policy.minima)
   const vatRatio = BASE.vatRevenue / BASE.consumption / BASE_POLICY.vat
   const isRatio = BASE.corporateTaxRevenue / (BASE_POLICY.corporateTax * BASE.corporateTaxBase)
   const wealthTaxBase = (w: number) => w * P.wealthTaxBase * Math.exp(-P.wealthTaxAvoidance * policy.wealthTax)
+  // Quand les prélèvements dépassent de beaucoup ceux de 2025, la fraude et le travail au noir progressent.
+  const evasion = init ? 0 : clamp(P.taxEvasion * Math.max(0, prev.taxBurden - prev.taxBurden0), 0, P.taxEvasionMax)
+  const declared = 1 - evasion
   const capitalFlight = clamp(
     prev.capitalFlight * P.flightMemory +
+      P.flightIncomeTax * Math.max(0, policy.incomeTaxTop - 0.05) +
       P.flightWealthTax * Math.max(0, policy.wealthTax - P.wealthTaxThreshold) +
       P.flightInheritance * Math.max(0, policy.inheritanceTax - P.inheritanceThreshold) +
       P.flightCorporate * Math.max(0, policy.corporateTax - P.corporateThreshold),
     0,
     P.flightMax,
   )
+
+  const bankRel = relative(FS.bankDependence, FS.investment)
+  const mobilityRel = relative(FS.mobility, FS.investment)
 
   let gdp = init ? BASE.gdp : prev.gdp * (1 + inflation + productivityGrowth)
   // La TVA dépend de la consommation, qui dépend des revenus : on reprend la consommation du tour précédent.
@@ -301,9 +393,11 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const mixed = BASE.mixedIncome * trend * scale
     const otherProd = g(policy.productionTaxes) * (productivity / initialCarry().productivity)
     const firmAid = g(policy.firmAid)
-    const vatRevenue = vatRatio * policy.vat * lastConsumption
+    const vatRevenue = vatRatio * policy.vat * lastConsumption * declared
     const gos = nominal - vatRevenue - otherProd - grossWages - employerContrib - mixed + firmAid
-    const corporateTax = Math.max(0, policy.corporateTax * isRatio * gos)
+    // Les entreprises mobiles (surtout les grands groupes) déclarent une partie de leurs bénéfices ailleurs quand les capitaux fuient.
+    const shifting = P.profitShifting * capitalFlight * sumSize(bySize((c) => FS.valueAdded[c] * mobilityRel[c]))
+    const corporateTax = Math.max(0, policy.corporateTax * isRatio * gos * (1 - shifting) * declared)
     const firmInterest = prev.firmDebt * loanRate
     const foreignIncome = BASE.foreignIncome * worldIndex * worldPrice
     // Les entreprises distribuent plus quand elles sont peu endettées, moins quand elles le sont trop : leur dette reste proportionnée à l'économie.
@@ -345,13 +439,13 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const employeeContrib = byGroup((k) => wagesOf(k) * BASE.employeeContribRate)
     const csgBase = byGroup((k) => wagesOf(k) + mixed * GP.mixed[k] + pensions * GP.pensions[k] * BASE.csgPensionShare)
     const csgRatio = BASE.csgRevenue / (BASE.grossWages + BASE.mixedIncome + BASE.pensions * BASE.csgPensionShare) / BASE_POLICY.csg
-    const csg = byGroup((k) => csgBase[k] * policy.csg * csgRatio)
+    const csg = byGroup((k) => csgBase[k] * policy.csg * csgRatio * declared)
     const irBase = BASE.incomeTaxRevenue / (BASE.grossWages + BASE.mixedIncome + BASE.pensions + BASE.taxableCapitalIncome)
     const incomeTax = byGroup((k) => {
       const taxable = wagesOf(k) + mixed * GP.mixed[k] + pensions * GP.pensions[k] + (dividendsHome + bankDividends) * GP.dividends[k]
       const rate = irBase * 5 * GP.incomeTax[k] / GP.population[k] * 0.2
       const top = policy.incomeTaxTop * GP.topRate[k]
-      return taxable * (rate + top)
+      return taxable * (rate + top) * declared
     })
     const wealthTax = policy.wealthTax * wealthTaxBase(wealth.g5) + (BASE.ifiRevenue * trend)
     const inheritance = BASE.inheritanceFlows * trend
@@ -366,7 +460,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
         incomeTax[k] +
         (k === 'g5' ? wealthTax : 0) +
         otherHouseholdTaxes * share +
-        foodContribution * (csgBase[k] / sum(csgBase)) +
+        (foodContribution + rescueTax) * (csgBase[k] / sum(csgBase)) +
         mortgageInterest * GP.wages[k]
       return income[k] - taxes
     })
@@ -388,31 +482,37 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       const deviation = disposable[k] - normal(k) - food
       const wealthEffect = P.wealthEffect * (wealth[k] - BASE.householdFinancialWealth * GP.wealth[k] * trend)
       // Les ménages lissent : seule une partie de l'écart de revenu passe tout de suite en consommation.
-      return Math.max(0, (baseC[k] * trend * scale + P.consumptionSmoothing * GP.mpc[k] * deviation + food + wealthEffect) * (1 - world.demandShock))
+      return Math.max(0, (baseC[k] * trend * scale + P.consumptionSmoothing * GP.mpc[k] * deviation + food + wealthEffect) * (1 - demandShock))
     })
     const totalConsumption = sum(consumption)
 
     // Investissement des entreprises et des ménages
     const growthSignal = init ? 0 : real / prev.gdpReal - 1 - (BASE.productivityGrowth + P.acceleratorTrend)
-    const investment =
-      BASE.investment *
-      trend *
+    // Chaque taille d'entreprise réagit à sa façon : les PME dépendent de leur banque, les grands groupes peuvent partir.
+    const firmFactor = bySize((c) =>
       clamp(
         1 +
           P.accelerator * growthSignal -
-          P.investmentRateSensitivity * (loanRate - baseRate) -
+          P.investmentRateSensitivity * bankRel[c] * (loanRate - baseRate) -
           P.investmentCorporateTax * (policy.corporateTax - BASE_POLICY.corporateTax) +
-          P.savingsToFirmsEffect * policy.savingsToFirms -
-          capitalFlight,
+          P.savingsToFirmsEffect * bankRel[c] * policy.savingsToFirms -
+          capitalFlight * mobilityRel[c],
         P.investmentMin,
         P.investmentMax,
       ) *
-      (1 - creditCrunch) *
+      (1 - Math.min(0.9, creditCrunch * bankRel[c])) *
       // Après un défaut, les entreprises investissent moins : tout actif français paraît plus risqué.
       (1 - P.stigmaInvestment * stigma) *
-      (1 - P.demandShockInvestment * world.demandShock) +
-      // Électrifier coûte : bornes, pompes à chaleur, réseaux, véhicules (≈ 15 Md€ par point de rythme en plus).
-      P.electrificationInvestment * 100 * Math.max(0, policy.electrification - BASE_POLICY.electrification) * trend
+      (1 - P.demandShockInvestment * demandShock),
+    )
+    // Une aide en plus (ou en moins) se transforme en partie en investissement : beaucoup pour une PME, peu pour un grand groupe.
+    const aidNow = aidShares(policy.firmAidSmeShare)
+    const aidRef = aidShares(BASE_POLICY.firmAidSmeShare)
+    const aidInvestment = bySize((c) => FS.cashFlowInvestment[c] * (firmAid * aidNow[c] - g(BASE_POLICY.firmAid) * aidRef[c]))
+    // Électrifier coûte : bornes, pompes à chaleur, réseaux, véhicules (≈ 15 Md€ par point de rythme en plus).
+    const electrifyInvestment = P.electrificationInvestment * 100 * Math.max(0, policy.electrification - BASE_POLICY.electrification) * trend
+    const investmentBy = bySize((c) => BASE.investment * trend * FS.investment[c] * firmFactor[c] + aidInvestment[c] + electrifyInvestment * FS.investment[c])
+    const investment = sumSize(investmentBy)
     const housing = BASE.housing * trend * scale * clamp(1 - P.housingRateSensitivity * (rate - baseRate), P.housingMin, P.housingMax) * (1 - creditCrunch)
 
     // Commerce extérieur et énergie
@@ -444,6 +544,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       inheritanceTax,
       otherHouseholdTaxes,
       foodContribution,
+      rescueTax,
       nonTax,
       bceDividend,
     }
@@ -489,6 +590,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       spending,
       revenue,
       firmAid,
+      aidNow,
+      investmentBy,
+      retaliation,
       inheritanceTaxBy,
       wealthTax,
       csgBase,
@@ -542,7 +646,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const flowsList = ([
     { from: 'menages', to: 'entreprises', amount: d.totalConsumption + d.housing, label: 'Consommation et logement' },
     { from: 'entreprises', to: 'menages', amount: d.grossWages + d.mixed + d.dividendsHome, label: 'Salaires, revenus d’indépendants, dividendes' },
-    { from: 'menages', to: 'etat', amount: t.incomeTax + t.wealthTax + t.inheritanceTax + t.otherHouseholdTaxes, label: 'Impôts des ménages' },
+    { from: 'menages', to: 'etat', amount: t.incomeTax + t.wealthTax + t.inheritanceTax + t.otherHouseholdTaxes + t.rescueTax, label: 'Impôts des ménages' },
     { from: 'menages', to: 'secu', amount: t.employeeContributions + t.csg + t.foodContribution, label: 'Cotisations salariales et CSG' },
     { from: 'entreprises', to: 'secu', amount: t.employerContributions, label: 'Cotisations patronales' },
     { from: 'entreprises', to: 'etat', amount: t.tva + t.productionTaxes + t.corporateTax + t.nonTax, label: 'TVA, impôts de production, impôt sur les sociétés' },
@@ -573,6 +677,59 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
 
   const gdpReal = d.real
   const growth = init ? 0.008 : gdpReal / prev.gdpReal - 1
+
+  // — 9. Tension sur la dette : de combien le solde public est-il loin de ce qui stabiliserait la dette ?
+  // Il faudrait un excédent primaire (hors intérêts) de (taux − croissance) × dette ; tout écart fait grossir la dette.
+  const nominalGrowth = init ? BASE.inflationAnchor + BASE.productivityGrowth : gdp / prev.gdp - 1
+  const primaryBalance = -(deficit - d.interest) / gdp
+  const stabilizing = ((effectiveRate - nominalGrowth) / (1 + nominalGrowth)) * (debt / gdp)
+  const stabilityGap = stabilizing - primaryBalance
+  const rawStress = Math.max(0, debt / gdp - P.crisisDebtThreshold) / P.crisisDebtRange + Math.max(0, stabilityGap) / P.crisisGapRange
+  const marketStress = init ? rawStress : P.crisisSmoothing * rawStress + (1 - P.crisisSmoothing) * prev.marketStress
+
+  // — 9 bis. La société : prélèvements, colère, et ce qui rendrait la situation intenable
+  const taxBurden = d.revenue / gdp
+  const taxBurden0 = init ? taxBurden : prev.taxBurden0
+  const poverty0 = init ? dist.poverty : prev.poverty0
+  const medianDrop = init ? 0 : Math.max(0, 1 - dist.median / prev.medianIncome)
+  const anger =
+    medianDrop / P.unrestIncomeDrop +
+    Math.max(0, taxBurden - taxBurden0) / P.unrestTaxRange +
+    Math.max(0, d.unemployment - P.unrestUnemployment) / P.unrestUnemploymentRange +
+    Math.max(0, inflation - P.unrestInflation) / P.unrestInflationRange +
+    Math.max(0, dist.poverty - poverty0) / P.unrestPovertyRange +
+    // L'austérité imposée nourrit la colère tant que le plan d'aide dure.
+    (rescueYears > 0 ? rescueStep * (P.rescueYears - rescueYears + 1) : 0) / P.unrestAusterityRange
+  const discontent = init ? 0 : P.unrestMemory * prev.discontent + (1 - P.unrestMemory) * anger
+  const ending: Ending | null = init
+    ? null
+    : discontent >= 1
+      ? 'revolte'
+      : rescueYears === 0 && (premium >= P.bankruptcyPremium || d.interest / d.revenue >= P.bankruptcyInterestShare)
+        ? 'faillite'
+        : inflation >= P.hyperinflation
+          ? 'hyperinflation'
+          : d.unemployment >= P.depressionUnemployment
+            ? 'depression'
+            : null
+
+  // — 10. Les entreprises par taille : qui investit, qui exporte, qui emploie
+  const lowWageRel = relative(FS.lowWageExposure, FS.employment)
+  const tariffRel = relative(FS.tariffExposure, FS.exports)
+  const energyRel = relative(FS.energyIntensity, FS.exports)
+  const normalize = (w: BySize, total: number) => bySize((c) => (w[c] / sumSize(w)) * total)
+  const jobsBy = normalize(bySize((c) => FS.employment[c] * (1 - P.smicJobLoss * policy.smicBoost * lowWageRel[c])), d.employment)
+  const exportsBy = normalize(
+    bySize((c) => FS.exports[c] * (1 - d.retaliation * tariffRel[c]) * (1 - P.electricityExportLoss * (electricityPrice - 1) * energyRel[c])),
+    d.exports,
+  )
+  const taxBy = normalize(bySize((c) => FS.corporateTaxShare[c] * (1 - P.profitShifting * capitalFlight * mobilityRel[c])), d.corporateTax)
+  const firmsBySize = Object.fromEntries(
+    SIZES.map((c) => [
+      c,
+      { employment: jobsBy[c], investment: d.investmentBy[c], exports: exportsBy[c], profits: (d.gos - d.firmAid) * FS.valueAdded[c] + d.firmAid * d.aidNow[c], corporateTax: taxBy[c] },
+    ]),
+  ) as YearState['firms']
   const state: YearState = {
     year,
     gdp,
@@ -605,11 +762,11 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     riskPremium,
     budget: {
       Retraites: d.transfers.pensions,
-      Santé: g(policy.health + policy.prevention),
-      Éducation: g(policy.education),
-      Défense: g(policy.defence),
-      'Investissement public': g(policy.investment),
-      'Autres services publics': g(policy.otherServices),
+      Santé: g(policy.health + policy.prevention) * publicFactor,
+      Éducation: g(policy.education) * publicFactor,
+      Défense: g(policy.defence) * publicFactor,
+      'Investissement public': g(policy.investment) * publicFactor,
+      'Autres services publics': g(policy.otherServices) * publicFactor,
       'Chômage, famille, minima': d.transfers.unemploymentBenefits + d.transfers.family + d.transfers.minima + d.transfers.otherTransfers,
       'Sécurité sociale de l’alimentation': d.transfers.foodTransfer,
       'Aides aux entreprises': d.firmAid,
@@ -625,11 +782,12 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       'Impôts de production': t.productionTaxes,
       'Patrimoine et succession': t.wealthTax + t.inheritanceTax,
       'Cotisation alimentation': t.foodContribution,
+      'Plan d’aide : impôts en plus': t.rescueTax,
       'Autres recettes': t.otherHouseholdTaxes + t.nonTax + t.bceDividend,
     },
     secu: {
       Retraite: { revenue: (t.employerContributions + t.employeeContributions) * 0.55 + t.csg * 0.1, spending: d.transfers.pensions },
-      Maladie: { revenue: (t.employerContributions + t.employeeContributions) * 0.33 + t.csg * 0.6 + t.tva * 0.25, spending: g(policy.health + policy.prevention) },
+      Maladie: { revenue: (t.employerContributions + t.employeeContributions) * 0.33 + t.csg * 0.6 + t.tva * 0.25, spending: g(policy.health + policy.prevention) * publicFactor },
       Famille: { revenue: (t.employerContributions + t.employeeContributions) * 0.07 + t.csg * 0.1, spending: d.transfers.family },
       Chômage: { revenue: (t.employerContributions + t.employeeContributions) * 0.05 + t.csg * 0.05, spending: d.transfers.unemploymentBenefits },
       ...(t.foodContribution > 0 ? { Alimentation: { revenue: t.foodContribution, spending: d.transfers.foodTransfer } } : {}),
@@ -656,6 +814,15 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     firmDebt,
     bankCapital,
     creditCrunch,
+    firms: firmsBySize,
+    marketStress,
+    debtCrisis,
+    rescueYears,
+    rescueEffort,
+    taxBurden,
+    evasion,
+    discontent,
+    ending,
     flows: flowsList,
     closure,
     notes,
@@ -703,6 +870,17 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     healthStock,
     capitalFlight,
     consumption: d.consumption,
+    marketStress,
+    crisisCooldown,
+    rescueYears,
+    rescueEffort,
+    taxBurden,
+    taxBurden0,
+    poverty0,
+    medianIncome: dist.median,
+    discontent,
+    stabilityGap,
+    rescueStep,
   }
   return { state, carry, anchors: anchorsOut }
 }

@@ -11,7 +11,8 @@ import { Kpis } from './ui/Kpis'
 import { KPIS } from './ui/indicators'
 import { formatLever, LEVER_GROUPS } from './ui/levers'
 import { MISSIONS, type Mission } from './ui/missions'
-import { BudgetPanel, DebtPanel, GroupsPanel, JournalPanel, WorldPanel } from './ui/Panels'
+import { BudgetPanel, DebtPanel, FirmsPanel, GroupsPanel, JournalPanel, WorldPanel } from './ui/Panels'
+import { ENDINGS } from './ui/endings'
 import { focusLine } from './ui/story'
 import { Trajectory } from './ui/Trajectory'
 
@@ -23,17 +24,18 @@ const LONG_RUN = 2050
 const MISSION_YEARS = 10
 const INTRO_KEY = 'france-sim:intro-vue'
 
-type Tab = 'groupes' | 'courbes' | 'budget' | 'dette' | 'monde' | 'journal'
+type Tab = 'groupes' | 'courbes' | 'budget' | 'dette' | 'entreprises' | 'monde' | 'journal'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'groupes', label: 'Qui gagne, qui perd' },
   { id: 'courbes', label: 'Courbes' },
   { id: 'budget', label: 'Budget' },
   { id: 'dette', label: 'Dette' },
+  { id: 'entreprises', label: 'Entreprises' },
   { id: 'monde', label: 'Énergie et monde' },
   { id: 'journal', label: 'Journal' },
 ]
 
-const ACTOR_TAB: Partial<Record<Actor, Tab>> = { menages: 'groupes', etat: 'budget', secu: 'budget', bce: 'dette', banques: 'dette', monde: 'monde', energie: 'monde', entreprises: 'budget' }
+const ACTOR_TAB: Partial<Record<Actor, Tab>> = { menages: 'groupes', etat: 'budget', secu: 'budget', bce: 'dette', banques: 'dette', monde: 'monde', energie: 'monde', entreprises: 'entreprises' }
 
 type Verdict = { mission: Mission; start: number }
 
@@ -64,6 +66,12 @@ function App() {
   const [overrides, setOverrides] = useState<Overrides>({})
   const [brain, setBrain] = useState<{ focus: string | null } | null>(null)
   const [intro, setIntro] = useState(() => !linked && !introSeen())
+  /** Les années de crise de la dette auxquelles le joueur a déjà répondu. */
+  const [handled, setHandled] = useState<number[]>([])
+  /** Le joueur a choisi de continuer après une défaite (mode bac à sable). */
+  const [sandbox, setSandbox] = useState(false)
+  /** Le levier dont l'explication est ouverte (au clic, pas au survol : rien ne bouge sous la souris). */
+  const [hint, setHint] = useState<string | null>(null)
 
   const params = overrides
   const states = useMemo(() => simulate({ decisions, events, until: year, params }), [decisions, events, year, params])
@@ -98,11 +106,17 @@ function App() {
       deficit: withDraft.deficit - without.deficit,
       unemployment: withDraft.unemployment - without.unemployment,
       poverty: withDraft.poverty - without.poverty,
+      discontent: withDraft.discontent,
+      ending: withDraft.ending,
     }
   }, [hasDraft, decisions, events, year, draft, params])
 
   // Avancer le temps, une année à la fois, pour voir la France changer.
-  const running = target !== null && year < target
+  // Une crise de la dette met la partie en pause : le joueur doit choisir sa réponse.
+  const lost = states.find((x) => x.ending)
+  const gameOver = !sandbox && lost && year >= lost.year ? lost : null
+  const crisisPending = s.debtCrisis && !handled.includes(year) && !gameOver
+  const running = target !== null && year < target && !crisisPending && !gameOver
   // Les longs voyages vont plus vite : on voit défiler les années sans attendre.
   const delay = target !== null && target - year > 6 ? 140 : 380
   useEffect(() => {
@@ -159,6 +173,8 @@ function App() {
     setYear(START)
     setTarget(null)
     setVerdict(null)
+    setHandled([])
+    setSandbox(false)
   }
 
   const fire = (id: string) => {
@@ -173,6 +189,8 @@ function App() {
     setDraft({})
     setYear(START)
     setTarget(START + 1 + MISSION_YEARS)
+    setHandled([])
+    setSandbox(false)
     setVerdict({ mission: m, start: START + 1 })
   }
 
@@ -189,7 +207,27 @@ function App() {
     })
   }
 
-  const showVerdict = verdict && !running && year >= verdict.start + MISSION_YEARS
+  const showVerdict = verdict && !running && !crisisPending && !gameOver && year >= verdict.start + MISSION_YEARS
+
+  // Revenir juste avant la dernière décision, pour tenter autre chose.
+  const undoLast = () => {
+    const last = [...decisions].sort((x, y) => y.year - x.year)[0]
+    if (!last) {
+      return
+    }
+    setDecisions((ds) => ds.filter((d) => d !== last))
+    setYear(Math.max(START, last.year - 1))
+    setTarget(null)
+    setHandled((h) => h.filter((y) => y < last.year))
+    setVerdict(null)
+  }
+
+  const respond = (patch: Partial<Policy> | null) => {
+    if (patch) {
+      setDecisions((ds) => [...ds, { year: year + 1, patch }])
+    }
+    setHandled((h) => [...h, year])
+  }
 
   return (
     <div className="app">
@@ -270,6 +308,10 @@ function App() {
               <span className={preview.deficit > 0 ? 'bad' : 'good'}>Déficit {sbn(preview.deficit)}</span>
               <span className={preview.unemployment > 0 ? 'bad' : 'good'}>Chômage {num(preview.unemployment * 100, 2)} pt</span>
               <span className={preview.poverty > 0 ? 'bad' : 'good'}>Pauvreté {num(preview.poverty * 100, 2)} pt</span>
+              <span className={preview.discontent >= 0.6 ? 'bad' : ''}>
+                Climat social {preview.discontent >= 1 ? 'explosif' : preview.discontent >= 0.6 ? 'tendu' : 'calme'} ({num(preview.discontent, 2)})
+              </span>
+              {preview.ending ? <strong className="bad">⚠️ {ENDINGS[preview.ending].title} : la partie serait perdue en {year + 1}.</strong> : null}
               <button type="button" className="ghost small" onClick={() => setDraft({})}>
                 Annuler les changements
               </button>
@@ -284,13 +326,27 @@ function App() {
                 const v = policy[l.key] as number
                 const moved = Math.abs(v - (BASE_POLICY[l.key] as number)) > 1e-9
                 return (
-                  <label key={l.key} className={l.key in draft ? 'lever is-draft' : moved ? 'lever is-moved' : 'lever'} title={l.hint}>
+                  <label key={l.key} className={`lever${l.key in draft ? ' is-draft' : moved ? ' is-moved' : ''}${hint === l.key ? ' show-hint' : ''}`}>
                     <span className="lever-top">
                       <span>{l.label}</span>
-                      <strong>{formatLever(l, v)}</strong>
+                      <span className="lever-value">
+                        <strong>{formatLever(l, v)}</strong>
+                        <button
+                          type="button"
+                          className="hint-toggle"
+                          aria-label={`Explication : ${l.label}`}
+                          aria-expanded={hint === l.key}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setHint(hint === l.key ? null : l.key)
+                          }}
+                        >
+                          ⓘ
+                        </button>
+                      </span>
                     </span>
                     <input type="range" min={l.min} max={l.max} step={l.step} value={v} onChange={(e) => setLever(l.key, Number(e.target.value))} />
-                    <small>{l.hint}</small>
+                    {hint === l.key ? <small>{l.hint}</small> : null}
                   </label>
                 )
               })}
@@ -346,9 +402,12 @@ function App() {
           <div className="map-card">
             <div className="map-head">
               <h2>Où circule l’argent en {year}</h2>
-              <p>Plus un trait est épais et rapide, plus le flux est gros. Touchez un acteur pour le détail.</p>
+              <p>Plus un trait est épais et rapide, plus le flux est gros. Cliquez sur un acteur pour voir ce qui entre et ce qui sort.</p>
             </div>
-            <FlowMap state={s} onPick={(a) => setTab(ACTOR_TAB[a] ?? 'budget')} />
+            <FlowMap state={s} base={changed ? b : null} onOpen={(a) => {
+              setTab(ACTOR_TAB[a] ?? 'budget')
+              document.querySelector('.side')?.scrollIntoView({ behavior: 'smooth' })
+            }} />
           </div>
           <div className="events">
             <h2>Le monde réagit</h2>
@@ -375,6 +434,7 @@ function App() {
           {tab === 'courbes' ? <Trajectory states={states} base={base} decisions={decisions} events={events} reliableUntil={RELIABLE_UNTIL} /> : null}
           {tab === 'budget' ? <BudgetPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'dette' ? <DebtPanel s={s} b={b} changed={changed} /> : null}
+          {tab === 'entreprises' ? <FirmsPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'monde' ? <WorldPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'journal' ? <JournalPanel states={states} base={base} /> : null}
         </section>
@@ -406,6 +466,117 @@ function App() {
       {verdict && running ? (
         <div className="playing-banner">
           {verdict.mission.icon} {verdict.mission.title} — la France avance… {year}
+        </div>
+      ) : null}
+
+      {gameOver && gameOver.ending ? (
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal ending" role="dialog" aria-modal="true" aria-label="Partie perdue">
+            <header>
+              <div>
+                <p className="eyebrow">
+                  {ENDINGS[gameOver.ending].icon} Partie perdue · {gameOver.year}
+                </p>
+                <h2>{ENDINGS[gameOver.ending].title}</h2>
+              </div>
+            </header>
+            <p className="belief">{ENDINGS[gameOver.ending].text}</p>
+            <h3>Comment on en est arrivé là</h3>
+            <ul className="mechanism">
+              {ENDINGS[gameOver.ending].chain.map((m) => (
+                <li key={m}>{m}</li>
+              ))}
+            </ul>
+            <dl className="facts ending-facts">
+              <div>
+                <dt>Climat social (1 = révolte)</dt>
+                <dd>{num(gameOver.discontent, 2)}</dd>
+              </div>
+              <div>
+                <dt>Prélèvements publics</dt>
+                <dd>
+                  {num(gameOver.taxBurden * 100, 1)} % du PIB ({num((gameOver.taxBurden - states[0].taxBurden) * 100, 1)} pt depuis 2025)
+                </dd>
+              </div>
+              <div>
+                <dt>Niveau de vie médian</dt>
+                <dd>{num(((gameOver.medianIncome / states[0].medianIncome) - 1) * 100, 1)} % depuis 2025</dd>
+              </div>
+              <div>
+                <dt>Chômage · inflation</dt>
+                <dd>
+                  {num(gameOver.unemployment * 100, 1)} % · {num(gameOver.inflation * 100, 1)} %
+                </dd>
+              </div>
+              <div>
+                <dt>Dette · taux à 10 ans</dt>
+                <dd>
+                  {num(gameOver.debtRatio * 100, 0)} % du PIB · {num(gameOver.rate * 100, 1)} %
+                </dd>
+              </div>
+              {gameOver.evasion > 0.01 ? (
+                <div>
+                  <dt>Impôts qui échappent au fisc</dt>
+                  <dd>{num(gameOver.evasion * 100, 0)} %</dd>
+                </div>
+              ) : null}
+            </dl>
+            <div className="verdict-actions">
+              {decisions.length ? (
+                <button type="button" className="primary" onClick={undoLast}>
+                  ↶ Revenir avant ma dernière décision
+                </button>
+              ) : null}
+              <button type="button" className={decisions.length ? 'ghost' : 'primary'} onClick={reset}>
+                ↺ Recommencer en 2025
+              </button>
+              <button type="button" className="ghost" onClick={() => setSandbox(true)}>
+                Continuer quand même (bac à sable)
+              </button>
+              <button type="button" className="ghost" onClick={() => setBrain({ focus: 'ending' })}>
+                🧠 Voir ce qui y mène
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {crisisPending ? (
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal crisis" role="dialog" aria-modal="true" aria-label="Crise de la dette">
+            <header>
+              <div>
+                <p className="eyebrow">⚠️ Crise de la dette · {year}</p>
+                <h2>Les prêteurs ne suivent plus</h2>
+              </div>
+            </header>
+            <p>
+              La dette atteint {num(s.debtRatio * 100, 0)} % du PIB et le solde public est trop loin de ce qui la stabiliserait. Les marchés exigent{' '}
+              {num(s.rate * 100, 1)} % pour prêter à 10 ans, les banques et l’assurance-vie perdent une partie de la valeur de leurs obligations. Que faites-vous ?
+            </p>
+            <div className="crisis-options">
+              <button type="button" className="crisis-option" onClick={() => respond(policyAt(decisions, year + 1).crisisResponse === 1 ? { crisisResponse: 0 } : null)}>
+                <strong>🇪🇺 Accepter le plan d’aide européen</strong>
+                <small>
+                  Le MES prête et la BCE rachète la dette : les taux redescendent. En échange, des économies imposées pendant 3 ans (dépenses en moins, impôts en plus). C’est ce
+                  qu’ont vécu la Grèce, l’Irlande et le Portugal.
+                </small>
+              </button>
+              <button type="button" className="crisis-option" onClick={() => respond({ crisisResponse: 1 })}>
+                <strong>✋ Refuser l’aide et garder la main</strong>
+                <small>Pas d’économies imposées, mais la France continue d’emprunter au prix fort : la dette grossit plus vite, et une nouvelle crise peut suivre.</small>
+              </button>
+              <button type="button" className="crisis-option" onClick={() => respond({ crisisResponse: 1, cancelShare: 0.5, cancelHolder: 'monde' })}>
+                <strong>✂️ Faire défaut sur la moitié de la dette étrangère</strong>
+                <small>La dette baisse d’un coup, mais la France perd la confiance des prêteurs pour des années et devra trouver en France l’argent qu’ils prêtaient.</small>
+              </button>
+              <button type="button" className="crisis-option" onClick={() => respond({ crisisResponse: 1, cancelShare: 0.3, cancelHolder: 'assureurs' })}>
+                <strong>🏦 Faire payer les épargnants (comme Chypre en 2013)</strong>
+                <small>30 % de la dette détenue par l’assurance-vie est effacée : ce sont les économies des ménages, surtout aisés, qui paient.</small>
+              </button>
+            </div>
+            <p className="note">Votre choix s’applique dès {year + 1}. Sans réponse de votre part (idées reçues, simulations), le modèle suppose que la France accepte le plan. Le journal et l’onglet « Dette » montrent la suite.</p>
+          </div>
         </div>
       ) : null}
 
