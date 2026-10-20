@@ -177,8 +177,9 @@ describe('influence : la puissance rejaillit sur tout le reste', () => {
     expect(at(base, 2035).influence).toBeGreaterThan(0.9)
   })
 
-  it('une France influente paie un peu moins cher sa dette', () => {
-    const strong = simulate({ decisions: [{ year: 2026, patch: { softPower: 20, developmentAid: 30 } }], events: [], until: 2032 })
+  it('une France influente paie un peu moins cher sa dette (à dépense égale)', () => {
+    // Les 14 Md€ de rayonnement en plus sont pris sur les autres services publics : seule l'influence change.
+    const strong = simulate({ decisions: [{ year: 2026, patch: { softPower: 20, otherServices: 246, developmentAid: 30 } }], events: [], until: 2032 })
     const b = simulate({ decisions: [{ year: 2026, patch: { developmentAid: 30 } }], events: [], until: 2032 })
     expect(at(strong, 2032).riskPremium).toBeLessThan(at(b, 2032).riskPremium)
   })

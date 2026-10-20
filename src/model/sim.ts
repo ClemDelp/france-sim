@@ -486,7 +486,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const scale = laborForce / (BASE.workingAge * BASE.participation)
   /** Une dépense publique fixée en Md€ de 2025 suit la croissance de l'économie et des prix : à politique inchangée, son poids dans le PIB reste stable. */
   const g = (bn: number) => bn * trend * scale
-  const plannedPublicGoods = g(policy.health + policy.prevention + policy.education + policy.defence + policy.investment + policy.otherServices)
+  // Le rayonnement culturel au-delà de celui de 2025 (audiovisuel extérieur, réseau diplomatique, universités) est un service public de plus.
+  const plannedPublicGoods = g(policy.health + policy.prevention + policy.education + policy.defence + policy.investment + policy.otherServices + policy.softPower - REF.softPower)
   // Les économies imposées par un plan d'aide : une part en dépenses publiques en moins, une part en impôts en plus.
   const rescueBase = rescueEffort * BASE.gdp * trend * scale
   // Adaptation au-delà de l'effort de départ, et reconstruction après les catastrophes : des travaux publics en plus.
