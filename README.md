@@ -7,6 +7,18 @@ et ce que changent vraiment des idées qui paraissent simples (« taxons les ric
 
 C’est un **simulateur pédagogique** : il montre des mécanismes justes et des ordres de grandeur, pas des prévisions.
 
+## Documentation
+
+La documentation complète est dans [`docs/`](docs/index.html) : ouvrez `docs/index.html` dans un navigateur.
+
+| Pour… | Page |
+| --- | --- |
+| Comprendre le modèle en schémas | [Comprendre le modèle](docs/modele.html), [glossaire](docs/glossaire.html) |
+| Modifier un paramètre sans coder | [Modifier un paramètre](docs/parametres.html), [tester son changement](docs/tester.html), [catalogue des paramètres](docs/catalogue.html) |
+| Développer le jeu | [Guide du développeur](docs/developpeurs.html), [le moteur pas à pas](docs/moteur.html), [recettes](docs/recettes.html) |
+
+Le catalogue et la page « Comprendre le modèle » sont générés à partir de `modele/*.csv` et de `docs/COMMENT-CA-MARCHE.md` : `npm run docs`.
+
 ## Jouer
 
 ```bash
@@ -103,4 +115,4 @@ et cohérence des fichiers du modèle (chaque paramètre utilisé, chaque lien d
 
 ## Limites connues
 
-Voir la fin de [docs/COMMENT-CA-MARCHE.md](docs/COMMENT-CA-MARCHE.md#8-ce-que-le-modèle-ne-sait-pas-faire-limites-connues).
+Voir la fin de [docs/COMMENT-CA-MARCHE.md](docs/COMMENT-CA-MARCHE.md#17-ce-que-le-modèle-ne-sait-pas-faire-limites-connues).
