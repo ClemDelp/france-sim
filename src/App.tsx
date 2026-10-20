@@ -14,6 +14,15 @@ import { MISSIONS, type Mission } from './ui/missions'
 import { BudgetPanel, DebtPanel, FirmsPanel, GroupsPanel, JournalPanel, WorldPanel } from './ui/Panels'
 import { ENDINGS } from './ui/endings'
 import { focusLine } from './ui/story'
+import { ACHIEVEMENTS } from './game/achievements'
+import { adviseDraft, adviseState } from './game/advisors'
+import { headline } from './game/headlines'
+import { evaluate, SCENARIOS, type Scenario } from './game/scenarios'
+import { electionAt, isElectionYear, nextElection, popularity } from './game/score'
+import { load, save } from './game/storage'
+import { Briefing, Home, Stars } from './ui/game/Home'
+import { Advisors, Confetti, Counter, Newspaper, Objectives, Popularity, Toasts } from './ui/game/Hud'
+import { Tour, type TourStep } from './ui/game/Tour'
 import { Robustness } from './ui/Robustness'
 import { FOCUS_METRICS, KPI_FOCUS } from './ui/robustnessMetrics'
 import { Trajectory } from './ui/Trajectory'
@@ -24,7 +33,6 @@ const END = 2075
 const RELIABLE_UNTIL = 2040
 const LONG_RUN = 2050
 const MISSION_YEARS = 10
-const INTRO_KEY = 'france-sim:intro-vue'
 
 type Tab = 'groupes' | 'courbes' | 'budget' | 'dette' | 'entreprises' | 'monde' | 'journal'
 const TABS: { id: Tab; label: string }[] = [
@@ -44,13 +52,10 @@ type Verdict = { mission: Mission; start: number }
 /** Un lien #idee=<id> lance directement une idée reçue (pratique pour la partager). */
 const linked = MISSIONS.find((m) => m.id === new URLSearchParams(window.location.hash.slice(1)).get('idee'))
 
-function introSeen(): boolean {
-  try {
-    return window.localStorage.getItem(INTRO_KEY) === '1'
-  } catch {
-    return false
-  }
-}
+/** Comment on joue : partie libre (avec élections), idée reçue (10 ans, sans élection), ou scénario à objectifs. */
+type Mode = { kind: 'free' } | { kind: 'myth' } | { kind: 'scenario'; scenario: Scenario }
+
+const STAR_TITLES = ['Mission échouée', 'Peut mieux faire', 'Beau mandat', 'Mandat historique !']
 
 /** Les quatre chiffres qui résument l'effet d'une variante du modèle. */
 const IMPACT_KPIS = ['gdp', 'unemployment', 'debt', 'poverty']
@@ -67,7 +72,17 @@ function App() {
   const [leversOpen, setLeversOpen] = useState(false)
   const [overrides, setOverrides] = useState<Overrides>({})
   const [brain, setBrain] = useState<{ focus: string | null; view?: View; query?: string } | null>(null)
-  const [intro, setIntro] = useState(() => !linked && !introSeen())
+  const [mode, setMode] = useState<Mode>(linked ? { kind: 'myth' } : { kind: 'free' })
+  const [home, setHome] = useState(!linked)
+  const [briefing, setBriefing] = useState<Scenario | null>(null)
+  const [tour, setTour] = useState(false)
+  const [playerName, setPlayerName] = useState(() => load('name', ''))
+  const [stars, setStars] = useState<Record<string, number>>(() => load('stars', {}))
+  const [seen, setSeen] = useState<string[]>(() => load('achievements', []))
+  const [myths, setMyths] = useState(() => load('myths', 0))
+  const [openedModel, setOpenedModel] = useState(() => load('openedModel', false))
+  /** Les élections dont le joueur a vu le résultat. */
+  const [electionsSeen, setElectionsSeen] = useState<number[]>([])
   /** Les années de crise de la dette auxquelles le joueur a déjà répondu. */
   const [handled, setHandled] = useState<number[]>([])
   /** Le joueur a choisi de continuer après une défaite (mode bac à sable). */
@@ -110,6 +125,7 @@ function App() {
       poverty: withDraft.poverty - without.poverty,
       discontent: withDraft.discontent,
       ending: withDraft.ending,
+      inflation: withDraft.inflation - without.inflation,
     }
   }, [hasDraft, decisions, events, year, draft, params])
 
@@ -117,8 +133,14 @@ function App() {
   // Une crise de la dette met la partie en pause : le joueur doit choisir sa réponse.
   const lost = states.find((x) => x.ending)
   const gameOver = !sandbox && lost && year >= lost.year ? lost : null
-  const crisisPending = s.debtCrisis && !handled.includes(year) && !gameOver
-  const running = target !== null && year < target && !crisisPending && !gameOver
+  // Une élection tous les cinq ans (sauf pour les idées reçues et en bac à sable) : on regarde le résultat avant de continuer.
+  const elections = mode.kind !== 'myth' && !sandbox
+  const election = elections && isElectionYear(year) && year > START && !electionsSeen.includes(year) && !gameOver ? electionAt(s) : null
+  const crisisPending = s.debtCrisis && !handled.includes(year) && !gameOver && !election
+  const scenario = mode.kind === 'scenario' ? mode.scenario : null
+  const evaluation = scenario ? evaluate(scenario, states) : null
+  const scenarioOver = !!scenario && !!evaluation && (evaluation.finished || !!gameOver || (!!election && !election.won))
+  const running = target !== null && year < target && !crisisPending && !gameOver && !election
   // Les longs voyages vont plus vite : on voit défiler les années sans attendre.
   const delay = target !== null && target - year > 6 ? 140 : 380
   useEffect(() => {
@@ -140,14 +162,87 @@ function App() {
     }
   }, [verdict, events, params])
 
-  const closeIntro = () => {
-    setIntro(false)
-    try {
-      window.localStorage.setItem(INTRO_KEY, '1')
-    } catch {
-      // Le navigateur refuse le stockage : on reverra simplement l'introduction.
+  const pop = popularity(s)
+  const upcoming = elections ? nextElection(year) : null
+  const news = headline(s, states.at(-2), elections)
+  const advice = preview ? adviseDraft(preview) : adviseState(s, pop, upcoming ? upcoming - year : 99)
+
+  // Les étoiles du scénario en cours comptent dès qu'il est terminé (et on garde le meilleur score).
+  const earnedStars = scenario && evaluation && scenarioOver ? (gameOver || (election && !election.won) ? 0 : evaluation.stars) : null
+  const allStars = useMemo(() => (scenario && earnedStars !== null ? { ...stars, [scenario.id]: Math.max(stars[scenario.id] ?? 0, earnedStars) } : stars), [scenario, earnedStars, stars])
+  useEffect(() => {
+    save('stars', allStars)
+  }, [allStars])
+
+  // Les succès : ceux de la partie en cours, plus ceux déjà gagnés. Les nouveaux s'affichent quelques secondes.
+  const earnedNow = ACHIEVEMENTS.filter((a) => a.check({ states, elections: mode.kind !== 'myth', lost: !!gameOver || (!!election && !election.won), stars: allStars, myths, openedModel })).map((a) => a.id)
+  const fresh = earnedNow.filter((id) => !seen.includes(id))
+  const freshKey = fresh.join(',')
+  const earned = [...new Set([...seen, ...earnedNow])]
+  useEffect(() => {
+    if (!freshKey) {
+      return
+    }
+    const id = window.setTimeout(() => {
+      setSeen((old) => {
+        const next = [...new Set([...old, ...freshKey.split(',')])]
+        save('achievements', next)
+        return next
+      })
+    }, 4500)
+    return () => window.clearTimeout(id)
+  }, [freshKey])
+
+  const openBrain = (b: { focus: string | null; view?: View; query?: string }) => {
+    setBrain(b)
+    if (!openedModel) {
+      setOpenedModel(true)
+      save('openedModel', true)
     }
   }
+
+  const begin = (next: Mode, eventsAtStart: FiredEvent[] = []) => {
+    setMode(next)
+    setDecisions([])
+    setEvents(eventsAtStart)
+    setDraft({})
+    setYear(START)
+    setTarget(null)
+    setVerdict(null)
+    setHandled([])
+    setSandbox(false)
+    setElectionsSeen([])
+    setHome(false)
+    setBriefing(null)
+  }
+
+  const startScenario = (sc: Scenario) => begin({ kind: 'scenario', scenario: sc }, sc.events)
+
+  const startTutorial = () => {
+    begin({ kind: 'free' })
+    setLeversOpen(true)
+    setTour(true)
+  }
+
+  const recordStars = () => setStars(allStars)
+
+  const tourSteps: TourStep[] = [
+    {
+      title: `Bienvenue, ${playerName || 'Président·e'} !`,
+      text: 'Vous venez d’arriver à l’Élysée. Chaque décision que vous prendrez fera bouger la France entière : l’emploi, les prix, la dette, la pauvreté, la colère… Voici comment piloter le pays.',
+    },
+    { target: '.kpis', title: 'Votre tableau de bord', text: 'Les chiffres clés du pays, et leur évolution. Cliquez sur l’un d’eux pour comprendre ce qui le fait monter ou baisser.' },
+    { target: '.popularity', title: 'Votre popularité', text: 'Elle suit le climat social. Élection en 2027 puis tous les cinq ans : sous 40 % de popularité, vous êtes battu.' },
+    { target: '.levers', title: 'Vos leviers', text: 'Impôts, dépenses, retraites, énergie, commerce, dette… Bougez un curseur : rien ne change tant que vous n’avancez pas dans le temps. Le ⓘ explique chaque levier.' },
+    { target: '.advisors', title: 'Votre gouvernement', text: 'Vos ministres réagissent à chaque décision avant que vous la preniez : déficit, emploi, pauvreté, colère. Écoutez-les… ou pas.' },
+    { target: '.time-buttons', title: 'Le temps', text: 'Avancez d’un an pour voir l’effet de vos choix, ou de plusieurs années d’un coup. Le jeu s’arrête de lui-même en cas de crise ou d’élection.' },
+    { target: '.newspaper', title: 'La une du jour', text: 'Chaque année, la presse résume ce qui s’est passé. Le journal complet est dans l’onglet « Journal ».' },
+    { target: '.map-card', title: 'L’argent du pays', text: 'Qui paie qui : ménages, entreprises, État, Sécu, banques, reste du monde. En vert ou rouge, ce que vos décisions ont changé.' },
+    { target: '.events', title: 'Le monde ne vous attend pas', text: 'Choc pétrolier, crise financière, pandémie… Déclenchez-les pour tester la solidité du pays.' },
+    { target: '.side', title: 'Les analyses', text: 'Qui gagne, qui perd ; le budget ; la dette ; les entreprises ; les courbes sur toute la partie.' },
+    { target: '.brain-button', title: 'Sous le capot', text: 'Le graphe de toutes les causes, les 350 paramètres sourcés, et le modèle face au passé. Tout est ouvert et modifiable.' },
+    { title: 'À vous de jouer !', text: 'Conseil : commencez par le scénario « Premier mandat » depuis le menu 🏠. Et souvenez-vous : on peut toujours revenir avant sa dernière décision.' },
+  ]
 
   const setOverride = (id: string, value: number | null) =>
     setOverrides((o) => {
@@ -160,24 +255,16 @@ function App() {
       return next
     })
 
+  const last = scenario ? scenario.end : END
   const advance = (years: number) => {
     if (hasDraft) {
       setDecisions((ds) => [...ds, { year: year + 1, patch: draft }])
       setDraft({})
     }
-    setTarget(Math.min(END, year + years))
+    setTarget(Math.min(last, year + years))
   }
 
-  const reset = () => {
-    setDecisions([])
-    setEvents([])
-    setDraft({})
-    setYear(START)
-    setTarget(null)
-    setVerdict(null)
-    setHandled([])
-    setSandbox(false)
-  }
+  const reset = () => (scenario ? startScenario(scenario) : begin({ kind: 'free' }))
 
   const fire = (id: string) => {
     setEvents((es) => [...es, { year: year + 1, id }])
@@ -186,14 +273,14 @@ function App() {
 
   const play = (m: Mission) => {
     setMissionsOpen(false)
+    begin({ kind: 'myth' })
     setDecisions([{ year: START + 1, patch: m.patch }])
-    setEvents([])
-    setDraft({})
-    setYear(START)
     setTarget(START + 1 + MISSION_YEARS)
-    setHandled([])
-    setSandbox(false)
     setVerdict({ mission: m, start: START + 1 })
+    setMyths((n) => {
+      save('myths', n + 1)
+      return n + 1
+    })
   }
 
   const setLever = (key: PolicyKey, value: number) => {
@@ -213,14 +300,15 @@ function App() {
 
   // Revenir juste avant la dernière décision, pour tenter autre chose.
   const undoLast = () => {
-    const last = [...decisions].sort((x, y) => y.year - x.year)[0]
-    if (!last) {
+    const latest = [...decisions].sort((x, y) => y.year - x.year)[0]
+    if (!latest) {
       return
     }
-    setDecisions((ds) => ds.filter((d) => d !== last))
-    setYear(Math.max(START, last.year - 1))
+    setDecisions((ds) => ds.filter((d) => d !== latest))
+    setYear(Math.max(START, latest.year - 1))
     setTarget(null)
-    setHandled((h) => h.filter((y) => y < last.year))
+    setHandled((h) => h.filter((y) => y < latest.year))
+    setElectionsSeen((e) => e.filter((y) => y < latest.year))
     setVerdict(null)
   }
 
@@ -234,15 +322,15 @@ function App() {
   return (
     <div className="app">
       <header className="top">
-        <div className="brand">
+        <button type="button" className="brand" onClick={() => setHome(true)} title="Menu">
           <span className="logo">🇫🇷</span>
           <div>
             <strong>France·Sim</strong>
-            <small>Comment marche vraiment un pays ?</small>
+            <small>{playerName ? `Président·e ${playerName}` : 'Comment marche vraiment un pays ?'}</small>
           </div>
-        </div>
+        </button>
         <div className="clock">
-          <span className="year" title={year > RELIABLE_UNTIL ? 'Au-delà de 2040, le simulateur montre des tendances, pas des prévisions.' : undefined}>
+          <span key={year} className="year year-pop" title={year > RELIABLE_UNTIL ? 'Au-delà de 2040, le simulateur montre des tendances, pas des prévisions.' : undefined}>
             {year}
             {year > RELIABLE_UNTIL ? <small className="year-tag">tendance</small> : null}
           </span>
@@ -253,30 +341,33 @@ function App() {
               </button>
             ) : (
               <>
-                <button type="button" onClick={() => advance(1)} disabled={year >= END}>
+                <button type="button" className="advance-main" onClick={() => advance(1)} disabled={year >= last}>
                   ▶ 1 an
                 </button>
-                <button type="button" onClick={() => advance(5)} disabled={year >= END}>
+                <button type="button" onClick={() => advance(5)} disabled={year >= last}>
                   ⏩ 5 ans
                 </button>
-                <button type="button" onClick={() => advance(10)} disabled={year >= END}>
-                  ⏩ 10 ans
-                </button>
-                <button type="button" onClick={() => advance(END - year)} disabled={year >= END} title={`Avancer jusqu’en ${END}`}>
-                  ⏭ {END}
+                {last - year > 5 ? (
+                  <button type="button" onClick={() => advance(10)}>
+                    ⏩ 10 ans
+                  </button>
+                ) : null}
+                <button type="button" onClick={() => advance(last - year)} disabled={year >= last} title={`Avancer jusqu’en ${last}`}>
+                  ⏭ {last}
                 </button>
               </>
             )}
-            <button type="button" className="ghost" onClick={reset} title="Recommencer en 2025">
+            <button type="button" className="ghost" onClick={reset} title={scenario ? 'Recommencer le scénario' : 'Recommencer en 2025'}>
               ↺
             </button>
           </div>
         </div>
+        {elections ? <Popularity value={pop} nextElection={upcoming} year={year} /> : null}
         <div className="top-actions">
-          <button type="button" className="primary" onClick={() => setMissionsOpen(true)}>
-            💡 Idées reçues
+          <button type="button" className="primary" onClick={() => setHome(true)}>
+            🏠 Menu
           </button>
-          <button type="button" className="ghost" onClick={() => setBrain({ focus: null })}>
+          <button type="button" className="ghost brain-button" onClick={() => openBrain({ focus: null })}>
             🧠 Le modèle
           </button>
           <button type="button" className="ghost levers-toggle" onClick={() => setLeversOpen(!leversOpen)}>
@@ -289,7 +380,7 @@ function App() {
         <div className="variant-bar">
           🧪 Vous jouez avec une variante du modèle ({Object.keys(overrides).length} paramètre{Object.keys(overrides).length > 1 ? 's' : ''} modifié
           {Object.keys(overrides).length > 1 ? 's' : ''}).
-          <button type="button" className="ghost small" onClick={() => setBrain({ focus: null })}>
+          <button type="button" className="ghost small" onClick={() => openBrain({ focus: null })}>
             Voir
           </button>
           <button type="button" className="ghost small" onClick={() => setOverrides({})}>
@@ -304,6 +395,7 @@ function App() {
             <h2>Vos décisions</h2>
             <p>Bougez un levier, puis avancez d’un an : la décision s’applique en {year + 1}.</p>
           </div>
+          <Advisors advice={advice} />
           {preview ? (
             <div className="preview">
               <strong>Effet estimé en {year + 1}</strong>
@@ -327,6 +419,7 @@ function App() {
               {g.levers.map((l) => {
                 const v = policy[l.key] as number
                 const moved = Math.abs(v - (BASE_POLICY[l.key] as number)) > 1e-9
+                const locked = scenario?.locked?.keys.includes(l.key)
                 return (
                   <label key={l.key} className={`lever${l.key in draft ? ' is-draft' : moved ? ' is-moved' : ''}${hint === l.key ? ' show-hint' : ''}`}>
                     <span className="lever-top">
@@ -347,7 +440,7 @@ function App() {
                         </button>
                       </span>
                     </span>
-                    <input type="range" min={l.min} max={l.max} step={l.step} value={v} onChange={(e) => setLever(l.key, Number(e.target.value))} />
+                    <input type="range" min={l.min} max={l.max} step={l.step} value={v} disabled={locked} title={locked ? scenario?.locked?.why : undefined} onChange={(e) => setLever(l.key, Number(e.target.value))} />
                     {hint === l.key ? <small>{l.hint}</small> : null}
                   </label>
                 )
@@ -375,32 +468,9 @@ function App() {
         </aside>
 
         <section className="center">
-          {intro ? (
-            <div className="intro">
-              <div>
-                <h2>Bienvenue : vous gouvernez la France à partir de 2025</h2>
-                <ol>
-                  <li>
-                    <strong>Décidez</strong> : bougez les leviers (impôts, dépenses, retraites, énergie…), ou testez une <em>idée reçue</em>.
-                  </li>
-                  <li>
-                    <strong>Avancez</strong> d’un an, de 5, de 10, ou jusqu’en {END} : le pays réagit, année après année.
-                  </li>
-                  <li>
-                    <strong>Comprenez</strong> : chaque chiffre est comparé à « si on n’avait rien changé ». Cliquez sur un indicateur pour voir ce qui le fait bouger.
-                  </li>
-                </ol>
-                <p className="note">
-                  Un simulateur, pas une boule de cristal : il montre des mécanismes et des ordres de grandeur. Toutes ses hypothèses sont visibles et modifiables dans « 🧠 Le
-                  modèle ».
-                </p>
-              </div>
-              <button type="button" className="primary" onClick={closeIntro}>
-                C’est parti
-              </button>
-            </div>
-          ) : null}
-          <Kpis states={states} base={base} changed={changed} onPick={(node) => setBrain({ focus: node })} />
+          {scenario && evaluation ? <Objectives scenario={scenario} year={year} start={START} evaluation={evaluation} onAbandon={() => setHome(true)} /> : null}
+          <Newspaper headline={news} />
+          <Kpis states={states} base={base} changed={changed} onPick={(node) => openBrain({ focus: node })} />
           <div className="map-card">
             <div className="map-head">
               <h2>Où circule l’argent en {year}</h2>
@@ -446,7 +516,7 @@ function App() {
                     key={`${kpiId}-${year}-${decisions.length}`}
                     input={{ decisions, events, until: year, params }}
                     metrics={[FOCUS_METRICS[KPI_FOCUS[kpiId]]]}
-                    onInspect={(id) => setBrain({ focus: null, view: 'parametres', query: id })}
+                    onInspect={(id) => openBrain({ focus: null, view: 'parametres', query: id })}
                   />
                 ) : null
               }
@@ -553,7 +623,7 @@ function App() {
               <button type="button" className="ghost" onClick={() => setSandbox(true)}>
                 Continuer quand même (bac à sable)
               </button>
-              <button type="button" className="ghost" onClick={() => setBrain({ focus: 'ending' })}>
+              <button type="button" className="ghost" onClick={() => openBrain({ focus: 'ending' })}>
                 🧠 Voir ce qui y mène
               </button>
             </div>
@@ -663,10 +733,17 @@ function App() {
             <Robustness
               input={{ decisions: [{ year: verdict.start, patch: verdict.mission.patch }], events, until: verdict.start + MISSION_YEARS, params }}
               metrics={verdict.mission.focus.map((f) => FOCUS_METRICS[f])}
-              onInspect={(id) => setBrain({ focus: null, view: 'parametres', query: id })}
+              onInspect={(id) => openBrain({ focus: null, view: 'parametres', query: id })}
             />
             <div className="verdict-actions">
-              <button type="button" className="primary" onClick={() => setVerdict(null)}>
+              <button
+                type="button"
+                className="primary"
+                onClick={() => {
+                  setVerdict(null)
+                  setMode({ kind: 'free' })
+                }}
+              >
                 Continuer la partie
               </button>
               <button
@@ -683,6 +760,167 @@ function App() {
           </div>
         </div>
       ) : null}
+      {election ? (
+        <div className="modal-backdrop" role="presentation">
+          <div className={`modal election ${election.won ? 'is-won' : 'is-lost'}`} role="dialog" aria-modal="true" aria-label="Soirée électorale">
+            <p className="eyebrow">🗳️ Soirée électorale · {election.year}</p>
+            <h2>{election.won ? (playerName ? `${playerName}, réélu·e !` : 'Réélu·e !') : 'Battu…'}</h2>
+            <div className="vote">
+              <strong>
+                <Counter value={election.vote} /> %
+              </strong>
+              <div className="vote-bar">
+                <span style={{ width: `${election.vote}%` }} />
+                <i />
+              </div>
+              <small>des voix au second tour · popularité {election.popularity} %</small>
+            </div>
+            <p>
+              {election.won
+                ? 'Les Français vous renouvellent leur confiance pour cinq ans. Votre popularité suit le climat social : continuez à ménager le pouvoir d’achat, l’emploi et la paix sociale.'
+                : 'Les Français ont choisi l’alternance. Votre popularité était trop basse : le climat social (baisse du niveau de vie, impôts, chômage, inflation, pauvreté, austérité) a pesé dans les urnes.'}
+            </p>
+            <div className="verdict-actions">
+              {election.won ? (
+                <button type="button" className="primary big" onClick={() => setElectionsSeen((e) => [...e, election.year])}>
+                  Entamer un nouveau mandat
+                </button>
+              ) : (
+                <>
+                  {decisions.length ? (
+                    <button type="button" className="primary" onClick={undoLast}>
+                      ↶ Revenir avant ma dernière décision
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="ghost"
+                    onClick={() => {
+                      recordStars()
+                      reset()
+                    }}
+                  >
+                    ↺ Recommencer
+                  </button>
+                  <button
+                    type="button"
+                    className="ghost"
+                    onClick={() => {
+                      setSandbox(true)
+                      setElectionsSeen((e) => [...e, election.year])
+                    }}
+                  >
+                    Continuer quand même (bac à sable)
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          {election.won ? <Confetti /> : null}
+        </div>
+      ) : null}
+
+      {scenario && evaluation && scenarioOver && !election && !gameOver && !running && earnedStars !== null ? (
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal scenario-end" role="dialog" aria-modal="true" aria-label="Fin du scénario">
+            <p className="eyebrow">
+              {scenario.icon} {scenario.title} · {START}–{scenario.end}
+            </p>
+            <h2>{STAR_TITLES[earnedStars]}</h2>
+            <Stars n={earnedStars} size="big" />
+            <ul className="end-objectives">
+              {evaluation.results.map((r) => (
+                <li key={r.objective.label} className={r.status === 'ok' ? 'good' : 'bad'}>
+                  <span>{r.status === 'ok' ? '✅' : '❌'}</span>
+                  <span>{r.objective.label}</span>
+                  <strong>{r.objective.show(r.value)}</strong>
+                </li>
+              ))}
+            </ul>
+            {(stars[scenario.id] ?? 0) < earnedStars ? <p className="good">🎉 Nouveau record !</p> : null}
+            <div className="verdict-actions">
+              <button
+                type="button"
+                className="primary"
+                onClick={() => {
+                  recordStars()
+                  startScenario(scenario)
+                }}
+              >
+                ↺ Rejouer
+              </button>
+              {SCENARIOS[SCENARIOS.indexOf(scenario) + 1] ? (
+                <button
+                  type="button"
+                  className="ghost"
+                  onClick={() => {
+                    recordStars()
+                    setBriefing(SCENARIOS[SCENARIOS.indexOf(scenario) + 1])
+                  }}
+                >
+                  Scénario suivant →
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="ghost"
+                onClick={() => {
+                  recordStars()
+                  setMode({ kind: 'free' })
+                }}
+              >
+                Continuer en partie libre
+              </button>
+              <button
+                type="button"
+                className="ghost"
+                onClick={() => {
+                  recordStars()
+                  setHome(true)
+                }}
+              >
+                🏠 Menu
+              </button>
+            </div>
+          </div>
+          {earnedStars >= 2 ? <Confetti /> : null}
+        </div>
+      ) : null}
+
+      {home ? (
+        <Home
+          name={playerName}
+          onName={(n) => {
+            setPlayerName(n)
+            save('name', n)
+          }}
+          stars={allStars}
+          earned={earned}
+          canResume={year > START || decisions.length > 0}
+          onResume={() => setHome(false)}
+          onTutorial={startTutorial}
+          onScenario={(sc) => {
+            recordStars()
+            setBriefing(sc)
+          }}
+          onFree={() => begin({ kind: 'free' })}
+          onMyths={() => {
+            setHome(false)
+            setMissionsOpen(true)
+          }}
+          onModel={() => {
+            setHome(false)
+            openBrain({ focus: null })
+          }}
+        />
+      ) : null}
+
+      {briefing ? <Briefing scenario={briefing} best={allStars[briefing.id] ?? 0} onStart={() => startScenario(briefing)} onBack={() => setBriefing(null)} /> : null}
+
+      {tour ? <Tour steps={tourSteps} onClose={() => setTour(false)} /> : null}
+
+      <Toasts items={ACHIEVEMENTS.filter((a) => fresh.includes(a.id))} />
+
       {brain ? (
         <Brain
           focus={brain.focus}

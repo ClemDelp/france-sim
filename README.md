@@ -14,6 +14,20 @@ npm install
 npm run dev
 ```
 
+### Le jeu
+
+- **Accueil** : votre nom de président·e, et cinq façons de jouer (tutoriel, scénarios, partie libre, idées reçues, comprendre le modèle).
+- **Visite guidée** : douze étapes qui présentent chaque zone de l’écran.
+- **8 scénarios** avec un récit, trois objectifs (une étoile chacun) et une difficulté : *Premier mandat*, *Le choc d’Ormuz*,
+  *La France électrique*, *Sauver les retraites*, *Sous l’œil des marchés*, *Zéro pauvreté ?*, *2008 recommence*, *Le grand chelem*.
+  Un test vérifie que chacun reste gagnable (et que ne rien faire ne suffit pas).
+- **Popularité et élections** : votre popularité suit le climat social ; élection en 2027 puis tous les cinq ans,
+  il faut 40 % de popularité pour être réélu. Soirée électorale animée.
+- **Vos ministres** commentent chaque décision avant que vous avanciez (comptes, emploi, solidarités, transition, ordre public).
+- **La une du journal** chaque année ; **14 succès** à débloquer ; records d’étoiles gardés dans le navigateur.
+
+### Les outils
+
 - **Leviers** (à gauche) : impôts, dépenses, Sécurité sociale, travail et population, énergie, commerce, dette et monnaie.
   On bouge, on voit l’effet estimé l’an prochain, puis on avance d’un an, de 5, de 10, ou jusqu’en 2075.
   Au-delà de 2040, les courbes sont grisées : ce sont des tendances, pas des prévisions.

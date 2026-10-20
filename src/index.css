@@ -2167,3 +2167,882 @@ button.kpi:focus-visible {
   text-decoration: underline;
   font-size: inherit;
 }
+
+/* ===================== Le jeu ===================== */
+
+button.brand {
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+}
+
+.year-pop {
+  animation: year-pop 0.45s ease-out;
+}
+
+@keyframes year-pop {
+  0% {
+    transform: scale(1.35);
+    color: #fff;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.advance-main {
+  background: linear-gradient(135deg, #f5b70a, #ff8a3d) !important;
+  color: #1a1206;
+  border-color: transparent !important;
+}
+
+.primary.big {
+  padding: 12px 22px;
+  font-size: 1.05rem;
+}
+
+/* — Popularité */
+
+.popularity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  min-width: 150px;
+}
+
+.pop-heart {
+  font-size: 1.3rem;
+}
+
+.popularity strong {
+  font-size: 1rem;
+}
+
+.popularity small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.pop-bar {
+  position: relative;
+  display: block;
+  width: 100px;
+  height: 6px;
+  margin: 2px 0;
+  border-radius: 3px;
+  background: var(--panel-2);
+}
+
+.pop-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  transition: width 0.4s;
+}
+
+.pop-bar i {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--ink);
+}
+
+.pop-good .pop-bar span {
+  background: var(--good);
+}
+
+.pop-mid .pop-bar span {
+  background: var(--gold);
+}
+
+.pop-bad .pop-bar span {
+  background: var(--bad);
+}
+
+.pop-bad {
+  border-color: var(--bad);
+  animation: pulse-bad 1.6s infinite;
+}
+
+@keyframes pulse-bad {
+  50% {
+    box-shadow: 0 0 0 4px rgba(255, 93, 98, 0.25);
+  }
+}
+
+/* — Conseillers */
+
+.advisors {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.advice {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  animation: advice-in 0.3s ease-out;
+}
+
+@keyframes advice-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.advice-avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--panel-2);
+  border: 2px solid var(--rule);
+  font-size: 1.1rem;
+}
+
+.advice p {
+  position: relative;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 4px 12px 12px 12px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.advice p small {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.advice-warn .advice-avatar {
+  border-color: var(--bad);
+}
+
+.advice-warn p {
+  border-color: rgba(255, 93, 98, 0.5);
+}
+
+.advice-good .advice-avatar {
+  border-color: var(--good);
+}
+
+.advice-good p {
+  border-color: rgba(47, 191, 113, 0.5);
+}
+
+/* — La une */
+
+.newspaper {
+  margin-bottom: 12px;
+  padding: 10px 16px 12px;
+  border-radius: 6px;
+  background: #f4efe3;
+  color: #1c1a17;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  animation: news-in 0.5s ease-out;
+  transform-origin: top center;
+}
+
+@keyframes news-in {
+  from {
+    opacity: 0;
+    transform: rotate(-1.5deg) scale(0.97);
+  }
+}
+
+.newspaper header {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  border-bottom: 3px double #1c1a17;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.news-kicker {
+  margin: 8px 0 2px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a1c1c;
+}
+
+.news-good .news-kicker {
+  color: #1d6b3f;
+}
+
+.newspaper h2 {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.45rem;
+  line-height: 1.15;
+}
+
+.news-sub {
+  margin: 4px 0 0;
+  font-family: Georgia, serif;
+  font-size: 0.9rem;
+  color: #3d3a33;
+}
+
+/* — Objectifs du scénario */
+
+.objectives {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--gold);
+  background: linear-gradient(135deg, rgba(245, 183, 10, 0.1), rgba(91, 141, 239, 0.06));
+}
+
+.objectives-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.objectives-head strong {
+  flex: 1;
+}
+
+.objectives-head span {
+  color: var(--muted);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.objectives-progress {
+  height: 5px;
+  margin: 8px 0;
+  border-radius: 3px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+
+.objectives-progress span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.4s;
+}
+
+.objectives ul,
+.end-objectives {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 0.86rem;
+}
+
+.objectives li,
+.end-objectives li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.obj-label {
+  flex: 1;
+}
+
+.obj-ko .obj-label,
+.obj-off .obj-label {
+  color: var(--muted);
+}
+
+/* — Étoiles, difficulté */
+
+.stars {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--rule);
+}
+
+.stars .on {
+  color: var(--gold);
+}
+
+.stars-big {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 8px 0 14px;
+  font-size: 3.2rem;
+}
+
+.stars-big .on {
+  animation: star-in 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  text-shadow: 0 0 24px rgba(245, 183, 10, 0.6);
+}
+
+@keyframes star-in {
+  from {
+    transform: scale(0) rotate(-90deg);
+  }
+}
+
+.difficulty {
+  display: inline-flex;
+  gap: 3px;
+  vertical-align: middle;
+}
+
+.difficulty i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--rule);
+}
+
+.difficulty i.on {
+  background: var(--bad);
+}
+
+/* — Accueil */
+
+.home {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow-y: auto;
+  background: radial-gradient(ellipse at top, #1d2b5c 0%, #0d1220 65%);
+}
+
+.home-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px 16px 40px;
+}
+
+.home-hero {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.home-flag {
+  display: inline-flex;
+  height: 10px;
+  width: 120px;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.home-flag i {
+  flex: 1;
+}
+
+.home-flag i:nth-child(1) {
+  background: #0055a4;
+}
+
+.home-flag i:nth-child(2) {
+  background: #fff;
+}
+
+.home-flag i:nth-child(3) {
+  background: #ef4135;
+}
+
+.home-hero h1 {
+  margin: 0;
+  font-size: clamp(2.6rem, 9vw, 4.5rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #8fb4ff, #fff, #ff9a95);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.home-hero p {
+  margin: 6px 0 18px;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.home-name {
+  display: inline-grid;
+  gap: 4px;
+  text-align: left;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.home-name input {
+  width: min(320px, 80vw);
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.home-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.menu-card,
+.scenario-card {
+  display: grid;
+  gap: 4px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  text-align: left;
+  transition:
+    transform 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.menu-card:hover,
+.menu-card:focus-visible,
+.scenario-card:hover,
+.scenario-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--gold);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.menu-card > span,
+.scenario-icon {
+  font-size: 2rem;
+}
+
+.menu-card strong,
+.scenario-card strong {
+  font-size: 1.1rem;
+}
+
+.menu-card small,
+.scenario-card small {
+  color: var(--muted);
+}
+
+.menu-tutorial {
+  border-color: rgba(91, 141, 239, 0.6);
+  background: linear-gradient(135deg, rgba(91, 141, 239, 0.18), var(--panel));
+}
+
+.menu-scenarios {
+  border-color: rgba(245, 183, 10, 0.6);
+  background: linear-gradient(135deg, rgba(245, 183, 10, 0.16), var(--panel));
+}
+
+.menu-resume {
+  border-color: rgba(47, 191, 113, 0.6);
+  background: linear-gradient(135deg, rgba(47, 191, 113, 0.16), var(--panel));
+}
+
+.home-section-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.home-section-head h2 {
+  flex: 1;
+  margin: 0;
+}
+
+.home-total {
+  color: var(--gold);
+  font-weight: 800;
+}
+
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.scenario-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.home-achievements {
+  margin-top: 28px;
+}
+
+.home-achievements h2 small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.home-achievements ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.home-achievements li {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  text-align: center;
+  opacity: 0.45;
+}
+
+.home-achievements li.is-earned {
+  opacity: 1;
+  border-color: var(--gold);
+}
+
+.home-achievements li span {
+  font-size: 1.6rem;
+}
+
+.home-achievements li small {
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.home-foot {
+  margin-top: 22px;
+  text-align: center;
+}
+
+/* — Briefing, élection, fin de scénario */
+
+.briefing-story {
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+
+.briefing-objectives {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.briefing-objectives li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.briefing-objectives small {
+  color: var(--muted);
+}
+
+.briefing-rule {
+  color: var(--muted);
+}
+
+.election,
+.scenario-end {
+  max-width: 560px;
+  text-align: center;
+}
+
+.election .verdict-actions,
+.scenario-end .verdict-actions {
+  justify-content: center;
+}
+
+.vote {
+  margin: 14px 0;
+}
+
+.vote strong {
+  display: block;
+  font-size: 3.4rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.is-won .vote strong {
+  color: var(--good);
+}
+
+.is-lost .vote strong {
+  color: var(--bad);
+}
+
+.vote-bar {
+  position: relative;
+  height: 14px;
+  margin: 6px auto;
+  max-width: 360px;
+  border-radius: 7px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+
+.vote-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, #0055a4, #5b8def);
+  animation: grow 1.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes grow {
+  from {
+    width: 0;
+  }
+}
+
+.vote-bar i {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #fff;
+}
+
+.vote small {
+  color: var(--muted);
+}
+
+.end-objectives {
+  text-align: left;
+  margin: 0 auto 12px;
+  max-width: 460px;
+}
+
+/* — Confettis */
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti i {
+  position: absolute;
+  top: -20px;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+  animation-name: fall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes fall {
+  to {
+    top: 105vh;
+    transform: translateX(60px) rotate(720deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti,
+  .year-pop,
+  .newspaper,
+  .stars-big .on {
+    animation: none;
+  }
+  .confetti {
+    display: none;
+  }
+}
+
+/* — Succès */
+
+.toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 70;
+  display: grid;
+  gap: 8px;
+}
+
+.toast {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  max-width: 320px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--gold);
+  background: var(--bg-2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  animation: toast-in 0.4s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+@keyframes toast-in {
+  from {
+    transform: translateX(120%);
+  }
+}
+
+.toast > span {
+  font-size: 2rem;
+}
+
+.toast small {
+  color: var(--gold);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+
+.toast strong {
+  display: block;
+}
+
+.toast p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* — Visite guidée */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+}
+
+.tour-dim {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 16, 0.72);
+}
+
+.tour-spot {
+  position: fixed;
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px rgba(5, 8, 16, 0.72);
+  outline: 2px solid var(--gold);
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.tour-bubble {
+  position: fixed;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--gold);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  transition:
+    top 0.3s ease,
+    left 0.3s ease;
+}
+
+.tour-bubble h3 {
+  margin: 2px 0 6px;
+  font-size: 1.1rem;
+}
+
+.tour-bubble p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.tour-bubble .eyebrow {
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tour-dots {
+  display: flex;
+  gap: 4px;
+  margin: 10px 0;
+}
+
+.tour-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rule);
+}
+
+.tour-dots i.on {
+  background: var(--gold);
+}
+
+.tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+input[type='range']:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1100px) {
+  .popularity {
+    min-width: 0;
+  }
+  .pop-bar {
+    width: 70px;
+  }
+}
+
+@media (max-width: 800px) {
+  .popularity {
+    order: 3;
+  }
+  .newspaper h2 {
+    font-size: 1.2rem;
+  }
+  .toasts {
+    left: 12px;
+    right: 12px;
+  }
+}
+
+.election h2,
+.scenario-end h2 {
+  font-size: 1.8rem;
+  margin-top: 4px;
+}
