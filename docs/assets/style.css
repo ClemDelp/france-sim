@@ -1,0 +1,507 @@
+/* Documentation de France·Sim — une seule feuille de style, thème clair et sombre. */
+:root {
+  --bg: #f7f8fb;
+  --surface: #ffffff;
+  --surface-2: #eef1f7;
+  --ink: #18202f;
+  --muted: #5a6478;
+  --rule: #dde2ec;
+  --accent: #2456c8;
+  --accent-soft: #e6edfc;
+  --gold: #b07a00;
+  --good: #1d7a4a;
+  --bad: #b3261e;
+  --code-bg: #f0f2f7;
+  --radius: 12px;
+  --font: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0d1220;
+    --surface: #151d31;
+    --surface-2: #1c2640;
+    --ink: #e9edf6;
+    --muted: #9aa5bf;
+    --rule: #2a3757;
+    --accent: #7ea6ff;
+    --accent-soft: #1f2d52;
+    --gold: #f5b70a;
+    --good: #4ccf8a;
+    --bad: #ff7a72;
+    --code-bg: #10172a;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0d1220;
+  --surface: #151d31;
+  --surface-2: #1c2640;
+  --ink: #e9edf6;
+  --muted: #9aa5bf;
+  --rule: #2a3757;
+  --accent: #7ea6ff;
+  --accent-soft: #1f2d52;
+  --gold: #f5b70a;
+  --good: #4ccf8a;
+  --bad: #ff7a72;
+  --code-bg: #10172a;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+a {
+  color: var(--accent);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* — Menu */
+
+.nav {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 20px 16px;
+  border-right: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  font-weight: 900;
+  font-size: 1.15rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.nav-brand small {
+  display: block;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.nav h4 {
+  margin: 18px 0 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav li a {
+  display: block;
+  padding: 5px 10px;
+  border-radius: 8px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+
+.nav li a:hover {
+  background: var(--surface-2);
+}
+
+.nav li a.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.theme-toggle {
+  margin-top: 20px;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.nav-toggle {
+  display: none;
+}
+
+/* — Contenu */
+
+main {
+  max-width: 920px;
+  padding: 32px 40px 80px;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 2.1rem;
+  line-height: 1.2;
+}
+
+.lead {
+  margin: 0 0 24px;
+  font-size: 1.12rem;
+  color: var(--muted);
+}
+
+h2 {
+  margin: 40px 0 10px;
+  padding-top: 10px;
+  font-size: 1.45rem;
+  border-top: 1px solid var(--rule);
+}
+
+h3 {
+  margin: 26px 0 8px;
+  font-size: 1.12rem;
+}
+
+p,
+li {
+  max-width: 75ch;
+}
+
+code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--code-bg);
+  font-family: var(--mono);
+  font-size: 0.88em;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--code-bg);
+  border: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+pre code {
+  padding: 0;
+  background: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--surface-2);
+  font-weight: 800;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+/* — Encarts */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.card {
+  display: block;
+  padding: 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+
+a.card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.card .icon {
+  font-size: 1.8rem;
+}
+
+.card strong {
+  display: block;
+  margin: 6px 0 4px;
+  font-size: 1.08rem;
+}
+
+.card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.note,
+.warn,
+.tip {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  border-left: 4px solid var(--accent);
+  background: var(--accent-soft);
+}
+
+.warn {
+  border-left-color: var(--bad);
+  background: color-mix(in srgb, var(--bad) 10%, transparent);
+}
+
+.tip {
+  border-left-color: var(--good);
+  background: color-mix(in srgb, var(--good) 10%, transparent);
+}
+
+.note > :first-child,
+.warn > :first-child,
+.tip > :first-child {
+  margin-top: 0;
+}
+
+.note > :last-child,
+.warn > :last-child,
+.tip > :last-child {
+  margin-bottom: 0;
+}
+
+.steps {
+  counter-reset: step;
+  list-style: none;
+  padding: 0;
+}
+
+.steps > li {
+  position: relative;
+  margin: 0 0 16px;
+  padding-left: 46px;
+}
+
+.steps > li::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 900;
+}
+
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: var(--surface-2);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.badge.mesure {
+  background: color-mix(in srgb, var(--good) 18%, transparent);
+  color: var(--good);
+}
+
+.badge.estime {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.badge.hypothese {
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  color: var(--gold);
+}
+
+kbd {
+  padding: 1px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--rule);
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: 0.85em;
+}
+
+/* — Schémas (Mermaid) */
+
+.diagram {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  overflow-x: auto;
+}
+
+.diagram pre.mermaid {
+  margin: 0;
+  border: 0;
+  background: none;
+  text-align: center;
+}
+
+.diagram figcaption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* — Catalogue */
+
+.search {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.filters button {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.filters button.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.catalog td code {
+  white-space: nowrap;
+}
+
+.catalog td small {
+  color: var(--muted);
+}
+
+footer {
+  margin-top: 60px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* — Mobile */
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nav {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .nav-toggle {
+    display: inline-block;
+    margin-left: auto;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--rule);
+    background: var(--surface-2);
+    color: var(--ink);
+    font: inherit;
+  }
+
+  .nav-head {
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-body {
+    display: none;
+  }
+
+  .nav.is-open .nav-body {
+    display: block;
+  }
+
+  main {
+    padding: 20px 16px 60px;
+  }
+
+  h1 {
+    font-size: 1.7rem;
+  }
+}

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Modifier un paramètre</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <main>
+        <h1>🎛️ Modifier un paramètre, sans coder</h1>
+        <p class="lead">
+          Tous les chiffres et toutes les règles du modèle sont dans des fichiers tableur du dossier <code>modele/</code>. Vous pouvez les corriger, les sourcer, les discuter :
+          aucune ligne de code n’est nécessaire. Cette page explique quoi modifier, comment, et comment proposer votre changement.
+        </p>
+
+        <div class="tip">
+          <p>
+            <strong>Le plus court chemin</strong> : essayez votre valeur directement dans le jeu (<strong>🧠 Le modèle → Tous les paramètres</strong>), regardez l’effet, puis
+            proposez la modification sur GitHub depuis votre navigateur. Les tests automatiques vous diront si elle tient debout. Voir <a href="#trois-facons">les trois façons de
+            faire</a>.
+          </p>
+        </div>
+
+        <h2 id="fichiers">Les fichiers du modèle</h2>
+        <p>Chaque fichier est un tableau : une ligne par paramètre (ou par année, ou par lien), des colonnes séparées par des points-virgules.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fichier</th>
+                <th>Ce qu’il contient</th>
+                <th>Exemple de ligne</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>donnees-2025.csv</code></td>
+                <td>La France de 2025, point de départ de la partie : PIB, budget, dette, population, émissions… Des faits mesurés, avec leur source.</td>
+                <td><code>gdp;2990;Md€;Économie;PIB de 2025;INSEE…</code></td>
+              </tr>
+              <tr>
+                <td><code>comportements.csv</code></td>
+                <td>Comment chacun réagit : élasticités, délais, seuils, effets du climat, de l’immigration, de l’influence… Le cœur du débat.</td>
+                <td><code>vatPassThrough;0,7;part;Prix;Part d’une hausse de TVA répercutée…</code></td>
+              </tr>
+              <tr>
+                <td><code>tranches.csv</code></td>
+                <td>Les ménages en 5 tranches de revenu : qui reçoit quoi (salaires, retraites, aides), qui paie quoi (impôts).</td>
+                <td><code>mpc;Propension à consommer;0,97;0,9;0,82;0,72;0,45;…</code></td>
+              </tr>
+              <tr>
+                <td><code>entreprises.csv</code></td>
+                <td>PME, ETI, grandes entreprises : poids dans l’économie et sensibilités (crédit, mobilité, énergie…).</td>
+                <td><code>bankDependence;Dépendance au crédit bancaire;1,4;0,9;0,5;…</code></td>
+              </tr>
+              <tr>
+                <td><code>monde.csv</code></td>
+                <td>Le monde année par année : pétrole, taux de la BCE, croissance mondiale, crises. Histoire de 2000 à 2024, puis scénario.</td>
+                <td><code>2009;61,7;0,013;-0,11;0,3;0,02;0;Grande récession…</code></td>
+              </tr>
+              <tr>
+                <td><code>donnees-2000.csv</code>, <code>politiques-2000-2024.csv</code>, <code>historique.csv</code></td>
+                <td>Pour <a href="tester.html#passe">rejouer 2000–2024</a> : la France de 2000, les décisions réellement prises, et ce qui s’est vraiment passé.</td>
+                <td><code>2018;csg;0,092;Hausse de la CSG…</code></td>
+              </tr>
+              <tr>
+                <td><code>variables.csv</code>, <code>liens.csv</code></td>
+                <td>Le graphe des causes affiché dans le jeu : les variables, et qui fait bouger quoi, avec l’explication et les paramètres de chaque lien.</td>
+                <td><code>temperature;climateDamage;+;damageLinear damageQuadratic;Les dégâts croissent…</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le <a href="catalogue.html">catalogue des paramètres</a> liste toutes les lignes, avec une recherche.</p>
+
+        <h2 id="lire">Lire une ligne de <code>comportements.csv</code></h2>
+        <pre><code>climateMigration;60;milliers/an par °C;Immigration;Arrivées en plus par degré de réchauffement supplémentaire;Sécheresses, terres agricoles perdues…;hypothèse;Banque mondiale, Groundswell (2021);20;150</code></pre>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Colonne</th>
+                <th>Valeur ici</th>
+                <th>À quoi elle sert</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>id</code></td>
+                <td><code>climateMigration</code></td>
+                <td>Le nom technique, utilisé par le moteur. <strong>Ne jamais le changer</strong> (le moteur ne retrouverait plus le paramètre).</td>
+              </tr>
+              <tr>
+                <td><code>valeur</code></td>
+                <td><code>60</code></td>
+                <td>La valeur utilisée par le modèle. C’est généralement ce que vous voudrez modifier.</td>
+              </tr>
+              <tr>
+                <td><code>unite</code></td>
+                <td>milliers/an par °C</td>
+                <td>Dans quelle unité s’exprime la valeur. Respectez-la : « 0,6 » et « 60 % » ne veulent pas dire la même chose selon l’unité.</td>
+              </tr>
+              <tr>
+                <td><code>bloc</code></td>
+                <td>Immigration</td>
+                <td>Le thème, pour s’y retrouver (et filtrer dans le jeu).</td>
+              </tr>
+              <tr>
+                <td><code>nom</code>, <code>explication</code></td>
+                <td>…</td>
+                <td>Ce que voient les joueurs dans « 🧠 Le modèle ». Écrivez pour quelqu’un qui ne connaît pas l’économie.</td>
+              </tr>
+              <tr>
+                <td><code>fiabilite</code></td>
+                <td><span class="badge hypothese">hypothèse</span></td>
+                <td>
+                  <span class="badge mesure">mesuré</span> une statistique officielle · <span class="badge estime">estimé</span> tiré d’études sérieuses, avec une marge ·
+                  <span class="badge hypothese">hypothèse</span> un choix raisonnable faute de mieux. Améliorer une hypothèse est la contribution la plus utile.
+                </td>
+              </tr>
+              <tr>
+                <td><code>source</code></td>
+                <td>Banque mondiale…</td>
+                <td>D’où vient la valeur. Indiquez l’organisme, le document et l’année.</td>
+              </tr>
+              <tr>
+                <td><code>min</code>, <code>max</code></td>
+                <td>20 ; 150</td>
+                <td>
+                  La <strong>plage plausible</strong> : les valeurs que des gens sérieux pourraient défendre. Elle sert à l’analyse « 🔬 Ce résultat est-il solide ? ». Facultative (sans elle,
+                  l’analyse teste ± 30 %).
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Dans <code>tranches.csv</code> et <code>entreprises.csv</code>, une ligne porte une valeur par colonne de tranche (<code>g1</code> à <code>g5</code>, des 20 % les plus
+          modestes aux 10 % les plus aisés) ou de taille (<code>pme</code>, <code>eti</code>, <code>ge</code>).
+        </p>
+
+        <h2 id="regles">Les règles d’or du format</h2>
+        <div class="warn">
+          <ul>
+            <li><strong>Séparateur : le point-virgule</strong> <code>;</code>. N’en mettez jamais dans un texte (explication, source) : utilisez une virgule. Un test le vérifie.</li>
+            <li><strong>Décimales : la virgule</strong> (<code>0,7</code>). Le point est accepté aussi, mais restez cohérent.</li>
+            <li><strong>Encodage : UTF-8</strong>, pour garder les accents. Les fichiers commencent par un caractère invisible (BOM) qui aide Excel : laissez-le.</li>
+            <li><strong>Ne renommez pas</strong> un <code>id</code>, <strong>ne supprimez pas</strong> de ligne, <strong>ne changez pas</strong> l’ordre des colonnes.</li>
+            <li><strong>Ajouter une ligne</strong> à <code>comportements.csv</code> ne suffit pas : un nouveau paramètre doit être utilisé par le moteur (un test le rappellera). Demandez à un développeur, ou décrivez le mécanisme dans une discussion (« issue »).</li>
+            <li>Les parts de la dette par détenteur (<code>holderMonde</code>, <code>holderBce</code>, <code>holderAssureurs</code>, <code>holderBanques</code>) doivent faire 100 %.</li>
+          </ul>
+        </div>
+
+        <h2 id="trois-facons">Trois façons de proposer un changement</h2>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart LR
+    A["💡 Une idée :<br/>« ce chiffre me semble faux »"] --> B["🎮 1. Essayer dans le jeu<br/>🧠 Le modèle → Tous les paramètres"]
+    B --> C{"L’effet vous<br/>paraît juste ?"}
+    C -- "oui" --> D["✏️ 2. Modifier le fichier<br/>sur GitHub ou dans un tableur"]
+    C -- "non" --> A
+    D --> E["📨 3. Proposer<br/>(pull request, avec la source)"]
+    E --> F["🤖 Tests automatiques<br/>(quelques minutes)"]
+    F -- "✅" --> G["👀 Relecture, discussion, fusion"]
+    F -- "❌" --> H["🔎 Lire le message,<br/>corriger ou discuter"]
+    H --> D
+          </pre>
+          <figcaption>De l’idée à la proposition : on essaie d’abord, on modifie ensuite, les tests tranchent.</figcaption>
+        </div>
+
+        <h3 id="jeu">Façon 1 — Essayer dans le jeu (aucun outil, aucun compte)</h3>
+        <ol class="steps">
+          <li>Ouvrez le jeu, cliquez sur <strong>🧠 Le modèle</strong>, puis l’onglet <strong>Tous les paramètres</strong>. Cherchez le paramètre (par son nom ou son <code>id</code>).</li>
+          <li>Tapez une autre valeur. Toute la partie se recalcule avec votre <strong>variante</strong> ; un bandeau violet indique qu’elle est active et montre son effet sur la croissance, le chômage, la dette et la pauvreté.</li>
+          <li>
+            Ouvrez l’onglet <strong>Face au passé (2000–2024)</strong> : la colonne « Avec votre variante » dit si le modèle reproduit <em>mieux</em> ou <em>moins bien</em>
+            l’histoire réelle. C’est un argument très fort pour votre proposition.
+          </li>
+          <li>Jouez quelques années : le bouton <strong>🔍 Pourquoi en est-on là ?</strong> de la une du journal et l’analyse <strong>🔬 Ce résultat est-il solide ?</strong> (onglet Courbes) montrent ce que votre valeur change.</li>
+          <li>Satisfait ? Dans <strong>Tous les paramètres</strong>, téléchargez le fichier modifié (bouton <code>⬇ comportements.csv</code>, etc.). Il contient déjà votre nouvelle valeur.</li>
+        </ol>
+
+        <h3 id="github">Façon 2 — Modifier directement sur GitHub (dans le navigateur)</h3>
+        <ol class="steps">
+          <li>Sur la page du dépôt, ouvrez le dossier <code>modele/</code> puis le fichier voulu.</li>
+          <li>Cliquez sur l’icône ✏️ (<em>Edit this file</em>). GitHub vous propose de créer votre propre copie si vous n’avez pas les droits : acceptez.</li>
+          <li>Modifiez la valeur (et la source, la fiabilité, la plage plausible si besoin). Utilisez <kbd>Ctrl</kbd>+<kbd>F</kbd> pour trouver l’<code>id</code>.</li>
+          <li>
+            Cliquez sur <strong>Commit changes…</strong>, choisissez <em>Create a new branch and start a pull request</em>, écrivez un titre clair (« comportements : élasticité de la TVA
+            0,7 → 0,6, source Benzarti 2020 »), puis <strong>Propose changes</strong> et <strong>Create pull request</strong>.
+          </li>
+          <li>Les <a href="tester.html#github">tests automatiques</a> se lancent tout seuls. Vous pouvez aussi déposer directement le fichier téléchargé depuis le jeu : <em>Add file → Upload files</em>.</li>
+        </ol>
+
+        <h3 id="tableur">Façon 3 — Dans un tableur (Excel, LibreOffice, Google Sheets)</h3>
+        <ol class="steps">
+          <li>
+            <strong>Ouvrir</strong> : dans LibreOffice, choisissez « Jeu de caractères : Unicode (UTF-8) » et « Séparé par : point-virgule ». Dans Excel français, un double-clic suffit
+            généralement ; sinon <em>Données → À partir d’un fichier texte/CSV</em>, origine UTF-8, délimiteur point-virgule.
+          </li>
+          <li><strong>Modifier</strong> les cellules voulues. Ne touchez ni à la première ligne (les noms de colonnes) ni à la colonne <code>id</code>.</li>
+          <li>
+            <strong>Enregistrer au format CSV</strong> : « CSV UTF-8 (délimité par des points-virgules) ». Attention : un Excel réglé en anglais remplace les virgules décimales et
+            les points-virgules ; vérifiez le fichier dans un éditeur de texte avant de l’envoyer.
+          </li>
+          <li><strong>Proposer</strong> le fichier sur GitHub (<em>Add file → Upload files</em> dans <code>modele/</code>, en remplaçant l’ancien) comme dans la façon 2.</li>
+        </ol>
+
+        <h2 id="exemples">Trois exemples concrets</h2>
+        <h3>Corriger une donnée de 2025</h3>
+        <p>
+          L’INSEE publie un PIB 2025 de 3 010 Md€ au lieu de 2 990. Dans <code>donnees-2025.csv</code>, ligne <code>gdp</code>, remplacez <code>2990</code> par <code>3010</code> et
+          mettez à jour la source. Les tests de calage vérifieront que la France de 2025 reste cohérente (déficit, chômage…).
+        </p>
+        <h3>Remplacer une hypothèse par une estimation</h3>
+        <p>
+          Vous connaissez une étude qui chiffre les migrations climatiques vers la France. Dans <code>comportements.csv</code>, ligne <code>climateMigration</code> : nouvelle valeur,
+          <code>fiabilite</code> passée de <code>hypothèse</code> à <code>estimé</code>, source complète, et plage plausible (<code>min</code>, <code>max</code>) tirée de l’étude.
+        </p>
+        <h3>Mieux expliquer un lien du graphe</h3>
+        <p>
+          Dans <code>liens.csv</code>, la dernière colonne est l’explication affichée aux joueurs. Vous pouvez la réécrire librement. Changer le sens (<code>+</code>,
+          <code>-</code>, <code>±</code>) ou ajouter un lien est aussi possible, mais le graphe <em>décrit</em> le moteur : si le mécanisme n’existe pas dans le code, ouvrez une
+          discussion pour qu’un développeur l’ajoute.
+        </p>
+
+        <h2 id="proposition">Écrire une bonne proposition</h2>
+        <pre><code>Titre : comportements — élasticité TVA 0,7 → 0,6
+
+Pourquoi : l’étude X (Benzarti et al., 2020, American Economic Journal) estime
+qu’environ 60 % d’une hausse de TVA est répercutée dans les prix en France.
+
+Effet observé dans le jeu (variante) :
+- inflation après une hausse de TVA : un peu plus faible
+- rejeu 2000–2024 : écarts inchangés (inflation 1,2 pt)
+- tests : ✅</code></pre>
+        <ul>
+          <li><strong>Une proposition = un sujet.</strong> Plus facile à relire, à discuter, à accepter.</li>
+          <li><strong>Une source par valeur.</strong> Une affirmation sans source reste une hypothèse : dites-le.</li>
+          <li><strong>Dites ce que vous avez constaté</strong> dans le jeu et dans « Face au passé » : c’est ce qui convainc.</li>
+        </ul>
+
+        <p>Prochaine étape : <a href="tester.html">tester son changement</a>.</p>
+        <footer>Une question, une idée de mécanisme ? Ouvrez une discussion (« issue ») sur GitHub en décrivant ce que vous avez observé et votre source.</footer>
+      </main>
+    </div>
+    <script type="module" src="assets/docs.js"></script>
+  </body>
+</html>

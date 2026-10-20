@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Documentation France·Sim</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <main>
+        <h1>Documentation de France·Sim</h1>
+        <p class="lead">
+          France·Sim est un jeu de gestion de la France, construit sur un vrai modèle économique, social et climatique. Tout le modèle est ouvert : ses chiffres et ses règles
+          sont dans des fichiers que chacun peut lire, discuter et améliorer.
+        </p>
+
+        <div class="cards">
+          <a class="card" href="parametres.html">
+            <span class="icon">🎛️</span>
+            <strong>Je veux améliorer le modèle, sans coder</strong>
+            <p>Corriger un chiffre, proposer une meilleure source, ajuster une hypothèse. Un tableur suffit, et on peut tout faire depuis le site de GitHub.</p>
+          </a>
+          <a class="card" href="developpeurs.html">
+            <span class="icon">💻</span>
+            <strong>Je veux développer le jeu</strong>
+            <p>Architecture, moteur de simulation, couche de jeu, tests : tout ce qu’il faut pour ajouter un levier, un événement, un scénario ou un écran.</p>
+          </a>
+          <a class="card" href="modele.html">
+            <span class="icon">🧠</span>
+            <strong>Je veux comprendre comment ça marche</strong>
+            <p>Les grandes boucles du modèle, en schémas : l’argent, la dette, les ménages, le climat, l’immigration, l’influence, les crises.</p>
+          </a>
+        </div>
+
+        <h2>En une minute</h2>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart LR
+    CSV["📂 modele/*.csv<br/>chiffres et règles<br/>(modifiables dans un tableur)"] --> ENG["⚙️ Moteur<br/>src/model/<br/>simule la France année par année"]
+    ENG --> GAME["🎮 Jeu<br/>src/App.tsx, src/game/, src/ui/<br/>leviers, scénarios, élections"]
+    ENG --> TESTS["🧪 Tests<br/>npm test<br/>le modèle reste cohérent et fidèle au passé"]
+    GAME --> PLAYER["👤 Joueur"]
+    PLAYER -- "décisions" --> ENG
+    CONTRIB["🤝 Contributeur"] -- "propose une meilleure valeur" --> CSV
+    TESTS -- "valide ou refuse" --> CONTRIB
+          </pre>
+          <figcaption>Le modèle vit dans des fichiers ; le moteur les lit ; les tests vérifient chaque changement.</figcaption>
+        </div>
+
+        <h2>Démarrage rapide</h2>
+        <h3>Jouer et explorer, sans rien installer</h3>
+        <p>
+          Demandez le lien de la version en ligne à l’équipe, ou lancez-la en local (ci-dessous). Dans le jeu, le bouton <strong>🧠 Le modèle</strong> ouvre le graphe des causes,
+          tous les paramètres (modifiables pour essayer) et le test « face au passé ».
+        </p>
+        <h3>Lancer le jeu sur son ordinateur</h3>
+        <p>Il faut <a href="https://nodejs.org/">Node.js</a> (version 20 ou plus récente), puis, dans un terminal, à la racine du dépôt :</p>
+        <pre><code>npm install      # une seule fois
+npm run dev      # lance le jeu sur http://localhost:5173
+npm test         # vérifie que le modèle tient debout</code></pre>
+
+        <h2>Le dépôt en un coup d’œil</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Dossier ou fichier</th>
+                <th>Ce qu’on y trouve</th>
+                <th>Pour qui</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>modele/</code></td>
+                <td>Toutes les données et règles du modèle, en fichiers CSV : chiffres de 2025 et de 2000, comportements, tranches de ménages, tailles d’entreprises, monde, historique, graphe des causes.</td>
+                <td>Tout le monde</td>
+              </tr>
+              <tr>
+                <td><code>src/model/</code></td>
+                <td>Le moteur de simulation (TypeScript), le rejeu du passé, l’analyse de solidité, les explications.</td>
+                <td>Développeurs</td>
+              </tr>
+              <tr>
+                <td><code>src/game/</code></td>
+                <td>La couche de jeu : scénarios, élections, capital politique, conseillers, une du journal, succès.</td>
+                <td>Développeurs</td>
+              </tr>
+              <tr>
+                <td><code>src/ui/</code>, <code>src/App.tsx</code></td>
+                <td>L’interface (React).</td>
+                <td>Développeurs</td>
+              </tr>
+              <tr>
+                <td><code>docs/</code></td>
+                <td>Cette documentation (pages HTML) et <code>COMMENT-CA-MARCHE.md</code>.</td>
+                <td>Tout le monde</td>
+              </tr>
+              <tr>
+                <td><code>scripts/build-docs.mjs</code></td>
+                <td>Fabrique le <a href="catalogue.html">catalogue des paramètres</a> à partir des CSV.</td>
+                <td>Développeurs</td>
+              </tr>
+              <tr>
+                <td><code>.github/workflows/ci.yml</code></td>
+                <td>Les vérifications automatiques lancées par GitHub à chaque proposition de modification.</td>
+                <td>Tout le monde (le résultat)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Lire cette documentation</h2>
+        <ul>
+          <li><strong>Sur votre ordinateur</strong> : ouvrez <code>docs/index.html</code> dans un navigateur (double-clic). Les schémas ont besoin d’une connexion Internet pour être dessinés ; sans connexion, leur texte reste lisible.</li>
+          <li>
+            <strong>En ligne, avec GitHub Pages</strong> : dans les réglages du dépôt sur GitHub, <em>Settings → Pages → Build and deployment</em>, choisir la branche
+            <code>main</code> et le dossier <code>/docs</code>. (Pour un dépôt privé, GitHub Pages demande une offre payante.)
+          </li>
+        </ul>
+
+        <div class="note">
+          <p>
+            <strong>Le principe qui guide tout le projet</strong> : un simulateur honnête montre des mécanismes et des ordres de grandeur, pas des prédictions. Chaque chiffre a
+            une source ou est déclaré comme hypothèse, et chaque règle peut être discutée et changée. Les tests garantissent que les changements ne cassent pas la cohérence de
+            l’ensemble.
+          </p>
+        </div>
+
+        <footer>France·Sim — documentation. Les pages sont dans <code>docs/</code> : corrigez-les comme le reste du dépôt.</footer>
+      </main>
+    </div>
+    <script type="module" src="assets/docs.js"></script>
+  </body>
+</html>

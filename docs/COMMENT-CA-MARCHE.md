@@ -238,7 +238,7 @@ flowchart LR
     POV --> LE["Espérance de vie"]
 ```
 
-## 6 bis. Le climat
+## 7. Le climat
 
 ```mermaid
 flowchart LR
@@ -262,7 +262,7 @@ Sans changement de politique dans le monde, le réchauffement atteint environ +1
 (soit une trajectoire vers +2,7 °C en 2100, comme l’estime l’ONU). Les chiffres viennent du GIEC (AR6), du Global Carbon Budget,
 de l’ONU Environnement, du Citepa et de Santé publique France ; les fonctions de dégâts sont des hypothèses, à discuter.
 
-## 6 bis bis. L’immigration : tout est cause et effet
+## 8. L’immigration : tout est cause et effet
 
 ```mermaid
 flowchart LR
@@ -288,7 +288,7 @@ Le contrôle des frontières a des rendements décroissants : on n’empêche au
 tant que guerres, misère et réchauffement poussent au départ. L’aide au développement et la lutte contre le réchauffement agissent sur les causes,
 mais sur des décennies. Toutes ces règles sont dans `modele/comportements.csv` (bloc Immigration), avec leurs sources ou leur statut d’hypothèse.
 
-## 6 quater. L’influence de la France
+## 9. L’influence de la France
 
 ```mermaid
 flowchart LR
@@ -310,7 +310,7 @@ L’influence suit la puissance avec retard (quelques années). Sans rien faire,
 Toutes les pondérations et tous les effets sont dans `modele/comportements.csv` (bloc Influence) ; ce sont des hypothèses, inspirées des indices
 de puissance (Lowy Institute) et de soft power.
 
-## 6 quinquies. Comprendre pourquoi : causes, combinaisons, effets émergents
+## 10. Comprendre pourquoi : causes, combinaisons, effets émergents
 
 Le jeu ne raconte rien d’écrit à l’avance : il mesure.
 
@@ -331,7 +331,7 @@ flowchart LR
 
 Tendance + parts de chaque cause + effet de combinaison = la valeur réelle, exactement (un test le vérifie).
 
-## 6 ter. Le monde bouge, le Parlement freine
+## 11. Le monde bouge, le Parlement freine
 
 - **Événements** : chaque année, 24 événements possibles sont tirés au sort (une partie différente à chaque fois). Leur probabilité
   dépend de la situation : plus il fait chaud, plus il y a de canicules et de sécheresses ; plus la colère monte, plus il y a de grèves ;
@@ -342,7 +342,7 @@ Tendance + parts de chaque cause + effet de combinaison = la valeur réelle, exa
   et fait fuir des capitaux) ou privatiser ; réglementer (protège les salaires du bas et les émissions, mais relève le chômage d’équilibre
   et freine la productivité) ou libéraliser.
 
-## 7. Crise de la dette et fin de partie
+## 12. Crise de la dette et fin de partie
 
 Une partie peut mal finir. Le moteur suit deux jauges, et quatre façons de perdre.
 
@@ -373,14 +373,14 @@ flowchart LR
 Quand les impôts s’envolent, une partie échappe au fisc (fraude, travail au noir) et les hauts revenus partent :
 chaque hausse rapporte de moins en moins. Tous les seuils sont dans `modele/comportements.csv`, avec leur plage plausible.
 
-## 8. Les entreprises : PME, ETI, grands groupes
+## 13. Les entreprises : PME, ETI, grands groupes
 
 Le moteur garde une seule économie, mais chaque taille d’entreprise réagit à sa façon (`modele/entreprises.csv`) :
 les PME dépendent de leur banque et emploient plus de salariés au SMIC ; les ETI portent l’industrie qui consomme de l’énergie ;
 les grands groupes exportent et peuvent déclarer leurs bénéfices ailleurs. Une aide publique est en partie investie :
 beaucoup par une PME qui manque de trésorerie, peu par un grand groupe. Le levier « Part des aides allant aux PME » le montre.
 
-## 9. Le test de vérité : rejouer 2000–2024
+## 14. Le test de vérité : rejouer 2000–2024
 
 Le même moteur repart de la France de 2000 (`donnees-2000.csv`), avec les décisions réellement prises
 (`politiques-2000-2024.csv`) et le monde tel qu’il a été (`monde.csv`). On compare à ce qui s’est passé (`historique.csv`).
@@ -402,7 +402,7 @@ plusieurs défauts : un impôt sur le revenu deux fois et demie trop lourd, des 
 des taux longs qui suivaient trop vite la BCE. L’onglet « Face au passé » du modèle montre les courbes, et dit si votre variante
 de paramètres reproduit mieux ou moins bien l’histoire.
 
-## 10. Ce résultat est-il solide ?
+## 15. Ce résultat est-il solide ?
 
 Pour une décision et un indicateur, on refait le calcul en faisant varier chaque **hypothèse** du modèle (les paramètres
 dont la fiabilité est « hypothèse ») dans sa plage plausible (colonnes `min` et `max`, sinon ± 30 %). Verdict :
@@ -413,7 +413,7 @@ dont la fiabilité est « hypothèse ») dans sa plage plausible (colonnes `min`
 
 L’analyse nomme les hypothèses qui décident : ce sont elles qu’il faut documenter en priorité.
 
-## 11. Participer : du tableur au modèle
+## 16. Participer : du tableur au modèle
 
 ```mermaid
 flowchart LR
@@ -426,9 +426,9 @@ flowchart LR
     G --> H["Le modèle s’améliore"]
 ```
 
-Voir [CONTRIBUER.md](../CONTRIBUER.md) pour le détail.
+Voir [CONTRIBUER.md](../CONTRIBUER.md) pour le détail, et la documentation HTML (`docs/index.html`) pour les guides pas à pas.
 
-## 12. Ce que le modèle ne sait pas faire (limites connues)
+## 17. Ce que le modèle ne sait pas faire (limites connues)
 
 Un simulateur honnête dit où il s’arrête. Les principales limites aujourd’hui :
 

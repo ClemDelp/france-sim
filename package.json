@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "vitest run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docs": "node scripts/build-docs.mjs",
+    "check": "npm run lint && npm test && npm run build"
   },
   "dependencies": {
     "react": "^19.2.8",

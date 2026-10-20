@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tester son changement</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <main>
+        <h1>🧪 Tester son changement</h1>
+        <p class="lead">
+          Un changement de paramètre peut avoir des effets en cascade. Trois niveaux de vérification, du plus simple au plus complet, vous disent s’il tient debout. Les deux
+          premiers ne demandent aucune installation.
+        </p>
+
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart LR
+    N1["🎮 Niveau 1<br/>Dans le jeu<br/>(variante)"] --> N2["🤖 Niveau 2<br/>Sur GitHub<br/>(tests automatiques)"]
+    N2 --> N3["💻 Niveau 3<br/>Sur votre ordinateur<br/>(npm test)"]
+    N1 -. "aucune installation" .- N2
+          </pre>
+        </div>
+
+        <h2 id="jeu">Niveau 1 — Dans le jeu</h2>
+        <p>Dans <strong>🧠 Le modèle → Tous les paramètres</strong>, changez une valeur : vous jouez alors avec une <strong>variante</strong> du modèle.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Outil</th>
+                <th>Où</th>
+                <th>Ce qu’il vous dit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Bandeau de la variante</td>
+                <td>en haut du jeu et du modèle</td>
+                <td>L’effet de votre variante sur la croissance, le chômage, la dette et la pauvreté, l’année en cours, comparé au modèle d’origine.</td>
+              </tr>
+              <tr>
+                <td id="passe">Face au passé (2000–2024)</td>
+                <td>🧠 Le modèle → onglet « Face au passé »</td>
+                <td>
+                  Le modèle rejoue 2000–2024 avec les décisions réellement prises et le monde tel qu’il a été. La colonne « Avec votre variante » dit si votre valeur reproduit
+                  <strong>mieux</strong> ou <strong>moins bien</strong> l’histoire (écart moyen par indicateur).
+                </td>
+              </tr>
+              <tr>
+                <td>🔬 Ce résultat est-il solide ?</td>
+                <td>verdict d’une idée reçue, onglet Courbes</td>
+                <td>Refait le calcul en faisant varier chaque hypothèse dans sa plage plausible : quelles hypothèses décident du résultat.</td>
+              </tr>
+              <tr>
+                <td>🔍 Pourquoi en est-on là ?</td>
+                <td>la une du journal</td>
+                <td>La part de chaque décision et de chaque événement dans la situation de l’année, et l’effet de leur combinaison.</td>
+              </tr>
+              <tr>
+                <td>Le graphe des causes</td>
+                <td>🧠 Le modèle → Graphe</td>
+                <td>Pour une variable, ce qui la fait bouger et ce qu’elle fait bouger, avec les paramètres de chaque lien et leur valeur dans votre partie.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note"><p>La variante n’est gardée que dans votre navigateur et disparaît au rechargement : c’est un banc d’essai, pas une modification du dépôt.</p></div>
+
+        <h2 id="github">Niveau 2 — Sur GitHub : les tests automatiques</h2>
+        <p>
+          Dès que vous proposez une modification (<em>pull request</em>), GitHub lance automatiquement toutes les vérifications du projet (fichier
+          <code>.github/workflows/ci.yml</code>). En bas de la page de votre proposition :
+        </p>
+        <ul>
+          <li><strong>🟡 en cours</strong> : patientez quelques minutes ;</li>
+          <li><strong>✅ All checks have passed</strong> : le modèle reste cohérent avec votre changement ;</li>
+          <li><strong>❌ Some checks were not successful</strong> : cliquez sur <em>Details</em>, puis sur l’étape en rouge. Le nom du test qui échoue et son message s’affichent ; voir <a href="#echecs">que faire si un test échoue</a>.</li>
+        </ul>
+
+        <h2 id="local">Niveau 3 — Sur votre ordinateur</h2>
+        <p>Avec <a href="https://nodejs.org/">Node.js</a> installé, à la racine du dépôt :</p>
+        <pre><code>npm install            # une seule fois
+npm test               # tous les tests (quelques secondes)
+npx vitest             # relance les tests à chaque modification de fichier
+npx vitest run replay  # seulement les tests dont le fichier contient « replay »
+npm run check          # tout ce que vérifie GitHub : lint, tests, compilation
+npm run dev            # le jeu, avec vos fichiers modifiés</code></pre>
+        <p>Les tests affichent aussi des informations utiles, par exemple l’écart du rejeu 2000–2024 pour chaque indicateur.</p>
+
+        <h2 id="garanties">Ce que garantissent les tests</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fichier de tests</th>
+                <th>Il vérifie que…</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/model/modele.test.ts</code></td>
+                <td>
+                  <strong>Les fichiers sont valides</strong> : chaque ligne a le bon nombre de colonnes (pas de « ; » dans un texte), aucun identifiant en double, chaque paramètre a une
+                  source ou une fiabilité et est utilisé par le moteur, chaque lien du graphe relie des variables et cite des paramètres qui existent, les parts de la dette font 100 %.
+                  <strong>Le long terme est stable</strong> : jusqu’en 2075, avec ou sans chaque idée reçue, rien ne s’emballe (inflation, chômage, croissance) ; la population vieillit sans
+                  s’effondrer.
+                </td>
+              </tr>
+              <tr>
+                <td><code>src/model/sim.test.ts</code></td>
+                <td>
+                  <strong>La comptabilité boucle</strong> chaque année (ce que l’un paie, un autre le reçoit). <strong>La France de 2025 est bien calée</strong>. <strong>Les grands
+                  mécanismes</strong> gardent leur sens : taxer les riches réduit la pauvreté, annuler la dette de la BCE ne rapporte presque rien, la retraite à 60 ans coûte, tous les
+                  impôts au maximum font perdre la partie, le contrôle des frontières n’arrête qu’une partie des arrivées, l’aide au développement réduit les départs forcés, une armée et
+                  une culture fortes accroissent l’influence…
+                </td>
+              </tr>
+              <tr>
+                <td><code>src/model/replay.test.ts</code></td>
+                <td><strong>Le passé reste reproduit</strong> : rejoué de 2000 à 2024, le modèle reste proche de l’histoire (écarts moyens plafonnés), retrouve les récessions de 2009 et 2020 et l’inflation de 2022, et ne déclenche aucune crise imaginaire.</td>
+              </tr>
+              <tr>
+                <td><code>src/model/robustness.test.ts</code>, <code>explain.test.ts</code></td>
+                <td>L’analyse de solidité et les explications « Pourquoi ? » fonctionnent ; tendance + causes + effet de combinaison redonnent exactement la valeur réelle.</td>
+              </tr>
+              <tr>
+                <td><code>src/game/game.test.ts</code></td>
+                <td><strong>Le jeu reste jouable</strong> : chaque scénario se gagne avec une stratégie connue mais pas en ne faisant rien ; élections, une du journal, conseillers, succès, explication des événements.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="echecs">Que faire si un test échoue</h2>
+        <p>Un test qui échoue n’est pas forcément une erreur de votre part : il signale que votre changement modifie un comportement que le projet considérait comme établi. Il faut alors décider, ensemble, qui a raison.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Message (extrait)</th>
+                <th>Ce qu’il veut dire</th>
+                <th>Que faire</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>« chaque ligne a autant de colonnes que l’en-tête »</td>
+                <td>Un « ; » s’est glissé dans un texte, ou une colonne manque.</td>
+                <td>Remplacez le « ; » par une virgule ; comparez la ligne fautive à ses voisines.</td>
+              </tr>
+              <tr>
+                <td>« Valeur non numérique dans les paramètres »</td>
+                <td>Une valeur n’est pas un nombre (espace, lettre, deux virgules…).</td>
+                <td>Corrigez la cellule indiquée.</td>
+              </tr>
+              <tr>
+                <td>« chaque paramètre est utilisé par le moteur : expected [ 'xxx' ] »</td>
+                <td>Vous avez ajouté (ou renommé) un paramètre que le moteur ne connaît pas.</td>
+                <td>Remettez l’ancien <code>id</code>, ou demandez à un développeur de coder le mécanisme.</td>
+              </tr>
+              <tr>
+                <td>« Paramètre « xxx » absent des fichiers du dossier modele/ »</td>
+                <td>Une ligne a été supprimée ou son <code>id</code> modifié.</td>
+                <td>Restaurez la ligne.</td>
+              </tr>
+              <tr>
+                <td>« reproduit les grandes lignes de l’histoire »</td>
+                <td>Avec votre valeur, le rejeu 2000–2024 s’éloigne trop de la réalité.</td>
+                <td>Vérifiez l’onglet « Face au passé » : si votre source est solide, discutez-en dans la proposition (le seuil, ou un autre paramètre, est peut-être à revoir).</td>
+              </tr>
+              <tr>
+                <td>« reste stable jusqu’en 2075 »</td>
+                <td>Votre valeur fait s’emballer le modèle à long terme (inflation, chômage…).</td>
+                <td>La valeur est souvent hors de sa plage plausible. Essayez-la dans le jeu en avançant jusqu’en 2075.</td>
+              </tr>
+              <tr>
+                <td>« ne rien faire ne suffit pas, une bonne stratégie rapporte des étoiles »</td>
+                <td>Un scénario n’est plus gagnable, ou se gagne sans rien faire.</td>
+                <td>Signalez-le : un développeur ajustera les objectifs du scénario (<code>src/game/scenarios.ts</code>).</td>
+              </tr>
+              <tr>
+                <td>Un test de mécanisme (« taxing the rich… », « l’aide au développement… »)</td>
+                <td>Votre valeur inverse ou annule un effet attendu.</td>
+                <td>C’est un vrai débat : expliquez votre source. Le test sera adapté si la communauté vous donne raison.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tip">
+          <p><strong>Lire un message vitest</strong> : la ligne <code>×</code> donne le nom du test, la ligne <code>AssertionError</code> dit ce qui était attendu (<em>expected … to be less than …</em>), et le chemin du fichier pointe la ligne du test.</p>
+        </div>
+        <footer>Vous ne comprenez pas un échec ? Collez le message dans la discussion de votre proposition : quelqu’un vous aidera.</footer>
+      </main>
+    </div>
+    <script type="module" src="assets/docs.js"></script>
+  </body>
+</html>
