@@ -26,6 +26,21 @@ npm install
 npm run dev
 ```
 
+### Sur téléphone, comme une appli
+
+Le jeu s’adapte au téléphone (une zone à la fois, onglets en bas, grand bouton ▶ sous le pouce, à la verticale comme à
+l’horizontale) et s’installe comme une application : icône sur l’écran d’accueil, plein écran, **jeu hors ligne**, partie
+sauvegardée automatiquement.
+
+- **Depuis votre ordinateur, sur le même Wi-Fi** : `npm run phone`, puis ouvrez sur le téléphone l’adresse
+  `Network: http://192.168.…:4173` affichée. On peut jouer tout de suite ; l’installation hors ligne demande en
+  revanche un site en HTTPS.
+- **En ligne (HTTPS), pour l’installer** : publiez le dossier `dist/` (créé par `npm run build`) sur n’importe quel
+  hébergeur de site statique : GitHub Pages (dépôt public ou offre payante), Netlify (glisser-déposer `dist/` sur
+  app.netlify.com/drop), Cloudflare Pages, Vercel… Les chemins sont relatifs : le jeu marche aussi dans un sous-dossier.
+- **Installer** : sur Android (Chrome), bouton « 📲 Installer l’appli » de l’accueil ; sur iPhone (Safari),
+  Partager ⬆️ puis « Sur l’écran d’accueil » (l’accueil du jeu l’explique).
+
 ### Le jeu
 
 - **Accueil** : votre nom de président·e, et cinq façons de jouer (tutoriel, scénarios, partie libre, idées reçues, comprendre le modèle).

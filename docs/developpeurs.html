@@ -24,7 +24,8 @@ npx vitest         # tests en continu
 npm run lint       # oxlint
 npm run build      # vérification des types (tsc -b) puis build de production dans dist/
 npm run check      # lint + tests + build : ce que vérifie GitHub
-npm run docs       # régénère docs/catalogue.html et docs/modele.html</code></pre>
+npm run docs       # régénère docs/catalogue.html et docs/modele.html
+npm run phone      # build + serveur sur le Wi-Fi, pour jouer depuis un téléphone (port 4173)</code></pre>
         <div class="table-wrap">
           <table>
             <thead>
@@ -137,7 +138,9 @@ sequenceDiagram
               <tr><td><code>src/game/advisors.ts</code>, <code>headlines.ts</code>, <code>achievements.ts</code></td><td>Les ministres, la une du journal, les succès.</td></tr>
               <tr><td><code>src/App.tsx</code></td><td>L’état de la partie et l’orchestration : modes, pauses (crise, élection, fin de partie, fin de scénario), fenêtres.</td></tr>
               <tr><td><code>src/ui/</code></td><td>Composants : leviers (<code>levers.ts</code>), indicateurs (<code>indicators.ts</code>), panneaux (<code>Panels.tsx</code>), carte des flux, courbes, cerveau du modèle (<code>Brain.tsx</code>), idées reçues (<code>missions.ts</code>), programmes économiques (<code>doctrines.ts</code>).</td></tr>
-              <tr><td><code>src/ui/game/</code></td><td>Accueil, HUD (popularité, objectifs, Conseil des ministres, fil d’actualité, journal), tutoriel, ambiance visuelle, fenêtre « Pourquoi ? ».</td></tr>
+              <tr><td><code>src/ui/game/</code></td><td>Accueil, HUD (popularité, objectifs, Conseil des ministres, fil d’actualité, journal), tutoriel, ambiance visuelle, fenêtre « Pourquoi ? » ; la barre d’onglets du téléphone (<code>Phone.tsx</code>, <code>usePhone.ts</code>) et l’installation de l’appli (<code>install.ts</code>).</td></tr>
+              <tr><td><code>src/game/savegame.ts</code></td><td>La sauvegarde automatique de la partie en cours (relue au lancement, validée).</td></tr>
+              <tr><td><code>pwa/sw.js</code>, <code>public/manifest.webmanifest</code>, <code>public/icons/</code></td><td>L’application installable : le modèle du service worker (complété au build par <code>vite.config.ts</code>), le manifeste et les icônes.</td></tr>
             </tbody>
           </table>
         </div>
@@ -197,6 +200,39 @@ stateDiagram-v2
           <figcaption>Les pauses sont <em>dérivées</em> de l’état (pas de drapeau à remettre à zéro) : <code>running</code> est faux tant qu’une crise, une élection ou une fin de partie attend une réponse.</figcaption>
         </div>
 
+        <h2 id="mobile">Téléphone et application installable</h2>
+        <p>
+          Le jeu a deux mises en page. Au-delà de 760 px de large, l’écran ordinateur à trois colonnes. Jusqu’à 760 px (ou sur un téléphone tenu à l’horizontale :
+          écran tactile de moins de 500 px de haut), la mise en page téléphone : une zone à la fois. La règle est écrite deux fois, à garder identique :
+          <code>PHONE_QUERY</code> dans <code>src/ui/game/usePhone.ts</code> et les <code>@media (max-width: 760px), (pointer: coarse) and (max-height: 500px)</code> de
+          <code>src/index.css</code>.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart TB
+    TOP["En-tête : 🇫🇷 (menu) · année · popularité · 🧠"]
+    subgraph VUES["Une zone à la fois (classe .layout.phone.view-…)"]
+        P["🇫🇷 Le pays<br/>objectifs, une du journal, chiffres clés"]
+        D["🎛️ Décider<br/>leviers avec − / +"]
+        F["💶 L'argent<br/>carte des flux (disposition verticale), le monde bouge"]
+        A["📊 Analyses<br/>onglets qui défilent"]
+    end
+    C["Conseil des ministres : une ligne → panneau (avancer de 5, 10 ans…)"]
+    N["Onglets en bas · bouton ▶ au centre"]
+    TOP --> VUES --> C --> N
+          </pre>
+          <figcaption>Après ▶, le jeu revient sur « Le pays » pour montrer la une de l’année. La visite guidée change d’écran à chaque étape (champ <code>view</code> de <code>TourStep</code>).</figcaption>
+        </div>
+        <ul>
+          <li><strong>Afficher ou cacher une zone sur téléphone</strong> : règles <code>.layout.phone.view-… .classe { display: none }</code> dans <code>index.css</code>. Un composant qui doit changer de comportement (carte en hauteur, texte « Touchez » au lieu de « Survolez ») lit <code>usePhone()</code>.</li>
+          <li><strong>Pas de survol sur un écran tactile</strong> : toute information donnée au survol (<code>title</code>, <code>:hover</code>) doit aussi être accessible d’un toucher.</li>
+          <li><strong>Les fenêtres</strong> deviennent des panneaux qui montent du bas ; gardez leurs boutons dans <code>.verdict-actions</code> (pleine largeur sur téléphone).</li>
+          <li><strong>Hors ligne</strong> : <code>npm run build</code> écrit <code>dist/sw.js</code> à partir de <code>pwa/sw.js</code>, avec la liste exacte des fichiers et une version (empreinte du build). Le service worker n’est enregistré que dans la version construite (<code>import.meta.env.PROD</code>) et seulement en HTTPS ou sur <code>localhost</code>. Pour tester : <code>npm run build &amp;&amp; npx vite preview</code>, puis dans Chrome, DevTools → Application → Service workers / Manifest, et l’option « Offline ».</li>
+          <li><strong>Mise à jour</strong> : la page est demandée au réseau d’abord ; une nouvelle version s’installe en arrière-plan et sert au lancement suivant (aucun rechargement en pleine partie).</li>
+          <li><strong>Sauvegarde</strong> : tout état qui doit survivre à la fermeture de l’appli va dans <code>SavedGame</code> (<code>savegame.ts</code>) ; changez <code>v</code> si son format change (les anciennes sauvegardes sont alors ignorées).</li>
+          <li><strong>Icônes</strong> : <code>public/icons/icon.svg</code> (coins arrondis) et <code>maskable.svg</code> (plein cadre, dessin dans les 80 % du centre) ; les PNG en sont des rendus en 192, 512 et 180 px (Apple).</li>
+        </ul>
+
         <h2 id="regles">Les règles du projet</h2>
         <ol>
           <li><strong>Tout coefficient dans un CSV</strong>, avec un nom, une explication, une fiabilité, une source ou le mot « hypothèse », et une plage plausible si c’est une hypothèse. Un test refuse un paramètre déclaré mais inutilisé.</li>
@@ -213,8 +249,7 @@ stateDiagram-v2
 
         <h2 id="ui">Tester l’interface</h2>
         <p>
-          Les tests automatiques couvrent le moteur et les règles du jeu, pas l’affichage. Pour l’interface, vérifiez dans le navigateur, à plusieurs largeurs (1440, 1200, 1000,
-          375 px). Pour un bouton dans une fenêtre, assurez-vous qu’il est réellement cliquable : un clic déclenché par programme (<code>button.click()</code>) réussit même sur un
+          Les tests automatiques couvrent le moteur et les règles du jeu, pas l’affichage. Pour l’interface, vérifiez dans le navigateur, à plusieurs largeurs (1440, 1100, 820 et 390 px, plus 844 × 390 pour un téléphone à l’horizontale, avec l’émulation tactile des DevTools). Pour un bouton dans une fenêtre, assurez-vous qu’il est réellement cliquable : un clic déclenché par programme (<code>button.click()</code>) réussit même sur un
           bouton caché derrière une autre couche. Dans la console du navigateur :
         </p>
         <pre><code>const b = [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Prendre les commandes'))
@@ -232,6 +267,7 @@ b.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
               <tr><td>Ambiance (flammes, pancartes)</td><td>5 (ne capte jamais la souris)</td></tr>
               <tr><td>En-tête</td><td>10</td></tr>
               <tr><td>Conseil des ministres</td><td>20</td></tr>
+              <tr><td>Téléphone : barre d’onglets ; panneau du Conseil et son fond</td><td>25 ; 27 et 26</td></tr>
               <tr><td>Fenêtres de la partie, cerveau du modèle</td><td>30</td></tr>
               <tr><td>Accueil</td><td>40</td></tr>
               <tr><td>Fenêtre ouverte depuis l’accueil (<code>.modal-backdrop.on-top</code>)</td><td>45</td></tr>
