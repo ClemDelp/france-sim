@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Recettes du développeur</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <main>
+        <h1>🧩 Recettes</h1>
+        <p class="lead">
+          Les modifications les plus courantes, pas à pas, avec la liste exacte des fichiers à toucher. Après chaque recette : <code>npm run check</code>, puis
+          <code>npm run docs</code> si un CSV a changé.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Je veux…</th><th>Fichiers</th></tr></thead>
+            <tbody>
+              <tr><td><a href="#parametre">ajouter un paramètre</a></td><td><code>modele/comportements.csv</code> ou <code>donnees-2025.csv</code>, <code>calibration.ts</code>, <code>sim.ts</code>, <code>liens.csv</code></td></tr>
+              <tr><td><a href="#levier">ajouter un levier</a></td><td><code>types.ts</code>, <code>calibration.ts</code>, <code>sim.ts</code>, <code>ui/levers.ts</code>, <code>variables.csv</code>, <code>liens.csv</code>, un test</td></tr>
+              <tr><td><a href="#variable">ajouter une variable suivie</a></td><td><code>types.ts</code>, <code>sim.ts</code>, <code>variables.csv</code>, <code>liens.csv</code>, <code>ui/nodeValues.ts</code>, éventuellement <code>ui/indicators.ts</code> et <code>ui/Panels.tsx</code></td></tr>
+              <tr><td><a href="#evenement">ajouter un événement</a></td><td><code>model/events.ts</code> (et <code>types.ts</code>, <code>world.ts</code>, <code>sim.ts</code> pour un nouvel effet)</td></tr>
+              <tr><td><a href="#scenario">ajouter un scénario</a></td><td><code>game/scenarios.ts</code>, <code>game/game.test.ts</code></td></tr>
+              <tr><td><a href="#mythe">ajouter une idée reçue</a></td><td><code>ui/missions.ts</code></td></tr>
+              <tr><td><a href="#doctrine">ajouter un programme économique</a></td><td><code>ui/doctrines.ts</code></td></tr>
+              <tr><td><a href="#jeu">ajouter un succès, une une, un conseil</a></td><td><code>game/achievements.ts</code>, <code>game/headlines.ts</code>, <code>game/advisors.ts</code></td></tr>
+              <tr><td><a href="#fin">ajouter une fin de partie</a></td><td><code>types.ts</code>, <code>sim.ts</code> (étape 16), <code>ui/endings.ts</code></td></tr>
+              <tr><td><a href="#recalibrer">recalibrer le modèle</a></td><td><code>modele/*.csv</code>, tests de rejeu</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="parametre">Ajouter un paramètre</h2>
+        <ol class="steps">
+          <li>
+            Ajoutez une ligne dans <code>modele/comportements.csv</code> (un comportement) ou <code>modele/donnees-2025.csv</code> (une donnée observée). Remplissez la
+            fiabilité et la source, et pour une hypothèse les colonnes <code>min</code> et <code>max</code> (la plage plausible utilisée par l’analyse de solidité).
+            <pre><code>migrantNairu;0,05;part;Immigration;Effet des arrivées récentes sur le chômage d’équilibre;…;hypothèse;OCDE (2023);0,02;0,1</code></pre>
+          </li>
+          <li>Ajoutez l’<code>id</code> à la liste de <code>P = view([...])</code> (ou <code>DATA</code>) dans <code>src/model/calibration.ts</code> : il devient <code>P.migrantNairu</code>, typé.</li>
+          <li>Utilisez-le dans <code>sim.ts</code>. Le test « chaque paramètre est utilisé par le moteur » échoue tant que ce n’est pas fait, et inversement un <code>P.x</code> absent des CSV lève une erreur au chargement.</li>
+          <li>Citez-le dans la colonne <code>parametres</code> du lien concerné dans <code>modele/liens.csv</code> : les joueurs le retrouvent dans le graphe des causes.</li>
+          <li><code>npm run docs</code> : il apparaît dans le <a href="catalogue.html">catalogue</a>.</li>
+        </ol>
+        <div class="warn"><p>Jamais de « ; » dans un texte de CSV : il décale les colonnes. Utilisez une virgule.</p></div>
+
+        <h2 id="levier">Ajouter un levier</h2>
+        <p>Exemple réel : <code>softPower</code> (rayonnement culturel et diplomatie).</p>
+        <ol class="steps">
+          <li><strong>Le type</strong> : ajoutez <code>softPower: number</code> dans <code>Policy</code> (<code>src/model/types.ts</code>).</li>
+          <li><strong>La valeur de 2025</strong> : <code>softPower: 6</code> dans <code>BASE_POLICY</code> (<code>calibration.ts</code>). C’est aussi la valeur du rejeu, sauf si <code>politiques-2000-2024.csv</code> en donne une autre.</li>
+          <li>
+            <strong>Le mécanisme</strong> dans <code>sim.ts</code>, à la bonne étape (voir <a href="moteur.html">le moteur</a>). Travaillez en écart à la référence (<code>policy.x − REF.x</code>) pour que la politique de départ reproduise l’année de départ. Une dépense doit être payée :
+            <pre><code>const plannedPublicGoods = g(… + policy.otherServices + policy.softPower - REF.softPower)</code></pre>
+          </li>
+          <li>
+            <strong>Le curseur</strong> dans <code>src/ui/levers.ts</code>, dans le bon groupe :
+            <pre><code>{ key: 'softPower', label: 'Rayonnement culturel et diplomatie', min: 0, max: 30, step: 0.5, unit: 'bn', hint: '≈ 6 Md€ par an…' }</code></pre>
+            <code>weight</code> (1 par défaut) règle le coût en capital politique : un sixième de la plage coûte <code>weight</code> point. Mettez 1,5 ou 2 pour une réforme très contestée.
+          </li>
+          <li><strong>Le graphe</strong> : une ligne dans <code>variables.csv</code> (bloc <code>Leviers</code>) et un lien par effet dans <code>liens.csv</code>, avec les paramètres qui le règlent.</li>
+          <li><strong>Un test</strong> dans <code>sim.test.ts</code> qui fixe le sens de l’effet (ex. « une culture forte accroît l’influence »), et vérifiez que la comptabilité boucle toujours.</li>
+        </ol>
+
+        <h2 id="variable">Ajouter une variable suivie</h2>
+        <ol class="steps">
+          <li>Ajoutez le champ à <code>YearState</code> (<code>types.ts</code>) avec un commentaire qui dit son unité.</li>
+          <li>Calculez-le dans <code>step()</code> et ajoutez-le à l’objet <code>state</code>. S’il doit avoir une mémoire d’une année sur l’autre, ajoutez-le aussi à <code>Carry</code> et à <code>initialCarry()</code>.</li>
+          <li>Déclarez-le dans <code>variables.csv</code> et reliez-le dans <code>liens.csv</code> ; donnez sa valeur dans <code>src/ui/nodeValues.ts</code> pour que le graphe affiche son évolution.</li>
+          <li>Pour l’afficher : un indicateur dans <code>src/ui/indicators.ts</code> (tableau de bord et courbes), ou une ligne dans un panneau de <code>src/ui/Panels.tsx</code>.</li>
+          <li>Pour l’expliquer : la fenêtre « Pourquoi ? » (<code>explain.ts</code>) accepte toute fonction <code>(s: YearState) =&gt; number</code>.</li>
+        </ol>
+
+        <h2 id="evenement">Ajouter un événement</h2>
+        <p>Les événements vivent dans <code>EVENTS</code> (<code>src/model/events.ts</code>). Le jeu les tire au sort chaque année ; le joueur ne les déclenche pas.</p>
+        <pre><code>{
+  id: 'heatwave',
+  label: 'Canicule meurtrière',
+  icon: '🥵',
+  category: 'climat',                        // climat | economie | monde | societe | technologie
+  summary: 'Six semaines au-delà de 40 °C…',
+  effects: [{ heatShock: 0.6, unrest: 0.05 }], // un objet par année, à partir du déclenchement
+  chance: (s) => odds(0.08, warming(s, 0.3)),  // s = la France de l'an dernier
+  cooldown: 2,                                 // années avant de pouvoir revenir
+}</code></pre>
+        <ul>
+          <li><strong>Chaque facteur de probabilité a un nom lisible</strong> : <code>add(libellé, valeur)</code> s’ajoute, <code>mult(libellé, facteur)</code> multiplie. C’est ce que la fenêtre « Pourquoi cet événement ? » affiche au joueur ; un facteur négligeable est masqué automatiquement.</li>
+          <li><strong>Les effets</strong> sont des champs de <code>World</code> : <code>growth</code>, <code>oil</code>, <code>ecbRate</code>, <code>panic</code>, <code>demandShock</code>, <code>qe</code>, <code>climateAmbition</code>, <code>heatShock</code>, <code>unrest</code>, <code>productivity</code>, <code>migrants</code>, <code>conflict</code>. Ils s’ajoutent au monde de l’année (<code>worldAt</code>). <code>repeat(n, effet)</code> pour un effet durable.</li>
+          <li><strong>Un nouvel effet</strong> : ajoutez le champ à <code>World</code> (<code>types.ts</code>), à 0 dans <code>world.ts</code> et <code>baseWorld()</code>, et utilisez <code>world.x</code> dans <code>sim.ts</code>.</li>
+          <li>Préférez des probabilités qui dépendent de l’état du pays : ce sont elles qui font émerger des enchaînements (réchauffement → réfugiés → tensions → colère).</li>
+        </ul>
+
+        <h2 id="scenario">Ajouter un scénario</h2>
+        <ol class="steps">
+          <li>
+            Ajoutez une entrée à <code>SCENARIOS</code> (<code>src/game/scenarios.ts</code>) : récit, difficulté, année de fin, événements imposés, leviers verrouillés, objectifs.
+            <pre><code>objectives: [
+  { label: 'Dette sous 115 % du PIB en 2035', when: 'end', get: (s) =&gt; s.debtRatio, op: 'below', target: 1.15, show: pct0 },
+  { label: 'Taux à 10 ans toujours sous 4 %', when: 'always', get: (s) =&gt; s.rate, op: 'below', target: 0.04, show: pct },
+]</code></pre>
+            <code>when: 'end'</code> se juge à la dernière année ; <code>'always'</code> chaque année, et un échec est définitif.
+          </li>
+          <li>
+            Ajoutez une <strong>stratégie gagnante</strong> à <code>WINNING</code> dans <code>src/game/game.test.ts</code>. Le test vérifie que ne rien faire ne donne pas 3 étoiles, que la
+            stratégie fait mieux, ne perd pas la partie et gagne chaque élection.
+          </li>
+          <li>Réglez les cibles : jouez la référence (<code>simulate({ decisions: [], events: sc.events, until: sc.end })</code>), lisez les valeurs, et placez les cibles entre « rien faire » et « bien jouer ».</li>
+        </ol>
+
+        <h2 id="mythe">Ajouter une idée reçue</h2>
+        <p>Une entrée dans <code>MISSIONS</code> (<code>src/ui/missions.ts</code>) : la croyance, la décision testée (<code>patch</code>), les indicateurs à mettre en avant (<code>focus</code>), le mécanisme en quelques phrases et les limites du modèle. Les chiffres du verdict sont calculés ; le texte doit rester vrai quels que soient les paramètres, ou dire « dans ce modèle ».</p>
+
+        <h2 id="doctrine">Ajouter un programme économique</h2>
+        <p>Une entrée dans <code>DOCTRINES</code> (<code>src/ui/doctrines.ts</code>) : un titre, un texte et un <code>patch</code> de leviers appliqué d’un coup (il coûte du capital politique comme toute réforme).</p>
+
+        <h2 id="jeu">Ajouter un succès, une une, un conseil</h2>
+        <ul>
+          <li><strong>Succès</strong> : <code>{ id, icon, title, text, check: (c) =&gt; … }</code> dans <code>ACHIEVEMENTS</code>. <code>c.states</code> est la partie ; ne testez que <code>states.slice(1)</code> (l’année de départ ne compte pas).</li>
+          <li><strong>Une du journal</strong> : <code>headline()</code> (<code>headlines.ts</code>) titre l’événement le plus marquant de l’année : une cascade de règles, de la plus grave (fin de partie, crise, élection) à la plus banale. Insérez la vôtre à son rang de gravité, avec un ton (<code>good</code>, <code>bad</code>, <code>neutral</code>).</li>
+          <li><strong>Conseil</strong> : <code>adviseDraft</code> réagit à l’aperçu d’une décision (avec un poids : les plus graves passent devant), <code>adviseState</code> à la situation. Les conseils s’affichent dans le Conseil des ministres, en bas, sans décaler les curseurs.</li>
+        </ul>
+
+        <h2 id="fin">Ajouter une fin de partie</h2>
+        <ol class="steps">
+          <li>Ajoutez le nom à <code>Ending</code> (<code>types.ts</code>).</li>
+          <li>Ajoutez la condition dans la cascade de l’étape 16 de <code>sim.ts</code>, avec un seuil lu dans <code>comportements.csv</code> (bloc « Fin de partie »).</li>
+          <li>Décrivez-la dans <code>ENDINGS</code> (<code>src/ui/endings.ts</code>) : titre, texte et la chaîne de causes qui y mène.</li>
+          <li>Testez qu’une stratégie extrême la déclenche et que la référence ne la déclenche jamais.</li>
+        </ol>
+
+        <h2 id="recalibrer">Recalibrer le modèle</h2>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart LR
+    A["Changer un mécanisme<br/>ou une valeur"] --> B["npm test"]
+    B --> C{"2025 calé ?<br/>(sim.test)"}
+    C -- non --> A
+    C -- oui --> D{"Rejeu 2000–2024<br/>proche ? (replay.test)"}
+    D -- non --> E["Lire les écarts par indicateur<br/>(onglet « Face au passé »)"] --> A
+    D -- oui --> F{"Stable jusqu'en 2075 ?<br/>Scénarios gagnables ?"}
+    F -- non --> A
+    F -- oui --> G["Commit"]
+          </pre>
+        </div>
+        <ul>
+          <li>Une nouvelle mécanique doit être <strong>neutre à politique inchangée</strong> : travaillez en écart à la référence, et la France de 2025 reste identique.</li>
+          <li>Si le rejeu se dégrade, vérifiez qu’elle est aussi neutre en 2000 (<code>donnees-2000.csv</code>, <code>politiques-2000-2024.csv</code>) : une valeur de 2025 codée en dur casse souvent le rejeu.</li>
+          <li><code>npx vitest run replay</code> affiche l’écart moyen par indicateur : comparez avant et après.</li>
+        </ul>
+        <footer>Une recette manque ? Ajoutez-la à <code>docs/recettes.html</code> après l’avoir suivie.</footer>
+      </main>
+    </div>
+    <script type="module" src="assets/docs.js"></script>
+  </body>
+</html>

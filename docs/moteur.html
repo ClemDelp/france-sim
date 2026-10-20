@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Le moteur pas à pas</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <main>
+        <h1>⚙️ Le moteur pas à pas</h1>
+        <p class="lead">
+          <code>src/model/sim.ts</code> simule une année de la France dans la fonction <code>step()</code>, en 18 étapes numérotées dans le code (<code>// — 1.</code> à
+          <code>// — 18.</code>). Cette page décrit chacune d’elles : ce qu’elle lit, ce qu’elle calcule, et les paramètres qui la règlent.
+        </p>
+
+        <h2 id="boucle">La boucle des années</h2>
+        <pre><code>simulate({ decisions, events, until, params?, scenario? })
+  └─ withParams(variante)              // applique les paramètres modifiés, puis les remet
+      └─ REF = scenario.reference       // politique de l'année de départ (2025, ou 2000 pour le rejeu)
+          └─ run()
+              carry   = initialCarry()  // les stocks de départ (données de l'année de départ)
+              anchors = null            // la 1re année calcule ses repères
+              pour chaque année :
+                policy = policyAt(decisions, année, REF)
+                world  = worldAt(events, année)
+                { state, carry, anchors } = step(carry, policy, world, anchors, annulation?)</code></pre>
+        <p>
+          La <strong>première année</strong> (<code>anchors === null</code>, variable <code>init</code>) ne fait pas évoluer les stocks : elle reproduit les chiffres de
+          l’année de départ et en tire les <code>Anchors</code>, les repères des comportements (revenu disponible « normal » de chaque tranche, consommation, taux implicites
+          d’impôt sur le revenu et sur les sociétés calés pour retrouver les recettes observées).
+        </p>
+
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart TB
+    subgraph A["Début d'année"]
+        S1["1 · Annulation de dette"] --> S2["2 · Nationalisations"] --> S3["3 · Crise de la dette"]
+    end
+    subgraph B["Le monde réel"]
+        S4["4 · Démographie"] --> S5["5 · Influence"] --> S6["6 · Migrations"] --> S7["7 · Climat"]
+    end
+    subgraph C["Prix et argent"]
+        S8["8 · Énergie, prix, salaires"] --> S9["9 · Taux d'intérêt"]
+    end
+    S10["10 · Demande, revenus, emploi<br/>point fixe sur le PIB"]
+    subgraph D["Bouclage"]
+        S11["11 · Qui prête à l'État ?"] --> S12["12 · Bilans de fin d'année"]
+        S13["13 · Inégalités, espérance de vie"] --> S14["14 · Flux et bouclage comptable"]
+    end
+    subgraph E["Conséquences"]
+        S15["15 · Tension sur la dette"] --> S16["16 · Colère et fins de partie"]
+        S17["17 · Émissions"] --> S18["18 · Entreprises par taille"]
+    end
+    A --> B --> C --> S10 --> D --> E
+          </pre>
+          <figcaption>Les étapes s’enchaînent dans cet ordre. Une grandeur calculée plus bas (colère, émissions, tension) n’agit qu’à partir de l’année suivante, via <code>prev</code> : à la fin de l’étape 18, le <code>Carry</code> repart à l’étape 1 de l’année suivante.</figcaption>
+        </div>
+
+        <div class="note">
+          <p>
+            <strong>Règle de lecture</strong> : <code>prev.x</code> est la valeur de l’an dernier (dans <code>Carry</code>), <code>policy.x</code> le levier en vigueur,
+            <code>world.x</code> le monde de l’année (avec les événements), <code>P.x</code> un paramètre de comportement, <code>BASE.x</code> une donnée de l’année de départ,
+            <code>REF.x</code> la politique de départ. Tous les <code>P.</code> et <code>BASE.</code> sont décrits dans le <a href="catalogue.html">catalogue</a>.
+          </p>
+        </div>
+
+        <h2 id="s1">1 · Annulation de dette</h2>
+        <p>
+          Si le joueur annule une part de la dette détenue par un créancier (<code>cancelShare</code>, <code>cancelHolder</code>), le stock de ce créancier baisse au début de
+          l’année. Les conséquences dépendent du créancier : panique des marchés (<code>cancelBcePanic</code>…), perte de fonds propres pour les banques, perte de patrimoine pour
+          les épargnants (assurance-vie), fuite des prêteurs étrangers (<code>shun</code>) et mémoire du défaut (<code>stigma</code>), qui renchérit le crédit pendant des années.
+        </p>
+
+        <h2 id="s2">2 · Nationalisations et réglementation</h2>
+        <ul>
+          <li>Un changement de <code>publicOwnership</code> achète (en obligations, <code>compensationRate</code>) ou revend une part de <code>largeFirmsValue</code>. Les dividendes de ces entreprises iront ensuite à l’État (étape 10).</li>
+          <li><code>regulation</code> rejoint le levier à 30 % par an ; moins de règles (<code>deregulation</code>) baisse le chômage d’équilibre (<code>regulationNairu</code>), accroît la productivité, la précarité, la colère et les émissions.</li>
+        </ul>
+
+        <h2 id="s3">3 · Crise de la dette</h2>
+        <p>
+          Si la tension de l’an dernier (<code>prev.marketStress</code>, étape 15) atteint 1 hors période de répit (<code>crisisCooldown</code>), la crise éclate : panique
+          (<code>crisisPanic</code>), fuite des étrangers (<code>crisisShun</code>), perte de valeur des obligations (<code>crisisBondLoss</code>) pour les banques et
+          l’assurance-vie, choc de demande. L’année suivante, sauf refus du joueur (<code>crisisResponse = 1</code>), le <strong>plan d’aide européen</strong> démarre pour
+          <code>rescueYears</code> ans : taux plafonné (<code>rescueSpread</code>), en échange d’économies annuelles <code>rescueStep</code> calibrées sur l’écart à combler
+          (<code>stabilityGap</code>), partagées entre dépenses et impôts (<code>rescueTaxShare</code>).
+        </p>
+
+        <h2 id="s4">4 · Démographie et espérance de vie</h2>
+        <ul>
+          <li>Stocks de santé et de prévention, qui suivent les dépenses avec retard ; espérance de vie = tendance + santé + prévention (puis pauvreté et climat à l’étape 13).</li>
+          <li>Âge effectif de départ qui rejoint la cible progressivement (<code>retirementPhaseIn</code>, pause jusqu’à <code>reformPauseUntil</code>).</li>
+          <li>Trois stocks de population (jeunes, âge actif, retraités) avec naissances, entrées à 20 ans, départs à la retraite (cohortes du baby-boom), décès, migrants (étape 6).</li>
+          <li>Population active : taux d’activité tendanciel, plus faible pour les seniors (<code>seniorParticipation</code>).</li>
+        </ul>
+
+        <h2 id="s5">5 · Influence</h2>
+        <p>
+          Un indice composite (1 = la France de 2025), moyenne pondérée de six composantes en racine carrée (rendements décroissants) : armée (<code>defence</code>), économie
+          relative au monde, culture (<code>softPower</code>), aide au développement, exemplarité climatique, stabilité (colère, plan d’aide). Il suit sa cible lentement
+          (<code>influenceSpeed</code>). L’écart <code>clout = influence − 1</code> agit sur : apaisement des conflits (6), exportations (8), prime de risque (9), représailles
+          commerciales (10), fierté (16) et effet d’entraînement sur le CO2 mondial (7).
+        </p>
+
+        <h2 id="s6">6 · Migrations</h2>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart LR
+    W["Réchauffement<br/>(prev.temperature)"] --> CM["climateMigration"]
+    CF["Conflits<br/>(world.conflict, mémoire)"] --> EC["conflit effectif"]
+    W -- climateConflict --> EC
+    AID["Stock d'aide<br/>developmentAid"] -- "peaceEffect (plafonné aidMax)" --> EC & CM
+    INF["Influence"] -- influencePeace --> EC
+    EC --> PR["Pression migratoire"]
+    CM --> PR
+    B["asylumPressure"] --> PR
+    PR -- "× (1 − contrôle)<br/>contrôle ≤ controlMax" --> IRR["Arrivées irrégulières"]
+    LEG["netMigration (levier)"] --> TOT["Arrivées"]
+    IRR --> TOT
+    TOT --> POP["Population active"]
+    TOT -- "× welcomeGap<br/>(intégration)" --> NAIRU["Chômage d'équilibre"] & ANG["Colère (16)"]
+    IRR -- receptionCost --> DEP["Dépenses publiques"]
+          </pre>
+        </div>
+        <p>
+          Le contrôle des frontières a des rendements décroissants et ne dépasse jamais <code>controlMax</code> : on ne peut pas tout arrêter, et chaque point coûte. L’aide et
+          l’intégration agissent sur les causes et les conséquences.
+        </p>
+
+        <h2 id="s7">7 · Climat</h2>
+        <ul>
+          <li>Émissions mondiales : <code>worldCO2</code> × tendance (<code>worldEmissionsTrend</code>, <code>world.climateAmbition</code>), moins l’exemple français (<code>franceInfluence</code> × baisse de nos émissions × influence) et l’aide climat (<code>climateAidCost</code>), plus les points de bascule au-delà de <code>tippingTemperature</code>.</li>
+          <li>Température : <code>temperature + tcre × CO2 cumulé / 1000</code> (≈ 0,5 °C par 1 000 Gt).</li>
+          <li>Dégâts (part du PIB) : <code>(damageLinear × ΔT + damageQuadratic × ΔT²) × (1 − adaptation)</code>, l’adaptation étant un stock à rendements décroissants (<code>adaptationMax</code>). Leur hausse annuelle retire de la productivité (8) et ajoute de l’inflation.</li>
+        </ul>
+
+        <h2 id="s8">8 · Énergie, prix et salaires</h2>
+        <ul>
+          <li>Part fossile qui baisse avec l’électrification (levier, taxe carbone, droits de douane sur les véhicules chinois).</li>
+          <li>Prix de l’électricité (nucléaire, électrification, pétrole) et des carburants (<code>oilRetailPass</code>, <code>carbonRetailPass</code>).</li>
+          <li>Productivité : tendance + éducation + investissement public − fuite des capitaux + dérégulation − nationalisation + monde − dégâts climatiques.</li>
+          <li>Salaires : inertie de l’inflation passée, productivité, courbe de Phillips (<code>wageUnemployment</code>), SMIC.</li>
+          <li>Inflation : coûts salariaux, énergie, droits de douane, TVA, tension sur les capacités (<code>gapInflation</code>), planche à billets, panique, climat ; bornée entre −3 % et 40 %.</li>
+        </ul>
+
+        <h2 id="s9">9 · Taux d’intérêt</h2>
+        <pre><code>prime   = premiumBase + dette au-delà de debtThreshold + déficit au-delà de deficitThreshold
+        + panique + stigmate − influence − crédibilité de la monétisation (+ peur si excessive)
+taux 10 ans = BCE attendue + prime de terme (− QE) + prime + inflation élevée
+taux moyen de la dette : rejoint le taux 10 ans au rythme du renouvellement (debtRollover)</code></pre>
+        <p>Pendant un plan d’aide, la prime est plafonnée. Le crédit aux entreprises suit la BCE et une partie de la prime ; un manque de fonds propres bancaires provoque un resserrement du crédit (<code>creditCrunch</code>).</p>
+
+        <h2 id="s10">10 · Demande, revenus et emploi : le point fixe</h2>
+        <p>
+          C’est le cœur du moteur. La fonction interne <code>flows(PIB)</code> calcule, pour un PIB nominal supposé, tout ce qui en découle : emploi et chômage, salaires,
+          profits, dividendes (dont ceux des entreprises publiques pour l’État), banques, Sécurité sociale et transferts, revenus et impôts de chaque tranche, consommation
+          (lissée autour de la normale des <code>Anchors</code>), investissement par taille d’entreprise, logement, commerce extérieur et énergie, recettes et dépenses
+          publiques. Elle renvoie la <strong>demande</strong> qui en résulte.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart LR
+    G0["PIB supposé"] --> F["flows(PIB)"]
+    F --> D["demande = C + logement + I + G + X − M − énergie"]
+    D --> T{"|demande − PIB| < 0,005 Md€ ?"}
+    T -- non --> MIX["PIB ← ½ PIB + ½ demande"] --> F
+    T -- oui --> OK["PIB de l'année"]
+          </pre>
+          <figcaption>Au plus 60 itérations, amorties de moitié pour éviter les oscillations. En pratique, une dizaine suffit.</figcaption>
+        </div>
+        <div class="warn">
+          <p>Tout nouveau mécanisme qui dépend du PIB de l’année doit être calculé <strong>dans</strong> <code>flows()</code> ; sinon il utilise une valeur de l’itération précédente, et le bouclage comptable peut casser.</p>
+        </div>
+
+        <h2 id="s11">11 · Financement de la dette</h2>
+        <p>Le déficit est financé dans l’ordre : rachats de la BCE (planche à billets ou QE, sinon réduction progressive du stock, <code>qtPace</code>), étrangers (moins en cas de panique ou de stigmate), banques (moins si le crédit se resserre), et le reste par l’assurance-vie des ménages.</p>
+
+        <h2 id="s12">12 · Bilans de fin d’année</h2>
+        <p>Épargne des ménages par tranche → patrimoine ; dette des entreprises (investissement − autofinancement) ; fonds propres des banques ; dette immobilière ; dépôts ; balance courante.</p>
+
+        <h2 id="s13">13 · Inégalités et espérance de vie</h2>
+        <p>Revenu par personne de chaque tranche, corrigé des prix vus par la tranche (TVA et énergie pèsent plus sur les ménages modestes) ; pauvreté, Gini et D9/D1 (<code>distribution.ts</code>). L’espérance de vie perd avec la pauvreté et le réchauffement non adapté, gagne avec la sortie du fossile (pollution de l’air).</p>
+
+        <h2 id="s14">14 · Flux et bouclage comptable</h2>
+        <p>
+          La liste des flux entre acteurs (ménages, entreprises, État, Sécu, banques, BCE, monde, énergie) alimente la carte des flux. Puis le moteur somme les soldes de tous
+          les acteurs : <code>closure</code> doit être nul (un test le vérifie chaque année). C’est la garantie que l’argent ne se crée ni ne disparaît.
+        </p>
+
+        <h2 id="s15">15 · Tension sur la dette</h2>
+        <pre><code>solde stabilisant = (taux − croissance nominale) / (1 + croissance) × dette/PIB
+écart             = solde stabilisant − solde primaire
+tension brute     = (dette/PIB − crisisDebtThreshold) / crisisDebtRange + écart / crisisGapRange
+tension           = lissage(tension brute × (1 − qeStressRelief × QE))</code></pre>
+        <p>Une tension ≥ 1 déclenche la crise l’année suivante (étape 3).</p>
+
+        <h2 id="s16">16 · Colère et fins de partie</h2>
+        <p>
+          La colère de l’année additionne des sources, chacune divisée par la « plage » qui suffirait à elle seule à provoquer une révolte : baisse du revenu médian, hausse des
+          prélèvements, chômage, inflation, pauvreté, austérité d’un plan d’aide, réchauffement non adapté, événements, dérégulation, accueil débordé, moins la fierté
+          (influence). Le mécontentement est une moyenne mobile (<code>unrestMemory</code>).
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fin de partie</th><th>Condition</th></tr></thead>
+            <tbody>
+              <tr><td>effondrement</td><td>dégâts climatiques ≥ <code>collapseDamage</code> (part du PIB)</td></tr>
+              <tr><td>révolte</td><td>mécontentement ≥ 1</td></tr>
+              <tr><td>faillite</td><td>hors plan d’aide : prime ≥ <code>bankruptcyPremium</code> ou intérêts / recettes ≥ <code>bankruptcyInterestShare</code></td></tr>
+              <tr><td>hyperinflation</td><td>inflation ≥ <code>hyperinflation</code></td></tr>
+              <tr><td>dépression</td><td>chômage ≥ <code>depressionUnemployment</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>La première condition remplie, dans cet ordre, est inscrite dans <code>state.ending</code> ; c’est l’interface qui met la partie en pause (<code>src/ui/endings.ts</code>).</p>
+
+        <h2 id="s17">17 · Émissions françaises</h2>
+        <p>Fossiles (part fossile × activité × effet de la taxe carbone), électricité (gaz si le nucléaire recule, électrification), autres (agriculture, déchets, baisse tendancielle) ; plus si l’on dérégule. Elles servent l’année suivante au climat mondial (7) et à l’influence (5).</p>
+
+        <h2 id="s18">18 · Entreprises par taille</h2>
+        <p>Répartition entre PME, ETI et grands groupes (<code>entreprises.csv</code>) de l’emploi (sensibilité au SMIC), des exportations (droits de douane, prix de l’électricité), de l’impôt sur les sociétés (évasion des groupes mobiles) et des profits. L’investissement par taille est calculé dans <code>flows()</code> (dépendance bancaire, mobilité, aides).</p>
+
+        <h2 id="autour">Autour du moteur</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Module</th><th>Principe</th></tr></thead>
+            <tbody>
+              <tr><td><code>events.ts</code></td><td>Chaque événement a une probabilité de base multipliée ou augmentée par des facteurs nommés (<code>odds</code>), lus dans l’état de l’an dernier (réchauffement, colère, influence…), plafonnée à 60 %. <code>rollEvents(seed, year, …)</code> tire avec une graine : la même partie donne les mêmes événements.</td></tr>
+              <tr><td><code>explain.ts</code></td><td><code>explainYear</code> resimule la partie en retirant une cause à la fois (une décision, un événement) : la différence est sa contribution. Tendance (sans aucune cause) + contributions + effet de combinaison = valeur réelle, exactement.</td></tr>
+              <tr><td><code>robustness.ts</code></td><td>Resimule avec chaque hypothèse à son minimum et à son maximum (<code>min</code>/<code>max</code> dans <code>comportements.csv</code>, sinon ±30 %) et classe celles qui décident du résultat.</td></tr>
+              <tr><td><code>replay.ts</code></td><td>Simule depuis 2000 (<code>donnees-2000.csv</code>), avec les politiques réelles (<code>politiques-2000-2024.csv</code>) et le monde réel (<code>monde.csv</code>), et compare à <code>historique.csv</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <footer>Une étape change ? Mettez à jour cette page (<code>docs/moteur.html</code>) et le schéma de <code>docs/COMMENT-CA-MARCHE.md</code>.</footer>
+      </main>
+    </div>
+    <script type="module" src="assets/docs.js"></script>
+  </body>
+</html>
