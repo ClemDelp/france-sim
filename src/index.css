@@ -3542,3 +3542,82 @@ input[type='range']:disabled {
 .why li.down {
   color: var(--good);
 }
+
+.news-why {
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #1c1a17;
+  background: transparent;
+  color: #1c1a17;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.news-why:hover,
+.news-why:focus-visible {
+  background: #1c1a17;
+  color: #f4efe3;
+}
+
+.explain {
+  width: min(1100px, 100%);
+}
+
+.explain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px;
+}
+
+.explain-card {
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.explain-card h3 {
+  margin-top: 0;
+}
+
+.explain-card ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.explain-card li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 70px auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.explain-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+
+.explain-bar span {
+  display: block;
+  height: 100%;
+}
+
+.explain-bar .good {
+  background: var(--good);
+}
+
+.explain-bar .bad {
+  background: var(--bad);
+}
+
+.explain-combo {
+  padding-top: 5px;
+  border-top: 1px dashed var(--rule);
+}

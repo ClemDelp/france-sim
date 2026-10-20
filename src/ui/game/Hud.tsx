@@ -83,7 +83,7 @@ export function Advisors({ advice }: { advice: Advice[] }) {
 }
 
 /** La une du journal de l'année. */
-export function Newspaper({ headline }: { headline: Headline }) {
+export function Newspaper({ headline, onWhy }: { headline: Headline; onWhy?: () => void }) {
   return (
     <article key={headline.year} className={`newspaper news-${headline.tone}`}>
       <header>
@@ -93,6 +93,11 @@ export function Newspaper({ headline }: { headline: Headline }) {
       <p className="news-kicker">{headline.kicker}</p>
       <h2>{headline.title}</h2>
       <p className="news-sub">{headline.subtitle}</p>
+      {onWhy ? (
+        <button type="button" className="news-why" onClick={onWhy}>
+          🔍 Pourquoi en est-on là ?
+        </button>
+      ) : null}
     </article>
   )
 }

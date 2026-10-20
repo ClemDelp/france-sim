@@ -23,6 +23,7 @@ import { electionAt, isElectionYear, nextElection, popularity } from './game/sco
 import { load, save } from './game/storage'
 import { CANCEL_COST, politicalCapital, reformCost } from './game/capital'
 import { Ambiance } from './ui/game/Ambiance'
+import { Explain } from './ui/game/Explain'
 import { Briefing, Home, Stars } from './ui/game/Home'
 import { Confetti, Council, Counter, EventFeed, Newspaper, Objectives, Popularity, Toasts } from './ui/game/Hud'
 import { Tour, type TourStep } from './ui/game/Tour'
@@ -90,6 +91,8 @@ function App() {
   const [electionsSeen, setElectionsSeen] = useState<number[]>([])
   /** La graine du tirage au sort des événements : une partie différente à chaque fois. */
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1e9))
+  /** La fenêtre « Pourquoi ? » est ouverte. */
+  const [why, setWhy] = useState(false)
   /** Les années de crise de la dette auxquelles le joueur a déjà répondu. */
   const [handled, setHandled] = useState<number[]>([])
   /** Le joueur a choisi de continuer après une défaite (mode bac à sable). */
@@ -98,6 +101,7 @@ function App() {
   const [hint, setHint] = useState<string | null>(null)
 
   const params = overrides
+  const whyInput = useMemo(() => ({ decisions, events, params: overrides }), [decisions, events, overrides])
   const states = useMemo(() => simulate({ decisions, events, until: year, params }), [decisions, events, year, params])
   const base = useMemo(() => simulate({ decisions: [], events, until: year, params }), [events, year, params])
   const variant = Object.keys(overrides).length > 0
@@ -505,7 +509,7 @@ function App() {
 
         <section className="center">
           {scenario && evaluation ? <Objectives scenario={scenario} year={year} start={START} evaluation={evaluation} onAbandon={() => setHome(true)} /> : null}
-          <Newspaper headline={news} />
+          <Newspaper headline={news} onWhy={year > START ? () => setWhy(true) : undefined} />
           <Kpis states={states} base={base} changed={changed} onPick={(node) => openBrain({ focus: node })} />
           <div className="map-card">
             <div className="map-head">
@@ -958,6 +962,8 @@ function App() {
       />
 
       <Ambiance state={s} start={states[0]} eventsThisYear={eventsThisYear} />
+
+      {why ? <Explain input={whyInput} year={year} onClose={() => setWhy(false)} /> : null}
 
       <Toasts items={ACHIEVEMENTS.filter((a) => fresh.includes(a.id))} />
 
