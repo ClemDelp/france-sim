@@ -65,6 +65,7 @@ const VALUES: Record<string, NodeValue> = {
   conflict: { get: (s) => s.conflict, kind: 'level', show: (v) => `indice ${num(v, 2)}` },
   migrationPressure: { get: (s) => s.migrationPressure.base + s.migrationPressure.climate + s.migrationPressure.conflict, kind: 'level', show: (v) => `${num(v, 0)} 000 / an` },
   irregularArrivals: { get: (s) => s.migrationIrregular, kind: 'level', show: (v) => `${num(v, 0)} 000 / an` },
+  influence: { get: (s) => s.influence * 100, kind: 'level', show: (v) => `indice ${num(v, 0)}` },
   savings: { get: real((s) => total(s.wealth)), kind: 'amount' },
   bankCapital: { get: real((s) => s.bankCapital), kind: 'amount' },
   creditCrunch: { get: (s) => s.creditCrunch, kind: 'ratio' },

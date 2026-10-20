@@ -201,3 +201,16 @@ integrationMax;0,7;part;Immigration;Part maximale des difficultés d’accueil (
 integrationHalf;3;Md€/an;Immigration;Dépenses d’intégration qui atteignent la moitié de leur efficacité maximale;;hypothèse;;1,5;6
 migrantNairu;0,01;part par million;Immigration;Hausse du chômage d’équilibre par million d’arrivées récentes mal intégrées;Les nouveaux arrivants mettent du temps à trouver un emploi.;estimé;INSEE, insertion des immigrés;0,005;0,02
 migrationAnger;0,12;par 100 000;Mécontentement social;Tensions sociales par 100 000 arrivées de plus qu’en 2025, quand l’accueil est insuffisant;Ce n’est pas la présence des immigrés qui crée la tension, c’est un accueil débordé (campements, hébergement saturé) et son exploitation politique.;hypothèse;;0,05;0,25
+influenceSpeed;0,15;part/an;Influence;Vitesse à laquelle l’influence de la France rejoint sa puissance réelle;La réputation se construit (et se perd) en quelques années.;hypothèse;;0,08;0,3
+influenceMilitary;0,25;poids;Influence;Poids de la force militaire dans l’influence;Dissuasion, opérations extérieures, siège au Conseil de sécurité.;hypothèse;Lowy Institute, Asia Power Index (méthode);0,1;0,4
+influenceEconomy;0,25;poids;Influence;Poids de la taille de l’économie dans l’influence;;hypothèse;Lowy Institute, Asia Power Index (méthode);0,1;0,4
+influenceCulture;0,15;poids;Influence;Poids du rayonnement culturel et diplomatique;Langue, culture, audiovisuel, universités, réseau diplomatique.;hypothèse;Soft Power 30 (méthode);0,05;0,3
+influenceAid;0,1;poids;Influence;Poids de l’aide au développement dans l’influence;;hypothèse;;0;0,2
+influenceClimate;0,1;poids;Influence;Poids de l’exemplarité climatique dans l’influence;Un pays qui réduit ses émissions est écouté dans les négociations.;hypothèse;;0;0,2
+influenceStability;0,15;poids;Influence;Poids de la stabilité intérieure (paix sociale, finances saines);Un pays en crise ou dans la rue pèse moins à l’étranger.;hypothèse;;0,05;0,3
+influenceDiplomacy;0,6;sensibilité;Influence;Accords internationaux (climat, paix) plus probables quand la France est influente;Par point d’influence au-dessus de 2025.;hypothèse;;0,2;1,2
+influenceTrade;0,5;sensibilité;Influence;Guerres commerciales moins probables et représailles moins fortes quand la France est influente;;hypothèse;;0,2;1
+influenceExports;0,005;part/an;Influence;Parts de marché gagnées à l’exportation par point d’influence;Réseau diplomatique, image de marque, grands contrats (défense, énergie, aéronautique).;hypothèse;;0,002;0,01
+influencePremium;0,3;points;Influence;Baisse de la prime de risque par point d’influence;Un pays puissant et respecté rassure les prêteurs.;hypothèse;;0,1;0,6
+influencePeace;0,3;part;Influence;Conflits apaisés plus vite par point d’influence (médiation, dissuasion);;hypothèse;;0,1;0,5
+influencePride;0,05;sensibilité;Mécontentement social;Fierté nationale : colère en moins par point d’influence;;hypothèse;;0;0,1

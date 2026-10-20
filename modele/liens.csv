@@ -248,3 +248,17 @@ irregularArrivals;discontent;+;migrationAnger;Un accueil débordé crée des ten
 integration;discontent;-;integrationMax integrationHalf;Un accueil organisé désamorce les tensions.
 integration;unemployment;-;migrantNairu;Mieux intégrés, les arrivants trouvent plus vite un emploi.
 integration;spending;+;;
+defence;influence;+;influenceMilitary influenceSpeed;Une armée crédible pèse dans les négociations.
+gdp;influence;+;influenceEconomy;Une économie qui croît moins vite que le monde perd du poids.
+softPower;influence;+;influenceCulture;Langue, culture, universités, diplomatie : la France séduit.
+developmentAid;influence;+;influenceAid;Aider les autres, c’est aussi se faire des alliés.
+frenchEmissions;influence;-;influenceClimate;Un pays exemplaire sur le climat est écouté.
+discontent;influence;-;influenceStability;Un pays dans la rue pèse moins à l’étranger.
+rescue;influence;-;influenceStability;Sous plan d’aide, on ne donne pas de leçons.
+influence;worldEmissions;-;influenceDiplomacy franceInfluence;Une France influente entraîne les autres vers un accord climatique.
+influence;conflict;-;influencePeace;Médiation et dissuasion apaisent les conflits.
+influence;exports;+;influenceExports;Grands contrats, image de marque.
+influence;riskPremium;-;influencePremium;Un pays puissant rassure les prêteurs.
+influence;crisis;±;influenceTrade influenceDiplomacy;Moins de guerres commerciales, plus d’accords de paix et de climat.
+influence;discontent;-;influencePride;La fierté d’un pays qui compte.
+softPower;spending;+;;

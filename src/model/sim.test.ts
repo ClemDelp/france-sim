@@ -160,3 +160,26 @@ describe('immigration : tout est cause et effet', () => {
     expect(at(s, 2030).discontent).toBeLessThan(at(b, 2030).discontent)
   })
 })
+
+describe('influence : la puissance rejaillit sur tout le reste', () => {
+  const at = (s: ReturnType<typeof simulate>, y: number) => s.find((x) => x.year === y)!
+  const base = simulate({ decisions: [], events: [], until: 2035 })
+
+  it('l’armée, la culture et l’aide renforcent l’influence ; la colère l’affaiblit', () => {
+    const strong = simulate({ decisions: [{ year: 2026, patch: { defence: 90, softPower: 15, developmentAid: 25 } }], events: [], until: 2035 })
+    const angry = simulate({ decisions: [{ year: 2026, patch: { vat: 0.26, csg: 0.12 } }], events: [], until: 2035 })
+    expect(at(strong, 2035).influence).toBeGreaterThan(at(base, 2035).influence + 0.04)
+    expect(at(angry, 2030).influence).toBeLessThan(at(base, 2030).influence)
+  })
+
+  it('sans rien faire, le poids relatif de la France s’érode lentement (le monde croît plus vite)', () => {
+    expect(at(base, 2035).influence).toBeLessThan(1)
+    expect(at(base, 2035).influence).toBeGreaterThan(0.9)
+  })
+
+  it('une France influente paie un peu moins cher sa dette', () => {
+    const strong = simulate({ decisions: [{ year: 2026, patch: { softPower: 20, developmentAid: 30 } }], events: [], until: 2032 })
+    const b = simulate({ decisions: [{ year: 2026, patch: { developmentAid: 30 } }], events: [], until: 2032 })
+    expect(at(strong, 2032).riskPremium).toBeLessThan(at(b, 2032).riskPremium)
+  })
+})

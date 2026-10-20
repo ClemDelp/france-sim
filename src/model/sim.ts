@@ -102,6 +102,8 @@ type Carry = {
   consumption: ByGroup
   /** Prix du pétrole et de l'énergie fossile au détail, l'an dernier. */
   fossilPrice: number
+  /** Influence de la France dans le monde (1 = 2025). */
+  influence: number
   // Immigration
   conflict: number
   aidStock: number
@@ -184,6 +186,7 @@ function initialCarry(): Carry {
     capitalFlight: 0,
     consumption: byGroup(() => 0),
     fossilPrice: 1,
+    influence: 1,
     conflict: 0,
     aidStock: BASE_POLICY.developmentAid / P.aidDecay,
     recentMigrants: (BASE_POLICY.netMigration + P.asylumPressure * (1 - (P.controlMax * BASE_POLICY.borderControl) / (BASE_POLICY.borderControl + P.controlHalf))) / 1000 / 0.2,
@@ -330,13 +333,31 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     BASE.retirementEntrants * (1 + P.retirementCohortGrowth * Math.min(yearsIn, P.babyBoomYears)) - P.retirementCohortDecline * Math.max(0, yearsIn - P.babyBoomYears),
   )
   const entrants = Math.max(0.1, cohort - cohort * ageChange)
+  // — 1 bis. Influence : la puissance (armée, économie, culture, aide, exemplarité, stabilité) se traduit en poids dans le monde.
+  const root = (x: number) => Math.sqrt(Math.max(0.05, x))
+  const influenceParts = {
+    military: root(policy.defence / REF.defence),
+    // L'économie mondiale grandit : si la France croît moins vite, son poids relatif s'érode.
+    economy: root(prev.gdpReal / BASE.gdp / Math.pow(1 + BASE.worldGrowth, yearsIn)),
+    culture: root(policy.softPower / REF.softPower),
+    aid: root(policy.developmentAid / REF.developmentAid),
+    climate: 1 + Math.max(0, 1 - prev.frenchEmissions / (BASE.fossilEmissions + BASE.electricityEmissions + BASE.otherEmissions)),
+    stability: Math.max(0.1, 1 - Math.min(0.9, prev.discontent) - (prev.rescueYears > 0 ? 0.2 : 0)),
+  }
+  const weights = { military: P.influenceMilitary, economy: P.influenceEconomy, culture: P.influenceCulture, aid: P.influenceAid, climate: P.influenceClimate, stability: P.influenceStability }
+  const totalWeight = Object.values(weights).reduce((a, w) => a + w, 0)
+  const influenceTarget = (Object.keys(weights) as (keyof typeof weights)[]).reduce((a, k) => a + weights[k] * influenceParts[k], 0) / totalWeight
+  const influence = init ? 1 : prev.influence + P.influenceSpeed * (influenceTarget - prev.influence)
+  const clout = influence - 1
+
   // — 1 ter. Migrations : la pression vient du monde (conflits, réchauffement) ; la politique n'en filtre qu'une partie.
   const warmingSoFar = Math.max(0, prev.temperature - BASE.temperature)
   const aidStock = init ? prev.aidStock : prev.aidStock * (1 - P.aidDecay) + policy.developmentAid
   const aidExtra = Math.max(0, aidStock - REF.developmentAid / P.aidDecay)
   const peaceEffect = (P.aidMax * aidExtra) / (aidExtra + P.aidHalf)
   const conflict = init ? 0 : Math.max(0, prev.conflict * P.conflictDecay + world.conflict)
-  const effectiveConflict = (conflict + P.climateConflict * warmingSoFar) * (1 - peaceEffect)
+  // Une France influente aide à apaiser les conflits (médiation, dissuasion).
+  const effectiveConflict = (conflict + P.climateConflict * warmingSoFar) * (1 - peaceEffect) * clamp(1 - P.influencePeace * clout, 0.3, 1.7)
   const migrationPressure = {
     base: P.asylumPressure,
     climate: P.climateMigration * warmingSoFar * (1 - peaceEffect),
@@ -379,7 +400,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const frenchCut = Math.max(0, 1 - prev.frenchEmissions / startEmissions)
   const aidAvoided = Math.max(0, policy.climateAid - REF.climateAid) / P.climateAidCost
   const tipping = prev.temperature > P.tippingTemperature ? P.tippingEmissions : 0
-  const worldEmissions = Math.max(0, worldBaseEmissions * (1 - P.franceInfluence * frenchCut) - aidAvoided + tipping)
+  const worldEmissions = Math.max(0, worldBaseEmissions * (1 - P.franceInfluence * frenchCut * Math.max(0, influence)) - aidAvoided + tipping)
   const cumulativeCO2 = init ? 0 : prev.cumulativeCO2 + worldEmissions
   const temperature = BASE.temperature + (P.tcre * cumulativeCO2) / 1000
   // Les dégâts se comptent par rapport au climat de l'année de départ (déjà inclus dans les chiffres de cette année-là).
@@ -439,11 +460,11 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // Un choc pétrolier touche aussi nos partenaires : leurs prix montent comme les nôtres (seul notre électricité nucléaire fait la différence).
   const fossilShock = init ? 0 : fossilPrice / prev.fossilPrice - 1
   const worldPrice = init ? 1 : prev.worldPrice * (1 + BASE.worldInflation + P.energyInflationPass * BASE.fossilShare * fossilShock)
-  const worldIndex = init ? 1 : prev.worldIndex * (1 + world.growth - P.exportShareLoss)
+  const worldIndex = init ? 1 : prev.worldIndex * (1 + world.growth - P.exportShareLoss + P.influenceExports * clout)
 
   // — 3. Taux d'intérêt : le prix de la confiance
   const debtPct = prev.debtRatio * 100
-  const riskPremium = Math.max(0, P.premiumBase + P.premiumPerDebtPoint * Math.max(0, debtPct - P.debtThreshold) + P.premiumPerDeficitPoint * Math.max(0, prev.deficitRatio * 100 - P.deficitThreshold) + panic + stigma - P.monetizationCredibility * policy.monetization + P.monetizationFear * policy.monetization * policy.monetization) / 100
+  const riskPremium = Math.max(0, P.premiumBase + P.premiumPerDebtPoint * Math.max(0, debtPct - P.debtThreshold) + P.premiumPerDeficitPoint * Math.max(0, prev.deficitRatio * 100 - P.deficitThreshold) + panic + stigma - P.influencePremium * clout - P.monetizationCredibility * policy.monetization + P.monetizationFear * policy.monetization * policy.monetization) / 100
   const premium = rescueYears > 0 ? Math.min(riskPremium, P.rescueSpread / 100) : riskPremium
   // Le taux à 10 ans reflète les taux de la BCE attendus pour les années à venir : il ne suit qu'en partie un changement soudain.
   const ecbExpected = init ? world.ecbRate : prev.ecbExpected + P.rateExpectationSpeed * (world.ecbRate - prev.ecbExpected)
@@ -655,7 +676,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
 
     // Commerce extérieur et énergie
     const competitiveness = Math.pow(priceLevel / worldPrice, -P.priceCompetitiveness)
-    const retaliation = P.tariffRetaliation * policy.tariffs + P.evRetaliation * (policy.tariffChinaEV - REF.tariffChinaEV)
+    // Un pays influent subit moins de représailles commerciales.
+    const retaliation = (P.tariffRetaliation * policy.tariffs + P.evRetaliation * (policy.tariffChinaEV - REF.tariffChinaEV)) * clamp(1 - P.influenceTrade * clout, 0.2, 2)
     const exports = BASE.exports * worldIndex * worldPrice * competitiveness * (1 - retaliation) * (1 - P.electricityExportLoss * (electricityPrice - 1))
     const absorption = totalConsumption + housing + investment + publicGoods + exports
     const importRatio = BASE.importsNonEnergy / (BASE.consumption + BASE.housing + BASE.investment + basePublicGoods() + BASE.exports)
@@ -855,6 +877,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     world.unrest +
     // Précarité quand on allège fortement les règles.
     P.regulationAnger * Math.max(0, deregulation) +
+    // La fierté d'un pays qui compte dans le monde (ou l'humiliation d'un pays qui décline).
+    -P.influencePride * clout +
     // Un accueil débordé (bien plus d'arrivées qu'en 2025, sans moyens d'intégration) crée des tensions.
     (P.migrationAnger * Math.max(0, extraArrivals) * welcomeGap) / 100
   const discontent = init ? 0 : P.unrestMemory * prev.discontent + (1 - P.unrestMemory) * anger
@@ -992,6 +1016,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     evasion,
     discontent,
     ending,
+    influence,
+    influenceParts,
     migrationLegal,
     migrationIrregular,
     migrationPressure,
@@ -1053,6 +1079,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     capitalFlight,
     consumption: d.consumption,
     fossilPrice,
+    influence,
     conflict,
     aidStock,
     recentMigrants,

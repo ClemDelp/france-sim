@@ -213,9 +213,37 @@ export function DebtPanel({ s }: PanelProps) {
 }
 
 /** Énergie et commerce extérieur. */
-export function WorldPanel({ s }: PanelProps) {
+const INFLUENCE_PARTS: [keyof YearState['influenceParts'], string][] = [
+  ['military', 'Force militaire'],
+  ['economy', 'Poids économique'],
+  ['culture', 'Rayonnement culturel'],
+  ['aid', 'Aide au développement'],
+  ['climate', 'Exemplarité climatique'],
+  ['stability', 'Stabilité intérieure'],
+]
+
+export function WorldPanel({ s, b, changed }: PanelProps) {
   return (
     <div className="panel">
+      <h3>🌐 Influence de la France : indice {num(s.influence * 100, 0)}</h3>
+      <p className="panel-lead">
+        100 = 2025{changed ? ` · sans vos décisions : ${num(b.influence * 100, 0)}` : ''}. Elle facilite les accords (climat, paix), réduit les guerres commerciales et les
+        représailles, aide les exportations et rassure les prêteurs. Elle évolue lentement.
+      </p>
+      <ul className="influence-parts">
+        {INFLUENCE_PARTS.map(([k, label]) => {
+          const v = s.influenceParts[k]
+          return (
+            <li key={k}>
+              <span>{label}</span>
+              <span className="bar-track">
+                <span style={{ width: `${Math.min(100, (v / 2) * 100)}%` }} className={v >= 1 ? 'up' : 'down'} />
+              </span>
+              <strong className={v >= 1.005 ? 'good' : v <= 0.995 ? 'bad' : ''}>{num(v * 100, 0)}</strong>
+            </li>
+          )
+        })}
+      </ul>
       <p className="panel-lead">Montants en milliards d’euros de 2025 (inflation retirée).</p>
       <dl className="facts">
         <div>

@@ -79,6 +79,8 @@ export type Policy = {
   integration: number
   /** Aide au développement et à la paix (Md€ par an ; ≈ 15 en 2025). */
   developmentAid: number
+  /** Rayonnement culturel et diplomatie : culture, audiovisuel extérieur, réseau diplomatique (Md€ par an ; ≈ 6 en 2025). */
+  softPower: number
   // Modèle économique
   /** Part des grandes entreprises contrôlées par l'État (≈ 10 % en 2025 : EDF, SNCF, La Poste…). */
   publicOwnership: number
@@ -250,6 +252,10 @@ export type YearState = {
   integrationCoverage: number
   /** Part des conflits et départs évitée par l'aide au développement. */
   peaceEffect: number
+  // Influence
+  /** Influence de la France dans le monde (1 = 2025), et ce qui la compose. */
+  influence: number
+  influenceParts: { military: number; economy: number; culture: number; aid: number; climate: number; stability: number }
   // Climat
   /** Réchauffement mondial par rapport à l'ère préindustrielle (°C). */
   temperature: number

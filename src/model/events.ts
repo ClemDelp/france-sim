@@ -1,3 +1,4 @@
+import { P } from './calibration'
 import type { EventDef, World, YearState } from './types'
 
 /**
@@ -79,7 +80,7 @@ export const EVENTS: EventDef[] = [
     summary: 'Chine, États-Unis, Inde et Europe s’engagent ensemble : les émissions mondiales vont baisser beaucoup plus vite.',
     effects: repeat(40, { climateAmbition: -0.03 }),
     // Une France exemplaire rend un accord mondial plus probable.
-    chance: (s, start) => 0.015 + 0.08 * Math.max(0, 1 - s.frenchEmissions / start.frenchEmissions),
+    chance: (s, start) => (0.015 + 0.08 * Math.max(0, 1 - s.frenchEmissions / start.frenchEmissions)) * Math.max(0.2, 1 + P.influenceDiplomacy * (s.influence - 1)),
     cooldown: 60,
   },
   {
@@ -150,7 +151,7 @@ export const EVENTS: EventDef[] = [
     category: 'monde',
     summary: 'Washington et Pékin s’affrontent à coups de droits de douane : nos exportations trinquent.',
     effects: [{ growth: -0.02 }, { growth: -0.015 }, { growth: -0.005 }],
-    chance: () => 0.04,
+    chance: (s) => 0.04 * Math.max(0.2, 1 - P.influenceTrade * (s.influence - 1)),
     cooldown: 6,
   },
   {
@@ -256,7 +257,7 @@ export const EVENTS: EventDef[] = [
     summary: 'Sous l’égide de l’ONU et avec l’aide européenne, une guerre s’arrête : les réfugiés commencent à rentrer.',
     effects: [{ conflict: -1 }],
     // Plus la France investit dans la paix et le développement, plus un accord est probable.
-    chance: (s) => (s.conflict > 0.3 ? 0.04 + 0.3 * s.peaceEffect : 0),
+    chance: (s) => (s.conflict > 0.3 ? (0.04 + 0.3 * s.peaceEffect) * Math.max(0.2, 1 + P.influenceDiplomacy * (s.influence - 1)) : 0),
     cooldown: 8,
   },
   // — Société

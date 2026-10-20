@@ -31,6 +31,7 @@ developmentAid;Aide au développement et à la paix;Leviers;0;Santé, écoles, a
 monetization;Planche à billets;Leviers;0;Part du déficit financée directement par la banque centrale.
 savingsToFirms;Épargne vers les entreprises;Leviers;0;Orienter le Livret A et l’assurance-vie vers l’investissement des entreprises.
 crisisResponse;Réponse à une crise de la dette;Leviers;0;Accepter le plan d’aide européen (taux plafonnés, économies imposées) ou le refuser.
+softPower;Rayonnement culturel et diplomatie;Leviers;0;Culture, langue, audiovisuel extérieur, universités, réseau diplomatique.
 publicOwnership;Entreprises contrôlées par l’État;Leviers;0;Part des grandes entreprises détenues par l’État : nationaliser ou privatiser.
 regulation;Intensité des règles;Leviers;0;Marché du travail, normes, concurrence : de l’ultra-libéral (0) au très encadré (1).
 carbonTax;Taxe carbone;Leviers;0;Prix ajouté sur chaque tonne de CO2 émise par le pétrole et le gaz (44,6 € en 2025).
@@ -100,3 +101,4 @@ adaptationCoverage;Protection par l’adaptation;Climat;2;Part des dégâts évi
 conflict;Conflits autour de l’Europe;Monde;1;Guerres, famines, effondrements d’États : 1 = une grande guerre en cours.
 migrationPressure;Pression migratoire;Population;1;Personnes qui cherchent refuge ou une vie meilleure en France, avant tout contrôle.
 irregularArrivals;Arrivées hors voies légales;Population;2;Ce qui reste de la pression migratoire après contrôle et reconduites.
+influence;Influence de la France;Monde;3;Le poids de la France dans le monde (1 = 2025) : armée, économie, culture, aide, exemplarité climatique, stabilité.

@@ -288,6 +288,28 @@ Le contrôle des frontières a des rendements décroissants : on n’empêche au
 tant que guerres, misère et réchauffement poussent au départ. L’aide au développement et la lutte contre le réchauffement agissent sur les causes,
 mais sur des décennies. Toutes ces règles sont dans `modele/comportements.csv` (bloc Immigration), avec leurs sources ou leur statut d’hypothèse.
 
+## 6 quater. L’influence de la France
+
+```mermaid
+flowchart LR
+    ARM["Défense"] --> INF["Influence<br/>(1 = 2025)"]
+    ECO["Croissance comparée<br/>au reste du monde"] --> INF
+    CUL["Rayonnement culturel<br/>et diplomatie"] --> INF
+    AID["Aide au développement"] --> INF
+    CLI["Exemplarité climatique"] --> INF
+    STA["Stabilité intérieure<br/>(paix sociale, pas de plan d’aide)"] --> INF
+    INF --> DEAL["Accords climat et paix<br/>plus probables"]
+    INF --> TRADE["Moins de guerres commerciales<br/>et de représailles"]
+    INF --> EXP["Exportations"]
+    INF --> RATE["Taux d’emprunt plus bas"]
+    INF --> PEACE["Conflits apaisés<br/>(médiation, dissuasion)"]
+    INF --> PRIDE["Fierté : moins de colère"]
+```
+
+L’influence suit la puissance avec retard (quelques années). Sans rien faire, elle s’érode doucement : le monde croît plus vite que la France.
+Toutes les pondérations et tous les effets sont dans `modele/comportements.csv` (bloc Influence) ; ce sont des hypothèses, inspirées des indices
+de puissance (Lowy Institute) et de soft power.
+
 ## 6 ter. Le monde bouge, le Parlement freine
 
 - **Événements** : chaque année, 24 événements possibles sont tirés au sort (une partie différente à chaque fois). Leur probabilité

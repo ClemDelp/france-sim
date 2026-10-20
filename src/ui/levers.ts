@@ -83,6 +83,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
       { key: 'netMigration', label: 'Immigration légale', min: -50, max: 400, step: 10, unit: 'thousands', weight: 1.5, hint: '≈ 120 000 par an en 2025 (travail, études, famille). S’y ajoutent ≈ 56 000 arrivées hors voies légales, qui dépendent des guerres et du climat dans le monde, pas de ce levier.' },
       { key: 'borderControl', label: 'Contrôle et reconduites', min: 0, max: 20, step: 0.5, unit: 'bn', weight: 1.5, hint: '≈ 2 Md€ par an. Réduit les arrivées irrégulières, mais avec des rendements décroissants : au mieux la moitié, quoi qu’on dépense.' },
       { key: 'integration', label: 'Intégration des arrivants', min: 0, max: 15, step: 0.5, unit: 'bn', hint: '≈ 1,5 Md€ par an. Langue, formation, logement : les arrivants trouvent plus vite un emploi, et l’accueil crée moins de tensions.' },
+      { key: 'softPower', label: 'Rayonnement culturel et diplomatie', min: 0, max: 30, step: 0.5, unit: 'bn', hint: '≈ 6 Md€ par an (culture, audiovisuel extérieur, réseau diplomatique). Renforce l’influence de la France : accords plus faciles, moins de représailles, exportations, confiance des prêteurs.' },
       { key: 'developmentAid', label: 'Aide au développement et à la paix', min: 0, max: 60, step: 1, unit: 'bn', hint: '≈ 15 Md€ par an (0,5 % du revenu national). Prévient guerres et misère sur le long terme : moins de conflits, moins de départs forcés.' },
     ],
   },
