@@ -3621,3 +3621,8 @@ input[type='range']:disabled {
   padding-top: 5px;
   border-top: 1px dashed var(--rule);
 }
+
+/* Une fenêtre ouverte depuis l'accueil (présentation d'un scénario) passe au-dessus de lui. */
+.modal-backdrop.on-top {
+  z-index: 45;
+}

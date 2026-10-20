@@ -141,7 +141,7 @@ export function Home({ name, onName, stars, earned, canResume, onResume, onTutor
 /** La présentation d'un scénario, avant de le lancer. */
 export function Briefing({ scenario, best, onStart, onBack }: { scenario: Scenario; best: number; onStart: () => void; onBack: () => void }) {
   return (
-    <div className="modal-backdrop" role="presentation">
+    <div className="modal-backdrop on-top" role="presentation">
       <div className="modal briefing" role="dialog" aria-modal="true" aria-label={scenario.title}>
         <p className="eyebrow">
           Scénario · <Difficulty level={scenario.difficulty} /> · jusqu’en {scenario.end}
