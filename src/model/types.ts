@@ -72,6 +72,13 @@ export type Policy = {
   savingsToFirms: number
   /** Face à une crise de la dette : 0 = accepter le plan d'aide européen (et ses économies imposées), 1 = le refuser. */
   crisisResponse: number
+  // Immigration
+  /** Contrôle des frontières, reconduites (Md€ par an ; ≈ 2 en 2025). */
+  borderControl: number
+  /** Intégration : langue, formation, logement (Md€ par an ; ≈ 1,5 en 2025). */
+  integration: number
+  /** Aide au développement et à la paix (Md€ par an ; ≈ 15 en 2025). */
+  developmentAid: number
   // Modèle économique
   /** Part des grandes entreprises contrôlées par l'État (≈ 10 % en 2025 : EDF, SNCF, La Poste…). */
   publicOwnership: number
@@ -112,6 +119,8 @@ export type World = {
   productivity: number
   /** Arrivées en plus (milliers de personnes, réfugiés). */
   migrants: number
+  /** Conflits en plus dans le voisinage de l'Europe (1 = une grande guerre). */
+  conflict: number
 }
 
 /** Une décision prise une année donnée (le joueur bouge des leviers puis avance). */
@@ -226,6 +235,21 @@ export type YearState = {
   discontent: number
   /** Ce qui rend la situation intenable cette année (la partie est perdue), ou null. */
   ending: Ending | null
+  // Immigration
+  /** Arrivées par les voies légales (milliers). */
+  migrationLegal: number
+  /** Arrivées hors voies légales qui restent (milliers). */
+  migrationIrregular: number
+  /** Pression migratoire avant contrôle (milliers), et ses causes. */
+  migrationPressure: { base: number; climate: number; conflict: number }
+  /** Intensité des conflits dans le voisinage de l'Europe (1 = une grande guerre). */
+  conflict: number
+  /** Part des arrivées irrégulières empêchées par le contrôle. */
+  controlEffect: number
+  /** Part des difficultés d'accueil évitée par l'intégration. */
+  integrationCoverage: number
+  /** Part des conflits et départs évitée par l'aide au développement. */
+  peaceEffect: number
   // Climat
   /** Réchauffement mondial par rapport à l'ère préindustrielle (°C). */
   temperature: number

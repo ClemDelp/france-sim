@@ -3445,3 +3445,42 @@ input[type='range']:disabled {
 .doctrine:focus-visible {
   border-color: var(--gold);
 }
+
+.stack-bar {
+  display: flex;
+  height: 16px;
+  margin: 8px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--panel-2);
+}
+
+.stack-bar span {
+  height: 100%;
+  transition: width 0.4s;
+}
+
+.stack-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 0.84rem;
+}
+
+.stack-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stack-legend strong {
+  margin-left: auto;
+}
+
+.stack-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}

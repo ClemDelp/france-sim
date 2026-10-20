@@ -85,3 +85,4 @@ electricityEmissions;35;Mt CO2e/an;Climat;Émissions de l’électricité en 200
 otherEmissions;115;Mt CO2e/an;Climat;Agriculture, déchets, procédés en 2000;Citepa
 worldEmissionsTrend;0,013;part/an;Comportements 2000-2024;Croissance des émissions mondiales de 2000 à 2024;Global Carbon Budget
 largeFirmsValue;1100;Md€;Entreprises;Valeur des grandes entreprises françaises en 2000;Euronext (ordre de grandeur)
+asylumPressure;0;milliers/an;Comportements 2000-2024;Pendant le rejeu, le solde migratoire historique est entièrement dans les décisions (fichier des politiques);INSEE

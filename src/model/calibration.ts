@@ -49,7 +49,7 @@ export const P = view([
   'smicJobLoss', 'maxEmployment', 'consumptionSmoothing', 'wealthEffect', 'consumptionSplitMpc', 'accelerator',
   'acceleratorTrend', 'investmentRateSensitivity', 'investmentCorporateTax', 'savingsToFirmsEffect', 'investmentMin', 'investmentMax',
   'stigmaInvestment', 'demandShockInvestment', 'housingRateSensitivity', 'housingMin', 'housingMax', 'housingDebtShare', 'mortgageRepayment',
-  'priceCompetitiveness', 'importPriceElasticity', 'exportShareLoss', 'tariffRetaliation', 'evRetaliation', 'tariffImportCut', 'overheatingImports', 'overheatingThreshold', 'qeTermPremium', 'rateExpectationSpeed', 'qeStressRelief', 'oilRetailPass', 'profitShifting', 'crisisDebtThreshold', 'crisisDebtRange', 'crisisGapRange', 'crisisSmoothing', 'crisisPanic', 'crisisShun', 'crisisBondLoss', 'crisisDemandShock', 'crisisCooldown', 'rescueYears', 'rescueSpread', 'rescueEffort', 'rescueTaxShare', 'rescueEffortMax', 'tcre', 'worldEmissionsTrend', 'franceInfluence', 'climateAidCost', 'tippingTemperature', 'tippingEmissions', 'damageLinear', 'damageQuadratic', 'climateInflation', 'reconstructionShare', 'climateLifeLoss', 'airPollutionLife', 'unrestClimateRange', 'collapseDamage', 'adaptationMax', 'adaptationHalf', 'adaptationDecay', 'carbonRetailPass', 'carbonDemandCut', 'carbonElectrify', 'energyEmissionsGdp', 'otherEmissionsDecline', 'gasForNuclear', 'compensationRate', 'ownershipEfficiency', 'ownershipInvestment', 'nationalisationFlight', 'regulationNairu', 'regulationProductivity', 'regulationWages', 'regulationAnger', 'regulationEmissions', 'taxEvasion', 'taxEvasionMax', 'flightIncomeTax', 'unrestMemory', 'unrestIncomeDrop', 'unrestTaxRange', 'unrestUnemployment', 'unrestUnemploymentRange', 'unrestInflation', 'unrestInflationRange', 'unrestPovertyRange', 'unrestAusterityRange', 'bankruptcyPremium', 'bankruptcyInterestShare', 'hyperinflation', 'depressionUnemployment',
+  'priceCompetitiveness', 'importPriceElasticity', 'exportShareLoss', 'tariffRetaliation', 'evRetaliation', 'tariffImportCut', 'overheatingImports', 'overheatingThreshold', 'qeTermPremium', 'rateExpectationSpeed', 'qeStressRelief', 'oilRetailPass', 'profitShifting', 'crisisDebtThreshold', 'crisisDebtRange', 'crisisGapRange', 'crisisSmoothing', 'crisisPanic', 'crisisShun', 'crisisBondLoss', 'crisisDemandShock', 'crisisCooldown', 'rescueYears', 'rescueSpread', 'rescueEffort', 'rescueTaxShare', 'rescueEffortMax', 'tcre', 'worldEmissionsTrend', 'franceInfluence', 'climateAidCost', 'tippingTemperature', 'tippingEmissions', 'damageLinear', 'damageQuadratic', 'climateInflation', 'reconstructionShare', 'climateLifeLoss', 'airPollutionLife', 'unrestClimateRange', 'collapseDamage', 'adaptationMax', 'adaptationHalf', 'adaptationDecay', 'carbonRetailPass', 'carbonDemandCut', 'carbonElectrify', 'energyEmissionsGdp', 'otherEmissionsDecline', 'gasForNuclear', 'compensationRate', 'ownershipEfficiency', 'ownershipInvestment', 'nationalisationFlight', 'regulationNairu', 'regulationProductivity', 'regulationWages', 'regulationAnger', 'regulationEmissions', 'asylumPressure', 'climateMigration', 'conflictMigration', 'conflictDecay', 'climateConflict', 'controlMax', 'controlHalf', 'receptionCost', 'aidMax', 'aidHalf', 'aidDecay', 'integrationMax', 'integrationHalf', 'migrantNairu', 'migrationAnger', 'taxEvasion', 'taxEvasionMax', 'flightIncomeTax', 'unrestMemory', 'unrestIncomeDrop', 'unrestTaxRange', 'unrestUnemployment', 'unrestUnemploymentRange', 'unrestInflation', 'unrestInflationRange', 'unrestPovertyRange', 'unrestAusterityRange', 'bankruptcyPremium', 'bankruptcyInterestShare', 'hyperinflation', 'depressionUnemployment',
 ] as const)
 
 /** La politique de 2025 : le point de départ de toute partie. */
@@ -79,7 +79,10 @@ export const BASE_POLICY: Policy = {
   nuclearShare: 0.68,
   tariffs: 0,
   tariffChinaEV: 0.35,
-  netMigration: 176,
+  netMigration: 120,
+  borderControl: 2,
+  integration: 1.5,
+  developmentAid: 15,
   monetization: 0,
   savingsToFirms: 0,
   crisisResponse: 0,

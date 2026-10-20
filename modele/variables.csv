@@ -24,7 +24,10 @@ electrification;Rythme d’électrification;Leviers;0;Vitesse à laquelle on rem
 nuclearShare;Part du nucléaire;Leviers;0;Part du nucléaire dans la production d’électricité.
 tariffs;Droits de douane;Leviers;0;Taxe sur toutes les importations.
 tariffChinaEV;Droits sur les voitures chinoises;Leviers;0;Taxe sur les voitures électriques importées de Chine.
-netMigration;Immigration nette;Leviers;0;Arrivées moins départs, en milliers de personnes par an.
+netMigration;Immigration légale;Leviers;0;Titres de séjour (travail, études, famille), solde net en milliers par an.
+borderControl;Contrôle des frontières et reconduites;Leviers;0;Garde-frontières, centres de rétention, reconduites : coûteux et d’efficacité limitée.
+integration;Intégration des arrivants;Leviers;0;Cours de langue, formation, logement, reconnaissance des diplômes.
+developmentAid;Aide au développement et à la paix;Leviers;0;Santé, écoles, agriculture, ONG, médiation : réduit les conflits et les départs à long terme.
 monetization;Planche à billets;Leviers;0;Part du déficit financée directement par la banque centrale.
 savingsToFirms;Épargne vers les entreprises;Leviers;0;Orienter le Livret A et l’assurance-vie vers l’investissement des entreprises.
 crisisResponse;Réponse à une crise de la dette;Leviers;0;Accepter le plan d’aide européen (taux plafonnés, économies imposées) ou le refuser.
@@ -94,3 +97,6 @@ temperature;Réchauffement mondial;Climat;2;Il suit le CO2 accumulé dans l’at
 frenchEmissions;Émissions françaises;Climat;5;Pétrole et gaz, électricité, agriculture et déchets.
 climateDamage;Dégâts climatiques en France;Climat;3;Canicules, sécheresses, inondations, récoltes perdues : en part de la richesse produite.
 adaptationCoverage;Protection par l’adaptation;Climat;2;Part des dégâts évitée grâce aux investissements d’adaptation.
+conflict;Conflits autour de l’Europe;Monde;1;Guerres, famines, effondrements d’États : 1 = une grande guerre en cours.
+migrationPressure;Pression migratoire;Population;1;Personnes qui cherchent refuge ou une vie meilleure en France, avant tout contrôle.
+irregularArrivals;Arrivées hors voies légales;Population;2;Ce qui reste de la pression migratoire après contrôle et reconduites.

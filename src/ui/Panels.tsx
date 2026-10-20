@@ -439,3 +439,75 @@ export function ClimatePanel({ s, b, changed }: PanelProps) {
     </div>
   )
 }
+
+/** L'immigration : d'où vient la pression, ce que la politique filtre, et à quel prix. */
+export function MigrationPanel({ s, b, changed }: PanelProps) {
+  const p = s.migrationPressure
+  const pressure = p.base + p.climate + p.conflict
+  const total = s.migrationLegal + s.migrationIrregular
+  /** En milliers : « 56 000 », et « 0 » plutôt que « 0 000 ». */
+  const k = (v: number) => (Math.abs(v) < 0.5 ? '0' : `${num(v, 0)} 000`)
+  const parts: [string, number, string][] = [
+    ['Arrivées de base (asile, irrégulier)', p.base, '#5b8def'],
+    ['Dues au réchauffement', p.climate, '#ff7a2f'],
+    ['Dues aux guerres et famines', p.conflict, '#e5484d'],
+  ]
+  return (
+    <div className="panel">
+      <p className="panel-lead">En milliers de personnes par an (solde : arrivées moins départs).</p>
+      <dl className="facts">
+        <div>
+          <dt>Immigration légale (travail, études, famille)</dt>
+          <dd>{k(s.migrationLegal)}</dd>
+        </div>
+        <div>
+          <dt>Arrivées hors voies légales qui restent</dt>
+          <dd>
+            {k(s.migrationIrregular)}
+            {changed ? <em className={s.migrationIrregular < b.migrationIrregular ? 'good' : 'bad'}>{` ${s.migrationIrregular > b.migrationIrregular ? '+' : '−'}${k(Math.abs(s.migrationIrregular - b.migrationIrregular))}`}</em> : null}
+          </dd>
+        </div>
+        <div>
+          <dt>Solde migratoire total</dt>
+          <dd>{k(total)}</dd>
+        </div>
+      </dl>
+      <h3>D’où vient la pression ({k(pressure)} avant contrôle)</h3>
+      <div className="stack-bar" role="img" aria-label="Causes de la pression migratoire">
+        {parts.map(([label, v, color]) => (v > 0.5 ? <span key={label} style={{ width: `${(v / pressure) * 100}%`, background: color }} title={`${label} : ${k(v)}`} /> : null))}
+      </div>
+      <ul className="stack-legend">
+        {parts.map(([label, v, color]) => (
+          <li key={label}>
+            <i style={{ background: color }} />
+            {label} <strong>{k(v)}</strong>
+          </li>
+        ))}
+      </ul>
+      <h3>Ce que fait votre politique</h3>
+      <dl className="facts">
+        <div>
+          <dt>Arrivées irrégulières empêchées par le contrôle</dt>
+          <dd>{num(s.controlEffect * 100, 0)} % (au mieux {num(P.controlMax * 100, 0)} %)</dd>
+        </div>
+        <div>
+          <dt>Conflits et départs évités par l’aide au développement</dt>
+          <dd>{num(s.peaceEffect * 100, 0)} %</dd>
+        </div>
+        <div>
+          <dt>Difficultés d’accueil évitées par l’intégration</dt>
+          <dd>{num(s.integrationCoverage * 100, 0)} %</dd>
+        </div>
+        <div>
+          <dt>Conflits autour de l’Europe</dt>
+          <dd className={s.conflict > 0.5 ? 'bad' : ''}>{s.conflict > 0.05 ? `indice ${num(s.conflict, 2)}` : 'calme'}</dd>
+        </div>
+      </dl>
+      <p className="note">
+        Le contrôle des frontières coûte de plus en plus cher pour un effet de plus en plus faible : renvoyer quelqu’un dépend de son pays d’origine, et la pression revient
+        tant que guerres, misère et réchauffement poussent au départ. L’aide au développement et à la paix agit sur les causes, mais lentement. L’intégration ne change pas
+        le nombre d’arrivées : elle aide les arrivants à travailler et évite les tensions d’un accueil débordé. Hypothèses dans modele/comportements.csv (bloc Immigration).
+      </p>
+    </div>
+  )
+}

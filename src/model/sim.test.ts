@@ -120,3 +120,43 @@ describe('crises, colère et fin de partie', () => {
     expect(drop('pme')).toBeLessThan(drop('ge'))
   })
 })
+
+describe('immigration : tout est cause et effet', () => {
+  const at = (s: ReturnType<typeof simulate>, y: number) => s.find((x) => x.year === y)!
+
+  it('le réchauffement fait monter la pression migratoire au fil des décennies', () => {
+    const s = simulate({ decisions: [], events: [], until: 2060 })
+    expect(at(s, 2060).migrationPressure.climate).toBeGreaterThan(20)
+    expect(at(s, 2060).migrationIrregular).toBeGreaterThan(at(s, 2025).migrationIrregular * 1.4)
+  })
+
+  it('une guerre fait bondir les arrivées, puis la pression retombe', () => {
+    const s = simulate({ decisions: [], events: [{ id: 'war-europe', year: 2027 }], until: 2040 })
+    const b = simulate({ decisions: [], events: [], until: 2040 })
+    expect(at(s, 2027).migrationIrregular).toBeGreaterThan(at(b, 2027).migrationIrregular + 40)
+    expect(at(s, 2040).migrationIrregular - at(b, 2040).migrationIrregular).toBeLessThan(5)
+  })
+
+  it('le contrôle n’empêche qu’une partie des arrivées, quel qu’en soit le prix, et il coûte', () => {
+    const s = simulate({ decisions: [{ year: 2026, patch: { borderControl: 20 } }], events: [], until: 2035 })
+    const b = simulate({ decisions: [], events: [], until: 2035 })
+    expect(at(s, 2035).controlEffect).toBeLessThan(0.5)
+    expect(at(s, 2035).migrationIrregular).toBeGreaterThan(at(s, 2035).migrationPressure.base * 0.5)
+    expect(at(s, 2035).deficit / at(s, 2035).gdp).toBeGreaterThan(at(b, 2035).deficit / at(b, 2035).gdp)
+  })
+
+  it('l’aide au développement et à la paix réduit les départs forcés, lentement', () => {
+    const war = [{ id: 'sahel-war', year: 2032 }]
+    const s = simulate({ decisions: [{ year: 2026, patch: { developmentAid: 45 } }], events: war, until: 2035 })
+    const b = simulate({ decisions: [], events: war, until: 2035 })
+    expect(at(s, 2026).peaceEffect).toBeLessThan(at(s, 2035).peaceEffect)
+    expect(at(s, 2032).migrationPressure.conflict).toBeLessThan(at(b, 2032).migrationPressure.conflict * 0.85)
+  })
+
+  it('l’intégration apaise les tensions d’un accueil plus nombreux', () => {
+    const many = { netMigration: 300 }
+    const s = simulate({ decisions: [{ year: 2026, patch: { ...many, integration: 10 } }], events: [], until: 2030 })
+    const b = simulate({ decisions: [{ year: 2026, patch: many }], events: [], until: 2030 })
+    expect(at(s, 2030).discontent).toBeLessThan(at(b, 2030).discontent)
+  })
+})

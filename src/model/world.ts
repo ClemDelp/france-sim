@@ -22,6 +22,7 @@ export const WORLD_PATH: Readonly<Record<number, World>> = Object.fromEntries(
       unrest: 0,
       productivity: 0,
       migrants: 0,
+      conflict: 0,
     },
   ]),
 )

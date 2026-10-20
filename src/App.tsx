@@ -11,7 +11,7 @@ import { Kpis } from './ui/Kpis'
 import { KPIS } from './ui/indicators'
 import { formatLever, LEVER_GROUPS } from './ui/levers'
 import { MISSIONS, type Mission } from './ui/missions'
-import { BudgetPanel, ClimatePanel, DebtPanel, FirmsPanel, GroupsPanel, JournalPanel, WorldPanel } from './ui/Panels'
+import { BudgetPanel, ClimatePanel, DebtPanel, FirmsPanel, GroupsPanel, JournalPanel, MigrationPanel, WorldPanel } from './ui/Panels'
 import { DOCTRINES } from './ui/doctrines'
 import { ENDINGS } from './ui/endings'
 import { focusLine } from './ui/story'
@@ -37,11 +37,12 @@ const RELIABLE_UNTIL = 2040
 const LONG_RUN = 2050
 const MISSION_YEARS = 10
 
-type Tab = 'groupes' | 'courbes' | 'climat' | 'budget' | 'dette' | 'entreprises' | 'monde' | 'journal'
+type Tab = 'groupes' | 'courbes' | 'climat' | 'immigration' | 'budget' | 'dette' | 'entreprises' | 'monde' | 'journal'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'groupes', label: 'Qui gagne, qui perd' },
   { id: 'courbes', label: 'Courbes' },
   { id: 'climat', label: 'Climat' },
+  { id: 'immigration', label: 'Immigration' },
   { id: 'budget', label: 'Budget' },
   { id: 'dette', label: 'Dette' },
   { id: 'entreprises', label: 'Entreprises' },
@@ -548,6 +549,7 @@ function App() {
             />
           ) : null}
           {tab === 'climat' ? <ClimatePanel s={s} b={b} changed={changed} /> : null}
+          {tab === 'immigration' ? <MigrationPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'budget' ? <BudgetPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'dette' ? <DebtPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'entreprises' ? <FirmsPanel s={s} b={b} changed={changed} /> : null}

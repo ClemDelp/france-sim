@@ -76,6 +76,9 @@ export function adviseState(s: YearState, popularity: number, yearsToElection: n
   if (s.temperature >= 1.8 && s.adaptationCoverage < 0.25) {
     out.push({ who: 'energie', mood: 'warn', text: `+${num(s.temperature, 1)} °C : canicules et sécheresses vont se multiplier. Nous ne sommes protégés qu’à ${num(s.adaptationCoverage * 100, 0)} % : il faut investir dans l’adaptation.` })
   }
+  if (s.migrationIrregular > 100) {
+    out.push({ who: 'interieur', mood: 'warn', text: `${num(s.migrationIrregular, 0)} 000 arrivées hors voies légales cette année : l’hébergement est saturé. Plus de contrôle n’en arrêtera qu’une partie ; l’intégration et l’aide aux pays d’origine agissent sur la durée.` })
+  }
   if (s.oil > 100) {
     out.push({ who: 'energie', mood: 'info', text: `Le baril est à ${num(s.oil, 0)} $. Chaque point d’électrification nous rend moins vulnérables.` })
   }

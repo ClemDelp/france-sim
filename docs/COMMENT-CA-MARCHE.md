@@ -262,6 +262,32 @@ Sans changement de politique dans le monde, le réchauffement atteint environ +1
 (soit une trajectoire vers +2,7 °C en 2100, comme l’estime l’ONU). Les chiffres viennent du GIEC (AR6), du Global Carbon Budget,
 de l’ONU Environnement, du Citepa et de Santé publique France ; les fonctions de dégâts sont des hypothèses, à discuter.
 
+## 6 bis bis. L’immigration : tout est cause et effet
+
+```mermaid
+flowchart LR
+    T["Réchauffement"] -- "sécheresses,<br/>terres perdues" --> PR["Pression migratoire"]
+    T -- "attise" --> CF["Conflits autour<br/>de l’Europe"]
+    EV["Guerres, famines<br/>(événements)"] --> CF
+    CF --> PR
+    AID["Aide au développement<br/>et à la paix"] -- "prévient (lentement)" --> CF
+    AID -- "moins de départs" --> PR
+    PR --> IR["Arrivées hors<br/>voies légales"]
+    CTRL["Contrôle et reconduites"] -- "au mieux la moitié,<br/>de plus en plus cher" --> IR
+    LEG["Immigration légale"] --> POP["Actifs, population"]
+    IR --> POP
+    IR -- "accueil" --> COST["Dépenses publiques"]
+    CTRL --> COST
+    INT["Intégration"] --> COST
+    IR -- "accueil débordé" --> ANG["Tensions sociales"]
+    INT -- "apaise" --> ANG
+    INT -- "emploi plus rapide" --> U["Chômage"]
+```
+
+Le contrôle des frontières a des rendements décroissants : on n’empêche au mieux que la moitié des arrivées irrégulières, et la pression revient
+tant que guerres, misère et réchauffement poussent au départ. L’aide au développement et la lutte contre le réchauffement agissent sur les causes,
+mais sur des décennies. Toutes ces règles sont dans `modele/comportements.csv` (bloc Immigration), avec leurs sources ou leur statut d’hypothèse.
+
 ## 6 ter. Le monde bouge, le Parlement freine
 
 - **Événements** : chaque année, 24 événements possibles sont tirés au sort (une partie différente à chaque fois). Leur probabilité

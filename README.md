@@ -28,6 +28,8 @@ npm run dev
   et françaises (Citepa), dégâts en France (richesse, prix, espérance de vie, colère), adaptation, points de bascule,
   et une fin de partie « effondrement ». La France émet 0,8 % du CO2 mondial : elle agit surtout par l’adaptation,
   l’exemple et l’aide aux pays du Sud. Leviers : taxe carbone, adaptation, aide climat.
+- **L’immigration** : la pression migratoire vient du monde (guerres, famines, réchauffement) ; vos leviers : immigration légale,
+  contrôle et reconduites (efficacité plafonnée, coût croissant), intégration, aide au développement et à la paix.
 - **Le monde bouge tout seul** : 24 événements (canicules, méga-feux, inondations, guerres, krachs, pandémies, IA, accords
   climatiques, grèves, scandales…) tirés au sort chaque année, plus fréquents quand la situation s’y prête.
 - **Le capital politique** : on ne peut pas tout réformer la même année ; les points dépendent de la popularité.

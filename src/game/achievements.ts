@@ -39,6 +39,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'neutre', icon: '🌳', title: 'Presque neutre', text: 'Ramener les émissions françaises sous 100 Mt.', check: (c) => played(c).some((s) => s.frenchEmissions < 100) },
   { id: 'bouclier', icon: '🛡️', title: 'Bouclier climatique', text: 'Éviter 40 % des dégâts climatiques grâce à l’adaptation.', check: (c) => played(c).some((s) => s.adaptationCoverage >= 0.4) },
   { id: 'thermostat', icon: '🌡️', title: 'Thermostat', text: 'Atteindre 2075 sous +2 °C.', check: (c) => c.states.at(-1)!.year >= 2075 && c.states.at(-1)!.temperature < 2 },
+  { id: 'paix', icon: '🕊️', title: 'Artisan de paix', text: 'Éviter 30 % des conflits et des départs forcés grâce à l’aide au développement.', check: (c) => played(c).some((s) => s.peaceEffect >= 0.3) },
   { id: 'voyageur', icon: '🚀', title: 'Voyageur du temps', text: 'Atteindre 2075.', check: (c) => (c.states.at(-1)?.year ?? 0) >= 2075 },
   { id: 'chute', icon: '🪦', title: 'On apprend en tombant', text: 'Perdre une partie.', check: (c) => c.lost },
   { id: 'etoiles', icon: '⭐', title: 'Trois étoiles', text: 'Réussir tous les objectifs d’un scénario.', check: (c) => Object.values(c.stars).some((n) => n >= 3) },

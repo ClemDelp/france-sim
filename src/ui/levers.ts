@@ -64,7 +64,6 @@ export const LEVER_GROUPS: LeverGroup[] = [
     icon: '👷',
     levers: [
       { key: 'smicBoost', label: 'Coup de pouce au SMIC', min: -0.1, max: 0.4, step: 0.01, unit: 'pct', hint: 'En plus de l’indexation. Augmente les bas salaires, mais renchérit le travail peu qualifié.' },
-      { key: 'netMigration', label: 'Solde migratoire', min: -100, max: 400, step: 10, unit: 'thousands', hint: '+176 000 par an en 2025. Les arrivants sont surtout en âge de travailler.' },
     ],
   },
   {
@@ -74,6 +73,17 @@ export const LEVER_GROUPS: LeverGroup[] = [
     levers: [
       { key: 'electrification', label: 'Rythme d’électrification', min: 0, max: 0.08, step: 0.0025, unit: 'pct', hint: 'Part du pétrole et du gaz remplacée chaque année par l’électricité. Coûte de l’investissement, réduit la facture importée et l’exposition aux chocs.' },
       { key: 'nuclearShare', label: 'Part du nucléaire dans l’électricité', min: 0, max: 0.85, step: 0.01, unit: 'pct', weight: 1.5, hint: '68 % en 2025. Moins de nucléaire = électricité plus chère et plus de gaz.' },
+    ],
+  },
+  {
+    id: 'immigration',
+    label: 'Immigration',
+    icon: '🧳',
+    levers: [
+      { key: 'netMigration', label: 'Immigration légale', min: -50, max: 400, step: 10, unit: 'thousands', weight: 1.5, hint: '≈ 120 000 par an en 2025 (travail, études, famille). S’y ajoutent ≈ 56 000 arrivées hors voies légales, qui dépendent des guerres et du climat dans le monde, pas de ce levier.' },
+      { key: 'borderControl', label: 'Contrôle et reconduites', min: 0, max: 20, step: 0.5, unit: 'bn', weight: 1.5, hint: '≈ 2 Md€ par an. Réduit les arrivées irrégulières, mais avec des rendements décroissants : au mieux la moitié, quoi qu’on dépense.' },
+      { key: 'integration', label: 'Intégration des arrivants', min: 0, max: 15, step: 0.5, unit: 'bn', hint: '≈ 1,5 Md€ par an. Langue, formation, logement : les arrivants trouvent plus vite un emploi, et l’accueil crée moins de tensions.' },
+      { key: 'developmentAid', label: 'Aide au développement et à la paix', min: 0, max: 60, step: 1, unit: 'bn', hint: '≈ 15 Md€ par an (0,5 % du revenu national). Prévient guerres et misère sur le long terme : moins de conflits, moins de départs forcés.' },
     ],
   },
   {

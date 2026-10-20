@@ -45,6 +45,9 @@ export function headline(s: YearState, prev: YearState | undefined, elections: b
     const good = ['climate-deal', 'green-tech', 'world-cup', 'medical-breakthrough', 'china-boom', 'oil-glut', 'ai-boom'].includes(e.id)
     return h(`${e.icon} ${KICKER[e.category]}`, e.label, e.summary + (events[1] ? ` Et aussi : ${events[1].label.toLowerCase()}.` : ''), good ? 'good' : 'bad')
   }
+  if (s.migrationIrregular > 110 && prev.migrationIrregular <= 110) {
+    return h('Société', `${num(s.migrationIrregular, 0)} 000 arrivées irrégulières : l’accueil déborde`, 'Guerres et sécheresses jettent des millions de personnes sur les routes ; l’Europe se divise.', 'bad')
+  }
   for (const threshold of [1.5, 2, 2.5, 3]) {
     if (s.temperature >= threshold && prev.temperature < threshold) {
       return h('Climat', `La planète franchit +${num(threshold, 1)} °C`, threshold === 1.5 ? 'L’objectif le plus ambitieux de l’accord de Paris est hors d’atteinte.' : 'Les scientifiques alertent : chaque dixième de degré compte.', 'bad')

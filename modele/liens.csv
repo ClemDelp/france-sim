@@ -49,6 +49,7 @@ tariffs;exports;-;tariffRetaliation;Les autres pays répliquent en taxant nos pr
 tariffChinaEV;fossilShare;+;evTariffSlowdown;Des voitures électriques plus chères retardent l’électrification.
 tariffChinaEV;exports;-;evRetaliation;La Chine riposte (cognac, porc, avions…).
 netMigration;workingAge;+;migrantWorkingShare;La plupart des immigrés arrivent en âge de travailler.
+irregularArrivals;workingAge;+;migrantWorkingShare;
 netMigration;population;+;migrantYoungShare;
 monetization;rate;±;monetizationCredibility monetizationFear;Un acheteur garanti rassure… jusqu’à ce que l’excès fasse craindre l’inflation.
 monetization;inflation;+;monetizationInflation;Créer de la monnaie pour financer l’État pousse les prix.
@@ -232,3 +233,18 @@ regulation;productivity;-;regulationProductivity;Moins de concurrence, moins d�
 regulation;lowIncome;+;regulationWages;Les règles protègent les salaires du bas.
 regulation;discontent;-;regulationAnger;Moins de règles, c’est plus de précarité, et de colère.
 regulation;frenchEmissions;-;regulationEmissions;Les normes environnementales réduisent les émissions.
+temperature;migrationPressure;+;climateMigration;Sécheresses, terres perdues, montée des eaux : des millions de déplacés, dont une partie vient en Europe.
+temperature;conflict;+;climateConflict;Les pénuries d’eau et de terres attisent les guerres.
+crisis;conflict;+;conflictDecay;Guerres et famines tirées au sort chaque année.
+conflict;migrationPressure;+;conflictMigration;Chaque grande guerre jette des millions de personnes sur les routes.
+developmentAid;conflict;-;aidMax aidHalf aidDecay;L’aide au développement et à la paix prévient les conflits, sur le long terme.
+developmentAid;migrationPressure;-;aidMax;Moins de misère et de guerres, moins de départs.
+developmentAid;spending;+;;
+migrationPressure;irregularArrivals;+;asylumPressure;
+borderControl;irregularArrivals;-;controlMax controlHalf;Le contrôle n’empêche qu’une partie des arrivées : renvoyer coûte cher et dépend des pays d’origine.
+borderControl;spending;+;;
+irregularArrivals;spending;+;receptionCost;Hébergement, allocation et procédure pour les demandeurs d’asile.
+irregularArrivals;discontent;+;migrationAnger;Un accueil débordé crée des tensions.
+integration;discontent;-;integrationMax integrationHalf;Un accueil organisé désamorce les tensions.
+integration;unemployment;-;migrantNairu;Mieux intégrés, les arrivants trouvent plus vite un emploi.
+integration;spending;+;;

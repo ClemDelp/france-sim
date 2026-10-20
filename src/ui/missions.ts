@@ -105,13 +105,15 @@ export const MISSIONS: Mission[] = [
     icon: '🛂',
     title: 'Zéro immigration',
     belief: 'Sans immigration, il y aurait plus d’emplois et moins de dépenses pour les Français.',
-    patch: { netMigration: 0 },
+    patch: { netMigration: 0, borderControl: 12 },
     focus: ['gdp', 'unemployment', 'retirees', 'deficit', 'inflation'],
     mechanism: [
+      'On ferme les voies légales et on sextuple le contrôle : les arrivées irrégulières baissent, mais pas à zéro, car renvoyer coûte cher et dépend des pays d’origine. Et la pression monte avec les guerres et le réchauffement.',
       'Les arrivants sont surtout en âge de travailler : sans eux, la population active diminue chaque année.',
       'Le chômage baisse un peu, mais parce qu’il y a moins de candidats : l’économie produit moins, et les pénuries de main-d’œuvre poussent les salaires et les prix.',
       'Il y a moins d’actifs pour financer chaque retraité.',
     ],
+    limits: 'Ce qui réduit vraiment les départs forcés, c’est la paix et le développement dans les pays d’origine, et freiner le réchauffement : des politiques lentes, dont l’effet se voit en décennies.',
   },
   {
     id: 'retire-60',

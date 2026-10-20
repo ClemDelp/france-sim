@@ -45,7 +45,7 @@ const aidShares = (smeShare: number): BySize => {
 /** Ce que le monde fait sans nous (modele/monde.csv) : l'histoire jusqu'en 2024, la crise d'Ormuz de 2026, puis la tendance de long terme. */
 export function baseWorld(year: number): World {
   const known = WORLD_PATH[year]
-  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0, climateAmbition: 0, heatShock: 0, unrest: 0, productivity: 0, migrants: 0 }
+  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0, climateAmbition: 0, heatShock: 0, unrest: 0, productivity: 0, migrants: 0, conflict: 0 }
 }
 
 /**
@@ -102,6 +102,10 @@ type Carry = {
   consumption: ByGroup
   /** Prix du pétrole et de l'énergie fossile au détail, l'an dernier. */
   fossilPrice: number
+  // Immigration
+  conflict: number
+  aidStock: number
+  recentMigrants: number
   // Modèle économique
   publicOwnership: number
   /** Les règles en vigueur sur le terrain (elles s'appliquent progressivement). */
@@ -180,6 +184,9 @@ function initialCarry(): Carry {
     capitalFlight: 0,
     consumption: byGroup(() => 0),
     fossilPrice: 1,
+    conflict: 0,
+    aidStock: BASE_POLICY.developmentAid / P.aidDecay,
+    recentMigrants: (BASE_POLICY.netMigration + P.asylumPressure * (1 - (P.controlMax * BASE_POLICY.borderControl) / (BASE_POLICY.borderControl + P.controlHalf))) / 1000 / 0.2,
     publicOwnership: BASE_POLICY.publicOwnership,
     regulation: BASE_POLICY.regulation,
     worldBaseEmissions: BASE.worldCO2,
@@ -271,7 +278,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // Les règles (licenciement, normes, concurrence) changent sur le terrain en quelques années.
   const regulation = init ? REF.regulation : prev.regulation + 0.3 * (policy.regulation - prev.regulation)
   const deregulation = REF.regulation - regulation
-  const naturalUnemployment = BASE.naturalUnemployment - P.regulationNairu * deregulation
+  let naturalUnemployment = BASE.naturalUnemployment - P.regulationNairu * deregulation
 
   // — 0 bis. Crise de la dette : quand la tension accumulée atteint 1, les prêteurs paniquent.
   let crisisCooldown = Math.max(0, prev.crisisCooldown - 1)
@@ -323,7 +330,31 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     BASE.retirementEntrants * (1 + P.retirementCohortGrowth * Math.min(yearsIn, P.babyBoomYears)) - P.retirementCohortDecline * Math.max(0, yearsIn - P.babyBoomYears),
   )
   const entrants = Math.max(0.1, cohort - cohort * ageChange)
-  const migrants = (policy.netMigration + world.migrants) / 1000
+  // — 1 ter. Migrations : la pression vient du monde (conflits, réchauffement) ; la politique n'en filtre qu'une partie.
+  const warmingSoFar = Math.max(0, prev.temperature - BASE.temperature)
+  const aidStock = init ? prev.aidStock : prev.aidStock * (1 - P.aidDecay) + policy.developmentAid
+  const aidExtra = Math.max(0, aidStock - REF.developmentAid / P.aidDecay)
+  const peaceEffect = (P.aidMax * aidExtra) / (aidExtra + P.aidHalf)
+  const conflict = init ? 0 : Math.max(0, prev.conflict * P.conflictDecay + world.conflict)
+  const effectiveConflict = (conflict + P.climateConflict * warmingSoFar) * (1 - peaceEffect)
+  const migrationPressure = {
+    base: P.asylumPressure,
+    climate: P.climateMigration * warmingSoFar * (1 - peaceEffect),
+    conflict: P.conflictMigration * effectiveConflict,
+  }
+  const controlOf = (spend: number) => (P.controlMax * spend) / (spend + P.controlHalf)
+  const controlEffect = controlOf(policy.borderControl)
+  const migrationIrregular = (migrationPressure.base + migrationPressure.climate + migrationPressure.conflict) * (1 - controlEffect) + world.migrants
+  const migrationLegal = policy.netMigration
+  const migrants = (migrationLegal + migrationIrregular) / 1000
+  const irregularStart = P.asylumPressure * (1 - controlOf(REF.borderControl))
+  const integrationOf = (spend: number) => (P.integrationMax * spend) / (spend + P.integrationHalf)
+  const integrationCoverage = integrationOf(policy.integration)
+  // Les arrivées des cinq dernières années, à intégrer ; leurs difficultés pèsent moins si l'accueil suit.
+  const recentMigrants = init ? prev.recentMigrants : prev.recentMigrants * 0.8 + migrants
+  const welcomeGap = (1 - integrationCoverage) / (1 - integrationOf(REF.integration))
+  naturalUnemployment += P.migrantNairu * (recentMigrants - initialCarry().recentMigrants) * welcomeGap
+  const extraArrivals = migrationLegal + migrationIrregular - (REF.netMigration + irregularStart)
   const births = BASE.births
   // Les jeunes qui arrivent à 20 ans reflètent les naissances d'il y a 20 ans : leur nombre baisse, puis rejoint celui des naissances d'aujourd'hui.
   const youthIn = Math.max(births + P.migrantYoungShare * migrants - P.youngOutflow, BASE.youthEntrants - P.youthDecline * yearsIn)
@@ -439,13 +470,15 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const rescueBase = rescueEffort * BASE.gdp * trend * scale
   // Adaptation au-delà de l'effort de départ, et reconstruction après les catastrophes : des travaux publics en plus.
   const climateSpending = g(policy.adaptation - REF.adaptation) + P.reconstructionShare * climateDamage * BASE.gdp * trend * scale
-  const publicGoods = Math.max(0, plannedPublicGoods + climateSpending - (1 - P.rescueTaxShare) * rescueBase)
+  // Contrôle, intégration et accueil des demandeurs d'asile : des dépenses publiques en plus (ou en moins).
+  const migrationSpending = g(policy.borderControl - REF.borderControl) + g(policy.integration - REF.integration) + ((P.receptionCost * (migrationIrregular - irregularStart)) / 1000) * trend
+  const publicGoods = Math.max(0, plannedPublicGoods + climateSpending + migrationSpending - (1 - P.rescueTaxShare) * rescueBase)
   const publicFactor = plannedPublicGoods > 0 ? publicGoods / plannedPublicGoods : 1
   const rescueTax = P.rescueTaxShare * rescueBase
   // La taxe carbone en plus (ou en moins) de celle de 2025, sur les émissions fossiles de l'an dernier.
   const carbonRevenue = init ? 0 : ((carbonExtra * prev.fossilEmissions) / 1000) * priceLevel
   // L'aide climat aux pays du Sud, au-delà de celle de départ (versée au reste du monde, comme la contribution à l'UE).
-  const climateAidOut = g(policy.climateAid - REF.climateAid)
+  const climateAidOut = g(policy.climateAid - REF.climateAid) + g(policy.developmentAid - REF.developmentAid)
   const foodTransfer = (policy.foodSecurity * 12 * population) / 1000 * priceLevel
   const minimaBoost = g(policy.minima)
   const vatRatio = BASE.vatRevenue / BASE.consumption / REF.vat
@@ -821,7 +854,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     (Math.max(0, warming) * exposure) / P.unrestClimateRange +
     world.unrest +
     // Précarité quand on allège fortement les règles.
-    P.regulationAnger * Math.max(0, deregulation)
+    P.regulationAnger * Math.max(0, deregulation) +
+    // Un accueil débordé (bien plus d'arrivées qu'en 2025, sans moyens d'intégration) crée des tensions.
+    (P.migrationAnger * Math.max(0, extraArrivals) * welcomeGap) / 100
   const discontent = init ? 0 : P.unrestMemory * prev.discontent + (1 - P.unrestMemory) * anger
   const ending: Ending | null = init
     ? null
@@ -902,7 +937,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       'Aides aux entreprises': d.firmAid,
       'Charge de la dette': d.interest,
       'Contribution à l’UE': d.euContribution - climateAidOut,
-      'Aide climat aux pays du Sud (en plus)': climateAidOut,
+      'Aide climat et développement (en plus)': climateAidOut,
     },
     taxes: {
       TVA: t.tva,
@@ -957,6 +992,13 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     evasion,
     discontent,
     ending,
+    migrationLegal,
+    migrationIrregular,
+    migrationPressure,
+    conflict,
+    controlEffect,
+    integrationCoverage,
+    peaceEffect,
     temperature,
     worldEmissions,
     frenchEmissions,
@@ -1011,6 +1053,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     capitalFlight,
     consumption: d.consumption,
     fossilPrice,
+    conflict,
+    aidStock,
+    recentMigrants,
     publicOwnership: ownership,
     regulation,
     worldBaseEmissions,
@@ -1082,6 +1127,7 @@ export function worldAt(events: FiredEvent[], year: number): World {
     world.unrest += effect.unrest ?? 0
     world.productivity += effect.productivity ?? 0
     world.migrants += effect.migrants ?? 0
+    world.conflict += effect.conflict ?? 0
   }
   return world
 }
