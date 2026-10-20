@@ -175,7 +175,7 @@ ${body}
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
           <button type="button" data-filter="all" class="is-on">Tout (${count})</button>
-          ${tables.map(([file, label]) => `<button type="button" data-filter="${file.replace('.csv', '')}">${esc(file)}</button>`).join('')}
+          ${tables.map(([file]) => `<button type="button" data-filter="${file.replace('.csv', '')}">${esc(file)}</button>`).join('')}
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
         <p class="note">Pour modifier une valeur : <a href="parametres.html">mode d’emploi</a>. Pour essayer avant : dans le jeu, <strong>🧠 Le modèle → Tous les paramètres</strong>.</p>

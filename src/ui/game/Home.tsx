@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ACHIEVEMENTS } from '../../game/achievements'
 import { SCENARIOS, type Scenario } from '../../game/scenarios'
+import { promptInstall, useInstall } from './install'
 
 type Props = {
   name: string
@@ -34,6 +35,37 @@ export const Stars = ({ n, size = 'small' }: { n: number; size?: 'small' | 'big'
     ))}
   </span>
 )
+
+/** Proposer d'installer le jeu comme une appli (écran d'accueil, plein écran, hors ligne). */
+function InstallCard() {
+  const state = useInstall()
+  const [help, setHelp] = useState(false)
+  if (state === 'installed' || state === 'unavailable') {
+    return null
+  }
+  return (
+    <div className="install-card">
+      <button type="button" className="menu-card menu-install" onClick={() => (state === 'prompt' ? void promptInstall() : setHelp(!help))} aria-expanded={state === 'ios' ? help : undefined}>
+        <span>📲</span>
+        <strong>Installer l’appli</strong>
+        <small>Sur l’écran d’accueil, en plein écran, et même sans réseau.</small>
+      </button>
+      {help ? (
+        <ol className="install-steps">
+          <li>
+            Touchez <strong>Partager</strong> <span aria-hidden="true">⬆️</span> en bas de Safari (en haut sur iPad).
+          </li>
+          <li>
+            Choisissez <strong>Sur l’écran d’accueil</strong> <span aria-hidden="true">➕</span>.
+          </li>
+          <li>
+            Touchez <strong>Ajouter</strong> : France·Sim s’ouvre ensuite comme une appli.
+          </li>
+        </ol>
+      ) : null}
+    </div>
+  )
+}
 
 /** L'écran d'accueil : choisir comment jouer. */
 export function Home({ name, onName, stars, earned, canResume, onResume, onTutorial, onScenario, onFree, onMyths, onModel }: Props) {
@@ -116,6 +148,7 @@ export function Home({ name, onName, stars, earned, canResume, onResume, onTutor
               <strong>Comprendre le modèle</strong>
               <small>Le graphe des causes, les 350 paramètres, le test face au passé.</small>
             </button>
+            <InstallCard />
           </section>
         )}
 
