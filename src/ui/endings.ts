@@ -40,4 +40,14 @@ export const ENDINGS: Record<Ending, { icon: string; title: string; text: string
       'Le chômage réduit les revenus, qui réduisent encore la demande : la spirale s’auto-entretient.',
     ],
   },
+  effondrement: {
+    icon: '🔥',
+    title: 'La société s’effondre',
+    text: 'Canicules meurtrières, sécheresses, récoltes perdues, inondations à répétition : les dégâts du réchauffement dépassent ce que le pays peut réparer. Les services publics, l’agriculture et l’ordre public ne suivent plus.',
+    chain: [
+      'Le réchauffement dépend des émissions du monde entier : la France n’en émet que 0,8 %, mais son exemple et son aide aux pays du Sud comptent.',
+      'Les dégâts croissent plus vite que la température, et au-delà de 2 °C, des points de bascule (pergélisol, forêts) relâchent du carbone.',
+      'L’adaptation (digues, eau, bâtiments, cultures) évite une partie des dégâts, jamais la totalité.',
+    ],
+  },
 }

@@ -199,3 +199,36 @@ riskPremium;ending;+;bankruptcyPremium;Plus personne ne prête : l’État fait 
 interest;ending;+;bankruptcyInterestShare;Quand les intérêts absorbent un quart des recettes, l’État ne peut plus payer.
 inflation;ending;+;hyperinflation;La monnaie perd la confiance.
 unemployment;ending;+;depressionUnemployment;Un actif sur cinq sans emploi : dépression.
+worldEmissions;temperature;+;tcre tippingEmissions tippingTemperature;Chaque tonne de CO2 émise réchauffe la planète pour des siècles.
+frenchEmissions;worldEmissions;+;franceInfluence;Directement (0,8 % du total) et par l’exemple : une France qui réduit ses émissions entraîne un peu les autres.
+climateAid;worldEmissions;-;climateAidCost;Financer l’électricité propre et la protection des forêts dans les pays du Sud.
+crisis;worldEmissions;±;worldEmissionsTrend;Un accord mondial les fait baisser, un renoncement les fait remonter.
+temperature;climateDamage;+;damageLinear damageQuadratic;Les dégâts croissent plus vite que la température.
+adaptation;adaptationCoverage;+;adaptationMax adaptationHalf adaptationDecay;L’adaptation évite une partie des dégâts, jamais la totalité.
+adaptationCoverage;climateDamage;-;adaptationMax;
+adaptation;publicDemand;+;;Des travaux publics en plus.
+climateDamage;productivity;-;;Une part de la capacité de production est détruite.
+climateDamage;inflation;+;climateInflation;Récoltes perdues, assurances plus chères.
+climateDamage;spending;+;reconstructionShare;L’État répare une partie des dégâts.
+temperature;lifeExpectancy;-;climateLifeLoss;Canicules, maladies : moins si l’on s’est adapté.
+fossilShare;lifeExpectancy;-;airPollutionLife;Brûler du pétrole et du gaz pollue l’air.
+temperature;discontent;+;unrestClimateRange;Catastrophes à répétition et pénuries d’eau nourrissent la colère.
+climateDamage;ending;+;collapseDamage;Au-delà de 10 % du PIB de dégâts, la société s’effondre.
+carbonTax;fossilShare;-;carbonElectrify;Pompes à chaleur et voitures électriques deviennent plus rentables.
+carbonTax;frenchEmissions;-;carbonDemandCut;On consomme moins de pétrole et de gaz.
+carbonTax;energyPrice;+;carbonRetailPass;100 € la tonne, c’est environ 25 centimes de plus par litre.
+carbonTax;taxes;+;;
+fossilShare;frenchEmissions;+;energyEmissionsGdp;
+nuclearShare;frenchEmissions;-;gasForNuclear;Moins de nucléaire, c’est plus de gaz dans l’électricité.
+gdp;frenchEmissions;+;energyEmissionsGdp;
+publicOwnership;debt;+;largeFirmsValue compensationRate;Nationaliser, c’est racheter les entreprises : la dette monte (privatiser la fait baisser).
+publicOwnership;taxes;+;;Les dividendes des entreprises publiques reviennent à l’État.
+publicOwnership;disposableIncome;-;dividends.g5;Les actionnaires, surtout les plus aisés, perdent ces dividendes.
+publicOwnership;productivity;-;ownershipEfficiency;Les entreprises publiques sont en moyenne un peu moins efficaces.
+publicOwnership;privateInvestment;+;ownershipInvestment;L’État peut orienter l’investissement à long terme.
+publicOwnership;capitalFlight;+;nationalisationFlight;Les investisseurs craignent d’être les suivants.
+regulation;unemployment;+;regulationNairu;Des règles strictes protègent les emplois en place mais freinent l’embauche.
+regulation;productivity;-;regulationProductivity;Moins de concurrence, moins d’innovation.
+regulation;lowIncome;+;regulationWages;Les règles protègent les salaires du bas.
+regulation;discontent;-;regulationAnger;Moins de règles, c’est plus de précarité, et de colère.
+regulation;frenchEmissions;-;regulationEmissions;Les normes environnementales réduisent les émissions.

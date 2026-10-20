@@ -72,6 +72,18 @@ export type Policy = {
   savingsToFirms: number
   /** Face à une crise de la dette : 0 = accepter le plan d'aide européen (et ses économies imposées), 1 = le refuser. */
   crisisResponse: number
+  // Modèle économique
+  /** Part des grandes entreprises contrôlées par l'État (≈ 10 % en 2025 : EDF, SNCF, La Poste…). */
+  publicOwnership: number
+  /** Intensité des règles : marché du travail, normes, concurrence (0 = ultra-libéral, 1 = très encadré ; 0,6 en 2025). */
+  regulation: number
+  // Climat
+  /** Taxe carbone sur le pétrole et le gaz (€ par tonne de CO2 ; 44,6 € en 2025). */
+  carbonTax: number
+  /** Dépenses d'adaptation au réchauffement (Md€ par an). */
+  adaptation: number
+  /** Aide climat aux pays du Sud (Md€ par an). */
+  climateAid: number
   /** Annulation ponctuelle : part de la dette détenue par `cancelHolder` effacée cette année-là. */
   cancelShare: number
   cancelHolder: Holder
@@ -90,19 +102,36 @@ export type World = {
   demandShock: number
   /** Rachats de dette publique par la BCE (part du déficit rachetée, assouplissement quantitatif). */
   qe: number
+  /** Changement de rythme des émissions mondiales cette année (− = le monde agit, + = il renonce). */
+  climateAmbition: number
+  /** Canicule ou catastrophe exceptionnelle (en degrés de réchauffement équivalents, cette année seulement). */
+  heatShock: number
+  /** Colère ajoutée par un événement (grève, scandale ; négatif pour une liesse). */
+  unrest: number
+  /** Gains de productivité en plus (révolution technologique). */
+  productivity: number
+  /** Arrivées en plus (milliers de personnes, réfugiés). */
+  migrants: number
 }
 
 /** Une décision prise une année donnée (le joueur bouge des leviers puis avance). */
 export type Decision = { year: number; patch: Partial<Policy> }
 
 /** Un événement mondial, déclenché à la main ou par le hasard. */
+export type EventCategory = 'climat' | 'economie' | 'monde' | 'societe' | 'technologie'
+
 export type EventDef = {
   id: string
   label: string
   icon: string
   summary: string
+  category: EventCategory
   /** Effet sur le monde, année par année depuis le déclenchement. */
   effects: Partial<World>[]
+  /** Probabilité que l'événement survienne une année donnée, selon l'état du pays et du monde l'année d'avant. */
+  chance: (s: YearState, start: YearState) => number
+  /** Années minimum entre deux occurrences. */
+  cooldown: number
 }
 
 export type FiredEvent = { year: number; id: string }
@@ -113,7 +142,7 @@ export type Flow = { from: Actor; to: Actor; amount: number; label: string }
 export type Actor = 'menages' | 'entreprises' | 'etat' | 'secu' | 'banques' | 'bce' | 'monde' | 'energie'
 
 /** Les façons de perdre la partie. */
-export type Ending = 'revolte' | 'faillite' | 'hyperinflation' | 'depression'
+export type Ending = 'revolte' | 'faillite' | 'hyperinflation' | 'depression' | 'effondrement'
 
 /** L'état de la France à la fin d'une année. Montants en milliards d'euros courants. */
 export type YearState = {
@@ -197,6 +226,19 @@ export type YearState = {
   discontent: number
   /** Ce qui rend la situation intenable cette année (la partie est perdue), ou null. */
   ending: Ending | null
+  // Climat
+  /** Réchauffement mondial par rapport à l'ère préindustrielle (°C). */
+  temperature: number
+  /** Émissions mondiales de CO2 (Gt par an). */
+  worldEmissions: number
+  /** Émissions françaises (Mt CO2e par an). */
+  frenchEmissions: number
+  /** Dégâts climatiques en France, en part du PIB (après adaptation). */
+  climateDamage: number
+  /** Part des dégâts évitée par l'adaptation. */
+  adaptationCoverage: number
+  /** CO2 émis dans le monde depuis le début de la partie (Gt). */
+  cumulativeCO2: number
   // Carte
   flows: Flow[]
   /** Somme des soldes de tous les acteurs : nulle si les comptes bouclent. */

@@ -24,6 +24,17 @@ npm run dev
 - **Popularité et élections** : votre popularité suit le climat social ; élection en 2027 puis tous les cinq ans,
   il faut 40 % de popularité pour être réélu. Soirée électorale animée.
 - **Vos ministres** commentent chaque décision avant que vous avanciez (comptes, emploi, solidarités, transition, ordre public).
+- **Le climat** : réchauffement mondial calculé à partir du CO2 cumulé (GIEC), émissions mondiales (Global Carbon Budget)
+  et françaises (Citepa), dégâts en France (richesse, prix, espérance de vie, colère), adaptation, points de bascule,
+  et une fin de partie « effondrement ». La France émet 0,8 % du CO2 mondial : elle agit surtout par l’adaptation,
+  l’exemple et l’aide aux pays du Sud. Leviers : taxe carbone, adaptation, aide climat.
+- **Le monde bouge tout seul** : 24 événements (canicules, méga-feux, inondations, guerres, krachs, pandémies, IA, accords
+  climatiques, grèves, scandales…) tirés au sort chaque année, plus fréquents quand la situation s’y prête.
+- **Le capital politique** : on ne peut pas tout réformer la même année ; les points dépendent de la popularité.
+- **Le modèle économique** : nationaliser ou privatiser, réglementer ou libéraliser, et trois programmes clés en main
+  (ultra-libéral, entre-deux actuel, étatiste).
+- **L’ambiance suit le pays** : la planète qui brûle (rouge, flammes), la colère (pancartes de manifestants), la panique des marchés.
+- **Le Conseil des ministres** : un bandeau flottant qui réagit à chaque décision avant de la prendre.
 - **La une du journal** chaque année ; **14 succès** à débloquer ; records d’étoiles gardés dans le navigateur.
 
 ### Les outils

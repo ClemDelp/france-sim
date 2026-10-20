@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BASE_POLICY } from './model/calibration'
-import { EVENTS } from './model/events'
+import { EVENTS, rollEvents } from './model/events'
 import type { Overrides } from './model/params'
 import { policyAt, simulate } from './model/sim'
 import type { Actor, Decision, FiredEvent, Policy, PolicyKey } from './model/types'
 import { Brain, type Impact, type View } from './ui/Brain'
 import { FlowMap } from './ui/FlowMap'
-import { num, sbn } from './ui/format'
+import { num } from './ui/format'
 import { Kpis } from './ui/Kpis'
 import { KPIS } from './ui/indicators'
 import { formatLever, LEVER_GROUPS } from './ui/levers'
 import { MISSIONS, type Mission } from './ui/missions'
-import { BudgetPanel, DebtPanel, FirmsPanel, GroupsPanel, JournalPanel, WorldPanel } from './ui/Panels'
+import { BudgetPanel, ClimatePanel, DebtPanel, FirmsPanel, GroupsPanel, JournalPanel, WorldPanel } from './ui/Panels'
+import { DOCTRINES } from './ui/doctrines'
 import { ENDINGS } from './ui/endings'
 import { focusLine } from './ui/story'
 import { ACHIEVEMENTS } from './game/achievements'
@@ -20,8 +21,10 @@ import { headline } from './game/headlines'
 import { evaluate, SCENARIOS, type Scenario } from './game/scenarios'
 import { electionAt, isElectionYear, nextElection, popularity } from './game/score'
 import { load, save } from './game/storage'
+import { CANCEL_COST, politicalCapital, reformCost } from './game/capital'
+import { Ambiance } from './ui/game/Ambiance'
 import { Briefing, Home, Stars } from './ui/game/Home'
-import { Advisors, Confetti, Counter, Newspaper, Objectives, Popularity, Toasts } from './ui/game/Hud'
+import { Confetti, Council, Counter, EventFeed, Newspaper, Objectives, Popularity, Toasts } from './ui/game/Hud'
 import { Tour, type TourStep } from './ui/game/Tour'
 import { Robustness } from './ui/Robustness'
 import { FOCUS_METRICS, KPI_FOCUS } from './ui/robustnessMetrics'
@@ -34,10 +37,11 @@ const RELIABLE_UNTIL = 2040
 const LONG_RUN = 2050
 const MISSION_YEARS = 10
 
-type Tab = 'groupes' | 'courbes' | 'budget' | 'dette' | 'entreprises' | 'monde' | 'journal'
+type Tab = 'groupes' | 'courbes' | 'climat' | 'budget' | 'dette' | 'entreprises' | 'monde' | 'journal'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'groupes', label: 'Qui gagne, qui perd' },
   { id: 'courbes', label: 'Courbes' },
+  { id: 'climat', label: 'Climat' },
   { id: 'budget', label: 'Budget' },
   { id: 'dette', label: 'Dette' },
   { id: 'entreprises', label: 'Entreprises' },
@@ -45,7 +49,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'journal', label: 'Journal' },
 ]
 
-const ACTOR_TAB: Partial<Record<Actor, Tab>> = { menages: 'groupes', etat: 'budget', secu: 'budget', bce: 'dette', banques: 'dette', monde: 'monde', energie: 'monde', entreprises: 'entreprises' }
+const ACTOR_TAB: Partial<Record<Actor, Tab>> = { menages: 'groupes', etat: 'budget', secu: 'budget', bce: 'dette', banques: 'dette', monde: 'climat', energie: 'monde', entreprises: 'entreprises' }
 
 type Verdict = { mission: Mission; start: number }
 
@@ -83,6 +87,8 @@ function App() {
   const [openedModel, setOpenedModel] = useState(() => load('openedModel', false))
   /** Les élections dont le joueur a vu le résultat. */
   const [electionsSeen, setElectionsSeen] = useState<number[]>([])
+  /** La graine du tirage au sort des événements : une partie différente à chaque fois. */
+  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1e9))
   /** Les années de crise de la dette auxquelles le joueur a déjà répondu. */
   const [handled, setHandled] = useState<number[]>([])
   /** Le joueur a choisi de continuer après une défaite (mode bac à sable). */
@@ -126,6 +132,7 @@ function App() {
       discontent: withDraft.discontent,
       ending: withDraft.ending,
       inflation: withDraft.inflation - without.inflation,
+      emissions: withDraft.frenchEmissions - without.frenchEmissions,
     }
   }, [hasDraft, decisions, events, year, draft, params])
 
@@ -143,13 +150,23 @@ function App() {
   const running = target !== null && year < target && !crisisPending && !gameOver && !election
   // Les longs voyages vont plus vite : on voit défiler les années sans attendre.
   const delay = target !== null && target - year > 6 ? 140 : 380
+  // Chaque année qui passe, le monde tire ses événements au sort (sauf pour les idées reçues, qu'on compare à monde constant).
+  const randomEvents = mode.kind !== 'myth'
   useEffect(() => {
     if (!running) {
       return
     }
-    const id = window.setTimeout(() => setYear((y) => y + 1), delay)
+    const id = window.setTimeout(() => {
+      if (randomEvents) {
+        const fired = rollEvents(seed, year + 1, s, states[0], events)
+        if (fired.length) {
+          setEvents((es) => [...es, ...fired])
+        }
+      }
+      setYear((y) => y + 1)
+    }, delay)
     return () => window.clearTimeout(id)
-  }, [running, year, delay])
+  }, [running, year, delay, randomEvents, seed, s, states, events])
 
   // Une idée reçue jouée : le même scénario prolongé jusqu'en 2050, pour voir le long terme.
   const longRun = useMemo(() => {
@@ -164,11 +181,25 @@ function App() {
 
   const pop = popularity(s)
   const upcoming = elections ? nextElection(year) : null
-  const news = headline(s, states.at(-2), elections)
+  const eventsThisYear = events.filter((e) => e.year === year).map((e) => EVENTS.find((d) => d.id === e.id)!).filter(Boolean)
+  const news = headline(s, states.at(-2), elections, eventsThisYear)
+
+  // Le capital politique : combien de réformes le Parlement et l'opinion acceptent cette année.
+  const current = policyAt(decisions, year + 1)
+  const draftCost = Object.entries(draft).reduce((total, [key, value]) => {
+    if (key === 'cancelShare') {
+      return total + CANCEL_COST
+    }
+    const def = LEVER_GROUPS.flatMap((g) => g.levers).find((l) => l.key === key)
+    return total + (def ? reformCost(def, current[def.key] as number, value as number) : 0)
+  }, 0)
+  const capital = mode.kind === 'myth' || sandbox ? null : politicalCapital(pop, year === START || (elections && isElectionYear(year)))
+  const overBudget = capital !== null && draftCost > capital
   const advice = preview ? adviseDraft(preview) : adviseState(s, pop, upcoming ? upcoming - year : 99)
 
   // Les étoiles du scénario en cours comptent dès qu'il est terminé (et on garde le meilleur score).
-  const earnedStars = scenario && evaluation && scenarioOver ? (gameOver || (election && !election.won) ? 0 : evaluation.stars) : null
+  // Une partie perdue puis continuée en bac à sable ne rapporte pas d'étoile.
+  const earnedStars = scenario && evaluation && scenarioOver ? (gameOver || sandbox || (election && !election.won) ? 0 : evaluation.stars) : null
   const allStars = useMemo(() => (scenario && earnedStars !== null ? { ...stars, [scenario.id]: Math.max(stars[scenario.id] ?? 0, earnedStars) } : stars), [scenario, earnedStars, stars])
   useEffect(() => {
     save('stars', allStars)
@@ -212,6 +243,7 @@ function App() {
     setHandled([])
     setSandbox(false)
     setElectionsSeen([])
+    setSeed((x) => (Math.imul(x, 1103515245) + 12345) >>> 0)
     setHome(false)
     setBriefing(null)
   }
@@ -234,11 +266,11 @@ function App() {
     { target: '.kpis', title: 'Votre tableau de bord', text: 'Les chiffres clés du pays, et leur évolution. Cliquez sur l’un d’eux pour comprendre ce qui le fait monter ou baisser.' },
     { target: '.popularity', title: 'Votre popularité', text: 'Elle suit le climat social. Élection en 2027 puis tous les cinq ans : sous 40 % de popularité, vous êtes battu.' },
     { target: '.levers', title: 'Vos leviers', text: 'Impôts, dépenses, retraites, énergie, commerce, dette… Bougez un curseur : rien ne change tant que vous n’avancez pas dans le temps. Le ⓘ explique chaque levier.' },
-    { target: '.advisors', title: 'Votre gouvernement', text: 'Vos ministres réagissent à chaque décision avant que vous la preniez : déficit, emploi, pauvreté, colère. Écoutez-les… ou pas.' },
+    { target: '.council', title: 'Le Conseil des ministres', text: 'Vos ministres réagissent à chaque décision avant que vous la preniez. Et attention au capital politique : on ne peut pas tout réformer la même année. Plus vous êtes populaire, plus vous avez de points.' },
     { target: '.time-buttons', title: 'Le temps', text: 'Avancez d’un an pour voir l’effet de vos choix, ou de plusieurs années d’un coup. Le jeu s’arrête de lui-même en cas de crise ou d’élection.' },
     { target: '.newspaper', title: 'La une du jour', text: 'Chaque année, la presse résume ce qui s’est passé. Le journal complet est dans l’onglet « Journal ».' },
     { target: '.map-card', title: 'L’argent du pays', text: 'Qui paie qui : ménages, entreprises, État, Sécu, banques, reste du monde. En vert ou rouge, ce que vos décisions ont changé.' },
-    { target: '.events', title: 'Le monde ne vous attend pas', text: 'Choc pétrolier, crise financière, pandémie… Déclenchez-les pour tester la solidité du pays.' },
+    { target: '.event-feed', title: 'Le monde ne vous attend pas', text: 'Canicules, guerres, krachs, percées technologiques, accords climatiques… Le jeu les tire au sort chaque année. Plus la planète chauffe, plus les catastrophes sont fréquentes.' },
     { target: '.side', title: 'Les analyses', text: 'Qui gagne, qui perd ; le budget ; la dette ; les entreprises ; les courbes sur toute la partie.' },
     { target: '.brain-button', title: 'Sous le capot', text: 'Le graphe de toutes les causes, les 350 paramètres sourcés, et le modèle face au passé. Tout est ouvert et modifiable.' },
     { title: 'À vous de jouer !', text: 'Conseil : commencez par le scénario « Premier mandat » depuis le menu 🏠. Et souvenez-vous : on peut toujours revenir avant sa dernière décision.' },
@@ -257,6 +289,9 @@ function App() {
 
   const last = scenario ? scenario.end : END
   const advance = (years: number) => {
+    if (overBudget) {
+      return
+    }
     if (hasDraft) {
       setDecisions((ds) => [...ds, { year: year + 1, patch: draft }])
       setDraft({})
@@ -265,11 +300,6 @@ function App() {
   }
 
   const reset = () => (scenario ? startScenario(scenario) : begin({ kind: 'free' }))
-
-  const fire = (id: string) => {
-    setEvents((es) => [...es, { year: year + 1, id }])
-    setTarget(Math.min(END, year + 1))
-  }
 
   const play = (m: Mission) => {
     setMissionsOpen(false)
@@ -341,18 +371,18 @@ function App() {
               </button>
             ) : (
               <>
-                <button type="button" className="advance-main" onClick={() => advance(1)} disabled={year >= last}>
+                <button type="button" className="advance-main" onClick={() => advance(1)} disabled={year >= last || overBudget} title={overBudget ? "Trop de réformes d’un coup : le Parlement ne suivra pas." : undefined}>
                   ▶ 1 an
                 </button>
-                <button type="button" onClick={() => advance(5)} disabled={year >= last}>
+                <button type="button" onClick={() => advance(5)} disabled={year >= last || overBudget}>
                   ⏩ 5 ans
                 </button>
                 {last - year > 5 ? (
-                  <button type="button" onClick={() => advance(10)}>
+                  <button type="button" onClick={() => advance(10)} disabled={overBudget}>
                     ⏩ 10 ans
                   </button>
                 ) : null}
-                <button type="button" onClick={() => advance(last - year)} disabled={year >= last} title={`Avancer jusqu’en ${last}`}>
+                <button type="button" onClick={() => advance(last - year)} disabled={year >= last || overBudget} title={`Avancer jusqu’en ${last}`}>
                   ⏭ {last}
                 </button>
               </>
@@ -395,27 +425,32 @@ function App() {
             <h2>Vos décisions</h2>
             <p>Bougez un levier, puis avancez d’un an : la décision s’applique en {year + 1}.</p>
           </div>
-          <Advisors advice={advice} />
-          {preview ? (
-            <div className="preview">
-              <strong>Effet estimé en {year + 1}</strong>
-              <span className={preview.deficit > 0 ? 'bad' : 'good'}>Déficit {sbn(preview.deficit)}</span>
-              <span className={preview.unemployment > 0 ? 'bad' : 'good'}>Chômage {num(preview.unemployment * 100, 2)} pt</span>
-              <span className={preview.poverty > 0 ? 'bad' : 'good'}>Pauvreté {num(preview.poverty * 100, 2)} pt</span>
-              <span className={preview.discontent >= 0.6 ? 'bad' : ''}>
-                Climat social {preview.discontent >= 1 ? 'explosif' : preview.discontent >= 0.6 ? 'tendu' : 'calme'} ({num(preview.discontent, 2)})
-              </span>
-              {preview.ending ? <strong className="bad">⚠️ {ENDINGS[preview.ending].title} : la partie serait perdue en {year + 1}.</strong> : null}
-              <button type="button" className="ghost small" onClick={() => setDraft({})}>
-                Annuler les changements
-              </button>
-            </div>
-          ) : null}
           {LEVER_GROUPS.map((g) => (
             <details key={g.id} className="lever-group" open={g.id === 'impots'}>
               <summary>
                 <span>{g.icon}</span> {g.label}
               </summary>
+              {g.id === 'modele' ? (
+                <div className="doctrines">
+                  <p className="lever-note">Un programme complet : appliquez-le d’un coup (s’il reste du capital politique) ou petit à petit.</p>
+                  {DOCTRINES.map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      className="doctrine"
+                      title={d.text}
+                      onClick={() => {
+                        const base = policyAt(decisions, year + 1)
+                        setDraft(Object.fromEntries(Object.entries(d.patch).filter(([k, v]) => Math.abs((base[k as PolicyKey] as number) - (v as number)) > 1e-9)))
+                      }}
+                    >
+                      <span>{d.icon}</span>
+                      <strong>{d.title}</strong>
+                      <small>{d.text}</small>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               {g.levers.map((l) => {
                 const v = policy[l.key] as number
                 const moved = Math.abs(v - (BASE_POLICY[l.key] as number)) > 1e-9
@@ -481,17 +516,7 @@ function App() {
               document.querySelector('.side')?.scrollIntoView({ behavior: 'smooth' })
             }} />
           </div>
-          <div className="events">
-            <h2>Le monde réagit</h2>
-            <div className="event-buttons">
-              {EVENTS.map((e) => (
-                <button key={e.id} type="button" className="event" onClick={() => fire(e.id)} disabled={year >= END || running} title={e.summary}>
-                  <span>{e.icon}</span>
-                  {e.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <EventFeed events={events} year={year} />
         </section>
 
         <section className="side">
@@ -522,6 +547,7 @@ function App() {
               }
             />
           ) : null}
+          {tab === 'climat' ? <ClimatePanel s={s} b={b} changed={changed} /> : null}
           {tab === 'budget' ? <BudgetPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'dette' ? <DebtPanel s={s} b={b} changed={changed} /> : null}
           {tab === 'entreprises' ? <FirmsPanel s={s} b={b} changed={changed} /> : null}
@@ -918,6 +944,18 @@ function App() {
       {briefing ? <Briefing scenario={briefing} best={allStars[briefing.id] ?? 0} onStart={() => startScenario(briefing)} onBack={() => setBriefing(null)} /> : null}
 
       {tour ? <Tour steps={tourSteps} onClose={() => setTour(false)} /> : null}
+
+      <Council
+        advice={advice}
+        preview={preview}
+        year={year}
+        cost={draftCost}
+        capital={capital}
+        onCancel={() => setDraft({})}
+        endingTitle={preview?.ending ? ENDINGS[preview.ending].title : null}
+      />
+
+      <Ambiance state={s} start={states[0]} eventsThisYear={eventsThisYear} />
 
       <Toasts items={ACHIEVEMENTS.filter((a) => fresh.includes(a.id))} />
 

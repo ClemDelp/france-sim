@@ -84,6 +84,23 @@ export const SCENARIOS: Scenario[] = [
     tip: 'Le nucléaire existant rend l’électricité bon marché ; électrifier coûte cher au début.',
   },
   {
+    id: 'climat',
+    icon: '🌡️',
+    title: 'La planète brûle',
+    tagline: 'Le monde renonce au climat. Protéger la France d’ici 2050.',
+    story:
+      'Les grandes puissances relancent le charbon : les émissions mondiales repartent à la hausse. La France ne peut pas arrêter seule le réchauffement, mais elle peut réduire ses émissions, aider les pays du Sud et protéger sa population. Tenez jusqu’en 2050.',
+    difficulty: 3,
+    end: 2050,
+    events: [{ id: 'climate-backlash', year: 2026 }],
+    objectives: [
+      { label: 'Émissions françaises sous 200 Mt en 2050', when: 'end', get: (s) => s.frenchEmissions, op: 'below', target: 200, show: (v) => `${num(v, 0)} Mt` },
+      { label: 'Au moins 30 % des dégâts climatiques évités par l’adaptation en 2050', when: 'end', get: (s) => s.adaptationCoverage, op: 'above', target: 0.3, show: pct0 },
+      { label: 'Espérance de vie au-dessus de 85 ans en 2050', when: 'end', get: (s) => s.lifeExpectancy, op: 'above', target: 85, show: (v) => `${num(v, 1)} ans` },
+    ],
+    tip: 'Taxe carbone, électrification, adaptation, aide aux pays du Sud : il faudra financer, et ménager la colère.',
+  },
+  {
     id: 'retraites',
     icon: '🧓',
     title: 'Sauver les retraites',

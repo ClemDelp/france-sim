@@ -1,4 +1,4 @@
-import { GROUP_PARAMS } from '../model/calibration'
+import { BASE, GROUP_PARAMS, P } from '../model/calibration'
 import { GROUPS, GROUP_LABEL, HOLDERS, HOLDER_LABEL, SIZES, SIZE_LABEL, type Holder, type YearState } from '../model/types'
 import { num, pct, signed } from './format'
 import { yearStory } from './story'
@@ -355,6 +355,86 @@ export function FirmsPanel({ s, b, changed }: PanelProps) {
       <p className="note">
         PME et TPE : moins de 250 salariés. ETI : de 250 à 4 999. Grandes entreprises : 5 000 et plus. Le modèle répartit l’activité totale selon le poids de chaque taille et
         ses sensibilités propres (modele/entreprises.csv).
+      </p>
+    </div>
+  )
+}
+
+/** Le climat : la planète (que la France ne pilote pas seule), et ce que la France émet, subit et prépare. */
+export function ClimatePanel({ s, b, changed }: PanelProps) {
+  const t = s.temperature
+  // Le thermomètre va de +1 °C à +4 °C.
+  const pos = (v: number) => `${Math.min(100, Math.max(0, ((v - 1) / 3) * 100))}%`
+  const zone = t >= 3 ? 'Danger extrême' : t >= 2 ? 'Au-delà de l’accord de Paris' : t >= 1.5 ? 'Au-delà de 1,5 °C' : 'Sous 1,5 °C'
+  // Budget carbone restant pour rester sous 1,5 °C et 2 °C (GIEC, à partir de 2025 : ≈ 130 et ≈ 900 Gt).
+  const budget15 = Math.max(0, 130 - s.cumulativeCO2)
+  const budget2 = Math.max(0, 900 - s.cumulativeCO2)
+  const frenchShare = s.frenchEmissions / 1000 / s.worldEmissions
+  return (
+    <div className="panel">
+      <h3>🌍 La planète</h3>
+      <div className="thermo">
+        <div className="thermo-track">
+          <span className="thermo-fill" style={{ width: pos(t) }} />
+          {[1.5, 2, 3].map((v) => (
+            <i key={v} style={{ left: pos(v) }}>
+              <small>{num(v, 1)} °C</small>
+            </i>
+          ))}
+        </div>
+        <strong className={t >= 2 ? 'bad' : t >= 1.5 ? 'warn' : ''}>
+          +{num(t, 2)} °C <small>{zone}</small>
+        </strong>
+      </div>
+      <dl className="facts">
+        <div>
+          <dt>Émissions mondiales de CO2</dt>
+          <dd>{num(s.worldEmissions, 1)} Gt par an</dd>
+        </div>
+        <div>
+          <dt>Budget carbone restant pour 1,5 °C</dt>
+          <dd className={budget15 === 0 ? 'bad' : ''}>{budget15 === 0 ? 'épuisé' : `${num(budget15, 0)} Gt (${num(budget15 / s.worldEmissions, 0)} ans au rythme actuel)`}</dd>
+        </div>
+        <div>
+          <dt>Budget carbone restant pour 2 °C</dt>
+          <dd className={budget2 === 0 ? 'bad' : ''}>{budget2 === 0 ? 'épuisé' : `${num(budget2, 0)} Gt (${num(budget2 / s.worldEmissions, 0)} ans)`}</dd>
+        </div>
+      </dl>
+      <h3>🇫🇷 La France</h3>
+      <dl className="facts">
+        <div>
+          <dt>Émissions françaises</dt>
+          <dd>
+            {num(s.frenchEmissions, 0)} Mt par an
+            {changed ? <em className={s.frenchEmissions < b.frenchEmissions ? 'good' : 'bad'}>{` ${signed((s.frenchEmissions / b.frenchEmissions - 1) * 100, 0)} %`}</em> : null}
+          </dd>
+        </div>
+        <div>
+          <dt>Objectif 2030 (−55 % par rapport à 1990)</dt>
+          <dd className={s.frenchEmissions <= BASE.emissionsTarget2030 ? 'good' : 'bad'}>{num(BASE.emissionsTarget2030, 0)} Mt</dd>
+        </div>
+        <div>
+          <dt>Part de la France dans le CO2 mondial</dt>
+          <dd>{num(frenchShare * 100, 1)} %</dd>
+        </div>
+        <div>
+          <dt>Dégâts climatiques en France</dt>
+          <dd className={s.climateDamage > 0.02 ? 'bad' : ''}>{num(s.climateDamage * 100, 1)} % du PIB par an</dd>
+        </div>
+        <div>
+          <dt>Dégâts évités par l’adaptation</dt>
+          <dd>{num(s.adaptationCoverage * 100, 0)} %</dd>
+        </div>
+        <div>
+          <dt>Pétrole et gaz dans l’énergie</dt>
+          <dd>{num(s.fossilShare * 100, 0)} %</dd>
+        </div>
+      </dl>
+      <p className="note">
+        La température dépend des émissions du monde entier : la France n’en émet que {num(frenchShare * 100, 1)} %. Ses choix comptent surtout pour sa propre
+        vulnérabilité (adaptation, dépendance au pétrole), la santé de ses habitants (pollution de l’air), et par l’exemple et l’aide aux pays du Sud.
+        Au-delà de {num(P.tippingTemperature, 1)} °C, des points de bascule (pergélisol, forêts) relâchent du carbone et accélèrent le réchauffement. Sources : GIEC AR6,
+        Global Carbon Budget, ONU Environnement, Citepa.
       </p>
     </div>
   )

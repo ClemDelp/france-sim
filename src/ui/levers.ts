@@ -7,8 +7,10 @@ export type LeverDef = {
   max: number
   step: number
   /** Comment afficher la valeur. */
-  unit: 'pct' | 'bn' | 'years' | 'thousands' | 'euros' | 'share'
+  unit: 'pct' | 'bn' | 'years' | 'thousands' | 'euros' | 'share' | 'perTon'
   hint: string
+  /** Poids politique d'une réforme sur ce levier (1 = normal ; 2 = très contestée). */
+  weight?: number
 }
 
 export type LeverGroup = { id: string; label: string; icon: string; levers: LeverDef[] }
@@ -20,11 +22,11 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Impôts',
     icon: '💶',
     levers: [
-      { key: 'vat', label: 'TVA (taux normal)', min: 0.1, max: 0.3, step: 0.005, unit: 'pct', hint: '1 point de TVA rapporte ≈ 9 Md€. Elle pèse plus lourd sur ceux qui dépensent tout leur revenu.' },
+      { key: 'vat', weight: 1.5, label: 'TVA (taux normal)', min: 0.1, max: 0.3, step: 0.005, unit: 'pct', hint: '1 point de TVA rapporte ≈ 9 Md€. Elle pèse plus lourd sur ceux qui dépensent tout leur revenu.' },
       { key: 'incomeTaxTop', label: 'Impôt sur le revenu des plus aisés', min: -0.05, max: 0.15, step: 0.005, unit: 'pct', hint: 'Points d’imposition ajoutés aux 10 % les plus riches (un quart pour les aisés).' },
-      { key: 'csg', label: 'CSG', min: 0.06, max: 0.14, step: 0.002, unit: 'pct', hint: 'Prélevée sur presque tous les revenus, elle finance la Sécu.' },
+      { key: 'csg', weight: 1.5, label: 'CSG', min: 0.06, max: 0.14, step: 0.002, unit: 'pct', hint: 'Prélevée sur presque tous les revenus, elle finance la Sécu.' },
       { key: 'corporateTax', label: 'Impôt sur les sociétés', min: 0, max: 0.4, step: 0.01, unit: 'pct', hint: 'Taux sur les bénéfices des entreprises (25 % aujourd’hui).' },
-      { key: 'wealthTax', label: 'Impôt sur la fortune', min: 0, max: 0.05, step: 0.0025, unit: 'pct', hint: 'Taux annuel sur les gros patrimoines financiers. Plus il est haut, plus les fortunes partent ou se cachent.' },
+      { key: 'wealthTax', weight: 1.5, label: 'Impôt sur la fortune', min: 0, max: 0.05, step: 0.0025, unit: 'pct', hint: 'Taux annuel sur les gros patrimoines financiers. Plus il est haut, plus les fortunes partent ou se cachent.' },
       { key: 'inheritanceTax', label: 'Droits de succession', min: 0, max: 1, step: 0.01, unit: 'pct', hint: '≈ 300 Md€ transmis chaque année. Taux moyen ≈ 7 % aujourd’hui ; 100 % = suppression de l’héritage.' },
       { key: 'productionTaxes', label: 'Impôts de production', min: 100, max: 260, step: 5, unit: 'bn', hint: 'Payés par les entreprises quel que soit leur bénéfice (Md€ de 2025).' },
     ],
@@ -49,7 +51,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Sécurité sociale',
     icon: '🤝',
     levers: [
-      { key: 'retirementAge', label: 'Âge de départ à la retraite', min: 60, max: 67, step: 0.25, unit: 'years', hint: 'La loi actuelle mène à 64 ans en 2032. Monter se fait de 3 mois par an au plus.' },
+      { key: 'retirementAge', weight: 2, label: 'Âge de départ à la retraite', min: 60, max: 67, step: 0.25, unit: 'years', hint: 'La loi actuelle mène à 64 ans en 2032. Monter se fait de 3 mois par an au plus.' },
       { key: 'pensionIndexation', label: 'Indexation des retraites sur les prix', min: 0, max: 1.2, step: 0.05, unit: 'share', hint: '100 % = les pensions suivent l’inflation. Moins = gel partiel.' },
       { key: 'unemploymentReplacement', label: 'Allocation chômage (taux de remplacement)', min: 0.3, max: 0.8, step: 0.01, unit: 'pct', hint: 'Part de l’ancien salaire versée aux chômeurs indemnisés.' },
       { key: 'minima', label: 'Minima sociaux en plus', min: -20, max: 80, step: 5, unit: 'bn', hint: 'RSA, prime d’activité, aides au logement : surtout aux 20 % les plus modestes.' },
@@ -71,7 +73,26 @@ export const LEVER_GROUPS: LeverGroup[] = [
     icon: '⚡',
     levers: [
       { key: 'electrification', label: 'Rythme d’électrification', min: 0, max: 0.08, step: 0.0025, unit: 'pct', hint: 'Part du pétrole et du gaz remplacée chaque année par l’électricité. Coûte de l’investissement, réduit la facture importée et l’exposition aux chocs.' },
-      { key: 'nuclearShare', label: 'Part du nucléaire dans l’électricité', min: 0, max: 0.85, step: 0.01, unit: 'pct', hint: '68 % en 2025. Moins de nucléaire = électricité plus chère et plus de gaz.' },
+      { key: 'nuclearShare', label: 'Part du nucléaire dans l’électricité', min: 0, max: 0.85, step: 0.01, unit: 'pct', weight: 1.5, hint: '68 % en 2025. Moins de nucléaire = électricité plus chère et plus de gaz.' },
+    ],
+  },
+  {
+    id: 'modele',
+    label: 'Modèle économique',
+    icon: '🏛️',
+    levers: [
+      { key: 'publicOwnership', label: 'Entreprises contrôlées par l’État', min: 0, max: 0.6, step: 0.05, unit: 'pct', weight: 2, hint: '≈ 10 % en 2025 (EDF, SNCF, La Poste…). Nationaliser : l’État rachète en obligations (la dette monte), touche les dividendes, oriente l’investissement, mais fait fuir des capitaux. Privatiser : l’inverse.' },
+      { key: 'regulation', label: 'Intensité des règles', min: 0, max: 1, step: 0.05, unit: 'share', weight: 2, hint: '60 % en 2025. Moins de règles (licenciement, normes, concurrence) : plus de productivité et d’embauches, mais plus de précarité, d’inégalités et d’émissions. Plus de règles : l’inverse.' },
+    ],
+  },
+  {
+    id: 'climat',
+    label: 'Climat',
+    icon: '🌍',
+    levers: [
+      { key: 'carbonTax', label: 'Taxe carbone', min: 0, max: 400, step: 5, unit: 'perTon', weight: 1.5, hint: '44,6 € la tonne en 2025 (gelée depuis la crise des gilets jaunes). Réduit les émissions et rapporte, mais renchérit le carburant et le chauffage : les modestes trinquent si on ne redistribue pas.' },
+      { key: 'adaptation', label: 'Adaptation au réchauffement', min: 0, max: 40, step: 1, unit: 'bn', hint: '≈ 3 Md€ par an aujourd’hui. Digues, eau, bâtiments, cultures : réduit les dégâts et la colère quand le climat se dérègle, mais jamais à 100 %.' },
+      { key: 'climateAid', label: 'Aide climat aux pays du Sud', min: 0, max: 50, step: 1, unit: 'bn', hint: '≈ 6 Md€ par an. Une tonne évitée ailleurs coûte souvent moins cher qu’en France, et c’est le monde entier qui fait la température.' },
     ],
   },
   {
@@ -111,5 +132,7 @@ export function formatLever(def: LeverDef, v: number): string {
       return `${n(v, 0)} € / mois`
     case 'share':
       return `${n(v * 100, 0)} %`
+    case 'perTon':
+      return `${n(v, 0)} € / t`
   }
 }

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { ADVISORS, type Advice } from '../../game/advisors'
+import { ADVISORS, type Advice, type Preview } from '../../game/advisors'
+import { EVENTS } from '../../model/events'
+import type { FiredEvent } from '../../model/types'
 import type { Headline } from '../../game/headlines'
 import { onTrack, type evaluate, type Scenario } from '../../game/scenarios'
-import { num } from '../format'
+import { num, sbn } from '../format'
 
 /** La popularité et la prochaine élection, dans l'en-tête. */
 export function Popularity({ value, nextElection, year }: { value: number; nextElection: number | null; year: number }) {
@@ -150,4 +152,108 @@ export function Counter({ value, digits = 1 }: { value: number; digits?: number 
     return () => cancelAnimationFrame(frame)
   }, [value])
   return <>{num(shown, digits)}</>
+}
+
+/**
+ * Le Conseil des ministres : un bandeau flottant en bas de l'écran (il ne déplace pas les curseurs).
+ * Les réactions à la décision en préparation, son effet estimé, et le capital politique qu'elle consomme.
+ */
+export function Council({ advice, preview, year, cost, capital, onCancel, endingTitle }: { advice: Advice[]; preview: Preview | null; year: number; cost: number; capital: number | null; onCancel: () => void; endingTitle: string | null }) {
+  const [open, setOpen] = useState(true)
+  const over = capital !== null && cost > capital
+  return (
+    <aside className={`council${open ? '' : ' is-closed'}${preview ? ' has-draft' : ''}${over ? ' is-over' : ''}`} aria-label="Conseil des ministres">
+      <div className="council-head">
+        <button type="button" className="council-toggle" onClick={() => setOpen(!open)} aria-expanded={open}>
+          🏛️ Conseil des ministres {open ? '▾' : '▴'}
+        </button>
+        {capital !== null ? (
+          <span className="capital" title="Le capital politique : les réformes que le Parlement et l’opinion acceptent cette année. Il dépend de votre popularité, et augmente juste après une élection.">
+            ⚡ Capital politique
+            <span className="capital-pips">
+              {Array.from({ length: Math.min(12, Math.max(capital, cost)) }, (_, i) => (
+                <i key={i} className={i < cost ? (i < capital ? 'used' : 'over') : ''} />
+              ))}
+            </span>
+            <strong>
+              {cost} / {capital}
+            </strong>
+          </span>
+        ) : null}
+        {preview ? (
+          <button type="button" className="ghost small" onClick={onCancel}>
+            Annuler les changements
+          </button>
+        ) : null}
+      </div>
+      {open ? (
+        <div className="council-body">
+          {preview ? (
+            <div className="council-preview">
+              <strong>En {year + 1} :</strong>
+              <span className={preview.deficit > 0 ? 'bad' : 'good'}>Déficit {sbn(preview.deficit)}</span>
+              <span className={preview.unemployment > 0 ? 'bad' : 'good'}>Chômage {signedPts(preview.unemployment)}</span>
+              <span className={preview.poverty > 0 ? 'bad' : 'good'}>Pauvreté {signedPts(preview.poverty)}</span>
+              <span className={preview.emissions > 0 ? 'bad' : 'good'}>CO2 {preview.emissions > 0 ? '+' : ''}{num(preview.emissions, 0)} Mt</span>
+              <span className={preview.discontent >= 0.6 ? 'bad' : ''}>Colère {num(preview.discontent, 2)}</span>
+              {endingTitle ? <strong className="bad">⚠️ {endingTitle} : la partie serait perdue.</strong> : null}
+            </div>
+          ) : null}
+          {over ? <p className="council-over">🏛️ Trop de réformes d’un coup : le Parlement ne votera pas tout cette année ({cost} points pour {capital}). Étalez-les sur plusieurs années.</p> : null}
+          <div className="council-advice">
+            {advice.map((a) => {
+              const who = ADVISORS[a.who]
+              return (
+                <div key={a.who + a.text} className={`advice advice-${a.mood}`}>
+                  <span className="advice-avatar" title={`${who.name}, ${who.role}`}>
+                    {who.avatar}
+                  </span>
+                  <p>
+                    <strong>{who.name}</strong> <small>{who.role}</small>
+                    <br />
+                    {a.text}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : null}
+    </aside>
+  )
+}
+
+const signedPts = (v: number) => `${v > 0 ? '+' : ''}${num(v * 100, 1)} pt`
+
+/** Les dernières nouvelles du monde : ce que le jeu a tiré au sort. */
+export function EventFeed({ events, year }: { events: FiredEvent[]; year: number }) {
+  const recent = [...events].filter((e) => e.year <= year).sort((a, b) => b.year - a.year).slice(0, 6)
+  return (
+    <div className="events event-feed">
+      <h2>📡 Le monde bouge</h2>
+      {recent.length === 0 ? (
+        <p className="note">Rien à signaler pour l’instant. Chaque année, le monde peut vous réserver une surprise : canicule, crise, guerre, découverte…</p>
+      ) : (
+        <ul>
+          {recent.map((e) => {
+            const def = EVENTS.find((d) => d.id === e.id)
+            if (!def) {
+              return null
+            }
+            return (
+              <li key={`${e.id}-${e.year}`} className={`feed-${def.category}${e.year === year ? ' is-new' : ''}`}>
+                <span className="feed-icon">{def.icon}</span>
+                <div>
+                  <strong>
+                    {def.label} <small>{e.year}</small>
+                  </strong>
+                  <p>{def.summary}</p>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
 }

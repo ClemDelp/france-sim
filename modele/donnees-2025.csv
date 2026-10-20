@@ -70,3 +70,10 @@ startYear;2025;année;Simulation;Année de départ de la simulation;Choix du sim
 initialGrowth;0,008;taux;Économie;Croissance de l’année de départ;INSEE, prévision 2025
 reformPauseUntil;2028;année;Population;Année où reprend le relèvement de l’âge de départ (réforme de 2023 suspendue en 2025);Loi de financement de la Sécurité sociale 2026
 otherTaxes;182;Md€;Impôts;Autres impôts (carburants, taxe foncière, droits de mutation, taxes sur les salaires, taxes diverses);INSEE, comptes des administrations publiques : calé pour retrouver le total des recettes publiques (51,5 % du PIB)
+temperature;1,35;°C;Climat;Réchauffement mondial par rapport à l’ère préindustrielle (moyenne sur plusieurs années);OMM, État du climat 2024 (2024 seule : +1,55 °C)
+worldCO2;41,6;Gt CO2/an;Climat;Émissions mondiales de CO2 (fossiles et déforestation);Global Carbon Budget 2024
+fossilEmissions;265;Mt CO2e/an;Climat;Émissions françaises liées au pétrole et au gaz (transports, bâtiments, industrie);Citepa, Secten 2025
+electricityEmissions;15;Mt CO2e/an;Climat;Émissions de la production d’électricité française;RTE, Bilan électrique 2024
+otherEmissions;90;Mt CO2e/an;Climat;Autres émissions (agriculture, déchets, procédés industriels);Citepa, Secten 2025
+emissionsTarget2030;270;Mt CO2e/an;Climat;Objectif français pour 2030 (Stratégie nationale bas-carbone);SNBC, objectif européen −55 % en 2030
+largeFirmsValue;2500;Md€;Entreprises;Valeur des grandes entreprises françaises (ce qu’il faudrait payer pour les racheter);Euronext, capitalisation des sociétés françaises cotées (ordre de grandeur)

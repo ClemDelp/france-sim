@@ -17,6 +17,11 @@ export const WORLD_PATH: Readonly<Record<number, World>> = Object.fromEntries(
       panic: parseNumber(r.panique),
       demandShock: parseNumber(r.chocDemande),
       qe: parseNumber(r.rachatsBce),
+      climateAmbition: 0,
+      heatShock: 0,
+      unrest: 0,
+      productivity: 0,
+      migrants: 0,
     },
   ]),
 )

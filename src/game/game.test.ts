@@ -11,6 +11,7 @@ import { electionAt, isElectionYear, nextElection, voteShare } from './score'
 const WINNING: Record<string, Decision[]> = {
   'premier-mandat': [{ year: 2026, patch: { otherServices: 240, firmAid: 55, pensionIndexation: 0.85, firmAidSmeShare: 0.8, minima: 8, education: 170 } }],
   ormuz: [{ year: 2026, patch: { vat: 0.18 } }],
+  climat: [{ year: 2026, patch: { carbonTax: 130, electrification: 0.04, adaptation: 16, otherServices: 235, pensionIndexation: 0.85, firmAid: 55 } }],
   electrique: [{ year: 2026, patch: { electrification: 0.04, nuclearShare: 0.75 } }],
   retraites: [{ year: 2026, patch: { retirementAge: 66, pensionIndexation: 0.85, otherServices: 245 } }],
   marches: [{ year: 2026, patch: { otherServices: 230, firmAid: 50, pensionIndexation: 0.75, vat: 0.21 } }],
@@ -54,7 +55,7 @@ describe('les élections, la presse, les conseillers, les succès', () => {
   it('tous les impôts au maximum : la une parle de révolte, le ministre de l’Intérieur prévient', () => {
     const s = simulate({ decisions: [{ year: 2026, patch: { vat: 0.3, incomeTaxTop: 0.15, csg: 0.14, corporateTax: 0.4 } }], events: [], until: 2026 })
     expect(headline(s[1], s[0], true).title).toMatch(/gouvernement tombe/)
-    expect(adviseDraft({ deficit: -150, unemployment: 0.08, poverty: -0.01, discontent: 1.7, ending: 'revolte', inflation: 0.06 })[0].who).toBe('interieur')
+    expect(adviseDraft({ deficit: -150, unemployment: 0.08, poverty: -0.01, discontent: 1.7, ending: 'revolte', inflation: 0.06, emissions: 0 })[0].who).toBe('interieur')
   })
 
   it('les succès se déclenchent sur la partie', () => {

@@ -14,7 +14,7 @@ export type AdvisorId = keyof typeof ADVISORS
 export type Advice = { who: AdvisorId; mood: 'warn' | 'good' | 'info'; text: string }
 
 /** Ce que changerait la décision en préparation, l'an prochain. */
-export type Preview = { deficit: number; unemployment: number; poverty: number; discontent: number; ending: Ending | null; inflation: number }
+export type Preview = { deficit: number; unemployment: number; poverty: number; discontent: number; ending: Ending | null; inflation: number; emissions: number }
 
 const bn = (v: number) => `${num(Math.abs(v), 0)} Md€`
 
@@ -40,6 +40,11 @@ export function adviseDraft(p: Preview): Advice[] {
     out.push({ who: 'social', mood: 'warn', weight: 15 + p.poverty * 2000, text: `Ce sont les plus modestes qui vont trinquer : la pauvreté monte de ${num(p.poverty * 100, 1)} point.` })
   } else if (p.poverty < -0.002) {
     out.push({ who: 'social', mood: 'good', weight: 15 + -p.poverty * 2000, text: `Merci : la pauvreté recule de ${num(-p.poverty * 100, 1)} point. Des centaines de milliers de personnes respirent.` })
+  }
+  if (p.emissions < -5) {
+    out.push({ who: 'energie', mood: 'good', weight: 12 + -p.emissions / 3, text: `Bravo : ${num(-p.emissions, 0)} millions de tonnes de CO2 en moins dès l’an prochain.` })
+  } else if (p.emissions > 5) {
+    out.push({ who: 'energie', mood: 'warn', weight: 12 + p.emissions / 3, text: `On recule : ${num(p.emissions, 0)} millions de tonnes de CO2 en plus.` })
   }
   if (p.inflation > 0.005) {
     out.push({ who: 'energie', mood: 'warn', weight: 10 + p.inflation * 1000, text: `Les prix vont grimper (${num(p.inflation * 100, 1)} point d’inflation en plus).` })
@@ -67,6 +72,9 @@ export function adviseState(s: YearState, popularity: number, yearsToElection: n
   }
   if (s.inflation > 0.04) {
     out.push({ who: 'social', mood: 'warn', text: `L’inflation à ${num(s.inflation * 100, 1)} % mange le budget des familles modestes.` })
+  }
+  if (s.temperature >= 1.8 && s.adaptationCoverage < 0.25) {
+    out.push({ who: 'energie', mood: 'warn', text: `+${num(s.temperature, 1)} °C : canicules et sécheresses vont se multiplier. Nous ne sommes protégés qu’à ${num(s.adaptationCoverage * 100, 0)} % : il faut investir dans l’adaptation.` })
   }
   if (s.oil > 100) {
     out.push({ who: 'energie', mood: 'info', text: `Le baril est à ${num(s.oil, 0)} $. Chaque point d’électrification nous rend moins vulnérables.` })

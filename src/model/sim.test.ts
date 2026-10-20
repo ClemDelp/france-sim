@@ -78,12 +78,12 @@ describe('mechanisms', () => {
 describe('crises, colère et fin de partie', () => {
   const run = (patch: Parameters<typeof simulate>[0]['decisions'][0]['patch'], until = 2075) => simulate({ decisions: [{ year: 2026, patch }], events: [], until })
 
-  it('sans rien changer, une crise de la dette finit par éclater, le plan d’aide contient la dette, et la partie n’est pas perdue', () => {
+  it('sans rien changer : le pays tient vingt ans, puis crises de la dette, austérité et réchauffement finissent par le faire craquer', () => {
     const s = simulate({ decisions: [], events: [], until: 2075 })
     const first = s.find((x) => x.debtCrisis)
     expect(first?.year).toBeGreaterThan(2040)
     expect(Math.max(...s.map((x) => x.debtRatio))).toBeLessThan(2.3)
-    expect(s.some((x) => x.ending)).toBe(false)
+    expect(s.find((x) => x.ending)?.year ?? 2100).toBeGreaterThan(2045)
   })
 
   it('la rigueur évite la crise de la dette', () => {

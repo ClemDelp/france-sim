@@ -14,7 +14,7 @@ const DATA = view([
   'holderBanques', 'effectiveRate', 'termPremium', 'deficitRatio', 'population', 'workingAge', 'participation', 'unemployment', 'retirees',
   'retirementEntrants', 'youthEntrants', 'births', 'retirementAgeEffective', 'lifeExpectancy', 'lifeGap', 'avgPension', 'poverty',
   'incomeRatioTopBottom', 'oil', 'fossilShare', 'inflationAnchor', 'productivityGrowth', 'naturalUnemployment', 'smic', 'worldGrowth',
-  'worldInflation', 'oilLongRun', 'ecbLongRun', 'startYear', 'otherTaxes', 'initialGrowth', 'reformPauseUntil',
+  'worldInflation', 'oilLongRun', 'ecbLongRun', 'startYear', 'otherTaxes', 'initialGrowth', 'reformPauseUntil', 'temperature', 'worldCO2', 'fossilEmissions', 'electricityEmissions', 'otherEmissions', 'emissionsTarget2030', 'largeFirmsValue',
 ] as const)
 
 export const BASE_YEAR = 2025
@@ -49,7 +49,7 @@ export const P = view([
   'smicJobLoss', 'maxEmployment', 'consumptionSmoothing', 'wealthEffect', 'consumptionSplitMpc', 'accelerator',
   'acceleratorTrend', 'investmentRateSensitivity', 'investmentCorporateTax', 'savingsToFirmsEffect', 'investmentMin', 'investmentMax',
   'stigmaInvestment', 'demandShockInvestment', 'housingRateSensitivity', 'housingMin', 'housingMax', 'housingDebtShare', 'mortgageRepayment',
-  'priceCompetitiveness', 'importPriceElasticity', 'exportShareLoss', 'tariffRetaliation', 'evRetaliation', 'tariffImportCut', 'overheatingImports', 'overheatingThreshold', 'qeTermPremium', 'rateExpectationSpeed', 'qeStressRelief', 'oilRetailPass', 'profitShifting', 'crisisDebtThreshold', 'crisisDebtRange', 'crisisGapRange', 'crisisSmoothing', 'crisisPanic', 'crisisShun', 'crisisBondLoss', 'crisisDemandShock', 'crisisCooldown', 'rescueYears', 'rescueSpread', 'rescueEffort', 'rescueTaxShare', 'rescueEffortMax', 'taxEvasion', 'taxEvasionMax', 'flightIncomeTax', 'unrestMemory', 'unrestIncomeDrop', 'unrestTaxRange', 'unrestUnemployment', 'unrestUnemploymentRange', 'unrestInflation', 'unrestInflationRange', 'unrestPovertyRange', 'unrestAusterityRange', 'bankruptcyPremium', 'bankruptcyInterestShare', 'hyperinflation', 'depressionUnemployment',
+  'priceCompetitiveness', 'importPriceElasticity', 'exportShareLoss', 'tariffRetaliation', 'evRetaliation', 'tariffImportCut', 'overheatingImports', 'overheatingThreshold', 'qeTermPremium', 'rateExpectationSpeed', 'qeStressRelief', 'oilRetailPass', 'profitShifting', 'crisisDebtThreshold', 'crisisDebtRange', 'crisisGapRange', 'crisisSmoothing', 'crisisPanic', 'crisisShun', 'crisisBondLoss', 'crisisDemandShock', 'crisisCooldown', 'rescueYears', 'rescueSpread', 'rescueEffort', 'rescueTaxShare', 'rescueEffortMax', 'tcre', 'worldEmissionsTrend', 'franceInfluence', 'climateAidCost', 'tippingTemperature', 'tippingEmissions', 'damageLinear', 'damageQuadratic', 'climateInflation', 'reconstructionShare', 'climateLifeLoss', 'airPollutionLife', 'unrestClimateRange', 'collapseDamage', 'adaptationMax', 'adaptationHalf', 'adaptationDecay', 'carbonRetailPass', 'carbonDemandCut', 'carbonElectrify', 'energyEmissionsGdp', 'otherEmissionsDecline', 'gasForNuclear', 'compensationRate', 'ownershipEfficiency', 'ownershipInvestment', 'nationalisationFlight', 'regulationNairu', 'regulationProductivity', 'regulationWages', 'regulationAnger', 'regulationEmissions', 'taxEvasion', 'taxEvasionMax', 'flightIncomeTax', 'unrestMemory', 'unrestIncomeDrop', 'unrestTaxRange', 'unrestUnemployment', 'unrestUnemploymentRange', 'unrestInflation', 'unrestInflationRange', 'unrestPovertyRange', 'unrestAusterityRange', 'bankruptcyPremium', 'bankruptcyInterestShare', 'hyperinflation', 'depressionUnemployment',
 ] as const)
 
 /** La politique de 2025 : le point de départ de toute partie. */
@@ -83,6 +83,11 @@ export const BASE_POLICY: Policy = {
   monetization: 0,
   savingsToFirms: 0,
   crisisResponse: 0,
+  publicOwnership: 0.1,
+  regulation: 0.6,
+  carbonTax: 44.6,
+  adaptation: 3,
+  climateAid: 6,
   cancelShare: 0,
   cancelHolder: 'bce',
 }

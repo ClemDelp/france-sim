@@ -3046,3 +3046,402 @@ input[type='range']:disabled {
   font-size: 1.8rem;
   margin-top: 4px;
 }
+
+/* ===================== Conseil des ministres (bandeau flottant) ===================== */
+
+.layout {
+  padding-bottom: 190px;
+}
+
+.council {
+  position: fixed;
+  /* À droite de la colonne des leviers : le bandeau ne recouvre jamais les curseurs. */
+  left: 348px;
+  right: 14px;
+  bottom: 12px;
+  z-index: 20;
+  padding: 8px 12px 10px;
+  border-radius: 18px;
+  border: 1px solid var(--rule);
+  background: rgba(18, 26, 45, 0.94);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  transition: border-color 0.2s;
+}
+
+.council.has-draft {
+  border-color: var(--gold);
+}
+
+.council.is-over {
+  border-color: var(--bad);
+}
+
+.council-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.council-toggle {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-weight: 800;
+}
+
+.capital {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.capital strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.capital-pips {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.capital-pips i {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--gold);
+  background: transparent;
+}
+
+.capital-pips i.used {
+  background: var(--gold);
+}
+
+.capital-pips i.over {
+  background: var(--bad);
+  border-color: var(--bad);
+}
+
+.council-body {
+  margin-top: 8px;
+}
+
+.council-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+.council-over {
+  margin: 0 0 8px;
+  color: var(--bad);
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.council-advice {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
+}
+
+.council.is-closed .council-body {
+  display: none;
+}
+
+@media (max-width: 1200px) {
+  .council {
+    left: 328px;
+  }
+}
+
+@media (max-width: 800px) {
+  .council {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 16px 16px 0 0;
+  }
+  .council-advice {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .council .advice:nth-child(n + 2) {
+    display: none;
+  }
+}
+
+/* ===================== Le monde bouge ===================== */
+
+.event-feed ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.event-feed li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--rule);
+}
+
+.event-feed li.is-new {
+  border-color: var(--gold);
+  animation: advice-in 0.4s ease-out;
+}
+
+.event-feed li.feed-climat.is-new {
+  border-color: #ff7a2f;
+}
+
+.feed-icon {
+  font-size: 1.6rem;
+}
+
+.event-feed li p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.event-feed li small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ===================== Thermomètre ===================== */
+
+.thermo {
+  margin: 6px 0 14px;
+}
+
+.thermo-track {
+  position: relative;
+  height: 14px;
+  margin: 22px 0 8px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #2fbf71, #f5b70a 30%, #ff7a2f 55%, #ff3b30 80%, #7a0010);
+}
+
+.thermo-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-right: 3px solid #fff;
+  border-radius: 7px 0 0 7px;
+  background: rgba(13, 18, 32, 0.15);
+}
+
+.thermo-track i {
+  position: absolute;
+  top: -18px;
+  bottom: -2px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.thermo-track i small {
+  position: absolute;
+  top: -2px;
+  left: 3px;
+  font-size: 0.68rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.thermo strong {
+  font-size: 1.5rem;
+}
+
+.thermo strong small {
+  margin-left: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.thermo .warn {
+  color: #ff9a3d;
+}
+
+/* ===================== Ambiance du pays ===================== */
+
+.ambiance {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.amb-heat {
+  position: absolute;
+  inset: 0;
+  opacity: calc(var(--fire) * 0.9);
+  background:
+    radial-gradient(ellipse at 50% 120%, rgba(255, 90, 20, 0.55), transparent 60%),
+    linear-gradient(0deg, rgba(255, 60, 0, 0.25), transparent 35%),
+    radial-gradient(ellipse at 50% -20%, rgba(255, 140, 40, 0.18), transparent 50%);
+  animation: heat 3s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+}
+
+@keyframes heat {
+  to {
+    filter: brightness(1.25) saturate(1.2);
+  }
+}
+
+.amb-flames span {
+  position: absolute;
+  bottom: -14px;
+  opacity: 0.85;
+  animation: flame 1.4s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 12px rgba(255, 120, 0, 0.8));
+}
+
+@keyframes flame {
+  from {
+    transform: translateY(6px) scaleY(0.9);
+  }
+  to {
+    transform: translateY(-10px) scaleY(1.15);
+  }
+}
+
+.sign {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  animation: march 1.1s ease-in-out infinite alternate;
+  opacity: 0.92;
+}
+
+.sign span {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 2px solid #1c1a17;
+  background: #f4efe3;
+  color: #b3121b;
+  font-family: 'Permanent Marker', 'Comic Sans MS', 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  transform: rotate(-4deg);
+}
+
+.sign-right span {
+  transform: rotate(5deg);
+}
+
+.sign i {
+  width: 4px;
+  height: 46px;
+  background: #8a5a2b;
+}
+
+@keyframes march {
+  from {
+    transform: translateY(0) rotate(-2deg);
+  }
+  to {
+    transform: translateY(-12px) rotate(2deg);
+  }
+}
+
+.amb-panic {
+  position: absolute;
+  top: 68px;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  background: repeating-linear-gradient(45deg, #b3121b 0 18px, #8a0d14 18px 36px);
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  padding: 4px 0;
+  opacity: 0.92;
+}
+
+.amb-panic span {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ticker 18s linear infinite;
+  padding-left: 100%;
+}
+
+@keyframes ticker {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@media (max-width: 800px) {
+  .sign {
+    left: auto !important;
+    right: 4%;
+  }
+  .sign:nth-child(n + 3) {
+    display: none;
+  }
+  .sign span {
+    font-size: 0.7rem;
+  }
+  .amb-panic {
+    top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amb-heat,
+  .amb-flames span,
+  .sign,
+  .amb-panic span {
+    animation: none;
+  }
+}
+
+.doctrines {
+  display: grid;
+  gap: 6px;
+  padding: 0 12px 10px;
+}
+
+.doctrine {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--rule);
+  background: var(--panel-2);
+  text-align: left;
+}
+
+.doctrine span {
+  grid-row: span 2;
+  font-size: 1.5rem;
+}
+
+.doctrine small {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.doctrine:hover,
+.doctrine:focus-visible {
+  border-color: var(--gold);
+}

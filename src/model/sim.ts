@@ -45,7 +45,7 @@ const aidShares = (smeShare: number): BySize => {
 /** Ce que le monde fait sans nous (modele/monde.csv) : l'histoire jusqu'en 2024, la crise d'Ormuz de 2026, puis la tendance de long terme. */
 export function baseWorld(year: number): World {
   const known = WORLD_PATH[year]
-  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0 }
+  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0, climateAmbition: 0, heatShock: 0, unrest: 0, productivity: 0, migrants: 0 }
 }
 
 /**
@@ -102,6 +102,18 @@ type Carry = {
   consumption: ByGroup
   /** Prix du pétrole et de l'énergie fossile au détail, l'an dernier. */
   fossilPrice: number
+  // Modèle économique
+  publicOwnership: number
+  /** Les règles en vigueur sur le terrain (elles s'appliquent progressivement). */
+  regulation: number
+  // Climat
+  worldBaseEmissions: number
+  cumulativeCO2: number
+  temperature: number
+  adaptStock: number
+  climateDamage: number
+  frenchEmissions: number
+  fossilEmissions: number
   /** Le taux de la BCE que les marchés attendent en moyenne pour les années à venir. */
   ecbExpected: number
   /** Tension sur la dette, lissée sur les années. */
@@ -168,6 +180,15 @@ function initialCarry(): Carry {
     capitalFlight: 0,
     consumption: byGroup(() => 0),
     fossilPrice: 1,
+    publicOwnership: BASE_POLICY.publicOwnership,
+    regulation: BASE_POLICY.regulation,
+    worldBaseEmissions: BASE.worldCO2,
+    cumulativeCO2: 0,
+    temperature: BASE.temperature,
+    adaptStock: BASE_POLICY.adaptation / P.adaptationDecay,
+    climateDamage: 0,
+    frenchEmissions: BASE.fossilEmissions + BASE.electricityEmissions + BASE.otherEmissions,
+    fossilEmissions: BASE.fossilEmissions,
     ecbExpected: 0,
     marketStress: 0,
     crisisCooldown: 0,
@@ -228,6 +249,30 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     }
   }
 
+  // — 0 ter. Nationalisations et privatisations : l'État rachète (en obligations) ou revend des grandes entreprises.
+  const ownership = init ? REF.publicOwnership : policy.publicOwnership
+  const ownershipStep = init ? 0 : ownership - prev.publicOwnership
+  const deal = ownershipStep * BASE.largeFirmsValue * (prev.gdp / BASE.gdp)
+  if (deal > 0) {
+    // Les anciens actionnaires reçoivent des obligations d'État (indemnisation) ; la part non indemnisée est une perte sèche.
+    holders.assureurs += deal * P.compensationRate
+    for (const g of GROUPS) {
+      wealth[g] -= deal * (1 - P.compensationRate) * GP.dividends[g]
+    }
+    panic += 2 * P.nationalisationFlight * ownershipStep
+    notes.push(`L’État nationalise ${Math.round(ownershipStep * 100)} % des grandes entreprises : ${Math.round(deal * P.compensationRate)} Md€ d’obligations versées aux anciens actionnaires. Les dividendes reviendront à l’État, mais les investisseurs s’inquiètent.`)
+  } else if (deal < 0) {
+    const proceeds = -deal
+    const fromInsurers = Math.min(proceeds, holders.assureurs)
+    holders.assureurs -= fromInsurers
+    holders.monde -= proceeds - fromInsurers
+    notes.push(`L’État privatise ${Math.round(-ownershipStep * 100)} % des grandes entreprises : ${Math.round(proceeds)} Md€ de recettes pour rembourser la dette, mais l’État perd leurs dividendes.`)
+  }
+  // Les règles (licenciement, normes, concurrence) changent sur le terrain en quelques années.
+  const regulation = init ? REF.regulation : prev.regulation + 0.3 * (policy.regulation - prev.regulation)
+  const deregulation = REF.regulation - regulation
+  const naturalUnemployment = BASE.naturalUnemployment - P.regulationNairu * deregulation
+
   // — 0 bis. Crise de la dette : quand la tension accumulée atteint 1, les prêteurs paniquent.
   let crisisCooldown = Math.max(0, prev.crisisCooldown - 1)
   const debtCrisis = !init && prev.marketStress >= 1 && crisisCooldown === 0
@@ -278,7 +323,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     BASE.retirementEntrants * (1 + P.retirementCohortGrowth * Math.min(yearsIn, P.babyBoomYears)) - P.retirementCohortDecline * Math.max(0, yearsIn - P.babyBoomYears),
   )
   const entrants = Math.max(0.1, cohort - cohort * ageChange)
-  const migrants = policy.netMigration / 1000
+  const migrants = (policy.netMigration + world.migrants) / 1000
   const births = BASE.births
   // Les jeunes qui arrivent à 20 ans reflètent les naissances d'il y a 20 ans : leur nombre baisse, puis rejoint celui des naissances d'aujourd'hui.
   const youthIn = Math.max(births + P.migrantYoungShare * migrants - P.youngOutflow, BASE.youthEntrants - P.youthDecline * yearsIn)
@@ -296,13 +341,33 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const seniors = cohort * Math.max(0, retirementAge - 60)
   const laborForce = (workingAge - seniors) * Math.min(P.participationMax, coreParticipation() + P.participationTrend * yearsIn) + seniors * P.seniorParticipation
 
+  // — 1 bis. Climat : le monde émet, la planète se réchauffe, la France encaisse (et s'adapte)
+  // La France pèse environ 0,8 % du CO2 mondial : son effet direct est faible, mais son exemple et son aide comptent un peu.
+  const startEmissions = BASE.fossilEmissions + BASE.electricityEmissions + BASE.otherEmissions
+  const worldBaseEmissions = init ? BASE.worldCO2 : prev.worldBaseEmissions * (1 + P.worldEmissionsTrend + world.climateAmbition)
+  const frenchCut = Math.max(0, 1 - prev.frenchEmissions / startEmissions)
+  const aidAvoided = Math.max(0, policy.climateAid - REF.climateAid) / P.climateAidCost
+  const tipping = prev.temperature > P.tippingTemperature ? P.tippingEmissions : 0
+  const worldEmissions = Math.max(0, worldBaseEmissions * (1 - P.franceInfluence * frenchCut) - aidAvoided + tipping)
+  const cumulativeCO2 = init ? 0 : prev.cumulativeCO2 + worldEmissions
+  const temperature = BASE.temperature + (P.tcre * cumulativeCO2) / 1000
+  // Les dégâts se comptent par rapport au climat de l'année de départ (déjà inclus dans les chiffres de cette année-là).
+  const warming = temperature - BASE.temperature + world.heatShock
+  const adaptStock = init ? prev.adaptStock : prev.adaptStock * (1 - P.adaptationDecay) + policy.adaptation
+  const adaptationCoverage = (P.adaptationMax * adaptStock) / (adaptStock + P.adaptationHalf)
+  const exposure = 1 - adaptationCoverage
+  const climateDamage = init ? 0 : (P.damageLinear * warming + P.damageQuadratic * warming * Math.max(0, warming)) * exposure
+  const damageStep = climateDamage - prev.climateDamage
+
   // — 2. Énergie, prix et salaires
   // Des droits de douane élevés sur les voitures électriques chinoises ralentissent un peu l'électrification (véhicules plus chers).
-  const electrifyPace = policy.electrification * (1 - P.evTariffSlowdown * Math.max(0, policy.tariffChinaEV - REF.tariffChinaEV))
+  // Une taxe carbone plus forte rend la pompe à chaleur et la voiture électrique plus rentables.
+  const carbonExtra = policy.carbonTax - REF.carbonTax
+  const electrifyPace = policy.electrification * (1 - P.evTariffSlowdown * Math.max(0, policy.tariffChinaEV - REF.tariffChinaEV)) + (P.carbonElectrify * Math.max(0, carbonExtra)) / 100
   const fossilShare = init ? prev.fossilShare : prev.fossilShare * (1 - electrifyPace)
   const electricityPrice = 1 + P.nuclearElectricityPrice * (REF.nuclearShare - policy.nuclearShare) + P.electrificationElectricityPrice * (BASE.fossilShare - fossilShare) + P.oilElectricityPrice * (world.oil / BASE.oil - 1)
   // Le prix payé pour le carburant et le gaz ne suit qu'une partie du baril : taxes fixes par litre, transport, distribution.
-  const fossilPrice = 1 + P.oilRetailPass * (world.oil / BASE.oil - 1)
+  const fossilPrice = 1 + P.oilRetailPass * (world.oil / BASE.oil - 1) + P.carbonRetailPass * carbonExtra
   const energyPrice = (fossilShare * fossilPrice + (1 - fossilShare) * electricityPrice) / (BASE.fossilShare + (1 - BASE.fossilShare))
   const energyInflation = init ? 0 : energyPrice / prev.energyPrice - 1
   const productivityGrowth = init
@@ -310,12 +375,17 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     : BASE.productivityGrowth +
       P.educationProductivity * clamp(prev.educationStock, -1, 1) +
       P.investmentProductivity * (policy.investment - REF.investment) -
-      P.flightProductivity * prev.capitalFlight
+      P.flightProductivity * prev.capitalFlight +
+      P.regulationProductivity * deregulation -
+      P.ownershipEfficiency * ownershipStep +
+      world.productivity -
+      // Les dégâts climatiques détruisent une part de la capacité de production.
+      damageStep
   const productivity = prev.productivity * (1 + productivityGrowth)
   const smicStep = policy.smicBoost - prev.smicBoost
   const wageGrowth = init
     ? 0
-    : P.wageInertia * prev.inflation + (1 - P.wageInertia) * BASE.inflationAnchor + productivityGrowth + P.wageUnemployment * (BASE.naturalUnemployment - prev.unemployment) + P.smicWageSpillover * smicStep
+    : P.wageInertia * prev.inflation + (1 - P.wageInertia) * BASE.inflationAnchor + productivityGrowth + P.wageUnemployment * (naturalUnemployment - prev.unemployment) + P.smicWageSpillover * smicStep
   const tariffStep = (policy.tariffs - prev.tariffs) * P.tariffPriceShare + (policy.tariffChinaEV - prev.tariffChinaEV) * P.evTariffPrice
   const inflation = init
     ? BASE.inflationAnchor
@@ -327,7 +397,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
           (P.vatPassThrough * (policy.vat - prev.vat)) / (1 + prev.vat) +
           P.gapInflation * prev.gap +
           P.monetizationInflation * policy.monetization +
-          P.panicInflation * prev.panic,
+          P.panicInflation * prev.panic +
+          P.climateInflation * Math.max(0, damageStep),
         -0.03,
         0.4,
       )
@@ -366,9 +437,15 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const plannedPublicGoods = g(policy.health + policy.prevention + policy.education + policy.defence + policy.investment + policy.otherServices)
   // Les économies imposées par un plan d'aide : une part en dépenses publiques en moins, une part en impôts en plus.
   const rescueBase = rescueEffort * BASE.gdp * trend * scale
-  const publicGoods = Math.max(0, plannedPublicGoods - (1 - P.rescueTaxShare) * rescueBase)
+  // Adaptation au-delà de l'effort de départ, et reconstruction après les catastrophes : des travaux publics en plus.
+  const climateSpending = g(policy.adaptation - REF.adaptation) + P.reconstructionShare * climateDamage * BASE.gdp * trend * scale
+  const publicGoods = Math.max(0, plannedPublicGoods + climateSpending - (1 - P.rescueTaxShare) * rescueBase)
   const publicFactor = plannedPublicGoods > 0 ? publicGoods / plannedPublicGoods : 1
   const rescueTax = P.rescueTaxShare * rescueBase
+  // La taxe carbone en plus (ou en moins) de celle de 2025, sur les émissions fossiles de l'an dernier.
+  const carbonRevenue = init ? 0 : ((carbonExtra * prev.fossilEmissions) / 1000) * priceLevel
+  // L'aide climat aux pays du Sud, au-delà de celle de départ (versée au reste du monde, comme la contribution à l'UE).
+  const climateAidOut = g(policy.climateAid - REF.climateAid)
   const foodTransfer = (policy.foodSecurity * 12 * population) / 1000 * priceLevel
   const minimaBoost = g(policy.minima)
   const vatRatio = BASE.vatRevenue / BASE.consumption / REF.vat
@@ -378,6 +455,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const declared = 1 - evasion
   const capitalFlight = clamp(
     prev.capitalFlight * P.flightMemory +
+      P.nationalisationFlight * Math.max(0, ownershipStep) +
       P.flightIncomeTax * Math.max(0, policy.incomeTaxTop - 0.05) +
       P.flightWealthTax * Math.max(0, policy.wealthTax - P.wealthTaxThreshold) +
       P.flightInheritance * Math.max(0, policy.inheritanceTax - P.inheritanceThreshold) +
@@ -406,7 +484,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
 
   function flows(nominal: number) {
     const real = nominal / priceLevel
-    const potential = laborForce * (1 - BASE.naturalUnemployment) * productivity
+    const potential = laborForce * (1 - naturalUnemployment) * productivity
     // Un SMIC plus cher pousse les entreprises à économiser du travail peu qualifié (élasticité modeste).
     const employment = Math.min(laborForce * P.maxEmployment, real / (productivity * (1 + P.smicJobLoss * policy.smicBoost)))
     const unemployment = clamp(1 - employment / laborForce, 0.015, 0.45)
@@ -427,8 +505,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     // Les entreprises distribuent plus quand elles sont peu endettées, moins quand elles le sont trop : leur dette reste proportionnée à l'économie.
     const payout = clamp(BASE.dividendPayout - P.payoutLeverage * (prev.firmDebt / prev.gdp - BASE.firmDebt / BASE.gdp), 0.1, 0.9)
     const dividends = Math.max(0, payout * (gos - corporateTax - firmInterest))
-    const dividendsAbroad = dividends * BASE.dividendsAbroad
-    const dividendsHome = dividends - dividendsAbroad
+    // Les dividendes des entreprises nationalisées (au-delà de celles de 2025) reviennent à l'État.
+    const publicDividends = dividends * (ownership - REF.publicOwnership)
+    const dividendsAbroad = (dividends - publicDividends) * BASE.dividendsAbroad
+    const dividendsHome = dividends - publicDividends - dividendsAbroad
     const nonTax = BASE.nonTaxRevenue * trend
     const retained = gos - corporateTax - firmInterest + foreignIncome - dividends - nonTax
 
@@ -450,7 +530,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const otherTransfers = BASE.otherTransfers * trend
 
     // Ménages, tranche par tranche
-    const wageShare = byGroup((k) => GP.wages[k] * (1 + GP.smicGain[k] * policy.smicBoost))
+    // Moins de règles : les salaires du bas décrochent ; plus de règles : ils sont mieux protégés.
+    const wageShare = byGroup((k) => GP.wages[k] * (1 + GP.smicGain[k] * (policy.smicBoost - P.regulationWages * deregulation)))
     const wageNorm = sum(wageShare)
     const income = byGroup((k) => {
       const wages = (grossWages * wageShare[k]) / wageNorm
@@ -483,7 +564,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
         incomeTax[k] +
         (k === 'g5' ? wealthTax : 0) +
         otherHouseholdTaxes * share +
-        (foodContribution + rescueTax + otherTaxes) * (csgBase[k] / sum(csgBase)) +
+        (foodContribution + rescueTax + otherTaxes + carbonRevenue * declared) * (csgBase[k] / sum(csgBase)) +
         mortgageInterest * GP.wages[k]
       return income[k] - taxes
     })
@@ -518,7 +599,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
           P.accelerator * growthSignal -
           P.investmentRateSensitivity * bankRel[c] * (loanRate - baseRate) -
           P.investmentCorporateTax * (policy.corporateTax - REF.corporateTax) +
-          P.savingsToFirmsEffect * bankRel[c] * policy.savingsToFirms -
+          P.savingsToFirmsEffect * bankRel[c] * policy.savingsToFirms +
+          P.ownershipInvestment * (ownership - REF.publicOwnership) -
           capitalFlight * mobilityRel[c],
         P.investmentMin,
         P.investmentMax,
@@ -547,14 +629,15 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const overheating = 1 + P.overheatingImports * Math.max(0, real / potential - P.overheatingThreshold)
     const imports = importRatio * absorption * Math.pow(priceLevel / worldPrice, P.importPriceElasticity) * (1 - P.tariffImportCut * policy.tariffs) * overheating
     // On consomme un peu moins de pétrole quand il est cher (élasticité-prix ≈ −0,2).
-    const energyImports = BASE.energyImports * Math.pow(world.oil / BASE.oil, P.oilElasticity) * (fossilShare / BASE.fossilShare) * Math.pow(real / BASE.gdp, P.energyGdpElasticity) * worldPrice
+    // Une taxe carbone plus forte fait consommer moins de pétrole et de gaz.
+    const energyImports = (1 - (P.carbonDemandCut * carbonExtra) / 100) * BASE.energyImports * Math.pow(world.oil / BASE.oil, P.oilElasticity) * (fossilShare / BASE.fossilShare) * Math.pow(real / BASE.gdp, P.energyGdpElasticity) * worldPrice
 
     const demand = totalConsumption + housing + investment + publicGoods + exports - imports - energyImports
 
     // État et Sécurité sociale
     const interest = sumRecord(interestBy)
     const bceDividend = interestBy.bce
-    const euContribution = BASE.euContribution * trend
+    const euContribution = BASE.euContribution * trend + climateAidOut
     const taxes = {
       tva: vatRevenue,
       productionTaxes: otherProd,
@@ -567,6 +650,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       inheritanceTax,
       otherHouseholdTaxes,
       otherTaxes,
+      carbonTax: carbonRevenue * declared,
+      publicDividends,
       foodContribution,
       rescueTax,
       nonTax,
@@ -666,6 +751,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const dist = distribution(perCapita, GP.population, GP.sigma)
   if (!init) {
     lifeExpectancy -= P.povertyLifeLoss * (dist.poverty - BASE.poverty) * 100
+    // Canicules et maladies liées au réchauffement (moins si l'on s'est adapté) ; moins de pollution de l'air si l'on sort du pétrole et du gaz.
+    lifeExpectancy += -P.climateLifeLoss * Math.max(0, warming) * exposure + (P.airPollutionLife * (BASE.fossilShare - fossilShare)) / BASE.fossilShare
   }
   const lifeGap = BASE.lifeGap * Math.pow(perCapita.g5 / perCapita.g1 / BASE.incomeRatioTopBottom, P.lifeGapElasticity)
 
@@ -674,7 +761,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const flowsList = ([
     { from: 'menages', to: 'entreprises', amount: d.totalConsumption + d.housing, label: 'Consommation et logement' },
     { from: 'entreprises', to: 'menages', amount: d.grossWages + d.mixed + d.dividendsHome, label: 'Salaires, revenus d’indépendants, dividendes' },
-    { from: 'menages', to: 'etat', amount: t.incomeTax + t.wealthTax + t.inheritanceTax + t.otherHouseholdTaxes + t.otherTaxes + t.rescueTax, label: 'Impôts des ménages' },
+    { from: 'menages', to: 'etat', amount: t.incomeTax + t.wealthTax + t.inheritanceTax + t.otherHouseholdTaxes + t.otherTaxes + t.carbonTax + t.rescueTax, label: 'Impôts des ménages' },
     { from: 'menages', to: 'secu', amount: t.employeeContributions + t.csg + t.foodContribution, label: 'Cotisations salariales et CSG' },
     { from: 'entreprises', to: 'secu', amount: t.employerContributions, label: 'Cotisations patronales' },
     { from: 'entreprises', to: 'etat', amount: t.tva + t.productionTaxes + t.corporateTax + t.nonTax, label: 'TVA, impôts de production, impôt sur les sociétés' },
@@ -729,11 +816,18 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     Math.max(0, inflation - P.unrestInflation) / P.unrestInflationRange +
     Math.max(0, dist.poverty - poverty0) / P.unrestPovertyRange +
     // L'austérité imposée nourrit la colère tant que le plan d'aide dure.
-    (rescueYears > 0 ? rescueStep * (P.rescueYears - rescueYears + 1) : 0) / P.unrestAusterityRange
+    (rescueYears > 0 ? rescueStep * (P.rescueYears - rescueYears + 1) : 0) / P.unrestAusterityRange +
+    // Catastrophes à répétition, pénuries d'eau : le réchauffement nourrit la colère, sauf si le pays s'est adapté.
+    (Math.max(0, warming) * exposure) / P.unrestClimateRange +
+    world.unrest +
+    // Précarité quand on allège fortement les règles.
+    P.regulationAnger * Math.max(0, deregulation)
   const discontent = init ? 0 : P.unrestMemory * prev.discontent + (1 - P.unrestMemory) * anger
   const ending: Ending | null = init
     ? null
-    : discontent >= 1
+    : climateDamage >= P.collapseDamage
+      ? 'effondrement'
+      : discontent >= 1
       ? 'revolte'
       : rescueYears === 0 && (premium >= P.bankruptcyPremium || d.interest / d.revenue >= P.bankruptcyInterestShare)
         ? 'faillite'
@@ -742,6 +836,12 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
           : d.unemployment >= P.depressionUnemployment
             ? 'depression'
             : null
+
+  // — 9 ter. Les émissions françaises : pétrole et gaz (moins avec l'électrification et la taxe carbone), électricité, agriculture et déchets.
+  const fossilEmissions =
+    BASE.fossilEmissions * (fossilShare / BASE.fossilShare) * Math.pow(d.real / BASE.gdp, P.energyEmissionsGdp) * Math.max(0, 1 - (P.carbonDemandCut * carbonExtra) / 100)
+  const electricityEmissions = BASE.electricityEmissions * Math.max(0.2, 1 + P.gasForNuclear * (REF.nuclearShare - policy.nuclearShare)) * (1 + (BASE.fossilShare - fossilShare))
+  const frenchEmissions = (fossilEmissions + electricityEmissions + BASE.otherEmissions * Math.pow(1 - P.otherEmissionsDecline, yearsIn)) * (1 + P.regulationEmissions * deregulation)
 
   // — 10. Les entreprises par taille : qui investit, qui exporte, qui emploie
   const lowWageRel = relative(FS.lowWageExposure, FS.employment)
@@ -801,7 +901,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       'Sécurité sociale de l’alimentation': d.transfers.foodTransfer,
       'Aides aux entreprises': d.firmAid,
       'Charge de la dette': d.interest,
-      'Contribution à l’UE': d.euContribution,
+      'Contribution à l’UE': d.euContribution - climateAidOut,
+      'Aide climat aux pays du Sud (en plus)': climateAidOut,
     },
     taxes: {
       TVA: t.tva,
@@ -814,7 +915,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       'Autres impôts (carburants, foncier…)': t.otherTaxes + t.otherHouseholdTaxes,
       'Cotisation alimentation': t.foodContribution,
       'Plan d’aide : impôts en plus': t.rescueTax,
+      'Taxe carbone (en plus de 2025)': t.carbonTax,
       'Autres recettes': t.nonTax + t.bceDividend,
+      'Dividendes des entreprises publiques (en plus)': t.publicDividends,
     },
     secu: {
       Retraite: { revenue: (t.employerContributions + t.employeeContributions) * 0.55 + t.csg * 0.1, spending: d.transfers.pensions },
@@ -854,6 +957,12 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     evasion,
     discontent,
     ending,
+    temperature,
+    worldEmissions,
+    frenchEmissions,
+    climateDamage,
+    adaptationCoverage,
+    cumulativeCO2,
     flows: flowsList,
     closure,
     notes,
@@ -902,6 +1011,15 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     capitalFlight,
     consumption: d.consumption,
     fossilPrice,
+    publicOwnership: ownership,
+    regulation,
+    worldBaseEmissions,
+    cumulativeCO2,
+    temperature,
+    adaptStock,
+    climateDamage,
+    frenchEmissions,
+    fossilEmissions,
     ecbExpected,
     marketStress,
     crisisCooldown,
@@ -959,6 +1077,11 @@ export function worldAt(events: FiredEvent[], year: number): World {
     world.panic += effect.panic ?? 0
     world.demandShock += effect.demandShock ?? 0
     world.qe += effect.qe ?? 0
+    world.climateAmbition += effect.climateAmbition ?? 0
+    world.heatShock += effect.heatShock ?? 0
+    world.unrest += effect.unrest ?? 0
+    world.productivity += effect.productivity ?? 0
+    world.migrants += effect.migrants ?? 0
   }
   return world
 }

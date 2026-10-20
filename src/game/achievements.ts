@@ -35,6 +35,10 @@ export const ACHIEVEMENTS: Achievement[] = [
       return !!crisis && !c.lost && c.states.at(-1)!.year >= crisis.year + 3
     },
   },
+  { id: 'bas-carbone', icon: '🌱', title: 'Bon élève de Paris', text: 'Ramener les émissions françaises sous 270 Mt (objectif 2030).', check: (c) => played(c).some((s) => s.frenchEmissions < 270) },
+  { id: 'neutre', icon: '🌳', title: 'Presque neutre', text: 'Ramener les émissions françaises sous 100 Mt.', check: (c) => played(c).some((s) => s.frenchEmissions < 100) },
+  { id: 'bouclier', icon: '🛡️', title: 'Bouclier climatique', text: 'Éviter 40 % des dégâts climatiques grâce à l’adaptation.', check: (c) => played(c).some((s) => s.adaptationCoverage >= 0.4) },
+  { id: 'thermostat', icon: '🌡️', title: 'Thermostat', text: 'Atteindre 2075 sous +2 °C.', check: (c) => c.states.at(-1)!.year >= 2075 && c.states.at(-1)!.temperature < 2 },
   { id: 'voyageur', icon: '🚀', title: 'Voyageur du temps', text: 'Atteindre 2075.', check: (c) => (c.states.at(-1)?.year ?? 0) >= 2075 },
   { id: 'chute', icon: '🪦', title: 'On apprend en tombant', text: 'Perdre une partie.', check: (c) => c.lost },
   { id: 'etoiles', icon: '⭐', title: 'Trois étoiles', text: 'Réussir tous les objectifs d’un scénario.', check: (c) => Object.values(c.stars).some((n) => n >= 3) },

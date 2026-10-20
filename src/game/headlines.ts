@@ -1,4 +1,4 @@
-import type { YearState } from '../model/types'
+import type { EventDef, YearState } from '../model/types'
 import { WORLD_NOTES } from '../model/world'
 import { num } from '../ui/format'
 import { electionAt, isElectionYear } from './score'
@@ -8,11 +8,16 @@ export type Headline = { year: number; kicker: string; title: string; subtitle: 
 const p1 = (v: number) => `${num(v * 100, 1)} %`
 
 /** La une du journal : l'événement le plus marquant de l'année, comme le titrerait la presse. */
-export function headline(s: YearState, prev: YearState | undefined, elections: boolean): Headline {
+const KICKER: Record<EventDef['category'], string> = { climat: 'Climat', economie: 'Économie', monde: 'Monde', societe: 'Société', technologie: 'Sciences et techniques' }
+
+export function headline(s: YearState, prev: YearState | undefined, elections: boolean, events: EventDef[] = []): Headline {
   const year = s.year
   const h = (kicker: string, title: string, subtitle: string, tone: Headline['tone']): Headline => ({ year, kicker, title, subtitle, tone })
   if (!prev) {
     return h('Politique', 'Nouveau gouvernement : la France attend des résultats', `Chômage à ${p1(s.unemployment)}, déficit à ${p1(s.deficit / s.gdp)} du PIB, dette à ${num(s.debtRatio * 100, 0)} %.`, 'neutral')
+  }
+  if (s.ending === 'effondrement') {
+    return h('Climat', 'Le pays ne fait plus face', `Dégâts climatiques : ${p1(s.climateDamage)} de la richesse détruite cette année. Les secours sont débordés.`, 'bad')
   }
   if (s.ending === 'revolte') {
     return h('Crise politique', 'Le pays dans la rue, le gouvernement tombe', 'Grèves générales et blocages : la colère a eu raison du pouvoir.', 'bad')
@@ -34,6 +39,16 @@ export function headline(s: YearState, prev: YearState | undefined, elections: b
     return e.won
       ? h('Présidentielle', `Réélu avec ${num(e.vote, 1)} % des voix`, `Les Français vous renouvellent leur confiance pour cinq ans.`, 'good')
       : h('Présidentielle', `Battu : ${num(e.vote, 1)} % seulement`, 'Les Français ont choisi l’alternance.', 'bad')
+  }
+  if (events.length) {
+    const e = events[0]
+    const good = ['climate-deal', 'green-tech', 'world-cup', 'medical-breakthrough', 'china-boom', 'oil-glut', 'ai-boom'].includes(e.id)
+    return h(`${e.icon} ${KICKER[e.category]}`, e.label, e.summary + (events[1] ? ` Et aussi : ${events[1].label.toLowerCase()}.` : ''), good ? 'good' : 'bad')
+  }
+  for (const threshold of [1.5, 2, 2.5, 3]) {
+    if (s.temperature >= threshold && prev.temperature < threshold) {
+      return h('Climat', `La planète franchit +${num(threshold, 1)} °C`, threshold === 1.5 ? 'L’objectif le plus ambitieux de l’accord de Paris est hors d’atteinte.' : 'Les scientifiques alertent : chaque dixième de degré compte.', 'bad')
+    }
   }
   if (s.growth < -0.01) {
     return h('Conjoncture', `Récession : l’économie recule de ${num(-s.growth * 100, 1)} %`, `Le chômage atteint ${p1(s.unemployment)}.`, 'bad')

@@ -28,11 +28,16 @@ netMigration;Immigration nette;Leviers;0;Arrivées moins départs, en milliers d
 monetization;Planche à billets;Leviers;0;Part du déficit financée directement par la banque centrale.
 savingsToFirms;Épargne vers les entreprises;Leviers;0;Orienter le Livret A et l’assurance-vie vers l’investissement des entreprises.
 crisisResponse;Réponse à une crise de la dette;Leviers;0;Accepter le plan d’aide européen (taux plafonnés, économies imposées) ou le refuser.
+publicOwnership;Entreprises contrôlées par l’État;Leviers;0;Part des grandes entreprises détenues par l’État : nationaliser ou privatiser.
+regulation;Intensité des règles;Leviers;0;Marché du travail, normes, concurrence : de l’ultra-libéral (0) au très encadré (1).
+carbonTax;Taxe carbone;Leviers;0;Prix ajouté sur chaque tonne de CO2 émise par le pétrole et le gaz (44,6 € en 2025).
+adaptation;Adaptation au réchauffement;Leviers;0;Digues, réseaux d’eau, bâtiments rafraîchis, cultures adaptées.
+climateAid;Aide climat aux pays du Sud;Leviers;0;Financer le solaire, l’éolien et la protection des forêts ailleurs dans le monde.
 cancelDebt;Annulation de dette;Leviers;0;Effacer d’un coup une partie de la dette, selon qui la détient.
 oil;Prix du pétrole;Monde;1;Fixé par le marché mondial : on le subit.
 ecbRate;Taux de la BCE;Monde;1;Fixé à Francfort pour toute la zone euro.
 worldGrowth;Croissance mondiale;Monde;1;La demande de nos clients étrangers.
-crisis;Crises;Monde;1;Pandémie, crise financière, récession : les chocs qu’on déclenche dans le jeu.
+crisis;Crises et événements;Monde;1;Pandémies, crises financières, guerres, accords ou renoncements climatiques : le jeu les tire au sort chaque année.
 population;Population;Population;1;Jeunes, actifs et retraités.
 workingAge;Personnes en âge de travailler;Population;1;De 20 ans à l’âge de la retraite.
 retirees;Retraités;Population;1;Nombre de personnes qui touchent une pension.
@@ -84,3 +89,8 @@ rescue;Plan d’aide européen;Finances publiques;8;Après une crise : le MES et
 evasion;Fraude et travail au noir;Finances publiques;6;Part des impôts qui échappe au fisc : elle monte quand les prélèvements s’envolent.
 discontent;Mécontentement social;Résultats;8;Colère accumulée : baisse du niveau de vie, impôts, chômage, inflation, pauvreté, austérité. À 1, le pays se soulève.
 ending;Fin de partie;Résultats;9;La situation devient intenable : révolte, faillite de l’État, hyperinflation ou dépression.
+worldEmissions;Émissions mondiales de CO2;Climat;1;Ce que le monde entier émet chaque année. La France en émet environ 0,8 %.
+temperature;Réchauffement mondial;Climat;2;Il suit le CO2 accumulé dans l’atmosphère depuis deux siècles.
+frenchEmissions;Émissions françaises;Climat;5;Pétrole et gaz, électricité, agriculture et déchets.
+climateDamage;Dégâts climatiques en France;Climat;3;Canicules, sécheresses, inondations, récoltes perdues : en part de la richesse produite.
+adaptationCoverage;Protection par l’adaptation;Climat;2;Part des dégâts évitée grâce aux investissements d’adaptation.

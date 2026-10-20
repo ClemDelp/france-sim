@@ -238,6 +238,41 @@ flowchart LR
     POV --> LE["Espérance de vie"]
 ```
 
+## 6 bis. Le climat
+
+```mermaid
+flowchart LR
+    FR["Émissions françaises<br/>≈ 370 Mt (0,8 % du monde)"] -- "exemple, diplomatie" --> W["Émissions mondiales<br/>≈ 42 Gt de CO2 par an"]
+    AID["Aide climat<br/>aux pays du Sud"] -- "tonnes évitées" --> W
+    EV["Accord mondial ou renoncement<br/>(événements)"] --> W
+    W -- "CO2 cumulé × 0,5 °C<br/>par 1000 Gt" --> T["Réchauffement mondial"]
+    T -- "au-delà de 2 °C" --> TIP["Points de bascule<br/>(pergélisol, forêts)"] --> W
+    T --> D["Dégâts en France<br/>(part du PIB)"]
+    AD["Adaptation"] -- "évite une partie" --> D
+    D --> PROD["Productivité, prix,<br/>reconstruction"]
+    T --> LE["Espérance de vie"]
+    FOS["Sortie du pétrole<br/>et du gaz"] -- "moins de pollution de l’air" --> LE
+    T --> COL["Colère"]
+    D -- "≥ 10 % du PIB" --> END["🔥 Effondrement"]
+    TAX["Taxe carbone"] --> FOS
+    TAX --> FR
+```
+
+Sans changement de politique dans le monde, le réchauffement atteint environ +1,8 °C en 2050 et +2,3 °C en 2075
+(soit une trajectoire vers +2,7 °C en 2100, comme l’estime l’ONU). Les chiffres viennent du GIEC (AR6), du Global Carbon Budget,
+de l’ONU Environnement, du Citepa et de Santé publique France ; les fonctions de dégâts sont des hypothèses, à discuter.
+
+## 6 ter. Le monde bouge, le Parlement freine
+
+- **Événements** : chaque année, 24 événements possibles sont tirés au sort (une partie différente à chaque fois). Leur probabilité
+  dépend de la situation : plus il fait chaud, plus il y a de canicules et de sécheresses ; plus la colère monte, plus il y a de grèves ;
+  une France qui réduit ses émissions rend un accord climatique mondial plus probable.
+- **Capital politique** : chaque réforme coûte des points selon son ampleur et son poids politique (âge de la retraite, nationalisations,
+  réglementation coûtent double). Les points dépendent de la popularité, avec un bonus juste après une élection.
+- **Modèle économique** : nationaliser (l’État rachète en obligations, touche les dividendes, oriente l’investissement, mais perd en efficacité
+  et fait fuir des capitaux) ou privatiser ; réglementer (protège les salaires du bas et les émissions, mais relève le chômage d’équilibre
+  et freine la productivité) ou libéraliser.
+
 ## 7. Crise de la dette et fin de partie
 
 Une partie peut mal finir. Le moteur suit deux jauges, et quatre façons de perdre.

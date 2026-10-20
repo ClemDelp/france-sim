@@ -78,3 +78,10 @@ lifeTrend;0,17;an/an;Comportements 2000-2024;Gain d’espérance de vie observé
 exportShareLoss;0,015;part/an;Comportements 2000-2024;Perte de parts de marché à l’exportation (forte dans les années 2000);Douanes
 otherTaxes;85;Md€;Impôts;Autres impôts (carburants, taxe foncière, droits de mutation, taxes diverses);INSEE : calé pour retrouver le déficit de 2000
 pensionRealGain;0,012;taux/an;Comportements 2000-2024;Hausse de la pension moyenne due aux carrières plus complètes des nouveaux retraités (effet noria, fort dans les années 2000);COR, rapports annuels
+temperature;0,8;°C;Climat;Réchauffement mondial en 2000;OMM
+worldCO2;30,5;Gt CO2/an;Climat;Émissions mondiales de CO2 en 2000;Global Carbon Budget
+fossilEmissions;400;Mt CO2e/an;Climat;Émissions françaises liées au pétrole et au gaz en 2000;Citepa
+electricityEmissions;35;Mt CO2e/an;Climat;Émissions de l’électricité en 2000;Citepa
+otherEmissions;115;Mt CO2e/an;Climat;Agriculture, déchets, procédés en 2000;Citepa
+worldEmissionsTrend;0,013;part/an;Comportements 2000-2024;Croissance des émissions mondiales de 2000 à 2024;Global Carbon Budget
+largeFirmsValue;1100;Md€;Entreprises;Valeur des grandes entreprises françaises en 2000;Euronext (ordre de grandeur)
