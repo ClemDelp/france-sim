@@ -35,16 +35,19 @@ self.addEventListener('fetch', (event) => {
   }
   const url = new URL(request.url)
 
-  // La page : d'abord le réseau (pour avoir la dernière version), sinon celle gardée en cache.
+  // Une page : d'abord le réseau (pour avoir la dernière version), sinon celle gardée en cache,
+  // sinon le jeu lui-même (hors ligne, toute adresse inconnue ouvre le jeu).
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone()
-          caches.open(CACHE).then((cache) => cache.put('./', copy))
+          if (response.ok) {
+            const copy = response.clone()
+            caches.open(CACHE).then((cache) => cache.put(request, copy))
+          }
           return response
         })
-        .catch(() => caches.match('./', { ignoreSearch: true }).then((r) => r ?? caches.match('index.html'))),
+        .catch(() => caches.match(request, { ignoreSearch: true }).then((r) => r ?? caches.match('./'))),
     )
     return
   }
