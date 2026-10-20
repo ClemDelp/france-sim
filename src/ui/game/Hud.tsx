@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ADVISORS, type Advice, type Preview } from '../../game/advisors'
 import { chanceOf, EVENTS } from '../../model/events'
 import type { FiredEvent, YearState } from '../../model/types'
@@ -163,68 +163,115 @@ export function Counter({ value, digits = 1 }: { value: number; digits?: number 
  * Le Conseil des ministres : un bandeau flottant en bas de l'écran (il ne déplace pas les curseurs).
  * Les réactions à la décision en préparation, son effet estimé, et le capital politique qu'elle consomme.
  */
-export function Council({ advice, preview, year, cost, capital, onCancel, endingTitle }: { advice: Advice[]; preview: Preview | null; year: number; cost: number; capital: number | null; onCancel: () => void; endingTitle: string | null }) {
-  const [open, setOpen] = useState(true)
+type CouncilProps = {
+  advice: Advice[]
+  preview: Preview | null
+  year: number
+  cost: number
+  capital: number | null
+  onCancel: () => void
+  endingTitle: string | null
+  /** Sur téléphone : une ligne en bas de l'écran, qui s'ouvre en panneau (avec les commandes du temps). */
+  phone?: boolean
+  controls?: ReactNode
+}
+
+export function Council({ advice, preview, year, cost, capital, onCancel, endingTitle, phone = false, controls }: CouncilProps) {
+  const [desktopOpen, setDesktopOpen] = useState(true)
+  const [phoneOpen, setPhoneOpen] = useState(false)
+  const open = phone ? phoneOpen : desktopOpen
+  const setOpen = phone ? setPhoneOpen : setDesktopOpen
   const over = capital !== null && cost > capital
-  return (
-    <aside className={`council${open ? '' : ' is-closed'}${preview ? ' has-draft' : ''}${over ? ' is-over' : ''}`} aria-label="Conseil des ministres">
-      <div className="council-head">
-        <button type="button" className="council-toggle" onClick={() => setOpen(!open)} aria-expanded={open}>
-          🏛️ Conseil des ministres {open ? '▾' : '▴'}
-        </button>
+  const first = advice[0]
+  if (phone && !open) {
+    // La ligne repliée : le conseil le plus important, et le capital politique.
+    return (
+      <button type="button" className={`council council-line${preview ? ' has-draft' : ''}${over ? ' is-over' : ''}`} onClick={() => setOpen(true)} aria-expanded={false} aria-label="Ouvrir le Conseil des ministres">
+        <span className="advice-avatar" aria-hidden="true">
+          {first ? ADVISORS[first.who].avatar : '🏛️'}
+        </span>
+        <span className="council-line-text">
+          {endingTitle ? <strong className="bad">⚠️ {endingTitle} </strong> : over ? <strong className="bad">Trop de réformes d’un coup. </strong> : null}
+          {first?.text}
+        </span>
         {capital !== null ? (
-          <span className="capital" title="Le capital politique : les réformes que le Parlement et l’opinion acceptent cette année. Il dépend de votre popularité, et augmente juste après une élection.">
-            ⚡ Capital politique
-            <span className="capital-pips">
-              {Array.from({ length: Math.min(12, Math.max(capital, cost)) }, (_, i) => (
-                <i key={i} className={i < cost ? (i < capital ? 'used' : 'over') : ''} />
-              ))}
-            </span>
-            <strong>
-              {cost} / {capital}
-            </strong>
+          <span className="council-line-capital">
+            ⚡ {cost}/{capital}
           </span>
         ) : null}
-        {preview ? (
-          <button type="button" className="ghost small" onClick={onCancel}>
-            Annuler les changements
+        <span aria-hidden="true">▴</span>
+      </button>
+    )
+  }
+  return (
+    <>
+      {phone ? <div className="sheet-backdrop" onClick={() => setOpen(false)} role="presentation" /> : null}
+      <aside className={`council${open ? '' : ' is-closed'}${preview ? ' has-draft' : ''}${over ? ' is-over' : ''}${phone ? ' is-sheet' : ''}`} aria-label="Conseil des ministres">
+        {phone ? <button type="button" className="sheet-handle" onClick={() => setOpen(false)} aria-label="Fermer le Conseil des ministres" /> : null}
+      <div className="council-head">
+          <button type="button" className="council-toggle" onClick={() => setOpen(!open)} aria-expanded={open}>
+            🏛️ Conseil des ministres {open ? '▾' : '▴'}
           </button>
-        ) : null}
-      </div>
-      {open ? (
-        <div className="council-body">
+          {capital !== null ? (
+            <span className="capital" title="Le capital politique : les réformes que le Parlement et l’opinion acceptent cette année. Il dépend de votre popularité, et augmente juste après une élection.">
+              ⚡ Capital politique
+              <span className="capital-pips">
+                {Array.from({ length: Math.min(12, Math.max(capital, cost)) }, (_, i) => (
+                  <i key={i} className={i < cost ? (i < capital ? 'used' : 'over') : ''} />
+                ))}
+              </span>
+              <strong>
+                {cost} / {capital}
+              </strong>
+            </span>
+          ) : null}
           {preview ? (
-            <div className="council-preview">
-              <strong>En {year + 1} :</strong>
-              <span className={preview.deficit > 0 ? 'bad' : 'good'}>Déficit {sbn(preview.deficit)}</span>
-              <span className={preview.unemployment > 0 ? 'bad' : 'good'}>Chômage {signedPts(preview.unemployment)}</span>
-              <span className={preview.poverty > 0 ? 'bad' : 'good'}>Pauvreté {signedPts(preview.poverty)}</span>
-              <span className={preview.emissions > 0 ? 'bad' : 'good'}>CO2 {preview.emissions > 0 ? '+' : ''}{num(preview.emissions, 0)} Mt</span>
-              <span className={preview.discontent >= 0.6 ? 'bad' : ''}>Colère {num(preview.discontent, 2)}</span>
-              {endingTitle ? <strong className="bad">⚠️ {endingTitle} : la partie serait perdue.</strong> : null}
+            <button type="button" className="ghost small" onClick={onCancel}>
+              Annuler les changements
+            </button>
+          ) : null}
+        </div>
+        {open ? (
+          <div className="council-body">
+            {preview ? (
+              <div className="council-preview">
+                <strong>En {year + 1} :</strong>
+                <span className={preview.deficit > 0 ? 'bad' : 'good'}>Déficit {sbn(preview.deficit)}</span>
+                <span className={preview.unemployment > 0 ? 'bad' : 'good'}>Chômage {signedPts(preview.unemployment)}</span>
+                <span className={preview.poverty > 0 ? 'bad' : 'good'}>Pauvreté {signedPts(preview.poverty)}</span>
+                <span className={preview.emissions > 0 ? 'bad' : 'good'}>CO2 {preview.emissions > 0 ? '+' : ''}{num(preview.emissions, 0)} Mt</span>
+                <span className={preview.discontent >= 0.6 ? 'bad' : ''}>Colère {num(preview.discontent, 2)}</span>
+                {endingTitle ? <strong className="bad">⚠️ {endingTitle} : la partie serait perdue.</strong> : null}
+              </div>
+            ) : null}
+            {controls ? (
+            // Avancer referme le panneau : on voit tout de suite ce que l'année a changé.
+            <div className="council-controls" onClick={(e) => ((e.target as HTMLElement).closest('button') ? setOpen(false) : null)} role="presentation">
+              {controls}
             </div>
           ) : null}
-          {over ? <p className="council-over">🏛️ Trop de réformes d’un coup : le Parlement ne votera pas tout cette année ({cost} points pour {capital}). Étalez-les sur plusieurs années.</p> : null}
-          <div className="council-advice">
-            {advice.map((a) => {
-              const who = ADVISORS[a.who]
-              return (
-                <div key={a.who + a.text} className={`advice advice-${a.mood}`}>
-                  <span className="advice-avatar" title={`${who.name}, ${who.role}`}>
-                    {who.avatar}
-                  </span>
-                  <p>
-                    <strong>{who.name}</strong> <small>{who.role}</small>
-                    <br />
-                    {a.text}
-                  </p>
-                </div>
-              )
-            })}
+            {over ? <p className="council-over">🏛️ Trop de réformes d’un coup : le Parlement ne votera pas tout cette année ({cost} points pour {capital}). Étalez-les sur plusieurs années.</p> : null}
+            <div className="council-advice">
+              {advice.map((a) => {
+                const who = ADVISORS[a.who]
+                return (
+                  <div key={a.who + a.text} className={`advice advice-${a.mood}`}>
+                    <span className="advice-avatar" title={`${who.name}, ${who.role}`}>
+                      {who.avatar}
+                    </span>
+                    <p>
+                      <strong>{who.name}</strong> <small>{who.role}</small>
+                      <br />
+                      {a.text}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      ) : null}
-    </aside>
+        ) : null}
+      </aside>
+    </>
   )
 }
 

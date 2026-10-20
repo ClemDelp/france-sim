@@ -1,26 +1,34 @@
 import { useEffect, useLayoutEffect, useState, type CSSProperties } from 'react'
+import type { PhoneView } from './usePhone'
 
 export type TourStep = {
   /** L'élément à mettre en lumière (sélecteur CSS), ou rien pour une bulle centrée. */
   target?: string
   title: string
   text: string
+  /** Sur téléphone : l'écran à afficher pour que la zone soit visible. */
+  view?: PhoneView
 }
 
 type Box = { top: number; left: number; width: number; height: number }
 
 /** La visite guidée : un projecteur sur une zone de l'écran, et une bulle qui l'explique. */
-export function Tour({ steps, onClose }: { steps: TourStep[]; onClose: () => void }) {
+export function Tour({ steps, onClose, onStep }: { steps: TourStep[]; onClose: () => void; onStep?: (step: TourStep) => void }) {
   const [index, setIndex] = useState(0)
   const [box, setBox] = useState<Box | null>(null)
   const step = steps[index]
   const last = index === steps.length - 1
 
   // On amène la zone au centre de l'écran avant de la mesurer.
+  // (Sur téléphone, on affiche d'abord le bon écran : la zone n'existe qu'à l'image suivante.)
   useLayoutEffect(() => {
-    const el = step.target ? document.querySelector(step.target) : null
-    el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-  }, [step])
+    onStep?.(step)
+    const frame = requestAnimationFrame(() => {
+      const el = step.target ? document.querySelector(step.target) : null
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [step, onStep])
 
   // On suit la zone pendant le défilement et les changements de taille.
   useEffect(() => {

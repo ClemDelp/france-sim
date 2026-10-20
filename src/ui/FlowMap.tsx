@@ -13,18 +13,33 @@ const NODES: Record<Actor, { x: number; y: number; icon: string; label: string }
   bce: { x: 520, y: 420, icon: '💶', label: 'Banque de France' },
 }
 
+/** Sur un téléphone tenu droit : les mêmes acteurs, disposés en hauteur, pour que tout reste lisible. */
+const PORTRAIT: Record<Actor, { x: number; y: number }> = {
+  etat: { x: 140, y: 70 },
+  secu: { x: 370, y: 80 },
+  energie: { x: 400, y: 260 },
+  menages: { x: 80, y: 300 },
+  entreprises: { x: 250, y: 330 },
+  monde: { x: 400, y: 450 },
+  banques: { x: 100, y: 540 },
+  bce: { x: 300, y: 580 },
+}
+
 type FlowMapProps = {
   state: YearState
   /** La même année sans les décisions du joueur, pour montrer ce qui change. */
   base: YearState | null
   /** Ouvre l'onglet d'analyse qui détaille un acteur. */
   onOpen: (actor: Actor) => void
+  /** Disposition en hauteur (téléphone). */
+  portrait?: boolean
 }
 
 const keyOf = (f: Flow) => `${f.from}>${f.to}>${f.label}`
 
 /** La carte des flux d'argent : l'épaisseur et la vitesse d'un trait suivent le montant qui circule. */
-export function FlowMap({ state, base, onOpen }: FlowMapProps) {
+export function FlowMap({ state, base, onOpen, portrait = false }: FlowMapProps) {
+  const at = (id: Actor) => (portrait ? { ...NODES[id], ...PORTRAIT[id] } : NODES[id])
   const [selected, setSelected] = useState<Actor | null>(null)
   const [hovered, setHovered] = useState<string | null>(null)
   const max = Math.max(...state.flows.map((f) => f.amount))
@@ -50,18 +65,18 @@ export function FlowMap({ state, base, onOpen }: FlowMapProps) {
     <div className="flowmap-wrap">
       {base ? (
         <p className="flow-legend">
-          <span className="key-up">plus</span> / <span className="key-down">moins</span> d’argent que « sans rien changer ». Cliquez sur un acteur pour le détail.
+          <span className="key-up">plus</span> / <span className="key-down">moins</span> d’argent que « sans rien changer ». {portrait ? 'Touchez' : 'Cliquez sur'} un acteur pour le détail.
         </p>
       ) : null}
-      <svg className="flowmap" viewBox="0 0 800 480" role="img" aria-label="Carte des flux d’argent entre les acteurs">
+      <svg className="flowmap" viewBox={portrait ? '0 0 480 650' : '0 0 800 480'} role="img" aria-label="Carte des flux d’argent entre les acteurs">
         <defs>
           <marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
             <path d="M0 0L10 5L0 10z" className="arrowhead" />
           </marker>
         </defs>
         {state.flows.map((f) => {
-          const a = NODES[f.from]
-          const b = NODES[f.to]
+          const a = at(f.from)
+          const b = at(f.to)
           const dx = b.x - a.x
           const dy = b.y - a.y
           const len = Math.hypot(dx, dy) || 1
@@ -105,7 +120,7 @@ export function FlowMap({ state, base, onOpen }: FlowMapProps) {
           )
         })}
         {(Object.keys(NODES) as Actor[]).map((id) => {
-          const n = NODES[id]
+          const n = at(id)
           return (
             <g
               key={id}

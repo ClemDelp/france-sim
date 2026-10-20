@@ -6,6 +6,7 @@ import type { Policy, PolicyKey, YearState } from '../model/types'
 import { formatLever, LEVER_GROUPS, type LeverDef } from './levers'
 import { readNode } from './nodeValues'
 import { ReplayView } from './ReplayView'
+import { usePhone } from './game/usePhone'
 
 export type Impact = { year: number; rows: { label: string; withChanges: string; original: string; tone: 'good' | 'bad' | 'flat' }[] }
 
@@ -358,6 +359,7 @@ function Contribute() {
 /** Le cerveau du modèle : le graphe des interactions, tous les paramètres, et comment participer. */
 export function Brain({ focus, onFocus, overrides, onOverride, onReset, impact, state, baseState, policy, initialView, initialQuery, onClose }: Props) {
   const [view, setView] = useState<View>(initialView ?? 'graphe')
+  const phone = usePhone()
   const [trail, setTrail] = useState<string[]>(focus ? [focus] : [])
   const go = (id: string | null) => {
     setTrail((t) => (id === null ? [] : t.includes(id) ? t.slice(0, t.indexOf(id) + 1) : [...t, id]))
@@ -476,8 +478,10 @@ export function Brain({ focus, onFocus, overrides, onOverride, onReset, impact, 
             ) : (
               <>
                 <p className="panel-lead">
-                  À gauche, vos décisions et le monde ; à droite, les résultats. Survolez une variable pour voir ses liens, cliquez pour comprendre ce qui la fait bouger et
-                  régler les paramètres. Liens <span className="sign sign-plus">+</span> : l’un monte, l’autre monte ; <span className="sign sign-minus">−</span> : l’un monte,
+                  À gauche, vos décisions et le monde ; à droite, les résultats.{' '}
+                  {phone
+                    ? 'Faites glisser le graphe de côté ; touchez une variable pour comprendre ce qui la fait bouger et régler les paramètres.'
+                    : 'Survolez une variable pour voir ses liens, cliquez pour comprendre ce qui la fait bouger et régler les paramètres.'} Liens <span className="sign sign-plus">+</span> : l’un monte, l’autre monte ; <span className="sign sign-minus">−</span> : l’un monte,
                   l’autre baisse.
                 </p>
                 <Overview highlight={highlight} onFocus={go} />

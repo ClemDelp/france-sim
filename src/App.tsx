@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BASE_POLICY } from './model/calibration'
 import { EVENTS, rollEvents } from './model/events'
 import type { Overrides } from './model/params'
@@ -26,6 +26,8 @@ import { Ambiance } from './ui/game/Ambiance'
 import { Explain } from './ui/game/Explain'
 import { Briefing, Home, Stars } from './ui/game/Home'
 import { Confetti, Council, Counter, EventFeed, Newspaper, Objectives, Popularity, Toasts } from './ui/game/Hud'
+import { PhoneNav } from './ui/game/Phone'
+import { usePhone, type PhoneView } from './ui/game/usePhone'
 import { Tour, type TourStep } from './ui/game/Tour'
 import { Robustness } from './ui/Robustness'
 import { FOCUS_METRICS, KPI_FOCUS } from './ui/robustnessMetrics'
@@ -52,6 +54,12 @@ const TABS: { id: Tab; label: string }[] = [
 ]
 
 const ACTOR_TAB: Partial<Record<Actor, Tab>> = { menages: 'groupes', etat: 'budget', secu: 'budget', bce: 'dette', banques: 'dette', monde: 'climat', energie: 'monde', entreprises: 'entreprises' }
+
+/** Un cran de plus ou de moins sur un levier, arrondi au pas du curseur (sans erreur d'arrondi qui s'accumule). */
+const stepLever = (l: { min: number; max: number; step: number }, v: number, dir: 1 | -1) => {
+  const n = Math.round((v - l.min) / l.step) + dir
+  return Math.min(l.max, Math.max(l.min, Number((l.min + n * l.step).toFixed(6))))
+}
 
 type Verdict = { mission: Mission; start: number }
 
@@ -99,6 +107,9 @@ function App() {
   const [sandbox, setSandbox] = useState(false)
   /** Le levier dont l'explication est ouverte (au clic, pas au survol : rien ne bouge sous la souris). */
   const [hint, setHint] = useState<string | null>(null)
+  /** Sur téléphone, l'écran affiché (une zone à la fois). */
+  const [view, setView] = useState<PhoneView>('pays')
+  const phone = usePhone()
 
   const params = overrides
   const whyInput = useMemo(() => ({ decisions, events, params: overrides }), [decisions, events, overrides])
@@ -263,23 +274,36 @@ function App() {
 
   const recordStars = () => setStars(allStars)
 
-  const tourSteps: TourStep[] = [
-    {
-      title: `Bienvenue, ${playerName || 'Président·e'} !`,
-      text: 'Vous venez d’arriver à l’Élysée. Chaque décision que vous prendrez fera bouger la France entière : l’emploi, les prix, la dette, la pauvreté, la colère… Voici comment piloter le pays.',
+  // Stable d'un rendu à l'autre : la visite ne repart pas à chaque image.
+  const tourSteps: TourStep[] = useMemo(
+    () => [
+      {
+        title: `Bienvenue, ${playerName || 'Président·e'} !`,
+        text: 'Vous venez d’arriver à l’Élysée. Chaque décision que vous prendrez fera bouger la France entière : l’emploi, les prix, la dette, la pauvreté, la colère… Voici comment piloter le pays.',
+      },
+      { target: '.kpis', view: 'pays', title: 'Votre tableau de bord', text: 'Les chiffres clés du pays, et leur évolution. Cliquez sur l’un d’eux pour comprendre ce qui le fait monter ou baisser.' },
+      { target: '.popularity', view: 'pays', title: 'Votre popularité', text: 'Elle suit le climat social. Élection en 2027 puis tous les cinq ans : sous 40 % de popularité, vous êtes battu.' },
+      { target: '.levers', view: 'decider', title: 'Vos leviers', text: 'Impôts, dépenses, retraites, énergie, commerce, dette… Bougez un curseur : rien ne change tant que vous n’avancez pas dans le temps. Le ⓘ explique chaque levier.' },
+      { target: '.council', view: 'decider', title: 'Le Conseil des ministres', text: 'Vos ministres réagissent à chaque décision avant que vous la preniez. Et attention au capital politique : on ne peut pas tout réformer la même année. Plus vous êtes populaire, plus vous avez de points.' },
+      { target: phone ? '.phone-play' : '.time-buttons', title: 'Le temps', text: phone ? 'Le grand bouton ▶ fait avancer d’un an. Pour plusieurs années d’un coup, ouvrez le Conseil des ministres (la ligne au-dessus).' : 'Avancez d’un an pour voir l’effet de vos choix, ou de plusieurs années d’un coup. Le jeu s’arrête de lui-même en cas de crise ou d’élection.' },
+      { target: '.newspaper', view: 'pays', title: 'La une du jour', text: 'Chaque année, la presse résume ce qui s’est passé. Le journal complet est dans l’onglet « Journal ».' },
+      { target: '.map-card', view: 'flux', title: 'L’argent du pays', text: 'Qui paie qui : ménages, entreprises, État, Sécu, banques, reste du monde. En vert ou rouge, ce que vos décisions ont changé.' },
+      { target: '.event-feed', view: 'flux', title: 'Le monde ne vous attend pas', text: 'Canicules, guerres, krachs, percées technologiques, accords climatiques… Le jeu les tire au sort chaque année. Plus la planète chauffe, plus les catastrophes sont fréquentes.' },
+      { target: '.side', view: 'analyses', title: 'Les analyses', text: 'Qui gagne, qui perd ; le budget ; la dette ; les entreprises ; les courbes sur toute la partie.' },
+      { target: '.brain-button', view: 'pays', title: 'Sous le capot', text: 'Le graphe de toutes les causes, les 350 paramètres sourcés, et le modèle face au passé. Tout est ouvert et modifiable.' },
+      { title: 'À vous de jouer !', text: 'Conseil : commencez par le scénario « Premier mandat » depuis le menu 🏠. Et souvenez-vous : on peut toujours revenir avant sa dernière décision.' },
+    ],
+    [playerName, phone],
+  )
+
+  const onTourStep = useCallback(
+    (step: TourStep) => {
+      if (phone && step.view) {
+        setView(step.view)
+      }
     },
-    { target: '.kpis', title: 'Votre tableau de bord', text: 'Les chiffres clés du pays, et leur évolution. Cliquez sur l’un d’eux pour comprendre ce qui le fait monter ou baisser.' },
-    { target: '.popularity', title: 'Votre popularité', text: 'Elle suit le climat social. Élection en 2027 puis tous les cinq ans : sous 40 % de popularité, vous êtes battu.' },
-    { target: '.levers', title: 'Vos leviers', text: 'Impôts, dépenses, retraites, énergie, commerce, dette… Bougez un curseur : rien ne change tant que vous n’avancez pas dans le temps. Le ⓘ explique chaque levier.' },
-    { target: '.council', title: 'Le Conseil des ministres', text: 'Vos ministres réagissent à chaque décision avant que vous la preniez. Et attention au capital politique : on ne peut pas tout réformer la même année. Plus vous êtes populaire, plus vous avez de points.' },
-    { target: '.time-buttons', title: 'Le temps', text: 'Avancez d’un an pour voir l’effet de vos choix, ou de plusieurs années d’un coup. Le jeu s’arrête de lui-même en cas de crise ou d’élection.' },
-    { target: '.newspaper', title: 'La une du jour', text: 'Chaque année, la presse résume ce qui s’est passé. Le journal complet est dans l’onglet « Journal ».' },
-    { target: '.map-card', title: 'L’argent du pays', text: 'Qui paie qui : ménages, entreprises, État, Sécu, banques, reste du monde. En vert ou rouge, ce que vos décisions ont changé.' },
-    { target: '.event-feed', title: 'Le monde ne vous attend pas', text: 'Canicules, guerres, krachs, percées technologiques, accords climatiques… Le jeu les tire au sort chaque année. Plus la planète chauffe, plus les catastrophes sont fréquentes.' },
-    { target: '.side', title: 'Les analyses', text: 'Qui gagne, qui perd ; le budget ; la dette ; les entreprises ; les courbes sur toute la partie.' },
-    { target: '.brain-button', title: 'Sous le capot', text: 'Le graphe de toutes les causes, les 350 paramètres sourcés, et le modèle face au passé. Tout est ouvert et modifiable.' },
-    { title: 'À vous de jouer !', text: 'Conseil : commencez par le scénario « Premier mandat » depuis le menu 🏠. Et souvenez-vous : on peut toujours revenir avant sa dernière décision.' },
-  ]
+    [phone],
+  )
 
   const setOverride = (id: string, value: number | null) =>
     setOverrides((o) => {
@@ -302,6 +326,11 @@ function App() {
       setDraft({})
     }
     setTarget(Math.min(last, year + years))
+    if (phone) {
+      // Sur téléphone, on revient au pays pour voir ce que l'année a changé.
+      setView('pays')
+      window.scrollTo({ top: 0 })
+    }
   }
 
   const reset = () => (scenario ? startScenario(scenario) : begin({ kind: 'free' }))
@@ -354,6 +383,36 @@ function App() {
     setHandled((h) => [...h, year])
   }
 
+  const timeButtons = (
+    <div className="time-buttons">
+      {running ? (
+        <button type="button" onClick={() => setTarget(year)}>
+          ⏸ Pause
+        </button>
+      ) : (
+        <>
+          <button type="button" className="advance-main" onClick={() => advance(1)} disabled={year >= last || overBudget} title={overBudget ? "Trop de réformes d’un coup : le Parlement ne suivra pas." : undefined}>
+            ▶ 1 an
+          </button>
+          <button type="button" onClick={() => advance(5)} disabled={year >= last || overBudget}>
+            ⏩ 5 ans
+          </button>
+          {last - year > 5 ? (
+            <button type="button" onClick={() => advance(10)} disabled={overBudget}>
+              ⏩ 10 ans
+            </button>
+          ) : null}
+          <button type="button" onClick={() => advance(last - year)} disabled={year >= last || overBudget} title={`Avancer jusqu’en ${last}`}>
+            ⏭ {last}
+          </button>
+        </>
+      )}
+      <button type="button" className="ghost" onClick={reset} title={scenario ? 'Recommencer le scénario' : 'Recommencer en 2025'}>
+        ↺
+      </button>
+    </div>
+  )
+
   return (
     <div className="app">
       <header className="top">
@@ -369,33 +428,7 @@ function App() {
             {year}
             {year > RELIABLE_UNTIL ? <small className="year-tag">tendance</small> : null}
           </span>
-          <div className="time-buttons">
-            {running ? (
-              <button type="button" onClick={() => setTarget(year)}>
-                ⏸ Pause
-              </button>
-            ) : (
-              <>
-                <button type="button" className="advance-main" onClick={() => advance(1)} disabled={year >= last || overBudget} title={overBudget ? "Trop de réformes d’un coup : le Parlement ne suivra pas." : undefined}>
-                  ▶ 1 an
-                </button>
-                <button type="button" onClick={() => advance(5)} disabled={year >= last || overBudget}>
-                  ⏩ 5 ans
-                </button>
-                {last - year > 5 ? (
-                  <button type="button" onClick={() => advance(10)} disabled={overBudget}>
-                    ⏩ 10 ans
-                  </button>
-                ) : null}
-                <button type="button" onClick={() => advance(last - year)} disabled={year >= last || overBudget} title={`Avancer jusqu’en ${last}`}>
-                  ⏭ {last}
-                </button>
-              </>
-            )}
-            <button type="button" className="ghost" onClick={reset} title={scenario ? 'Recommencer le scénario' : 'Recommencer en 2025'}>
-              ↺
-            </button>
-          </div>
+          {phone ? null : timeButtons}
         </div>
         {elections ? <Popularity value={pop} nextElection={upcoming} year={year} /> : null}
         <div className="top-actions">
@@ -403,7 +436,8 @@ function App() {
             🏠 Menu
           </button>
           <button type="button" className="ghost brain-button" onClick={() => openBrain({ focus: null })}>
-            🧠 Le modèle
+            <span aria-hidden="true">🧠</span>
+            <span className="btn-label"> Le modèle</span>
           </button>
           <button type="button" className="ghost levers-toggle" onClick={() => setLeversOpen(!leversOpen)}>
             🎛️ Leviers
@@ -424,7 +458,7 @@ function App() {
         </div>
       ) : null}
 
-      <main className="layout">
+      <main className={phone ? `layout phone view-${view}` : 'layout'}>
         <aside className={leversOpen ? 'levers is-open' : 'levers'}>
           <div className="levers-head">
             <h2>Vos décisions</h2>
@@ -480,7 +514,21 @@ function App() {
                         </button>
                       </span>
                     </span>
-                    <input type="range" min={l.min} max={l.max} step={l.step} value={v} disabled={locked} title={locked ? scenario?.locked?.why : undefined} onChange={(e) => setLever(l.key, Number(e.target.value))} />
+                    <span className="lever-input">
+                      <button type="button" className="lever-step" aria-label={`${l.label} : moins`} disabled={locked || v <= l.min + 1e-9} onClick={(e) => {
+                        e.preventDefault()
+                        setLever(l.key, stepLever(l, v, -1))
+                      }}>
+                        −
+                      </button>
+                      <input type="range" min={l.min} max={l.max} step={l.step} value={v} disabled={locked} title={locked ? scenario?.locked?.why : undefined} onChange={(e) => setLever(l.key, Number(e.target.value))} />
+                      <button type="button" className="lever-step" aria-label={`${l.label} : plus`} disabled={locked || v >= l.max - 1e-9} onClick={(e) => {
+                        e.preventDefault()
+                        setLever(l.key, stepLever(l, v, 1))
+                      }}>
+                        +
+                      </button>
+                    </span>
                     {hint === l.key ? <small>{l.hint}</small> : null}
                   </label>
                 )
@@ -514,11 +562,16 @@ function App() {
           <div className="map-card">
             <div className="map-head">
               <h2>Où circule l’argent en {year}</h2>
-              <p>Plus un trait est épais et rapide, plus le flux est gros. Cliquez sur un acteur pour voir ce qui entre et ce qui sort.</p>
+              <p>Plus un trait est épais et rapide, plus le flux est gros. {phone ? 'Touchez' : 'Cliquez sur'} un acteur pour voir ce qui entre et ce qui sort.</p>
             </div>
-            <FlowMap state={s} base={changed ? b : null} onOpen={(a) => {
+            <FlowMap state={s} base={changed ? b : null} portrait={phone} onOpen={(a) => {
               setTab(ACTOR_TAB[a] ?? 'budget')
-              document.querySelector('.side')?.scrollIntoView({ behavior: 'smooth' })
+              if (phone) {
+                setView('analyses')
+                window.scrollTo({ top: 0 })
+              } else {
+                document.querySelector('.side')?.scrollIntoView({ behavior: 'smooth' })
+              }
             }} />
           </div>
           <EventFeed events={events} year={year} states={states} scenarioEvents={scenario?.events ?? []} />
@@ -949,7 +1002,7 @@ function App() {
 
       {briefing ? <Briefing scenario={briefing} best={allStars[briefing.id] ?? 0} onStart={() => startScenario(briefing)} onBack={() => setBriefing(null)} /> : null}
 
-      {tour ? <Tour steps={tourSteps} onClose={() => setTour(false)} /> : null}
+      {tour ? <Tour steps={tourSteps} onClose={() => setTour(false)} onStep={onTourStep} /> : null}
 
       <Council
         advice={advice}
@@ -959,7 +1012,21 @@ function App() {
         capital={capital}
         onCancel={() => setDraft({})}
         endingTitle={preview?.ending ? ENDINGS[preview.ending].title : null}
+        phone={phone}
+        controls={phone ? timeButtons : null}
       />
+
+      {phone ? (
+        <PhoneNav
+          view={view}
+          onView={(v) => {
+            setView(v)
+            window.scrollTo({ top: 0 })
+          }}
+          drafts={Object.keys(draft).length}
+          play={{ running, disabled: year >= last || overBudget, label: overBudget ? 'Trop de réformes' : `Passer en ${Math.min(last, year + 1)}`, onPlay: () => advance(1), onPause: () => setTarget(year) }}
+        />
+      ) : null}
 
       <Ambiance state={s} start={states[0]} eventsThisYear={eventsThisYear} />
 
