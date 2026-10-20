@@ -20,6 +20,7 @@ import { adviseDraft, adviseState } from './game/advisors'
 import { headline } from './game/headlines'
 import { evaluate, SCENARIOS, type Scenario } from './game/scenarios'
 import { electionAt, isElectionYear, nextElection, popularity } from './game/score'
+import { loadGame, saveGame } from './game/savegame'
 import { load, save } from './game/storage'
 import { CANCEL_COST, politicalCapital, reformCost } from './game/capital'
 import { Ambiance } from './ui/game/Ambiance'
@@ -69,16 +70,20 @@ const linked = MISSIONS.find((m) => m.id === new URLSearchParams(window.location
 /** Comment on joue : partie libre (avec élections), idée reçue (10 ans, sans élection), ou scénario à objectifs. */
 type Mode = { kind: 'free' } | { kind: 'myth' } | { kind: 'scenario'; scenario: Scenario }
 
+/** La partie laissée en cours à la dernière visite (sauf si un lien lance une idée reçue). */
+const SAVED = linked ? null : loadGame(START, END)
+const SAVED_SCENARIO = SCENARIOS.find((s) => s.id === SAVED?.mode)
+
 const STAR_TITLES = ['Mission échouée', 'Peut mieux faire', 'Beau mandat', 'Mandat historique !']
 
 /** Les quatre chiffres qui résument l'effet d'une variante du modèle. */
 const IMPACT_KPIS = ['gdp', 'unemployment', 'debt', 'poverty']
 
 function App() {
-  const [decisions, setDecisions] = useState<Decision[]>(linked ? [{ year: START + 1, patch: linked.patch }] : [])
-  const [events, setEvents] = useState<FiredEvent[]>([])
-  const [year, setYear] = useState(START)
-  const [draft, setDraft] = useState<Partial<Policy>>({})
+  const [decisions, setDecisions] = useState<Decision[]>(linked ? [{ year: START + 1, patch: linked.patch }] : (SAVED?.decisions ?? []))
+  const [events, setEvents] = useState<FiredEvent[]>(SAVED?.events ?? [])
+  const [year, setYear] = useState(SAVED?.year ?? START)
+  const [draft, setDraft] = useState<Partial<Policy>>(SAVED?.draft ?? {})
   const [tab, setTab] = useState<Tab>('groupes')
   const [missionsOpen, setMissionsOpen] = useState(false)
   const [verdict, setVerdict] = useState<Verdict | null>(linked ? { mission: linked, start: START + 1 } : null)
@@ -86,7 +91,7 @@ function App() {
   const [leversOpen, setLeversOpen] = useState(false)
   const [overrides, setOverrides] = useState<Overrides>({})
   const [brain, setBrain] = useState<{ focus: string | null; view?: View; query?: string } | null>(null)
-  const [mode, setMode] = useState<Mode>(linked ? { kind: 'myth' } : { kind: 'free' })
+  const [mode, setMode] = useState<Mode>(linked ? { kind: 'myth' } : SAVED_SCENARIO ? { kind: 'scenario', scenario: SAVED_SCENARIO } : { kind: 'free' })
   const [home, setHome] = useState(!linked)
   const [briefing, setBriefing] = useState<Scenario | null>(null)
   const [tour, setTour] = useState(false)
@@ -96,15 +101,15 @@ function App() {
   const [myths, setMyths] = useState(() => load('myths', 0))
   const [openedModel, setOpenedModel] = useState(() => load('openedModel', false))
   /** Les élections dont le joueur a vu le résultat. */
-  const [electionsSeen, setElectionsSeen] = useState<number[]>([])
+  const [electionsSeen, setElectionsSeen] = useState<number[]>(SAVED?.electionsSeen ?? [])
   /** La graine du tirage au sort des événements : une partie différente à chaque fois. */
-  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1e9))
+  const [seed, setSeed] = useState(() => SAVED?.seed ?? Math.floor(Math.random() * 1e9))
   /** La fenêtre « Pourquoi ? » est ouverte. */
   const [why, setWhy] = useState(false)
   /** Les années de crise de la dette auxquelles le joueur a déjà répondu. */
-  const [handled, setHandled] = useState<number[]>([])
+  const [handled, setHandled] = useState<number[]>(SAVED?.handled ?? [])
   /** Le joueur a choisi de continuer après une défaite (mode bac à sable). */
-  const [sandbox, setSandbox] = useState(false)
+  const [sandbox, setSandbox] = useState(SAVED?.sandbox ?? false)
   /** Le levier dont l'explication est ouverte (au clic, pas au survol : rien ne bouge sous la souris). */
   const [hint, setHint] = useState<string | null>(null)
   /** Sur téléphone, l'écran affiché (une zone à la fois). */
@@ -112,6 +117,13 @@ function App() {
   const phone = usePhone()
 
   const params = overrides
+
+  // Chaque changement de la partie est sauvegardé : on la retrouve en rouvrant le jeu.
+  useEffect(() => {
+    if (mode.kind !== 'myth') {
+      saveGame({ v: 1, mode: mode.kind === 'scenario' ? mode.scenario.id : 'free', decisions, events, year, seed, draft, handled, electionsSeen, sandbox })
+    }
+  }, [mode, decisions, events, year, seed, draft, handled, electionsSeen, sandbox])
   const whyInput = useMemo(() => ({ decisions, events, params: overrides }), [decisions, events, overrides])
   const states = useMemo(() => simulate({ decisions, events, until: year, params }), [decisions, events, year, params])
   const base = useMemo(() => simulate({ decisions: [], events, until: year, params }), [events, year, params])

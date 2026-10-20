@@ -6,6 +6,7 @@ import { adviseDraft } from './advisors'
 import { headline } from './headlines'
 import { evaluate, SCENARIOS } from './scenarios'
 import { electionAt, isElectionYear, nextElection, voteShare } from './score'
+import { parseSave } from './savegame'
 
 /** Pour chaque scénario, une stratégie qui marche : le jeu doit rester gagnable quand le modèle évolue. */
 const WINNING: Record<string, Decision[]> = {
@@ -78,5 +79,26 @@ describe('pourquoi un événement arrive', () => {
     const aided = simulate({ decisions: [{ year: 2026, patch: { developmentAid: 50 } }], events: [], until: 2040 })
     const sahel = EVENTS.find((e) => e.id === 'sahel-war')!
     expect(chanceOf(sahel.chance(aided.at(-1)!, aided[0]))).toBeLessThan(chanceOf(sahel.chance(s[15], s[0])))
+  })
+})
+
+describe('la sauvegarde de la partie', () => {
+  const game = { v: 1, mode: 'premier-mandat', decisions: [{ year: 2026, patch: { vat: 0.21 } }], events: [{ year: 2027, id: 'heatwave' }], year: 2028, seed: 42, draft: { csg: 0.1 }, handled: [], electionsSeen: [2027], sandbox: false }
+
+  it('se relit telle quelle, et redonne exactement la même France', () => {
+    const back = parseSave(JSON.parse(JSON.stringify(game)), 2025, 2075)
+    expect(back).toEqual(game)
+    const a = simulate({ decisions: game.decisions, events: game.events, until: game.year }).at(-1)!
+    const b = simulate({ decisions: back!.decisions, events: back!.events, until: back!.year }).at(-1)!
+    expect(b.debtRatio).toBe(a.debtRatio)
+  })
+
+  it('ignore une sauvegarde abîmée ou d’une autre version', () => {
+    expect(parseSave(null, 2025, 2075)).toBeNull()
+    expect(parseSave('n’importe quoi', 2025, 2075)).toBeNull()
+    expect(parseSave({ ...game, v: 2 }, 2025, 2075)).toBeNull()
+    expect(parseSave({ ...game, mode: 'scenario-supprime' }, 2025, 2075)).toBeNull()
+    expect(parseSave({ ...game, events: [{ year: 2027, id: 'evenement-inconnu' }] }, 2025, 2075)).toBeNull()
+    expect(parseSave({ ...game, year: 2100 }, 2025, 2075)).toBeNull()
   })
 })
