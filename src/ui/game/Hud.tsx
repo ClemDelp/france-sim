@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ADVISORS, type Advice, type Preview } from '../../game/advisors'
-import { EVENTS } from '../../model/events'
-import type { FiredEvent } from '../../model/types'
+import { chanceOf, EVENTS } from '../../model/events'
+import type { FiredEvent, YearState } from '../../model/types'
 import type { Headline } from '../../game/headlines'
 import { onTrack, type evaluate, type Scenario } from '../../game/scenarios'
 import { num, sbn } from '../format'
@@ -225,8 +225,36 @@ export function Council({ advice, preview, year, cost, capital, onCancel, ending
 
 const signedPts = (v: number) => `${v > 0 ? '+' : ''}${num(v * 100, 1)} pt`
 
+const pctOf = (v: number) => `${num(v * 100, v < 0.1 ? 1 : 0)} %`
+
+/** Pourquoi cet événement est arrivé : sa probabilité cette année-là, et ce qui l'a fait monter ou baisser. */
+function EventWhy({ event, states, forced }: { event: FiredEvent; states: YearState[]; forced: boolean }) {
+  const def = EVENTS.find((d) => d.id === event.id)!
+  const before = states.find((x) => x.year === event.year - 1)
+  if (forced || !before) {
+    return <p className="why">📜 Prévu par le scénario : c’est le point de départ de votre mission.</p>
+  }
+  const o = def.chance(before, states[0])
+  return (
+    <div className="why">
+      <p>
+        Probabilité en {event.year} : <strong>{pctOf(chanceOf(o))}</strong>, puis le tirage au sort l’a déclenché.
+      </p>
+      <ul>
+        <li>{pctOf(o.base)} de base : le hasard du monde, que personne ne contrôle.</li>
+        {o.factors.map((f) => (
+          <li key={f.label} className={f.kind === 'add' ? (f.value > 0 ? 'up' : 'down') : f.value > 1 ? 'up' : 'down'}>
+            {f.kind === 'add' ? `${f.value > 0 ? '+' : '−'}${pctOf(Math.abs(f.value))}` : `×${num(f.value, 2)}`} : {f.label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 /** Les dernières nouvelles du monde : ce que le jeu a tiré au sort. */
-export function EventFeed({ events, year }: { events: FiredEvent[]; year: number }) {
+export function EventFeed({ events, year, states, scenarioEvents }: { events: FiredEvent[]; year: number; states: YearState[]; scenarioEvents: FiredEvent[] }) {
+  const [open, setOpen] = useState<string | null>(null)
   const recent = [...events].filter((e) => e.year <= year).sort((a, b) => b.year - a.year).slice(0, 6)
   return (
     <div className="events event-feed">
@@ -248,6 +276,10 @@ export function EventFeed({ events, year }: { events: FiredEvent[]; year: number
                     {def.label} <small>{e.year}</small>
                   </strong>
                   <p>{def.summary}</p>
+                  <button type="button" className="link" onClick={() => setOpen(open === `${e.id}-${e.year}` ? null : `${e.id}-${e.year}`)} aria-expanded={open === `${e.id}-${e.year}`}>
+                    {open === `${e.id}-${e.year}` ? 'Masquer' : 'Pourquoi ?'}
+                  </button>
+                  {open === `${e.id}-${e.year}` ? <EventWhy event={e} states={states} forced={scenarioEvents.some((x) => x.id === e.id && x.year === e.year)} /> : null}
                 </div>
               </li>
             )

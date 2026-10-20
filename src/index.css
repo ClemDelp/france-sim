@@ -3512,3 +3512,33 @@ input[type='range']:disabled {
 .influence-parts strong {
   text-align: right;
 }
+
+.why {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--bg-2);
+  border: 1px dashed var(--rule);
+  font-size: 0.82rem;
+}
+
+.why p {
+  margin: 0 0 4px;
+  color: var(--ink) !important;
+}
+
+.why ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 2px;
+  color: var(--muted);
+}
+
+.why li.up {
+  color: #ff9a7a;
+}
+
+.why li.down {
+  color: var(--good);
+}

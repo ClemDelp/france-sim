@@ -140,7 +140,7 @@ export type EventDef = {
   /** Effet sur le monde, année par année depuis le déclenchement. */
   effects: Partial<World>[]
   /** Probabilité que l'événement survienne une année donnée, selon l'état du pays et du monde l'année d'avant. */
-  chance: (s: YearState, start: YearState) => number
+  chance: (s: YearState, start: YearState) => { base: number; factors: { label: string; kind: 'add' | 'mult'; value: number }[] }
   /** Années minimum entre deux occurrences. */
   cooldown: number
 }

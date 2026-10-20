@@ -517,7 +517,7 @@ function App() {
               document.querySelector('.side')?.scrollIntoView({ behavior: 'smooth' })
             }} />
           </div>
-          <EventFeed events={events} year={year} />
+          <EventFeed events={events} year={year} states={states} scenarioEvents={scenario?.events ?? []} />
         </section>
 
         <section className="side">

@@ -8,6 +8,21 @@ import type { EventDef, World, YearState } from './types'
  */
 
 const warm = (s: YearState) => Math.max(0, s.temperature - 1.3)
+const pct = (v: number) => `${Math.round(v * 100)} %`
+const deg = (v: number) => `${v.toFixed(1).replace('.', ',')} °C`
+
+/** Un facteur de probabilité, en clair : « + parce que… » (ajouté) ou « × grâce à… » (multiplié). */
+export type OddsFactor = { label: string; kind: 'add' | 'mult'; value: number }
+export type Odds = { base: number; factors: OddsFactor[] }
+
+const odds = (base: number, ...factors: OddsFactor[]): Odds => ({ base, factors: factors.filter((f) => (f.kind === 'add' ? Math.abs(f.value) > 0.0005 : Math.abs(f.value - 1) > 0.005)) })
+const add = (label: string, value: number): OddsFactor => ({ label, kind: 'add', value })
+const mult = (label: string, value: number): OddsFactor => ({ label, kind: 'mult', value })
+const warming = (s: YearState, k: number) => add(`la planète a pris ${deg(warm(s))} de plus qu’au début du siècle`, k * warm(s))
+const influence = (s: YearState, k: number) => mult(`l’influence de la France (indice ${Math.round(s.influence * 100)})`, Math.max(0.2, 1 + k * (s.influence - 1)))
+
+/** La probabilité qui découle des facteurs (plafonnée à 60 % par an). */
+export const chanceOf = (o: Odds) => Math.min(0.6, Math.max(0, (o.base + o.factors.filter((f) => f.kind === 'add').reduce((a, f) => a + f.value, 0)) * o.factors.filter((f) => f.kind === 'mult').reduce((a, f) => a * f.value, 1)))
 const repeat = (n: number, effect: Partial<World>): Partial<World>[] => Array.from({ length: n }, () => effect)
 
 export const EVENTS: EventDef[] = [
@@ -19,7 +34,7 @@ export const EVENTS: EventDef[] = [
     category: 'climat',
     summary: 'Six semaines au-delà de 40 °C : surmortalité, hôpitaux saturés, centrales à l’arrêt faute d’eau froide.',
     effects: [{ heatShock: 0.6, unrest: 0.05 }],
-    chance: (s) => 0.08 + 0.3 * warm(s),
+    chance: (s) => odds(0.08, warming(s, 0.3)),
     cooldown: 2,
   },
   {
@@ -29,7 +44,7 @@ export const EVENTS: EventDef[] = [
     category: 'climat',
     summary: 'Les Landes, la Provence et les Pyrénées brûlent : des villages évacués, des forêts parties en fumée.',
     effects: [{ heatShock: 0.35, demandShock: 0.002 }],
-    chance: (s) => 0.04 + 0.2 * warm(s),
+    chance: (s) => odds(0.04, warming(s, 0.2)),
     cooldown: 3,
   },
   {
@@ -39,7 +54,7 @@ export const EVENTS: EventDef[] = [
     category: 'climat',
     summary: 'Des pluies diluviennes noient des vallées entières : routes coupées, maisons détruites, récoltes perdues.',
     effects: [{ heatShock: 0.45, demandShock: 0.003 }],
-    chance: (s) => 0.06 + 0.15 * warm(s),
+    chance: (s) => odds(0.06, warming(s, 0.15)),
     cooldown: 3,
   },
   {
@@ -49,7 +64,7 @@ export const EVENTS: EventDef[] = [
     category: 'climat',
     summary: 'Nappes à sec, restrictions d’eau, récoltes en chute : les prix alimentaires flambent.',
     effects: [{ heatShock: 0.5, unrest: 0.05 }],
-    chance: (s) => 0.05 + 0.25 * warm(s),
+    chance: (s) => odds(0.05, warming(s, 0.25)),
     cooldown: 3,
   },
   {
@@ -59,7 +74,7 @@ export const EVENTS: EventDef[] = [
     category: 'climat',
     summary: 'Des vents à 200 km/h balaient l’Ouest : toitures arrachées, millions de foyers sans électricité.',
     effects: [{ heatShock: 0.3 }],
-    chance: (s) => 0.03 + 0.1 * warm(s),
+    chance: (s) => odds(0.03, warming(s, 0.1)),
     cooldown: 4,
   },
   {
@@ -69,7 +84,7 @@ export const EVENTS: EventDef[] = [
     category: 'climat',
     summary: 'Sécheresses au Sahel et au Moyen-Orient : des centaines de milliers de personnes fuient vers l’Europe.',
     effects: [{ migrants: 60, conflict: 0.5 }, { migrants: 30 }],
-    chance: (s) => 0.4 * Math.max(0, s.temperature - 1.7),
+    chance: (s) => odds(0, add(`le réchauffement dépasse +1,7 °C (${deg(s.temperature)})`, 0.4 * Math.max(0, s.temperature - 1.7))),
     cooldown: 6,
   },
   {
@@ -80,7 +95,7 @@ export const EVENTS: EventDef[] = [
     summary: 'Chine, États-Unis, Inde et Europe s’engagent ensemble : les émissions mondiales vont baisser beaucoup plus vite.',
     effects: repeat(40, { climateAmbition: -0.03 }),
     // Une France exemplaire rend un accord mondial plus probable.
-    chance: (s, start) => (0.015 + 0.08 * Math.max(0, 1 - s.frenchEmissions / start.frenchEmissions)) * Math.max(0.2, 1 + P.influenceDiplomacy * (s.influence - 1)),
+    chance: (s, start) => odds(0.015, add(`la France a réduit ses émissions de ${pct(Math.max(0, 1 - s.frenchEmissions / start.frenchEmissions))} : elle montre l’exemple`, 0.08 * Math.max(0, 1 - s.frenchEmissions / start.frenchEmissions)), influence(s, P.influenceDiplomacy)),
     cooldown: 60,
   },
   {
@@ -90,7 +105,7 @@ export const EVENTS: EventDef[] = [
     category: 'climat',
     summary: 'Les grandes puissances relancent le charbon et sortent de l’accord de Paris : les émissions repartent à la hausse.',
     effects: repeat(40, { climateAmbition: 0.012 }),
-    chance: () => 0.012,
+    chance: () => odds(0.012),
     cooldown: 60,
   },
   // — Économie
@@ -101,7 +116,7 @@ export const EVENTS: EventDef[] = [
     category: 'economie',
     summary: 'Comme en 2008 : les banques se méfient, le crédit se tarit, le commerce mondial recule.',
     effects: [{ growth: -0.05, panic: 1, demandShock: 0.02 }, { growth: -0.02, panic: 0.5 }, { growth: 0.01 }],
-    chance: () => 0.025,
+    chance: () => odds(0.025),
     cooldown: 10,
   },
   {
@@ -111,7 +126,7 @@ export const EVENTS: EventDef[] = [
     category: 'economie',
     summary: 'Nos grands partenaires (Allemagne, États-Unis, Chine) ralentissent fortement.',
     effects: [{ growth: -0.035 }, { growth: -0.015 }],
-    chance: () => 0.05,
+    chance: () => odds(0.05),
     cooldown: 6,
   },
   {
@@ -121,7 +136,7 @@ export const EVENTS: EventDef[] = [
     category: 'monde',
     summary: 'Le pétrole bondit de 60 $ le baril : l’énergie importée renchérit tous les prix.',
     effects: [{ oil: 60, growth: -0.01 }, { oil: 40, growth: -0.005 }, { oil: 15 }],
-    chance: (s) => 0.025 * (s.fossilShare / 0.6),
+    chance: (s) => odds(0.025, mult(`la dépendance au pétrole et au gaz (${pct(s.fossilShare)} de l’énergie)`, s.fossilShare / 0.6)),
     cooldown: 8,
   },
   {
@@ -131,7 +146,7 @@ export const EVENTS: EventDef[] = [
     category: 'economie',
     summary: 'Surproduction mondiale : le baril s’effondre.',
     effects: [{ oil: -30 }, { oil: -25 }, { oil: -15 }],
-    chance: () => 0.035,
+    chance: () => odds(0.035),
     cooldown: 8,
   },
   {
@@ -141,7 +156,7 @@ export const EVENTS: EventDef[] = [
     category: 'economie',
     summary: 'Pour casser l’inflation en zone euro, la BCE ajoute 2 points à son taux directeur.',
     effects: [{ ecbRate: 0.02 }, { ecbRate: 0.02 }, { ecbRate: 0.01 }],
-    chance: (s) => 0.02 + 4 * Math.max(0, s.inflation - 0.03),
+    chance: (s) => odds(0.02, add(`l’inflation dépasse 3 % (${pct(s.inflation)})`, 4 * Math.max(0, s.inflation - 0.03))),
     cooldown: 6,
   },
   {
@@ -151,7 +166,7 @@ export const EVENTS: EventDef[] = [
     category: 'monde',
     summary: 'Washington et Pékin s’affrontent à coups de droits de douane : nos exportations trinquent.',
     effects: [{ growth: -0.02 }, { growth: -0.015 }, { growth: -0.005 }],
-    chance: (s) => 0.04 * Math.max(0.2, 1 - P.influenceTrade * (s.influence - 1)),
+    chance: (s) => odds(0.04, influence(s, -P.influenceTrade)),
     cooldown: 6,
   },
   {
@@ -161,7 +176,7 @@ export const EVENTS: EventDef[] = [
     category: 'technologie',
     summary: 'Hôpitaux, banques et réseaux électriques paralysés plusieurs jours.',
     effects: [{ demandShock: 0.006, unrest: 0.05 }],
-    chance: () => 0.03,
+    chance: () => odds(0.03),
     cooldown: 5,
   },
   {
@@ -171,7 +186,7 @@ export const EVENTS: EventDef[] = [
     category: 'technologie',
     summary: 'De nouveaux outils dopent la productivité… et bousculent des millions d’emplois de bureau.',
     effects: [...repeat(6, { productivity: 0.005 }), { unrest: 0.05 }],
-    chance: () => 0.025,
+    chance: () => odds(0.025),
     cooldown: 20,
   },
   {
@@ -181,7 +196,7 @@ export const EVENTS: EventDef[] = [
     category: 'technologie',
     summary: 'Les prix s’effondrent : électrifier devient beaucoup moins cher partout dans le monde.',
     effects: repeat(20, { climateAmbition: -0.008 }),
-    chance: () => 0.03,
+    chance: () => odds(0.03),
     cooldown: 30,
   },
   // — Monde et géopolitique
@@ -192,7 +207,7 @@ export const EVENTS: EventDef[] = [
     category: 'monde',
     summary: 'Le gaz et le pétrole flambent, les marchés s’affolent, les réfugiés affluent.',
     effects: [{ oil: 40, growth: -0.01, panic: 0.3, conflict: 1 }, { oil: 20 }],
-    chance: () => 0.02,
+    chance: () => odds(0.02),
     cooldown: 10,
   },
   {
@@ -205,7 +220,7 @@ export const EVENTS: EventDef[] = [
       { growth: -0.04, demandShock: 0.07 },
       { growth: 0.02, demandShock: 0.01 },
     ],
-    chance: () => 0.015,
+    chance: () => odds(0.015),
     cooldown: 15,
   },
   {
@@ -215,7 +230,7 @@ export const EVENTS: EventDef[] = [
     category: 'monde',
     summary: 'Un grand plan de relance chinois dope le commerce mondial.',
     effects: [{ growth: 0.015 }, { growth: 0.01 }],
-    chance: () => 0.03,
+    chance: () => odds(0.03),
     cooldown: 8,
   },
   {
@@ -226,7 +241,7 @@ export const EVENTS: EventDef[] = [
     summary: 'Sécheresse, famine et groupes armés : des millions de personnes fuient, une partie vers l’Europe.',
     effects: [{ conflict: 1.2 }],
     // Le réchauffement attise les conflits ; l'aide au développement les prévient.
-    chance: (s) => (0.03 + 0.12 * warm(s)) * (1 - s.peaceEffect),
+    chance: (s) => odds(0.03, warming(s, 0.12), mult(`l’aide au développement et à la paix (−${pct(s.peaceEffect)})`, 1 - s.peaceEffect)),
     cooldown: 8,
   },
   {
@@ -236,7 +251,7 @@ export const EVENTS: EventDef[] = [
     category: 'climat',
     summary: 'Trois saisons des pluies ratées : la faim jette des familles entières sur les routes.',
     effects: [{ conflict: 0.6, migrants: 15 }],
-    chance: (s) => (0.02 + 0.15 * warm(s)) * (1 - s.peaceEffect),
+    chance: (s) => odds(0.02, warming(s, 0.15), mult(`l’aide au développement et à la paix (−${pct(s.peaceEffect)})`, 1 - s.peaceEffect)),
     cooldown: 6,
   },
   {
@@ -246,7 +261,7 @@ export const EVENTS: EventDef[] = [
     category: 'monde',
     summary: 'Des milliers de personnes tentent la traversée : naufrages, camps débordés, l’Europe se divise sur l’accueil.',
     effects: [{ migrants: 35, unrest: 0.05 }],
-    chance: (s) => 0.03 + 0.1 * s.conflict,
+    chance: (s) => odds(0.03, add('des guerres et famines en cours autour de l’Europe', 0.1 * s.conflict)),
     cooldown: 3,
   },
   {
@@ -257,7 +272,7 @@ export const EVENTS: EventDef[] = [
     summary: 'Sous l’égide de l’ONU et avec l’aide européenne, une guerre s’arrête : les réfugiés commencent à rentrer.',
     effects: [{ conflict: -1 }],
     // Plus la France investit dans la paix et le développement, plus un accord est probable.
-    chance: (s) => (s.conflict > 0.3 ? (0.04 + 0.3 * s.peaceEffect) * Math.max(0.2, 1 + P.influenceDiplomacy * (s.influence - 1)) : 0),
+    chance: (s) => (s.conflict > 0.3 ? odds(0.04, add('l’aide au développement et à la paix', 0.3 * s.peaceEffect), influence(s, P.influenceDiplomacy)) : odds(0)),
     cooldown: 8,
   },
   // — Société
@@ -268,7 +283,7 @@ export const EVENTS: EventDef[] = [
     category: 'societe',
     summary: 'Transports, raffineries, écoles à l’arrêt : le pays est bloqué.',
     effects: [{ unrest: 0.15, demandShock: 0.004 }],
-    chance: (s) => 0.01 + 0.5 * Math.max(0, s.discontent - 0.35),
+    chance: (s) => odds(0.01, add(`la colère dans le pays (climat social ${s.discontent.toFixed(2).replace('.', ',')})`, 0.5 * Math.max(0, s.discontent - 0.35))),
     cooldown: 3,
   },
   {
@@ -278,7 +293,7 @@ export const EVENTS: EventDef[] = [
     category: 'societe',
     summary: 'Une affaire de corruption éclabousse le gouvernement.',
     effects: [{ unrest: 0.15 }],
-    chance: () => 0.04,
+    chance: () => odds(0.04),
     cooldown: 5,
   },
   {
@@ -288,7 +303,7 @@ export const EVENTS: EventDef[] = [
     category: 'societe',
     summary: 'Les Bleus sont champions du monde : le pays fait la fête, la colère retombe un moment.',
     effects: [{ unrest: -0.15 }],
-    chance: () => 0.04,
+    chance: () => odds(0.04),
     cooldown: 4,
   },
   {
@@ -298,7 +313,7 @@ export const EVENTS: EventDef[] = [
     category: 'technologie',
     summary: 'Un vaccin contre plusieurs cancers est mis au point : un espoir immense.',
     effects: [{ unrest: -0.05 }],
-    chance: () => 0.02,
+    chance: () => odds(0.02),
     cooldown: 20,
   },
 ]
@@ -321,7 +336,7 @@ export function rollEvents(seed: number, year: number, last: YearState, start: Y
     if (previous.some((y) => year - y < e.cooldown)) {
       return false
     }
-    return random(seed, year, e.id) < Math.min(0.6, e.chance(last, start))
+    return random(seed, year, e.id) < chanceOf(e.chance(last, start))
   })
   return fired.slice(0, 2).map((e) => ({ year, id: e.id }))
 }

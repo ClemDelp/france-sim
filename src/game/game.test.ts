@@ -65,3 +65,18 @@ describe('les élections, la presse, les conseillers, les succès', () => {
     expect(earned).not.toContain('chute')
   })
 })
+
+describe('pourquoi un événement arrive', () => {
+  it('chaque probabilité se lit comme une somme de raisons, et suit l’état du monde', async () => {
+    const { EVENTS, chanceOf } = await import('../model/events')
+    const s = simulate({ decisions: [], events: [], until: 2060 })
+    const heat = EVENTS.find((e) => e.id === 'heatwave')!
+    const early = heat.chance(s[1], s[0])
+    const late = heat.chance(s.at(-1)!, s[0])
+    expect(chanceOf(late)).toBeGreaterThan(chanceOf(early))
+    expect(late.factors.some((f) => f.label.includes('planète'))).toBe(true)
+    const aided = simulate({ decisions: [{ year: 2026, patch: { developmentAid: 50 } }], events: [], until: 2040 })
+    const sahel = EVENTS.find((e) => e.id === 'sahel-war')!
+    expect(chanceOf(sahel.chance(aided.at(-1)!, aided[0]))).toBeLessThan(chanceOf(sahel.chance(s[15], s[0])))
+  })
+})
