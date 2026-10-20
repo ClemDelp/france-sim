@@ -32,6 +32,8 @@ npm run dev
   contrôle et reconduites (efficacité plafonnée, coût croissant), intégration, aide au développement et à la paix.
 - **L’influence de la France** : armée, économie, culture, aide, exemplarité climatique et stabilité font son poids dans le monde,
   qui facilite les accords, limite les représailles, aide les exportations et rassure les prêteurs.
+- **Pourquoi ?** : chaque événement dit ce qui l’a rendu probable ; la une du journal ouvre une explication de l’année qui mesure
+  la part de chaque décision et de chaque événement, et l’effet de leur combinaison.
 - **Le monde bouge tout seul** : 24 événements (canicules, méga-feux, inondations, guerres, krachs, pandémies, IA, accords
   climatiques, grèves, scandales…) tirés au sort chaque année, plus fréquents quand la situation s’y prête.
 - **Le capital politique** : on ne peut pas tout réformer la même année ; les points dépendent de la popularité.

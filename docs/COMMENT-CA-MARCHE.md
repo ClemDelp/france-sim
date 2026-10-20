@@ -310,6 +310,27 @@ L’influence suit la puissance avec retard (quelques années). Sans rien faire,
 Toutes les pondérations et tous les effets sont dans `modele/comportements.csv` (bloc Influence) ; ce sont des hypothèses, inspirées des indices
 de puissance (Lowy Institute) et de soft power.
 
+## 6 quinquies. Comprendre pourquoi : causes, combinaisons, effets émergents
+
+Le jeu ne raconte rien d’écrit à l’avance : il mesure.
+
+- **Pourquoi un événement arrive** : chaque probabilité est une somme de raisons nommées (« 8 % de base, +12 % parce que la planète
+  a pris 0,4 °C, ×0,8 grâce à votre aide au développement »). Les mêmes raisons servent au tirage au sort et à l’explication.
+- **Pourquoi la France en est là** : le bouton « 🔍 Pourquoi en est-on là ? » de la une rejoue la partie en retirant, une à une,
+  chaque décision et chaque événement. La différence est la part de chacun. Ce qui reste une fois tout additionné est
+  l’**effet de combinaison** : des causes qui se renforcent ou s’amortissent entre elles, sans qu’aucune règle ne l’ait prévu.
+
+```mermaid
+flowchart LR
+    T["Tendance de fond<br/>(rien ne se passe)"] --> V["Valeur de l’année"]
+    D1["Décision 1"] -- "part mesurée en la retirant" --> V
+    D2["Décision 2"] --> V
+    E1["Événement"] --> V
+    C["🌀 Effet de combinaison<br/>(ce que les causes font ensemble)"] --> V
+```
+
+Tendance + parts de chaque cause + effet de combinaison = la valeur réelle, exactement (un test le vérifie).
+
 ## 6 ter. Le monde bouge, le Parlement freine
 
 - **Événements** : chaque année, 24 événements possibles sont tirés au sort (une partie différente à chaque fois). Leur probabilité
