@@ -75,33 +75,31 @@ sequenceDiagram
 
 ## 3. Une année dans le moteur
 
-Chaque année suit le même ordre. L’étape 4 est une recherche d’équilibre : la production dépend de la demande,
-qui dépend des revenus, qui dépendent de la production. Le moteur tâtonne (jusqu’à 60 essais) jusqu’à ce que tout boucle.
+Chaque année suit les mêmes 18 étapes (numérotées ainsi dans `src/model/sim.ts`). L’étape 10 est une recherche d’équilibre : la production dépend
+de la demande, qui dépend des revenus, qui dépendent de la production. Le moteur tâtonne (jusqu’à 60 essais) jusqu’à ce que tout boucle.
 
 ```mermaid
 flowchart TD
-    A0["0. Annulation de dette ? Crise de la dette ?<br/>qui perd, panique des prêteurs, plan d’aide"] --> A1
-    A1["1. Démographie<br/>naissances, immigration, départs en retraite,<br/>espérance de vie, nombre d’actifs"] --> A2
-    A2["2. Énergie, prix, salaires<br/>pétrole, électricité, inflation,<br/>salaires, productivité"] --> A3
-    A3["3. Taux d’intérêt<br/>BCE + prime de risque<br/>(dette, déficit, confiance)"] --> A4
-    A4["4. Production, revenus, demande<br/>on cherche le PIB qui boucle"] --> A5
-    A5["5. Qui finance le déficit ?<br/>étrangers, BCE, assureurs, banques"] --> A6
-    A6["6. Bilans de fin d’année<br/>dette, patrimoine, fonds propres"] --> A7
-    A7["7. Inégalités et santé<br/>pauvreté, Gini, espérance de vie"] --> A8
-    A8["8. Contrôle comptable<br/>la somme des soldes = 0"] --> A9
-    A9["9. Tension sur la dette, colère sociale<br/>la partie est-elle perdue ?"] --> A10
-    A10["10. Entreprises par taille<br/>PME, ETI, grands groupes"]
-    A10 -. "les stocks passent à l’année suivante" .-> A0
+    A["1-3. Début d’année<br/>annulation de dette, nationalisations,<br/>crise de la dette ?"] --> B
+    B["4-7. Le pays et le monde<br/>démographie, influence,<br/>migrations, climat"] --> C
+    C["8-9. Prix et taux<br/>énergie, inflation, salaires,<br/>taux d’intérêt"] --> D
+    D["10. Production, revenus, demande<br/>on cherche le PIB qui boucle"] --> E
+    E["11-12. Financement et bilans<br/>qui prête à l’État, dette,<br/>patrimoine, banques"] --> F
+    F["13-14. Inégalités et flux<br/>pauvreté, Gini, espérance de vie,<br/>matrice des flux (somme nulle)"] --> G
+    G["15-18. Conséquences<br/>tension sur la dette, colère et fin de partie,<br/>émissions, entreprises par taille"]
+    G -. "les stocks passent à l’année suivante" .-> A
 
-    subgraph boucle["4. la boucle d’équilibre"]
+    subgraph boucle["10. la boucle d’équilibre"]
         direction LR
         PIB["PIB supposé"] --> EMP["emplois, salaires,<br/>profits, impôts"]
         EMP --> REV["revenus des<br/>5 tranches"]
         REV --> DEM["consommation, investissement,<br/>exportations, importations"]
         DEM -- "demande ≠ PIB ?<br/>on corrige" --> PIB
     end
-    A4 --- boucle
+    D --- boucle
 ```
+
+Le détail de chaque étape est dans la documentation HTML, page « Le moteur pas à pas ».
 
 ## 4. Où circule l’argent (le modèle stock-flux)
 

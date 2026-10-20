@@ -231,7 +231,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   let bankCapital = prev.bankCapital
   const wealth = { ...prev.wealth }
 
-  // — 0. Annulation de dette, au début de l'année
+  // — 1. Annulation de dette, au début de l'année
   if (cancel && cancel.share > 0) {
     const amount = holders[cancel.holder] * cancel.share
     holders[cancel.holder] -= amount
@@ -259,7 +259,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     }
   }
 
-  // — 0 ter. Nationalisations et privatisations : l'État rachète (en obligations) ou revend des grandes entreprises.
+  // — 2. Nationalisations et privatisations : l'État rachète (en obligations) ou revend des grandes entreprises.
   const ownership = init ? REF.publicOwnership : policy.publicOwnership
   const ownershipStep = init ? 0 : ownership - prev.publicOwnership
   const deal = ownershipStep * BASE.largeFirmsValue * (prev.gdp / BASE.gdp)
@@ -283,7 +283,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const deregulation = REF.regulation - regulation
   let naturalUnemployment = BASE.naturalUnemployment - P.regulationNairu * deregulation
 
-  // — 0 bis. Crise de la dette : quand la tension accumulée atteint 1, les prêteurs paniquent.
+  // — 3. Crise de la dette : quand la tension accumulée atteint 1, les prêteurs paniquent.
   let crisisCooldown = Math.max(0, prev.crisisCooldown - 1)
   const debtCrisis = !init && prev.marketStress >= 1 && crisisCooldown === 0
   if (debtCrisis) {
@@ -317,7 +317,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const rescueEffort = prev.rescueEffort + (rescueYears > 0 ? rescueStep : 0)
   const demandShock = world.demandShock + (debtCrisis ? P.crisisDemandShock : 0)
 
-  // — 1. Démographie et espérance de vie
+  // — 4. Démographie et espérance de vie
   const yearsIn = year - BASE.year
   const healthRatio = (policy.health + policy.prevention) / (REF.health + REF.prevention)
   const healthStock = prev.healthStock + P.healthStockSpeed * (Math.log(healthRatio) - prev.healthStock)
@@ -333,7 +333,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     BASE.retirementEntrants * (1 + P.retirementCohortGrowth * Math.min(yearsIn, P.babyBoomYears)) - P.retirementCohortDecline * Math.max(0, yearsIn - P.babyBoomYears),
   )
   const entrants = Math.max(0.1, cohort - cohort * ageChange)
-  // — 1 bis. Influence : la puissance (armée, économie, culture, aide, exemplarité, stabilité) se traduit en poids dans le monde.
+  // — 5. Influence : la puissance (armée, économie, culture, aide, exemplarité, stabilité) se traduit en poids dans le monde.
   const root = (x: number) => Math.sqrt(Math.max(0.05, x))
   const influenceParts = {
     military: root(policy.defence / REF.defence),
@@ -350,7 +350,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const influence = init ? 1 : prev.influence + P.influenceSpeed * (influenceTarget - prev.influence)
   const clout = influence - 1
 
-  // — 1 ter. Migrations : la pression vient du monde (conflits, réchauffement) ; la politique n'en filtre qu'une partie.
+  // — 6. Migrations : la pression vient du monde (conflits, réchauffement) ; la politique n'en filtre qu'une partie.
   const warmingSoFar = Math.max(0, prev.temperature - BASE.temperature)
   const aidStock = init ? prev.aidStock : prev.aidStock * (1 - P.aidDecay) + policy.developmentAid
   const aidExtra = Math.max(0, aidStock - REF.developmentAid / P.aidDecay)
@@ -393,7 +393,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const seniors = cohort * Math.max(0, retirementAge - 60)
   const laborForce = (workingAge - seniors) * Math.min(P.participationMax, coreParticipation() + P.participationTrend * yearsIn) + seniors * P.seniorParticipation
 
-  // — 1 bis. Climat : le monde émet, la planète se réchauffe, la France encaisse (et s'adapte)
+  // — 7. Climat : le monde émet, la planète se réchauffe, la France encaisse (et s'adapte)
   // La France pèse environ 0,8 % du CO2 mondial : son effet direct est faible, mais son exemple et son aide comptent un peu.
   const startEmissions = BASE.fossilEmissions + BASE.electricityEmissions + BASE.otherEmissions
   const worldBaseEmissions = init ? BASE.worldCO2 : prev.worldBaseEmissions * (1 + P.worldEmissionsTrend + world.climateAmbition)
@@ -411,7 +411,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const climateDamage = init ? 0 : (P.damageLinear * warming + P.damageQuadratic * warming * Math.max(0, warming)) * exposure
   const damageStep = climateDamage - prev.climateDamage
 
-  // — 2. Énergie, prix et salaires
+  // — 8. Énergie, prix et salaires
   // Des droits de douane élevés sur les voitures électriques chinoises ralentissent un peu l'électrification (véhicules plus chers).
   // Une taxe carbone plus forte rend la pompe à chaleur et la voiture électrique plus rentables.
   const carbonExtra = policy.carbonTax - REF.carbonTax
@@ -462,7 +462,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const worldPrice = init ? 1 : prev.worldPrice * (1 + BASE.worldInflation + P.energyInflationPass * BASE.fossilShare * fossilShock)
   const worldIndex = init ? 1 : prev.worldIndex * (1 + world.growth - P.exportShareLoss + P.influenceExports * clout)
 
-  // — 3. Taux d'intérêt : le prix de la confiance
+  // — 9. Taux d'intérêt : le prix de la confiance
   const debtPct = prev.debtRatio * 100
   const riskPremium = Math.max(0, P.premiumBase + P.premiumPerDebtPoint * Math.max(0, debtPct - P.debtThreshold) + P.premiumPerDeficitPoint * Math.max(0, prev.deficitRatio * 100 - P.deficitThreshold) + panic + stigma - P.influencePremium * clout - P.monetizationCredibility * policy.monetization + P.monetizationFear * policy.monetization * policy.monetization) / 100
   const premium = rescueYears > 0 ? Math.min(riskPremium, P.rescueSpread / 100) : riskPremium
@@ -475,7 +475,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const baseRate = P.neutralLoanRate
   const creditCrunch = clamp((P.bankCapitalMin - bankCapital / (prev.firmDebt + prev.householdDebt)) * P.creditCrunchSensitivity, 0, P.creditCrunchMax)
 
-  // — 4. Demande, revenus et emploi : on cherche le PIB qui boucle
+  // — 10. Demande, revenus et emploi : on cherche le PIB qui boucle
   const trend = priceLevel * (productivity / initialCarry().productivity)
   const popIndex = population / BASE.population
   /**
@@ -770,7 +770,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const anchorsOut: Anchors = anchors ?? { yd: d.disposable, c: d.consumption, ydTotal: sum(d.disposable), irRate: d.irRate, isRatio: d.isRatio }
   const deficit = d.spending - d.revenue
 
-  // — 5. Financement de la dette : qui prête à l'État cette année ?
+  // — 11. Financement de la dette : qui prête à l'État cette année ?
   const debtBefore = sumRecord(holders)
   const shareAbroad = P.foreignBuyerShare * Math.exp(-P.foreignBuyerFlight * (panic + stigma + 2 * shun))
   // La BCE rachète une part de la dette nouvelle (planche à billets décidée par la France, ou rachats décidés à Francfort) ; sinon elle réduit peu à peu son stock.
@@ -785,7 +785,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   holders.assureurs += init ? 0 : deficit - fromBce - fromAbroad - fromBanks
   const debt = init ? debtBefore : sumRecord(holders)
 
-  // — 6. Bilans de fin d'année
+  // — 12. Bilans de fin d'année
   for (const k of GROUPS) {
     const saving = d.disposable[k] - d.consumption[k] - d.housing * GP.wealth[k]
     wealth[k] = (wealth[k] + (init ? 0 : saving) - (init ? 0 : d.inheritanceTaxBy[k])) * (init ? 1 : 1 + inflation * P.assetInflationShare)
@@ -796,7 +796,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const deposits = init ? prev.deposits : prev.deposits * (1 + inflation)
   const currentAccount = d.exports + d.foreignIncome - d.imports - d.energyImports - d.dividendsAbroad - d.interestBy.monde - d.euContribution
 
-  // — 7. Inégalités, pauvreté, espérance de vie
+  // — 13. Inégalités, pauvreté, espérance de vie
   // Prix vus par chaque tranche : la TVA et l'énergie pèsent plus lourd quand on dépense tout son revenu.
   const groupPrice = byGroup((k) => {
     const spendShare = d.consumption[k] / Math.max(1, d.disposable[k])
@@ -811,7 +811,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   }
   const lifeGap = BASE.lifeGap * Math.pow(perCapita.g5 / perCapita.g1 / BASE.incomeRatioTopBottom, P.lifeGapElasticity)
 
-  // — 8. Matrice des flux (chaque euro a un payeur et un receveur)
+  // — 14. Matrice des flux (chaque euro a un payeur et un receveur)
   const t = d.taxes
   const flowsList = ([
     { from: 'menages', to: 'entreprises', amount: d.totalConsumption + d.housing, label: 'Consommation et logement' },
@@ -848,7 +848,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const gdpReal = d.real
   const growth = init ? BASE.initialGrowth : gdpReal / prev.gdpReal - 1
 
-  // — 9. Tension sur la dette : de combien le solde public est-il loin de ce qui stabiliserait la dette ?
+  // — 15. Tension sur la dette : de combien le solde public est-il loin de ce qui stabiliserait la dette ?
   // Il faudrait un excédent primaire (hors intérêts) de (taux − croissance) × dette ; tout écart fait grossir la dette.
   const nominalGrowth = init ? BASE.inflationAnchor + BASE.productivityGrowth : gdp / prev.gdp - 1
   const primaryBalance = -(deficit - d.interest) / gdp
@@ -859,7 +859,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const shielded = rawStress * (1 - P.qeStressRelief * world.qe)
   const marketStress = init ? shielded : P.crisisSmoothing * shielded + (1 - P.crisisSmoothing) * prev.marketStress
 
-  // — 9 bis. La société : prélèvements, colère, et ce qui rendrait la situation intenable
+  // — 16. La société : prélèvements, colère, et ce qui rendrait la situation intenable
   const taxBurden = d.revenue / gdp
   const taxBurden0 = init ? taxBurden : prev.taxBurden0
   const poverty0 = init ? dist.poverty : prev.poverty0
@@ -896,13 +896,13 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
             ? 'depression'
             : null
 
-  // — 9 ter. Les émissions françaises : pétrole et gaz (moins avec l'électrification et la taxe carbone), électricité, agriculture et déchets.
+  // — 17. Les émissions françaises : pétrole et gaz (moins avec l'électrification et la taxe carbone), électricité, agriculture et déchets.
   const fossilEmissions =
     BASE.fossilEmissions * (fossilShare / BASE.fossilShare) * Math.pow(d.real / BASE.gdp, P.energyEmissionsGdp) * Math.max(0, 1 - (P.carbonDemandCut * carbonExtra) / 100)
   const electricityEmissions = BASE.electricityEmissions * Math.max(0.2, 1 + P.gasForNuclear * (REF.nuclearShare - policy.nuclearShare)) * (1 + (BASE.fossilShare - fossilShare))
   const frenchEmissions = (fossilEmissions + electricityEmissions + BASE.otherEmissions * Math.pow(1 - P.otherEmissionsDecline, yearsIn)) * (1 + P.regulationEmissions * deregulation)
 
-  // — 10. Les entreprises par taille : qui investit, qui exporte, qui emploie
+  // — 18. Les entreprises par taille : qui investit, qui exporte, qui emploie
   const lowWageRel = relative(FS.lowWageExposure, FS.employment)
   const tariffRel = relative(FS.tariffExposure, FS.exports)
   const energyRel = relative(FS.energyIntensity, FS.exports)
@@ -955,7 +955,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       Éducation: g(policy.education) * publicFactor,
       Défense: g(policy.defence) * publicFactor,
       'Investissement public': g(policy.investment) * publicFactor,
-      'Autres services publics': g(policy.otherServices) * publicFactor,
+      'Autres services publics': g(policy.otherServices + policy.softPower - REF.softPower) * publicFactor,
       'Chômage, famille, minima': d.transfers.unemploymentBenefits + d.transfers.family + d.transfers.minima + d.transfers.otherTransfers,
       'Sécurité sociale de l’alimentation': d.transfers.foodTransfer,
       'Aides aux entreprises': d.firmAid,
