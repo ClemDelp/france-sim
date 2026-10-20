@@ -3663,7 +3663,7 @@ input[type='range']:disabled {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px), (pointer: coarse) and (max-height: 500px) {
   :root {
     --nav-h: 64px;
     --safe-b: env(safe-area-inset-bottom, 0px);
@@ -4049,7 +4049,7 @@ input[type='range']:disabled {
   }
 }
 
-@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
   .modal,
   .council.is-sheet {
     animation: none;
@@ -4093,7 +4093,7 @@ input[type='range']:disabled {
   font-size: 0.92rem;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px), (pointer: coarse) and (max-height: 500px) {
   /* Accueil compact : l'icône à gauche, le texte à droite, tout le menu tient sur un écran. */
   .home-inner {
     padding: calc(20px + env(safe-area-inset-top, 0px)) 14px calc(28px + env(safe-area-inset-bottom, 0px));
@@ -4148,5 +4148,101 @@ input[type='range']:disabled {
 
   .scenario-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px), (pointer: coarse) and (max-height: 500px) {
+  /* Succès : une pastille compacte, qui ne cache presque rien et laisse passer les doigts. */
+  .toasts {
+    pointer-events: none;
+    gap: 6px;
+  }
+
+  .toast {
+    padding: 6px 10px;
+    gap: 8px;
+    animation-name: toast-drop;
+  }
+
+  .toast > span {
+    font-size: 1.4rem;
+  }
+
+  .toast p {
+    display: none;
+  }
+
+  .missions,
+  .verdict-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@keyframes toast-drop {
+  from {
+    transform: translateY(-140%);
+  }
+}
+
+/* Téléphone à l'horizontale : peu de hauteur, on resserre les barres. */
+@media (pointer: coarse) and (max-height: 500px) {
+  :root {
+    --nav-h: 50px;
+  }
+
+  .phone-nav > button {
+    grid-auto-flow: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+  }
+
+  .top {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  .phone-nav > button.phone-play {
+    width: 56px;
+    height: 56px;
+    margin-top: -10px;
+    font-size: 1.2rem;
+  }
+
+  .phone-play small {
+    display: none;
+  }
+
+  .council.council-line {
+    padding: 4px 10px;
+  }
+
+  .council-line-text {
+    -webkit-line-clamp: 1;
+  }
+
+  .layout.phone {
+    padding-bottom: calc(var(--nav-h) + 52px + var(--safe-b));
+  }
+
+  .layout.phone .kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .modal {
+    max-height: 100dvh;
+  }
+}
+
+/* Tablettes et petits écrans d'ordinateur : l'en-tête passe sur deux lignes plutôt que de déborder. */
+@media (min-width: 761px) and (max-width: 1280px) {
+  .top {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .top-actions {
+    margin-left: auto;
   }
 }
