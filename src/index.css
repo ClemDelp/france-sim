@@ -4246,3 +4246,28 @@ input[type='range']:disabled {
     margin-left: auto;
   }
 }
+
+/* Écrans tactiles : pas de zoom au double-tap sur les commandes, pas de zoom d'iOS en tapant dans un champ. */
+button,
+summary,
+label {
+  touch-action: manipulation;
+}
+
+@media (pointer: coarse) {
+  input[type='text'],
+  input[type='search'],
+  input[type='number'],
+  input:not([type]) {
+    font-size: 16px;
+  }
+}
+
+/* Appli installée sur iPhone : la barre d'état est transparente, on laisse la place à l'encoche. */
+.brain-top {
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+}
+
+.modal-backdrop {
+  padding-top: max(20px, env(safe-area-inset-top, 0px));
+}

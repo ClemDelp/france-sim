@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { BASE_POLICY } from './model/calibration'
 import { EVENTS, rollEvents } from './model/events'
 import type { Overrides } from './model/params'
@@ -115,6 +115,8 @@ function App() {
   /** Sur téléphone, l'écran affiché (une zone à la fois). */
   const [view, setView] = useState<PhoneView>('pays')
   const phone = usePhone()
+  /** Sur téléphone, seul l'écran choisi est rendu (les autres coûteraient du calcul à chaque geste). */
+  const shows = (v: PhoneView) => !phone || view === v
 
   const params = overrides
 
@@ -147,12 +149,16 @@ function App() {
   const hasDraft = Object.keys(draft).length > 0
 
   // Aperçu : ce que la décision en préparation changerait l'an prochain.
+  // L'année prochaine sans le brouillon ne dépend pas des curseurs : calculée une fois par année.
+  const nextWithout = useMemo(() => (year >= END ? null : simulate({ decisions, events, until: year + 1, params }).at(-1)!), [decisions, events, year, params])
+  // L'aperçu suit le curseur avec un temps de retard si l'appareil est lent : le curseur, lui, reste fluide sous le doigt.
+  const previewDraft = useDeferredValue(draft)
   const preview = useMemo(() => {
-    if (!hasDraft || year >= END) {
+    if (Object.keys(previewDraft).length === 0 || !nextWithout) {
       return null
     }
-    const without = simulate({ decisions, events, until: year + 1, params }).at(-1)!
-    const withDraft = simulate({ decisions: [...decisions, { year: year + 1, patch: draft }], events, until: year + 1, params }).at(-1)!
+    const without = nextWithout
+    const withDraft = simulate({ decisions: [...decisions, { year: year + 1, patch: previewDraft }], events, until: year + 1, params }).at(-1)!
     return {
       deficit: withDraft.deficit - without.deficit,
       unemployment: withDraft.unemployment - without.unemployment,
@@ -162,7 +168,7 @@ function App() {
       inflation: withDraft.inflation - without.inflation,
       emissions: withDraft.frenchEmissions - without.frenchEmissions,
     }
-  }, [hasDraft, decisions, events, year, draft, params])
+  }, [nextWithout, decisions, events, year, previewDraft, params])
 
   // Avancer le temps, une année à la fois, pour voir la France changer.
   // Une crise de la dette met la partie en pause : le joueur doit choisir sa réponse.
@@ -471,160 +477,170 @@ function App() {
       ) : null}
 
       <main className={phone ? `layout phone view-${view}` : 'layout'}>
-        <aside className={leversOpen ? 'levers is-open' : 'levers'}>
-          <div className="levers-head">
-            <h2>Vos décisions</h2>
-            <p>Bougez un levier, puis avancez d’un an : la décision s’applique en {year + 1}.</p>
-          </div>
-          {LEVER_GROUPS.map((g) => (
-            <details key={g.id} className="lever-group" open={g.id === 'impots'}>
-              <summary>
-                <span>{g.icon}</span> {g.label}
-              </summary>
-              {g.id === 'modele' ? (
-                <div className="doctrines">
-                  <p className="lever-note">Un programme complet : appliquez-le d’un coup (s’il reste du capital politique) ou petit à petit.</p>
-                  {DOCTRINES.map((d) => (
-                    <button
-                      key={d.id}
-                      type="button"
-                      className="doctrine"
-                      title={d.text}
-                      onClick={() => {
-                        const base = policyAt(decisions, year + 1)
-                        setDraft(Object.fromEntries(Object.entries(d.patch).filter(([k, v]) => Math.abs((base[k as PolicyKey] as number) - (v as number)) > 1e-9)))
-                      }}
-                    >
-                      <span>{d.icon}</span>
-                      <strong>{d.title}</strong>
-                      <small>{d.text}</small>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-              {g.levers.map((l) => {
-                const v = policy[l.key] as number
-                const moved = Math.abs(v - (BASE_POLICY[l.key] as number)) > 1e-9
-                const locked = scenario?.locked?.keys.includes(l.key)
-                return (
-                  <label key={l.key} className={`lever${l.key in draft ? ' is-draft' : moved ? ' is-moved' : ''}${hint === l.key ? ' show-hint' : ''}`}>
-                    <span className="lever-top">
-                      <span>{l.label}</span>
-                      <span className="lever-value">
-                        <strong>{formatLever(l, v)}</strong>
-                        <button
-                          type="button"
-                          className="hint-toggle"
-                          aria-label={`Explication : ${l.label}`}
-                          aria-expanded={hint === l.key}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setHint(hint === l.key ? null : l.key)
-                          }}
-                        >
-                          ⓘ
+        {shows('decider') ? (
+          <aside className={leversOpen ? 'levers is-open' : 'levers'}>
+            <div className="levers-head">
+              <h2>Vos décisions</h2>
+              <p>Bougez un levier, puis avancez d’un an : la décision s’applique en {year + 1}.</p>
+            </div>
+            {LEVER_GROUPS.map((g) => (
+              <details key={g.id} className="lever-group" open={g.id === 'impots'}>
+                <summary>
+                  <span>{g.icon}</span> {g.label}
+                </summary>
+                {g.id === 'modele' ? (
+                  <div className="doctrines">
+                    <p className="lever-note">Un programme complet : appliquez-le d’un coup (s’il reste du capital politique) ou petit à petit.</p>
+                    {DOCTRINES.map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        className="doctrine"
+                        title={d.text}
+                        onClick={() => {
+                          const base = policyAt(decisions, year + 1)
+                          setDraft(Object.fromEntries(Object.entries(d.patch).filter(([k, v]) => Math.abs((base[k as PolicyKey] as number) - (v as number)) > 1e-9)))
+                        }}
+                      >
+                        <span>{d.icon}</span>
+                        <strong>{d.title}</strong>
+                        <small>{d.text}</small>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                {g.levers.map((l) => {
+                  const v = policy[l.key] as number
+                  const moved = Math.abs(v - (BASE_POLICY[l.key] as number)) > 1e-9
+                  const locked = scenario?.locked?.keys.includes(l.key)
+                  return (
+                    <label key={l.key} className={`lever${l.key in draft ? ' is-draft' : moved ? ' is-moved' : ''}${hint === l.key ? ' show-hint' : ''}`}>
+                      <span className="lever-top">
+                        <span>{l.label}</span>
+                        <span className="lever-value">
+                          <strong>{formatLever(l, v)}</strong>
+                          <button
+                            type="button"
+                            className="hint-toggle"
+                            aria-label={`Explication : ${l.label}`}
+                            aria-expanded={hint === l.key}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              setHint(hint === l.key ? null : l.key)
+                            }}
+                          >
+                            ⓘ
+                          </button>
+                        </span>
+                      </span>
+                      <span className="lever-input">
+                        <button type="button" className="lever-step" aria-label={`${l.label} : moins`} disabled={locked || v <= l.min + 1e-9} onClick={(e) => {
+                          e.preventDefault()
+                          setLever(l.key, stepLever(l, v, -1))
+                        }}>
+                          −
+                        </button>
+                        <input type="range" min={l.min} max={l.max} step={l.step} value={v} disabled={locked} title={locked ? scenario?.locked?.why : undefined} onChange={(e) => setLever(l.key, Number(e.target.value))} />
+                        <button type="button" className="lever-step" aria-label={`${l.label} : plus`} disabled={locked || v >= l.max - 1e-9} onClick={(e) => {
+                          e.preventDefault()
+                          setLever(l.key, stepLever(l, v, 1))
+                        }}>
+                          +
                         </button>
                       </span>
-                    </span>
-                    <span className="lever-input">
-                      <button type="button" className="lever-step" aria-label={`${l.label} : moins`} disabled={locked || v <= l.min + 1e-9} onClick={(e) => {
-                        e.preventDefault()
-                        setLever(l.key, stepLever(l, v, -1))
-                      }}>
-                        −
-                      </button>
-                      <input type="range" min={l.min} max={l.max} step={l.step} value={v} disabled={locked} title={locked ? scenario?.locked?.why : undefined} onChange={(e) => setLever(l.key, Number(e.target.value))} />
-                      <button type="button" className="lever-step" aria-label={`${l.label} : plus`} disabled={locked || v >= l.max - 1e-9} onClick={(e) => {
-                        e.preventDefault()
-                        setLever(l.key, stepLever(l, v, 1))
-                      }}>
-                        +
-                      </button>
-                    </span>
-                    {hint === l.key ? <small>{l.hint}</small> : null}
-                  </label>
-                )
-              })}
+                      {hint === l.key ? <small>{l.hint}</small> : null}
+                    </label>
+                  )
+                })}
+              </details>
+            ))}
+            <details className="lever-group">
+              <summary>
+                <span>✂️</span> Annuler une partie de la dette
+              </summary>
+              <p className="lever-note">Une annulation est un coup unique, appliqué l’an prochain.</p>
+              <div className="cancel-buttons">
+                {(['bce', 'monde', 'assureurs', 'banques'] as const).map((h) => (
+                  <button
+                    key={h}
+                    type="button"
+                    className={draft.cancelHolder === h ? 'chip is-on' : 'chip'}
+                    onClick={() => setDraft((d) => ({ ...d, cancelHolder: h, cancelShare: h === 'monde' ? 0.5 : 1 }))}
+                  >
+                    {h === 'bce' ? 'Celle de la BCE' : h === 'monde' ? 'La moitié de celle des étrangers' : h === 'assureurs' ? 'Celle de l’assurance-vie' : 'Celle des banques'}
+                  </button>
+                ))}
+              </div>
             </details>
-          ))}
-          <details className="lever-group">
-            <summary>
-              <span>✂️</span> Annuler une partie de la dette
-            </summary>
-            <p className="lever-note">Une annulation est un coup unique, appliqué l’an prochain.</p>
-            <div className="cancel-buttons">
-              {(['bce', 'monde', 'assureurs', 'banques'] as const).map((h) => (
-                <button
-                  key={h}
-                  type="button"
-                  className={draft.cancelHolder === h ? 'chip is-on' : 'chip'}
-                  onClick={() => setDraft((d) => ({ ...d, cancelHolder: h, cancelShare: h === 'monde' ? 0.5 : 1 }))}
-                >
-                  {h === 'bce' ? 'Celle de la BCE' : h === 'monde' ? 'La moitié de celle des étrangers' : h === 'assureurs' ? 'Celle de l’assurance-vie' : 'Celle des banques'}
+          </aside>
+        ) : null}
+
+        {shows('pays') || shows('flux') ? (
+          <section className="center">
+            {shows('pays') && scenario && evaluation ? <Objectives scenario={scenario} year={year} start={START} evaluation={evaluation} onAbandon={() => setHome(true)} /> : null}
+            {shows('pays') ? <Newspaper headline={news} onWhy={year > START ? () => setWhy(true) : undefined} /> : null}
+            {shows('pays') ? <Kpis states={states} base={base} changed={changed} onPick={(node) => openBrain({ focus: node })} /> : null}
+            {shows('flux') ? (
+              <>
+                <div className="map-card">
+                  <div className="map-head">
+                    <h2>Où circule l’argent en {year}</h2>
+                    <p>Plus un trait est épais et rapide, plus le flux est gros. {phone ? 'Touchez' : 'Cliquez sur'} un acteur pour voir ce qui entre et ce qui sort.</p>
+                  </div>
+                  <FlowMap state={s} base={changed ? b : null} portrait={phone} onOpen={(a) => {
+                    setTab(ACTOR_TAB[a] ?? 'budget')
+                    if (phone) {
+                      setView('analyses')
+                      window.scrollTo({ top: 0 })
+                    } else {
+                      document.querySelector('.side')?.scrollIntoView({ behavior: 'smooth' })
+                    }
+                  }} />
+                </div>
+                <EventFeed events={events} year={year} states={states} scenarioEvents={scenario?.events ?? []} />
+              </>
+            ) : null}
+          </section>
+        ) : null}
+
+        {shows('analyses') ? (
+          <section className="side">
+            <nav className="tabs" aria-label="Analyses">
+              {TABS.map((t) => (
+                <button key={t.id} type="button" className={tab === t.id ? 'is-on' : ''} onClick={() => setTab(t.id)}>
+                  {t.label}
                 </button>
               ))}
-            </div>
-          </details>
-        </aside>
-
-        <section className="center">
-          {scenario && evaluation ? <Objectives scenario={scenario} year={year} start={START} evaluation={evaluation} onAbandon={() => setHome(true)} /> : null}
-          <Newspaper headline={news} onWhy={year > START ? () => setWhy(true) : undefined} />
-          <Kpis states={states} base={base} changed={changed} onPick={(node) => openBrain({ focus: node })} />
-          <div className="map-card">
-            <div className="map-head">
-              <h2>Où circule l’argent en {year}</h2>
-              <p>Plus un trait est épais et rapide, plus le flux est gros. {phone ? 'Touchez' : 'Cliquez sur'} un acteur pour voir ce qui entre et ce qui sort.</p>
-            </div>
-            <FlowMap state={s} base={changed ? b : null} portrait={phone} onOpen={(a) => {
-              setTab(ACTOR_TAB[a] ?? 'budget')
-              if (phone) {
-                setView('analyses')
-                window.scrollTo({ top: 0 })
-              } else {
-                document.querySelector('.side')?.scrollIntoView({ behavior: 'smooth' })
-              }
-            }} />
-          </div>
-          <EventFeed events={events} year={year} states={states} scenarioEvents={scenario?.events ?? []} />
-        </section>
-
-        <section className="side">
-          <nav className="tabs" aria-label="Analyses">
-            {TABS.map((t) => (
-              <button key={t.id} type="button" className={tab === t.id ? 'is-on' : ''} onClick={() => setTab(t.id)}>
-                {t.label}
-              </button>
-            ))}
-          </nav>
-          {tab === 'groupes' ? <GroupsPanel s={s} b={b} changed={changed} /> : null}
-          {tab === 'courbes' ? (
-            <Trajectory
-              states={states}
-              base={base}
-              decisions={decisions}
-              events={events}
-              reliableUntil={RELIABLE_UNTIL}
-              extra={(kpiId) =>
-                changed && KPI_FOCUS[kpiId] && year > START ? (
-                  <Robustness
-                    key={`${kpiId}-${year}-${decisions.length}`}
-                    input={{ decisions, events, until: year, params }}
-                    metrics={[FOCUS_METRICS[KPI_FOCUS[kpiId]]]}
-                    onInspect={(id) => openBrain({ focus: null, view: 'parametres', query: id })}
-                  />
-                ) : null
-              }
-            />
-          ) : null}
-          {tab === 'climat' ? <ClimatePanel s={s} b={b} changed={changed} /> : null}
-          {tab === 'immigration' ? <MigrationPanel s={s} b={b} changed={changed} /> : null}
-          {tab === 'budget' ? <BudgetPanel s={s} b={b} changed={changed} /> : null}
-          {tab === 'dette' ? <DebtPanel s={s} b={b} changed={changed} /> : null}
-          {tab === 'entreprises' ? <FirmsPanel s={s} b={b} changed={changed} /> : null}
-          {tab === 'monde' ? <WorldPanel s={s} b={b} changed={changed} /> : null}
-          {tab === 'journal' ? <JournalPanel states={states} base={base} /> : null}
-        </section>
+            </nav>
+            {tab === 'groupes' ? <GroupsPanel s={s} b={b} changed={changed} /> : null}
+            {tab === 'courbes' ? (
+              <Trajectory
+                states={states}
+                base={base}
+                decisions={decisions}
+                events={events}
+                reliableUntil={RELIABLE_UNTIL}
+                extra={(kpiId) =>
+                  changed && KPI_FOCUS[kpiId] && year > START ? (
+                    <Robustness
+                      key={`${kpiId}-${year}-${decisions.length}`}
+                      input={{ decisions, events, until: year, params }}
+                      metrics={[FOCUS_METRICS[KPI_FOCUS[kpiId]]]}
+                      onInspect={(id) => openBrain({ focus: null, view: 'parametres', query: id })}
+                    />
+                  ) : null
+                }
+              />
+            ) : null}
+            {tab === 'climat' ? <ClimatePanel s={s} b={b} changed={changed} /> : null}
+            {tab === 'immigration' ? <MigrationPanel s={s} b={b} changed={changed} /> : null}
+            {tab === 'budget' ? <BudgetPanel s={s} b={b} changed={changed} /> : null}
+            {tab === 'dette' ? <DebtPanel s={s} b={b} changed={changed} /> : null}
+            {tab === 'entreprises' ? <FirmsPanel s={s} b={b} changed={changed} /> : null}
+            {tab === 'monde' ? <WorldPanel s={s} b={b} changed={changed} /> : null}
+            {tab === 'journal' ? <JournalPanel states={states} base={base} /> : null}
+          </section>
+        ) : null}
       </main>
 
       {missionsOpen ? (
