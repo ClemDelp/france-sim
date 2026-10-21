@@ -10,7 +10,6 @@
     "test": "vitest run",
     "preview": "vite preview",
     "phone": "npm run build && vite preview --host --port 4173",
-    "deploy": "node scripts/deploy.mjs",
     "docs": "node scripts/build-docs.mjs",
     "check": "npm run lint && npm test && npm run build"
   },

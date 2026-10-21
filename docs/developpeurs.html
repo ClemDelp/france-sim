@@ -26,7 +26,8 @@ npm run build      # vérification des types (tsc -b) puis build de production d
 npm run check      # lint + tests + build : ce que vérifie GitHub
 npm run docs       # régénère docs/catalogue.html et docs/modele.html
 npm run phone      # build + serveur sur le Wi-Fi, pour jouer depuis un téléphone (port 4173)
-npm run deploy     # publie le jeu et cette documentation sur https://clemdelp.github.io/france-sim/</code></pre>
+</code></pre>
+        <p>La publication est automatique : à chaque envoi sur <code>main</code>, GitHub lance le lint, les tests et la compilation (<code>.github/workflows/ci.yml</code>), puis, si tout est vert, publie le jeu et cette documentation sur <a href="https://clemdelp.github.io/france-sim/">clemdelp.github.io/france-sim</a>. Travaillez sur une branche pour essayer sans publier.</p>
         <div class="table-wrap">
           <table>
             <thead>

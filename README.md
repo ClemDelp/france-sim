@@ -39,8 +39,8 @@ sauvegardée automatiquement.
   `Network: http://192.168.…:4173` affichée. On peut jouer tout de suite ; l’installation hors ligne demande en
   revanche un site en HTTPS.
 - **En ligne (HTTPS), pour l’installer** : le jeu est publié sur https://clemdelp.github.io/france-sim/.
-  Pour publier une nouvelle version : `npm run deploy` (construit le jeu, y joint la documentation et pousse le tout
-  sur la branche `gh-pages`, servie par GitHub Pages). Le dossier `dist/` peut aussi être déposé sur n’importe quel
+  Il se met à jour tout seul : à chaque envoi sur `main`, GitHub vérifie le code (lint, tests, compilation) puis, si tout
+  est vert, publie le jeu et la documentation (onglet « Actions » du dépôt, workflow « Vérifications »). Le dossier `dist/` peut aussi être déposé sur n’importe quel
   hébergeur statique (Netlify, Cloudflare Pages, Vercel…) : les chemins sont relatifs, le jeu marche dans un sous-dossier.
 - **Installer** : sur Android (Chrome), bouton « 📲 Installer l’appli » de l’accueil ; sur iPhone (Safari),
   Partager ⬆️ puis « Sur l’écran d’accueil » (l’accueil du jeu l’explique).

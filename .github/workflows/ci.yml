@@ -1,4 +1,5 @@
 # Vérifications automatiques : lancées à chaque envoi sur GitHub et à chaque proposition de modification (pull request).
+# Sur main, si tout est vert, le jeu est ensuite publié sur https://clemdelp.github.io/france-sim/.
 # Un contributeur qui modifie un fichier de modele/ voit ici, sans rien installer, si le modèle tient toujours debout.
 name: Vérifications
 
@@ -37,3 +38,45 @@ jobs:
         run: |
           npm run docs
           git diff --quiet -- docs/catalogue.html docs/modele.html || echo "::warning::Le catalogue des paramètres n'est plus à jour : à la fusion, lancer « npm run docs » et ajouter docs/catalogue.html et docs/modele.html."
+
+  # Publication du jeu et de la documentation sur GitHub Pages, seulement depuis main et seulement si tout est vert.
+  publier:
+    name: Publier le site
+    needs: verifier
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer
+        run: npm ci
+
+      - name: Construire le jeu et y joindre la documentation
+        run: |
+          npm run build
+          cp -r docs dist/docs
+          touch dist/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
