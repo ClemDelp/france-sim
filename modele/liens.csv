@@ -150,7 +150,7 @@ debt;interest;+;;Plus de dette, plus d’intérêts à payer.
 lowIncome;poverty;-;sigma.g1;Le seuil de pauvreté est 60 % du revenu médian : ce qui compte, c’est le revenu des modestes par rapport au milieu, pas la moyenne.
 gini;poverty;+;sigma.g1 sigma.g5;À revenu moyen égal, des écarts plus grands laissent plus de gens sous le seuil.
 smicBoost;lowIncome;+;smicGain.g1;Les salaires du bas progressent.
-unemployment;lowIncome;-;unemployment.g1;Le chômage frappe d’abord les plus modestes.
+unemployment;lowIncome;-;unemployment.g1 hireWageRatio;Le chômage frappe d’abord les plus modestes : un emploi retrouvé leur rapporte un salaire, un emploi perdu ne leur laisse qu’une allocation.
 socialBenefits;lowIncome;+;family.g1 minima.g1;
 poverty;lifeExpectancy;-;povertyLifeLoss;La pauvreté abîme la santé.
 gini;lifeGap;+;lifeGapElasticity incomeRatioTopBottom;Plus les revenus s’écartent, plus les espérances de vie s’écartent.

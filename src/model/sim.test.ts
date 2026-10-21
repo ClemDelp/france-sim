@@ -184,3 +184,22 @@ describe('influence : la puissance rejaillit sur tout le reste', () => {
     expect(at(strong, 2032).riskPremium).toBeLessThan(at(b, 2032).riskPremium)
   })
 })
+
+describe('emploi et pauvreté', () => {
+  it('quand le chômage baisse, les plus modestes y gagnent : les emplois retrouvés vont surtout à ceux qui étaient au chômage', () => {
+    const base = simulate({ decisions: [], events: [], until: 2026 }).at(-1)!
+    // Un grand chantier d'investissement public : beaucoup d'emplois, sans transfert direct aux ménages.
+    const boom = simulate({ decisions: [{ year: 2026, patch: { investment: 230 } }], events: [], until: 2026 }).at(-1)!
+    expect(boom.unemployment).toBeLessThan(base.unemployment - 0.01)
+    expect(boom.disposablePerCapita.g1).toBeGreaterThan(base.disposablePerCapita.g1)
+  })
+
+  it('une récession coûte aux plus modestes, mais les allocations amortissent (comme en 2009, les revenus du capital des plus aisés chutent davantage)', () => {
+    const base = simulate({ decisions: [], events: [], until: 2026 }).at(-1)!
+    const cut = simulate({ decisions: [{ year: 2026, patch: { investment: 60, otherServices: 200 } }], events: [], until: 2026 }).at(-1)!
+    expect(cut.unemployment).toBeGreaterThan(base.unemployment + 0.01)
+    const loss = (g: 'g1' | 'g5') => cut.disposablePerCapita[g] / base.disposablePerCapita[g] - 1
+    expect(loss('g1')).toBeLessThan(0)
+    expect(loss('g5')).toBeLessThan(loss('g1'))
+  })
+})

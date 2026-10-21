@@ -588,14 +588,17 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     // Moins de règles : les salaires du bas décrochent ; plus de règles : ils sont mieux protégés.
     const wageShare = byGroup((k) => GP.wages[k] * (1 + GP.smicGain[k] * (policy.smicBoost - P.regulationWages * deregulation)))
     const wageNorm = sum(wageShare)
+    // Les emplois en plus (ou en moins) par rapport au chômage de l'année de départ : ce sont surtout des chômeurs, souvent modestes,
+    // qui les trouvent (ou les perdent), à un salaire plus bas que la moyenne. Leurs salaires vont aux tranches où sont les chômeurs.
+    const marginalWages = (employment - laborForce * (1 - BASE.unemployment)) * avgWage * P.hireWageRatio
+    const wagesOf = (k: keyof ByGroup) => ((grossWages - marginalWages) * wageShare[k]) / wageNorm + marginalWages * GP.unemployment[k]
     const income = byGroup((k) => {
-      const wages = (grossWages * wageShare[k]) / wageNorm
+      const wages = wagesOf(k)
       const capital = (dividendsHome + bankDividends) * GP.dividends[k] + (interestBy.assureurs + depositInterest) * GP.wealth[k]
       const transfers =
         pensions * GP.pensions[k] + unemploymentBenefits * GP.unemployment[k] + family * GP.family[k] + minima * GP.minima[k] + otherTransfers * GP.population[k] + foodTransfer * GP.population[k]
       return wages + mixed * GP.mixed[k] + capital + transfers
     })
-    const wagesOf = (k: keyof ByGroup) => (grossWages * wageShare[k]) / wageNorm
     const employeeContrib = byGroup((k) => wagesOf(k) * BASE.employeeContribRate)
     const csgBase = byGroup((k) => wagesOf(k) + mixed * GP.mixed[k] + pensions * GP.pensions[k] * BASE.csgPensionShare)
     const csgRatio = BASE.csgRevenue / (BASE.grossWages + BASE.mixedIncome + BASE.pensions * BASE.csgPensionShare) / REF.csg

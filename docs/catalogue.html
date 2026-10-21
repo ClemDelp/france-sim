@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 409 paramètres du modèle et les 263 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 410 paramètres du modèle et les 263 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (409)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (410)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -1025,6 +1025,13 @@
   <td>0,04<br /><small>sensibilité</small></td>
   <td><span class="badge estime">estimé</span></td>
   <td><small>INSEE, budget des familles</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="hypothese" data-text="hirewageratio salaire des emplois en plus (ou perdus) rapporté au salaire moyen inégalités les personnes qui sortent du chômage, surtout parmi les plus modestes, sont souvent embauchées près du smic. leurs salaires vont aux tranches où se trouvent les chômeurs, pas en proportion des salaires de tous. ">
+  <td><code>hireWageRatio</code><br /><small>Inégalités</small></td>
+  <td><strong>Salaire des emplois en plus (ou perdus) rapporté au salaire moyen</strong><br /><small>Les personnes qui sortent du chômage, surtout parmi les plus modestes, sont souvent embauchées près du SMIC. Leurs salaires vont aux tranches où se trouvent les chômeurs, pas en proportion des salaires de tous.</small><br /><small>Utilisé par : Chômage → Revenu des 20 % les plus modestes</small></td>
+  <td>0,7<br /><small>part</small><br /><small>plage 0,5 à 1</small></td>
+  <td><span class="badge hypothese">hypothèse</span></td>
+  <td><small></small></td>
 </tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="educationproductivity gain de productivité si l’éducation double productivité  hanushek et woessmann">
   <td><code>educationProductivity</code><br /><small>Productivité</small></td>
@@ -3051,7 +3058,7 @@
 <tr data-file="liens" data-text="lowincome poverty revenu des 20 % les plus modestes pauvreté sigma.g1 le seuil de pauvreté est 60 % du revenu médian : ce qui compte, c’est le revenu des modestes par rapport au milieu, pas la moyenne."><td>Revenu des 20 % les plus modestes</td><td>Pauvreté</td><td>-</td><td><small><code>sigma.g1</code></small></td><td><small>Le seuil de pauvreté est 60 % du revenu médian : ce qui compte, c’est le revenu des modestes par rapport au milieu, pas la moyenne.</small></td></tr>
 <tr data-file="liens" data-text="gini poverty inégalités pauvreté sigma.g1 sigma.g5 à revenu moyen égal, des écarts plus grands laissent plus de gens sous le seuil."><td>Inégalités</td><td>Pauvreté</td><td>+</td><td><small><code>sigma.g1</code> <code>sigma.g5</code></small></td><td><small>À revenu moyen égal, des écarts plus grands laissent plus de gens sous le seuil.</small></td></tr>
 <tr data-file="liens" data-text="smicboost lowincome hausse du smic revenu des 20 % les plus modestes smicgain.g1 les salaires du bas progressent."><td>Hausse du SMIC</td><td>Revenu des 20 % les plus modestes</td><td>+</td><td><small><code>smicGain.g1</code></small></td><td><small>Les salaires du bas progressent.</small></td></tr>
-<tr data-file="liens" data-text="unemployment lowincome chômage revenu des 20 % les plus modestes unemployment.g1 le chômage frappe d’abord les plus modestes."><td>Chômage</td><td>Revenu des 20 % les plus modestes</td><td>-</td><td><small><code>unemployment.g1</code></small></td><td><small>Le chômage frappe d’abord les plus modestes.</small></td></tr>
+<tr data-file="liens" data-text="unemployment lowincome chômage revenu des 20 % les plus modestes unemployment.g1 hirewageratio le chômage frappe d’abord les plus modestes : un emploi retrouvé leur rapporte un salaire, un emploi perdu ne leur laisse qu’une allocation."><td>Chômage</td><td>Revenu des 20 % les plus modestes</td><td>-</td><td><small><code>unemployment.g1</code> <code>hireWageRatio</code></small></td><td><small>Le chômage frappe d’abord les plus modestes : un emploi retrouvé leur rapporte un salaire, un emploi perdu ne leur laisse qu’une allocation.</small></td></tr>
 <tr data-file="liens" data-text="socialbenefits lowincome prestations sociales revenu des 20 % les plus modestes family.g1 minima.g1 "><td>Prestations sociales</td><td>Revenu des 20 % les plus modestes</td><td>+</td><td><small><code>family.g1</code> <code>minima.g1</code></small></td><td><small></small></td></tr>
 <tr data-file="liens" data-text="poverty lifeexpectancy pauvreté espérance de vie povertylifeloss la pauvreté abîme la santé."><td>Pauvreté</td><td>Espérance de vie</td><td>-</td><td><small><code>povertyLifeLoss</code></small></td><td><small>La pauvreté abîme la santé.</small></td></tr>
 <tr data-file="liens" data-text="gini lifegap inégalités écart d’espérance de vie riches/pauvres lifegapelasticity incomeratiotopbottom plus les revenus s’écartent, plus les espérances de vie s’écartent."><td>Inégalités</td><td>Écart d’espérance de vie riches/pauvres</td><td>+</td><td><small><code>lifeGapElasticity</code> <code>incomeRatioTopBottom</code></small></td><td><small>Plus les revenus s’écartent, plus les espérances de vie s’écartent.</small></td></tr>

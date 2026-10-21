@@ -41,7 +41,7 @@ export const P = view([
   'povertyLifeLoss', 'lifeGapElasticity', 'retirementPhaseIn', 'retirementCohortGrowth', 'babyBoomYears', 'retirementCohortDecline', 'retirementCohortLongRun', 'youthDecline', 'migrantWorkingShare', 'migrantYoungShare',
   'workingAgeOutflow', 'youngOutflow', 'retirementExtraYears', 'seniorParticipation', 'participationTrend', 'participationMax', 'evTariffSlowdown',
   'nuclearElectricityPrice', 'electrificationElectricityPrice', 'oilElectricityPrice', 'electrificationInvestment', 'electricityExportLoss',
-  'oilElasticity', 'energyGdpElasticity', 'energyInflationPass', 'energyGroupPrice', 'educationProductivity', 'investmentProductivity',
+  'oilElasticity', 'energyGdpElasticity', 'energyInflationPass', 'energyGroupPrice', 'hireWageRatio', 'educationProductivity', 'investmentProductivity',
   'flightProductivity', 'educationStockSpeed', 'wageInertia', 'wageUnemployment', 'smicWageSpillover', 'priceWagePass', 'tariffPriceShare',
   'evTariffPrice', 'tariffInflation', 'vatPassThrough', 'gapInflation', 'monetizationInflation', 'panicInflation', 'pensionRealGain',
   'assetInflationShare', 'wealthTaxBase', 'wealthTaxAvoidance', 'flightMemory', 'flightWealthTax', 'wealthTaxThreshold', 'flightInheritance',

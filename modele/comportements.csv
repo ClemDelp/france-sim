@@ -64,6 +64,7 @@ energyGdpElasticity;0,6;élasticité;Énergie;Sensibilité de la consommation d�
 energyInflationPass;0,06;part;Prix;Part de la hausse du prix de l’énergie qui passe dans l’inflation;Avec un prix de l’énergie au détail qui ne suit qu’une partie du baril.;estimé;INSEE (poids de l’énergie dans les prix);;
 oilRetailPass;0,4;part;Énergie;Part d’une hausse du baril qui se retrouve dans le prix payé pour le carburant et le gaz;Les taxes fixes par litre amortissent les variations du pétrole brut.;estimé;DGEC, structure des prix des carburants;;
 energyGroupPrice;0,04;sensibilité;Inégalités;Poids de l’énergie dans les prix vus par chaque tranche;Les modestes dépensent une plus grande part de leur budget en énergie.;estimé;INSEE, budget des familles;;
+hireWageRatio;0,7;part;Inégalités;Salaire des emplois en plus (ou perdus) rapporté au salaire moyen;Les personnes qui sortent du chômage, surtout parmi les plus modestes, sont souvent embauchées près du SMIC. Leurs salaires vont aux tranches où se trouvent les chômeurs, pas en proportion des salaires de tous.;hypothèse;;0,5;1
 educationProductivity;0,006;taux;Productivité;Gain de productivité si l’éducation double;;hypothèse;Hanushek et Woessmann;;
 investmentProductivity;0,00005;taux par Md€;Productivité;Gain de productivité par milliard d’investissement public en plus;;estimé;FMI (2014), rendement de l’investissement public;;
 flightProductivity;0,01;sensibilité;Productivité;Perte de productivité quand les capitaux partent;;hypothèse;;;
