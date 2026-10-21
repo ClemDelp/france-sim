@@ -1,0 +1,39 @@
+# Vérifications automatiques : lancées à chaque envoi sur GitHub et à chaque proposition de modification (pull request).
+# Un contributeur qui modifie un fichier de modele/ voit ici, sans rien installer, si le modèle tient toujours debout.
+name: Vérifications
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verifier:
+    name: Lint, tests, compilation, documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer
+        run: npm ci
+
+      - name: Style du code (lint)
+        run: npm run lint
+
+      - name: Tests du modèle et du jeu
+        run: npm test
+
+      - name: Compilation
+        run: npm run build
+
+      # Un simple avertissement : un contributeur qui modifie un CSV depuis le site de GitHub ne peut pas régénérer le catalogue.
+      # La personne qui fusionne la proposition lance « npm run docs ».
+      - name: Documentation à jour (avertissement seulement)
+        run: |
+          npm run docs
+          git diff --quiet -- docs/catalogue.html docs/modele.html || echo "::warning::Le catalogue des paramètres n'est plus à jour : à la fusion, lancer « npm run docs » et ajouter docs/catalogue.html et docs/modele.html."
