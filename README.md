@@ -7,6 +7,9 @@ et ce que changent vraiment des idées qui paraissent simples (« taxons les ric
 
 C’est un **simulateur pédagogique** : il montre des mécanismes justes et des ordres de grandeur, pas des prévisions.
 
+**▶ Jouer en ligne : https://clemdelp.github.io/france-sim/** — sur ordinateur ou sur téléphone, où il s’installe
+comme une appli (hors ligne). Documentation : https://clemdelp.github.io/france-sim/docs/
+
 ## Documentation
 
 La documentation complète est dans [`docs/`](docs/index.html) : ouvrez `docs/index.html` dans un navigateur.
@@ -35,9 +38,10 @@ sauvegardée automatiquement.
 - **Depuis votre ordinateur, sur le même Wi-Fi** : `npm run phone`, puis ouvrez sur le téléphone l’adresse
   `Network: http://192.168.…:4173` affichée. On peut jouer tout de suite ; l’installation hors ligne demande en
   revanche un site en HTTPS.
-- **En ligne (HTTPS), pour l’installer** : publiez le dossier `dist/` (créé par `npm run build`) sur n’importe quel
-  hébergeur de site statique : GitHub Pages (dépôt public ou offre payante), Netlify (glisser-déposer `dist/` sur
-  app.netlify.com/drop), Cloudflare Pages, Vercel… Les chemins sont relatifs : le jeu marche aussi dans un sous-dossier.
+- **En ligne (HTTPS), pour l’installer** : le jeu est publié sur https://clemdelp.github.io/france-sim/.
+  Pour publier une nouvelle version : `npm run deploy` (construit le jeu, y joint la documentation et pousse le tout
+  sur la branche `gh-pages`, servie par GitHub Pages). Le dossier `dist/` peut aussi être déposé sur n’importe quel
+  hébergeur statique (Netlify, Cloudflare Pages, Vercel…) : les chemins sont relatifs, le jeu marche dans un sous-dossier.
 - **Installer** : sur Android (Chrome), bouton « 📲 Installer l’appli » de l’accueil ; sur iPhone (Safari),
   Partager ⬆️ puis « Sur l’écran d’accueil » (l’accueil du jeu l’explique).
 
