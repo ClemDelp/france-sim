@@ -10,7 +10,7 @@ export const nextElection = (year: number) => (year < FIRST_ELECTION ? FIRST_ELE
 /** La popularité suit le mécontentement social du modèle : à 1 (révolte), plus personne ne vous soutient. */
 export const popularity = (s: YearState) => Math.round(Math.min(92, Math.max(5, 62 - 55 * s.discontent)))
 
-/** Le score au second tour : une popularité de 40 % suffit tout juste à passer la barre des 50 %. */
+/** Le score au second tour : il faut plus de 40 % de popularité pour passer la barre des 50 % (à 40 % tout juste, c'est perdu). */
 export const voteShare = (pop: number) => Math.round((30 + 0.5 * pop) * 10) / 10
 
 export type Election = { year: number; popularity: number; vote: number; won: boolean }

@@ -10,7 +10,7 @@ import { num, sbn } from '../format'
 export function Popularity({ value, nextElection, year }: { value: number; nextElection: number | null; year: number }) {
   const tone = value >= 50 ? 'good' : value >= 40 ? 'mid' : 'bad'
   return (
-    <div className={`popularity pop-${tone}`} title="Votre popularité suit le climat social. À une élection, il faut au moins 40 % pour l’emporter.">
+    <div className={`popularity pop-${tone}`} title="Votre popularité suit le climat social. À une élection, il faut plus de 40 % pour l’emporter.">
       <span className="pop-heart">❤️</span>
       <div>
         <strong>{value} %</strong>
@@ -176,9 +176,11 @@ type CouncilProps = {
   controls?: ReactNode
   /** Ouvre l'avis détaillé d'un ministre (pour un avis sur la décision en préparation). */
   onAdvice?: (advice: Advice) => void
+  /** Les leviers bougés dont l'effet est lent, et pourquoi. */
+  slow?: string[]
 }
 
-export function Council({ advice, preview, year, cost, capital, onCancel, endingTitle, phone = false, controls, onAdvice }: CouncilProps) {
+export function Council({ advice, preview, year, cost, capital, onCancel, endingTitle, phone = false, controls, onAdvice, slow = [] }: CouncilProps) {
   const [desktopOpen, setDesktopOpen] = useState(true)
   const [phoneOpen, setPhoneOpen] = useState(false)
   const open = phone ? phoneOpen : desktopOpen
@@ -246,12 +248,17 @@ export function Council({ advice, preview, year, cost, capital, onCancel, ending
                 {endingTitle ? <strong className="bad">⚠️ {endingTitle} : la partie serait perdue.</strong> : null}
               </div>
             ) : null}
+            {slow.map((note) => (
+              <p key={note} className="council-slow">
+                ⏳ {note}
+              </p>
+            ))}
             {controls ? (
-            // Avancer referme le panneau : on voit tout de suite ce que l'année a changé.
-            <div className="council-controls" onClick={(e) => ((e.target as HTMLElement).closest('button') ? setOpen(false) : null)} role="presentation">
-              {controls}
-            </div>
-          ) : null}
+              // Avancer referme le panneau : on voit tout de suite ce que l'année a changé.
+              <div className="council-controls" onClick={(e) => ((e.target as HTMLElement).closest('button') ? setOpen(false) : null)} role="presentation">
+                {controls}
+              </div>
+            ) : null}
             {over ? <p className="council-over">🏛️ Trop de réformes d’un coup : le Parlement ne votera pas tout cette année ({cost} points pour {capital}). Étalez-les sur plusieurs années.</p> : null}
             <div className="council-advice">
               {advice.map((a) => {

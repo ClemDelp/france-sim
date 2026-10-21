@@ -64,7 +64,7 @@ naturalUnemployment;0,07;part;Emploi;Chômage d’équilibre (sous lequel les sa
 smic;1823;€/mois;Revenus;SMIC brut mensuel;Décret 2025
 worldGrowth;0,022;taux;Monde;Croissance du commerce mondial (en volume) à partir de 2026;FMI, hypothèse
 worldInflation;0,02;taux;Monde;Inflation chez nos partenaires;BCE, hypothèse
-oilLongRun;78;$/baril;Monde;Prix du pétrole après la crise d’Ormuz (2029 et après);Hypothèse
+oilLongRun;78;$/baril;Monde;Prix du pétrole de long terme (2029 et après);Hypothèse
 ecbLongRun;0,0225;taux;Monde;Taux de la BCE à long terme;Hypothèse
 startYear;2025;année;Simulation;Année de départ de la simulation;Choix du simulateur
 initialGrowth;0,008;taux;Économie;Croissance de l’année de départ;INSEE, prévision 2025

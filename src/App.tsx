@@ -309,7 +309,7 @@ function App() {
         text: 'Vous venez d’arriver à l’Élysée. Chaque décision que vous prendrez fera bouger la France entière : l’emploi, les prix, la dette, la pauvreté, la colère… Voici comment piloter le pays.',
       },
       { target: '.kpis', view: 'pays', title: 'Votre tableau de bord', text: 'Les chiffres clés du pays, et leur évolution. Cliquez sur l’un d’eux pour comprendre ce qui le fait monter ou baisser.' },
-      { target: '.popularity', view: 'pays', title: 'Votre popularité', text: 'Elle suit le climat social. Élection en 2027 puis tous les cinq ans : sous 40 % de popularité, vous êtes battu.' },
+      { target: '.popularity', view: 'pays', title: 'Votre popularité', text: 'Elle suit le climat social. Élection en 2027 puis tous les cinq ans : à 40 % de popularité ou moins, vous êtes battu.' },
       { target: '.levers', view: 'decider', title: 'Vos leviers', text: 'Impôts, dépenses, retraites, énergie, commerce, dette… Bougez un curseur : rien ne change tant que vous n’avancez pas dans le temps. Le ⓘ explique chaque levier.' },
       { target: '.council', view: 'decider', title: 'Le Conseil des ministres', text: 'Vos ministres réagissent à chaque décision avant que vous la preniez. Touchez un avis : vous verrez la part de chaque levier, par quels mécanismes, et qui paie. Et attention au capital politique : on ne peut pas tout réformer la même année. Plus vous êtes populaire, plus vous avez de points.' },
       { target: phone ? '.phone-play' : '.time-buttons', title: 'Le temps', text: phone ? 'Le grand bouton ▶ fait avancer d’un an. Pour plusieurs années d’un coup, ouvrez le Conseil des ministres (la ligne au-dessus).' : 'Avancez d’un an pour voir l’effet de vos choix, ou de plusieurs années d’un coup. Le jeu s’arrête de lui-même en cas de crise ou d’élection.' },
@@ -574,7 +574,9 @@ function App() {
                     key={h}
                     type="button"
                     className={draft.cancelHolder === h ? 'chip is-on' : 'chip'}
-                    onClick={() => setDraft((d) => ({ ...d, cancelHolder: h, cancelShare: h === 'monde' ? 0.5 : 1 }))}
+                    disabled={scenario?.locked?.keys.includes('cancelShare')}
+                  title={scenario?.locked?.keys.includes('cancelShare') ? scenario.locked.why : undefined}
+                  onClick={() => setDraft((d) => ({ ...d, cancelHolder: h, cancelShare: h === 'monde' ? 0.5 : 1 }))}
                   >
                     {h === 'bce' ? 'Celle de la BCE' : h === 'monde' ? 'La moitié de celle des étrangers' : h === 'assureurs' ? 'Celle de l’assurance-vie' : 'Celle des banques'}
                   </button>
@@ -1052,6 +1054,7 @@ function App() {
         phone={phone}
         controls={phone ? timeButtons : null}
         onAdvice={setAdviceOpen}
+        slow={LEVER_GROUPS.flatMap((g) => g.levers).filter((l) => l.key in draft && l.delay).map((l) => l.delay!)}
       />
 
       {adviceOpen && detail ? (

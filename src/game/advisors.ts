@@ -67,7 +67,7 @@ export function adviseState(s: YearState, popularity: number, yearsToElection: n
     out.push({ who: 'interieur', mood: 'warn', text: 'Grèves, blocages : la colère monte. Une mesure de plus et ça peut basculer.' })
   }
   if (yearsToElection <= 1 && popularity < 45) {
-    out.push({ who: 'interieur', mood: 'warn', text: `L’élection approche et vous n’êtes qu’à ${popularity} % d’opinions favorables. Il faut 40 % pour l’emporter.` })
+    out.push({ who: 'interieur', mood: 'warn', text: `L’élection approche et vous n’êtes qu’à ${popularity} % d’opinions favorables. Il faut dépasser 40 % pour l’emporter.` })
   }
   if (s.unemployment > 0.09) {
     out.push({ who: 'travail', mood: 'warn', text: `${num(s.unemployment * 100, 1)} % de chômage : les plans sociaux se multiplient.` })

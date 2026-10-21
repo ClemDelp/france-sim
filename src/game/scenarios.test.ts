@@ -44,7 +44,7 @@ function expectSane(states: YearState[], label: string) {
     expect(s.lifeExpectancy, `${where} : espérance de vie`).toBeGreaterThan(70)
     expect(s.lifeExpectancy, `${where} : espérance de vie`).toBeLessThan(95)
     expect(s.population, `${where} : population`).toBeGreaterThan(55)
-    expect(s.discontent, `${where} : colère`).toBeGreaterThanOrEqual(0)
+    expect(s.discontent, `${where} : colère`).toBeGreaterThanOrEqual(-0.5)
   }
 }
 

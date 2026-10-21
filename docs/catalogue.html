@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 412 paramètres du modèle et les 267 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 420 paramètres du modèle et les 268 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (412)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (420)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -477,9 +477,9 @@
   <td><span class="badge mesure">mesuré</span></td>
   <td><small>BCE, hypothèse</small></td>
 </tr>
-<tr data-file="donnees-2025" data-reliability="mesure" data-text="oillongrun prix du pétrole après la crise d’ormuz (2029 et après) monde  hypothèse">
+<tr data-file="donnees-2025" data-reliability="mesure" data-text="oillongrun prix du pétrole de long terme (2029 et après) monde  hypothèse">
   <td><code>oilLongRun</code><br /><small>Monde</small></td>
-  <td><strong>Prix du pétrole après la crise d’Ormuz (2029 et après)</strong></td>
+  <td><strong>Prix du pétrole de long terme (2029 et après)</strong></td>
   <td>78<br /><small>$/baril</small></td>
   <td><span class="badge mesure">mesuré</span></td>
   <td><small>Hypothèse</small></td>
@@ -963,6 +963,20 @@
   <td><span class="badge estime">estimé</span></td>
   <td><small>CRE, RTE, Futurs énergétiques 2050</small></td>
 </tr>
+<tr data-file="comportements" data-reliability="estime" data-text="nuclearbuildrate hausse maximale de la part du nucléaire en un an énergie construire un réacteur prend plus de dix ans : le programme de six epr2 (≈ 10 gw) d’ici 2035-2040 ajoute au mieux environ un point de part par an. rte, futurs énergétiques 2050, programme epr2, ordre de grandeur">
+  <td><code>nuclearBuildRate</code><br /><small>Énergie</small></td>
+  <td><strong>Hausse maximale de la part du nucléaire en un an</strong><br /><small>Construire un réacteur prend plus de dix ans : le programme de six EPR2 (≈ 10 GW) d’ici 2035-2040 ajoute au mieux environ un point de part par an.</small><br /><small>Utilisé par : Part du nucléaire → Prix de l’électricité</small></td>
+  <td>0,01<br /><small>part par an</small><br /><small>plage 0,005 à 0,02</small></td>
+  <td><span class="badge estime">estimé</span></td>
+  <td><small>RTE, Futurs énergétiques 2050, programme EPR2, ordre de grandeur</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="hypothese" data-text="nuclearcloserate baisse maximale de la part du nucléaire en un an énergie fermer des réacteurs va plus vite que d’en construire, mais il faut remplacer leur production. ">
+  <td><code>nuclearCloseRate</code><br /><small>Énergie</small></td>
+  <td><strong>Baisse maximale de la part du nucléaire en un an</strong><br /><small>Fermer des réacteurs va plus vite que d’en construire, mais il faut remplacer leur production.</small><br /><small>Utilisé par : Part du nucléaire → Prix de l’électricité</small></td>
+  <td>0,03<br /><small>part par an</small><br /><small>plage 0,02 à 0,05</small></td>
+  <td><span class="badge hypothese">hypothèse</span></td>
+  <td><small></small></td>
+</tr>
 <tr data-file="comportements" data-reliability="estime" data-text="electrificationelectricityprice hausse du prix de l’électricité quand la demande d’électricité monte énergie il faut construire des réseaux et des centrales. rte, futurs énergétiques 2050">
   <td><code>electrificationElectricityPrice</code><br /><small>Énergie</small></td>
   <td><strong>Hausse du prix de l’électricité quand la demande d’électricité monte</strong><br /><small>Il faut construire des réseaux et des centrales.</small><br /><small>Utilisé par : Part du pétrole et du gaz → Prix de l’électricité</small></td>
@@ -983,6 +997,20 @@
   <td>15<br /><small>Md€ par point</small></td>
   <td><span class="badge estime">estimé</span></td>
   <td><small>I4CE, panorama des financements climat</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="hypothese" data-text="electrificationsubstitution part de l’investissement d’électrification qui remplace un achat prévu de toute façon énergie une pompe à chaleur à la place d’une chaudière, une voiture électrique à la place d’une thermique : seul le surcoût est une dépense en plus. ">
+  <td><code>electrificationSubstitution</code><br /><small>Énergie</small></td>
+  <td><strong>Part de l’investissement d’électrification qui remplace un achat prévu de toute façon</strong><br /><small>Une pompe à chaleur à la place d’une chaudière, une voiture électrique à la place d’une thermique : seul le surcoût est une dépense en plus.</small><br /><small>Utilisé par : Rythme d’électrification → Investissement des entreprises</small></td>
+  <td>0,4<br /><small>part</small><br /><small>plage 0,2 à 0,6</small></td>
+  <td><span class="badge hypothese">hypothèse</span></td>
+  <td><small></small></td>
+</tr>
+<tr data-file="comportements" data-reliability="hypothese" data-text="electrificationimportshare part importée des équipements d’électrification énergie pompes à chaleur, batteries, véhicules et panneaux sont en bonne partie fabriqués à l’étranger. ">
+  <td><code>electrificationImportShare</code><br /><small>Énergie</small></td>
+  <td><strong>Part importée des équipements d’électrification</strong><br /><small>Pompes à chaleur, batteries, véhicules et panneaux sont en bonne partie fabriqués à l’étranger.</small><br /><small>Utilisé par : Rythme d’électrification → Importations</small></td>
+  <td>0,55<br /><small>part</small><br /><small>plage 0,35 à 0,75</small></td>
+  <td><span class="badge hypothese">hypothèse</span></td>
+  <td><small></small></td>
 </tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="electricityexportloss perte d’exportations quand l’électricité renchérit commerce  ">
   <td><code>electricityExportLoss</code><br /><small>Commerce</small></td>
@@ -1222,10 +1250,10 @@
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
-<tr data-file="comportements" data-reliability="hypothese" data-text="inheritanceerosion fonte de l’assiette quand les droits de succession montent fiscalité du capital donations anticipées, assurance-vie, départs. ">
+<tr data-file="comportements" data-reliability="hypothese" data-text="inheritanceerosion fonte de l’assiette quand les droits de succession montent fiscalité du capital donations anticipées, assurance-vie, départs : l’assiette fond de plus en plus vite, les recettes plafonnent vers 50 % de taux moyen. ">
   <td><code>inheritanceErosion</code><br /><small>Fiscalité du capital</small></td>
-  <td><strong>Fonte de l’assiette quand les droits de succession montent</strong><br /><small>Donations anticipées, assurance-vie, départs.</small><br /><small>Utilisé par : Droits de succession → Recettes publiques</small></td>
-  <td>0,5<br /><small>sensibilité</small></td>
+  <td><strong>Fonte de l’assiette quand les droits de succession montent</strong><br /><small>Donations anticipées, assurance-vie, départs : l’assiette fond de plus en plus vite, les recettes plafonnent vers 50 % de taux moyen.</small><br /><small>Utilisé par : Droits de succession → Recettes publiques</small></td>
+  <td>2,5<br /><small>sensibilité</small><br /><small>plage 1,5 à 4</small></td>
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
@@ -1247,6 +1275,20 @@
   <td><code>maxEmployment</code><br /><small>Emploi</small></td>
   <td><strong>Part maximale des actifs en emploi</strong><br /><small>Utilisé par : PIB (croissance) → Chômage</small></td>
   <td>0,985<br /><small>part</small><br /><small>plage 0,975 à 0,99</small></td>
+  <td><span class="badge hypothese">hypothèse</span></td>
+  <td><small></small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estime" data-text="okunelasticity part d’un écart d’activité qui se traduit en emplois la même année emploi loi d’okun : en france, 1 % d’activité en plus ou en moins ne fait bouger le chômage que d’environ 0,3 à 0,5 point la même année (les entreprises gardent ou recrutent leurs salariés avec retard). loi d’okun, estimations pour la france (insee, ofce), ordre de grandeur">
+  <td><code>okunElasticity</code><br /><small>Emploi</small></td>
+  <td><strong>Part d’un écart d’activité qui se traduit en emplois la même année</strong><br /><small>Loi d’Okun : en France, 1 % d’activité en plus ou en moins ne fait bouger le chômage que d’environ 0,3 à 0,5 point la même année (les entreprises gardent ou recrutent leurs salariés avec retard).</small><br /><small>Utilisé par : PIB (croissance) → Chômage</small></td>
+  <td>0,5<br /><small>part</small><br /><small>plage 0,3 à 0,8</small></td>
+  <td><span class="badge estime">estimé</span></td>
+  <td><small>Loi d’Okun, estimations pour la France (INSEE, OFCE), ordre de grandeur</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="hypothese" data-text="okunpersistence part du retard d’emploi qui reste l’année suivante emploi le retard d’embauche (ou les salariés gardés) se résorbe en quelques années. ">
+  <td><code>okunPersistence</code><br /><small>Emploi</small></td>
+  <td><strong>Part du retard d’emploi qui reste l’année suivante</strong><br /><small>Le retard d’embauche (ou les salariés gardés) se résorbe en quelques années.</small><br /><small>Utilisé par : PIB (croissance) → Chômage</small></td>
+  <td>0,5<br /><small>part</small><br /><small>plage 0,3 à 0,7</small></td>
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
@@ -1548,6 +1590,20 @@
   <td><code>unrestMemory</code><br /><small>Mécontentement social</small></td>
   <td><strong>Mémoire du mécontentement</strong><br /><small>Part de la colère d’une année qui reste l’année suivante.</small><br /><small>Utilisé par : Mécontentement social → Fin de partie</small></td>
   <td>0,5<br /><small>part</small><br /><small>plage 0,3 à 0,7</small></td>
+  <td><span class="badge hypothese">hypothèse</span></td>
+  <td><small></small></td>
+</tr>
+<tr data-file="comportements" data-reliability="hypothese" data-text="goodnewsweight poids des bonnes nouvelles par rapport aux mauvaises mécontentement social un niveau de vie qui progresse, un chômage bas ou une pauvreté qui recule apaisent le pays, mais on remarque davantage ce qu’on perd que ce qu’on gagne (biais de négativité). ">
+  <td><code>goodNewsWeight</code><br /><small>Mécontentement social</small></td>
+  <td><strong>Poids des bonnes nouvelles par rapport aux mauvaises</strong><br /><small>Un niveau de vie qui progresse, un chômage bas ou une pauvreté qui recule apaisent le pays, mais on remarque davantage ce qu’on perd que ce qu’on gagne (biais de négativité).</small></td>
+  <td>0,5<br /><small>part</small><br /><small>plage 0,3 à 0,8</small></td>
+  <td><span class="badge hypothese">hypothèse</span></td>
+  <td><small></small></td>
+</tr>
+<tr data-file="comportements" data-reliability="hypothese" data-text="serenityfloor climat social le plus serein possible mécontentement social même dans un pays qui va bien, il reste des mécontents : la popularité ne dépasse pas environ 78 %. ">
+  <td><code>serenityFloor</code><br /><small>Mécontentement social</small></td>
+  <td><strong>Climat social le plus serein possible</strong><br /><small>Même dans un pays qui va bien, il reste des mécontents : la popularité ne dépasse pas environ 78 %.</small></td>
+  <td>-0,3<br /><small>indice</small><br /><small>plage -0,5 à -0,15</small></td>
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
@@ -2963,8 +3019,8 @@
 <tr data-file="liens" data-text="smicboost unemployment hausse du smic chômage smicjobloss un travail peu qualifié plus cher : un peu moins d’embauches."><td>Hausse du SMIC</td><td>Chômage</td><td>+</td><td><small><code>smicJobLoss</code></small></td><td><small>Un travail peu qualifié plus cher : un peu moins d’embauches.</small></td></tr>
 <tr data-file="liens" data-text="smicboost gini hausse du smic inégalités smicgain.g1 smicgain.g2 les salaires du bas progressent plus vite que ceux du haut."><td>Hausse du SMIC</td><td>Inégalités</td><td>-</td><td><small><code>smicGain.g1</code> <code>smicGain.g2</code></small></td><td><small>Les salaires du bas progressent plus vite que ceux du haut.</small></td></tr>
 <tr data-file="liens" data-text="electrification fossilshare rythme d’électrification part du pétrole et du gaz  on remplace pétrole et gaz par l’électricité."><td>Rythme d’électrification</td><td>Part du pétrole et du gaz</td><td>-</td><td><small></small></td><td><small>On remplace pétrole et gaz par l’électricité.</small></td></tr>
-<tr data-file="liens" data-text="electrification privateinvestment rythme d’électrification investissement des entreprises electrificationinvestment il faut acheter bornes, pompes à chaleur, véhicules, réseaux."><td>Rythme d’électrification</td><td>Investissement des entreprises</td><td>+</td><td><small><code>electrificationInvestment</code></small></td><td><small>Il faut acheter bornes, pompes à chaleur, véhicules, réseaux.</small></td></tr>
-<tr data-file="liens" data-text="nuclearshare electricityprice part du nucléaire prix de l’électricité nuclearelectricityprice le parc nucléaire existant produit une électricité bon marché."><td>Part du nucléaire</td><td>Prix de l’électricité</td><td>-</td><td><small><code>nuclearElectricityPrice</code></small></td><td><small>Le parc nucléaire existant produit une électricité bon marché.</small></td></tr>
+<tr data-file="liens" data-text="electrification privateinvestment rythme d’électrification investissement des entreprises electrificationinvestment electrificationsubstitution il faut acheter bornes, pompes à chaleur, véhicules, réseaux (une partie remplace des achats prévus de toute façon)."><td>Rythme d’électrification</td><td>Investissement des entreprises</td><td>+</td><td><small><code>electrificationInvestment</code> <code>electrificationSubstitution</code></small></td><td><small>Il faut acheter bornes, pompes à chaleur, véhicules, réseaux (une partie remplace des achats prévus de toute façon).</small></td></tr>
+<tr data-file="liens" data-text="nuclearshare electricityprice part du nucléaire prix de l’électricité nuclearelectricityprice nuclearbuildrate nuclearcloserate le parc nucléaire existant produit une électricité bon marché."><td>Part du nucléaire</td><td>Prix de l’électricité</td><td>-</td><td><small><code>nuclearElectricityPrice</code> <code>nuclearBuildRate</code> <code>nuclearCloseRate</code></small></td><td><small>Le parc nucléaire existant produit une électricité bon marché.</small></td></tr>
 <tr data-file="liens" data-text="tariffs imports droits de douane importations tariffimportcut les produits étrangers deviennent plus chers."><td>Droits de douane</td><td>Importations</td><td>-</td><td><small><code>tariffImportCut</code></small></td><td><small>Les produits étrangers deviennent plus chers.</small></td></tr>
 <tr data-file="liens" data-text="tariffs inflation droits de douane inflation tariffinflation tariffpriceshare les consommateurs paient une grande partie des droits de douane."><td>Droits de douane</td><td>Inflation</td><td>+</td><td><small><code>tariffInflation</code> <code>tariffPriceShare</code></small></td><td><small>Les consommateurs paient une grande partie des droits de douane.</small></td></tr>
 <tr data-file="liens" data-text="tariffs exports droits de douane exportations tariffretaliation les autres pays répliquent en taxant nos produits."><td>Droits de douane</td><td>Exportations</td><td>-</td><td><small><code>tariffRetaliation</code></small></td><td><small>Les autres pays répliquent en taxant nos produits.</small></td></tr>
@@ -3050,7 +3106,7 @@
 <tr data-file="liens" data-text="gdp imports pib (croissance) importations overheatingimports overheatingthreshold une économie qui tourne à plein importe plus."><td>PIB (croissance)</td><td>Importations</td><td>+</td><td><small><code>overheatingImports</code> <code>overheatingThreshold</code></small></td><td><small>Une économie qui tourne à plein importe plus.</small></td></tr>
 <tr data-file="liens" data-text="gdp energyimports pib (croissance) facture énergétique energygdpelasticity "><td>PIB (croissance)</td><td>Facture énergétique</td><td>+</td><td><small><code>energyGdpElasticity</code></small></td><td><small></small></td></tr>
 <tr data-file="liens" data-text="gdp inflation pib (croissance) inflation gapinflation une économie en surchauffe fait monter les prix."><td>PIB (croissance)</td><td>Inflation</td><td>+</td><td><small><code>gapInflation</code></small></td><td><small>Une économie en surchauffe fait monter les prix.</small></td></tr>
-<tr data-file="liens" data-text="gdp unemployment pib (croissance) chômage maxemployment plus d’activité, plus d’emplois."><td>PIB (croissance)</td><td>Chômage</td><td>-</td><td><small><code>maxEmployment</code></small></td><td><small>Plus d’activité, plus d’emplois.</small></td></tr>
+<tr data-file="liens" data-text="gdp unemployment pib (croissance) chômage maxemployment okunelasticity okunpersistence plus d’activité, plus d’emplois, mais avec retard : les entreprises gardent ou recrutent leurs salariés progressivement."><td>PIB (croissance)</td><td>Chômage</td><td>-</td><td><small><code>maxEmployment</code> <code>okunElasticity</code> <code>okunPersistence</code></small></td><td><small>Plus d’activité, plus d’emplois, mais avec retard : les entreprises gardent ou recrutent leurs salariés progressivement.</small></td></tr>
 <tr data-file="liens" data-text="gdp profits pib (croissance) profits des entreprises  "><td>PIB (croissance)</td><td>Profits des entreprises</td><td>+</td><td><small></small></td><td><small></small></td></tr>
 <tr data-file="liens" data-text="gdp taxes pib (croissance) recettes publiques  presque tous les impôts suivent l’activité."><td>PIB (croissance)</td><td>Recettes publiques</td><td>+</td><td><small></small></td><td><small>Presque tous les impôts suivent l’activité.</small></td></tr>
 <tr data-file="liens" data-text="profits taxes profits des entreprises recettes publiques corporatetaxrevenue "><td>Profits des entreprises</td><td>Recettes publiques</td><td>+</td><td><small><code>corporateTaxRevenue</code></small></td><td><small></small></td></tr>
@@ -3188,6 +3244,7 @@
 <tr data-file="liens" data-text="health discontent dépenses de santé mécontentement social unrestservicesrange couper dans les hôpitaux et les soins se voit vite : la colère monte."><td>Dépenses de santé</td><td>Mécontentement social</td><td>-</td><td><small><code>unrestServicesRange</code></small></td><td><small>Couper dans les hôpitaux et les soins se voit vite : la colère monte.</small></td></tr>
 <tr data-file="liens" data-text="education discontent éducation mécontentement social unrestservicesrange des classes sans professeur, des écoles fermées : les familles protestent."><td>Éducation</td><td>Mécontentement social</td><td>-</td><td><small><code>unrestServicesRange</code></small></td><td><small>Des classes sans professeur, des écoles fermées : les familles protestent.</small></td></tr>
 <tr data-file="liens" data-text="otherservices discontent autres services publics mécontentement social unrestservicesrange police, justice, mairies : des services qui reculent nourrissent le mécontentement."><td>Autres services publics</td><td>Mécontentement social</td><td>-</td><td><small><code>unrestServicesRange</code></small></td><td><small>Police, justice, mairies : des services qui reculent nourrissent le mécontentement.</small></td></tr>
+<tr data-file="liens" data-text="electrification imports rythme d’électrification importations electrificationimportshare une bonne partie des équipements (pompes à chaleur, batteries, véhicules) est importée."><td>Rythme d’électrification</td><td>Importations</td><td>+</td><td><small><code>electrificationImportShare</code></small></td><td><small>Une bonne partie des équipements (pompes à chaleur, batteries, véhicules) est importée.</small></td></tr>
         </tbody></table></div>
         <script>
           const input = document.querySelector('.search')

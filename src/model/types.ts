@@ -211,6 +211,8 @@ export type YearState = {
   oil: number
   fossilShare: number
   electricityPrice: number
+  /** Part du nucléaire réellement atteinte dans l'électricité (suit le levier avec retard). */
+  nuclearShare: number
   energyPrice: number
   currentAccount: number
   // Entreprises et banques

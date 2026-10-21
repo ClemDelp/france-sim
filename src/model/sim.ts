@@ -66,18 +66,30 @@ type Carry = {
   productivity: number
   avgWage: number
   avgPension: number
+  /** Pouvoir d'achat d'une pension déjà liquidée, par rapport à l'année de départ (1 = intact) : seule l'indexation le fait bouger. */
+  pensionPower: number
   smic: number
   smicBoost: number
   vat: number
   tariffs: number
   tariffChinaEV: number
   inflation: number
+  /** La part de l'inflation de l'an dernier due à un changement de TVA (un saut de prix ponctuel). */
+  vatInflation: number
+  /** Le niveau des prix dû aux changements de TVA depuis le départ (1 = aucun). */
+  vatPrice: number
   unemployment: number
   gap: number
+  /** Le taux d'emploi « proportionnel » de l'an dernier (si l'emploi suivait l'activité un pour un). */
+  proportionalRate: number
+  /** L'écart (en log) entre l'emploi réel et l'emploi proportionnel l'an dernier : les salariés gardés ou pas encore embauchés. */
+  employmentGap: number
   gdpReal: number
   gdp: number
   energyPrice: number
   fossilShare: number
+  /** La part du nucléaire réellement atteinte (on ne construit pas un réacteur en un an). */
+  nuclearShare: number
   workingAge: number
   retirees: number
   young: number
@@ -151,18 +163,24 @@ function initialCarry(): Carry {
     productivity: BASE.gdp / (BASE.workingAge * BASE.participation * (1 - BASE.unemployment)),
     avgWage: BASE.grossWages / (BASE.workingAge * BASE.participation * (1 - BASE.unemployment)),
     avgPension: BASE.avgPension,
+    pensionPower: 1,
     smic: BASE.smic,
     smicBoost: 0,
     vat: REF.vat,
     tariffs: REF.tariffs,
     tariffChinaEV: REF.tariffChinaEV,
     inflation: BASE.inflationAnchor,
+    vatInflation: 0,
+    vatPrice: 1,
     unemployment: BASE.unemployment,
+    proportionalRate: 1 - BASE.unemployment,
+    employmentGap: 0,
     gap: 0,
     gdpReal: BASE.gdp,
     gdp: BASE.gdp,
     energyPrice: 1,
     fossilShare: BASE.fossilShare,
+    nuclearShare: REF.nuclearShare,
     workingAge: BASE.workingAge,
     retirees: BASE.retirees,
     young: BASE.population - BASE.workingAge - BASE.retirees,
@@ -324,7 +342,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const preventionStock = prev.preventionStock + P.preventionStockSpeed * ((policy.prevention - REF.prevention) - prev.preventionStock)
   const lifeTrend = BASE.lifeExpectancy + P.lifeTrend * yearsIn
   // L'âge effectif rejoint la cible progressivement : +3 mois par an au plus (la réforme de 2023 reprend en 2028), −1 an par an au plus.
-  const ageFloor = year < BASE.reformPauseUntil ? Math.min(prev.retirementAge, policy.retirementAge) : prev.retirementAge - 1
+  // Baisser l'âge se fait aussi progressivement : un an par an au plus (sinon des millions de départs la même année).
+  const ageFloor = prev.retirementAge - 1
   const retirementAge = init ? BASE.retirementAgeEffective : clamp(policy.retirementAge, ageFloor, year < BASE.reformPauseUntil ? prev.retirementAge : prev.retirementAge + P.retirementPhaseIn)
   const ageChange = retirementAge - prev.retirementAge
   // Les générations du baby-boom finissent de partir vers 2040 ; ensuite, les générations qui arrivent à la retraite sont un peu moins nombreuses.
@@ -342,7 +361,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     culture: root(policy.softPower / REF.softPower),
     aid: root(policy.developmentAid / REF.developmentAid),
     climate: 1 + Math.max(0, 1 - prev.frenchEmissions / (BASE.fossilEmissions + BASE.electricityEmissions + BASE.otherEmissions)),
-    stability: Math.max(0.1, 1 - Math.min(0.9, prev.discontent) - (prev.rescueYears > 0 ? 0.2 : 0)),
+    stability: Math.max(0.1, 1 - clamp(prev.discontent, 0, 0.9) - (prev.rescueYears > 0 ? 0.2 : 0)),
   }
   const weights = { military: P.influenceMilitary, economy: P.influenceEconomy, culture: P.influenceCulture, aid: P.influenceAid, climate: P.influenceClimate, stability: P.influenceStability }
   const totalWeight = Object.values(weights).reduce((a, w) => a + w, 0)
@@ -417,7 +436,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const carbonExtra = policy.carbonTax - REF.carbonTax
   const electrifyPace = policy.electrification * (1 - P.evTariffSlowdown * Math.max(0, policy.tariffChinaEV - REF.tariffChinaEV)) + (P.carbonElectrify * Math.max(0, carbonExtra)) / 100
   const fossilShare = init ? prev.fossilShare : prev.fossilShare * (1 - electrifyPace)
-  const electricityPrice = 1 + P.nuclearElectricityPrice * (REF.nuclearShare - policy.nuclearShare) + P.electrificationElectricityPrice * (BASE.fossilShare - fossilShare) + P.oilElectricityPrice * (world.oil / BASE.oil - 1)
+  // Le parc nucléaire suit l'objectif avec retard : construire un réacteur prend plus de dix ans, en fermer va plus vite.
+  const nuclearShare = init ? REF.nuclearShare : clamp(policy.nuclearShare, prev.nuclearShare - P.nuclearCloseRate, prev.nuclearShare + P.nuclearBuildRate)
+  const electricityPrice = 1 + P.nuclearElectricityPrice * (REF.nuclearShare - nuclearShare) + P.electrificationElectricityPrice * (BASE.fossilShare - fossilShare) + P.oilElectricityPrice * (world.oil / BASE.oil - 1)
   // Le prix payé pour le carburant et le gaz ne suit qu'une partie du baril : taxes fixes par litre, transport, distribution.
   const fossilPrice = 1 + P.oilRetailPass * (world.oil / BASE.oil - 1) + P.carbonRetailPass * carbonExtra
   const energyPrice = (fossilShare * fossilPrice + (1 - fossilShare) * electricityPrice) / (BASE.fossilShare + (1 - BASE.fossilShare))
@@ -439,6 +460,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     ? 0
     : P.wageInertia * prev.inflation + (1 - P.wageInertia) * BASE.inflationAnchor + productivityGrowth + P.wageUnemployment * (naturalUnemployment - prev.unemployment) + P.smicWageSpillover * smicStep
   const tariffStep = (policy.tariffs - prev.tariffs) * P.tariffPriceShare + (policy.tariffChinaEV - prev.tariffChinaEV) * P.evTariffPrice
+  // Un changement de TVA se répercute en grande partie dans les prix, une seule fois.
+  const vatInflation = init ? 0 : (P.vatPassThrough * (policy.vat - prev.vat)) / (1 + prev.vat)
+  const vatPrice = prev.vatPrice * (1 + vatInflation)
   const inflation = init
     ? BASE.inflationAnchor
     : clamp(
@@ -446,7 +470,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
           (1 - P.priceWagePass) * BASE.inflationAnchor +
           P.energyInflationPass * energyInflation +
           P.tariffInflation * tariffStep +
-          (P.vatPassThrough * (policy.vat - prev.vat)) / (1 + prev.vat) +
+          vatInflation +
           P.gapInflation * prev.gap +
           P.monetizationInflation * policy.monetization +
           P.panicInflation * prev.panic +
@@ -469,7 +493,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // Le taux à 10 ans reflète les taux de la BCE attendus pour les années à venir : il ne suit qu'en partie un changement soudain.
   const ecbExpected = init ? world.ecbRate : prev.ecbExpected + P.rateExpectationSpeed * (world.ecbRate - prev.ecbExpected)
   // Quand la BCE rachète massivement de la dette, les taux longs baissent.
-  const rate = ecbExpected + (BASE.termPremium - P.qeTermPremium * world.qe) / 100 + premium + P.inflationRatePass * Math.max(0, prev.inflation - P.inflationRateThreshold)
+  const rate = ecbExpected + (BASE.termPremium - P.qeTermPremium * world.qe) / 100 + premium + P.inflationRatePass * Math.max(0, prev.inflation - prev.vatInflation - P.inflationRateThreshold)
   const effectiveRate = init ? prev.effectiveRate : prev.effectiveRate + (rate - prev.effectiveRate) / P.debtRollover
   const loanRate = world.ecbRate + BASE.firmLoanSpread + P.firmPremiumPass * premium
   const baseRate = P.neutralLoanRate
@@ -485,7 +509,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
    */
   const scale = laborForce / (BASE.workingAge * BASE.participation)
   /** Une dépense publique fixée en Md€ de 2025 suit la croissance de l'économie et des prix : à politique inchangée, son poids dans le PIB reste stable. */
-  const g = (bn: number) => bn * trend * scale
+  // Les budgets publics sont votés en euros : ils suivent les prix, mais pas le saut ponctuel dû à une hausse de TVA.
+  const g = (bn: number) => (bn * trend * scale) / vatPrice
   // Le rayonnement culturel au-delà de celui de 2025 (audiovisuel extérieur, réseau diplomatique, universités) est un service public de plus.
   const plannedPublicGoods = g(policy.health + policy.prevention + policy.education + policy.defence + policy.investment + policy.otherServices + policy.softPower - REF.softPower)
   // Les économies imposées par un plan d'aide : une part en dépenses publiques en moins, une part en impôts en plus.
@@ -541,7 +566,11 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const real = nominal / priceLevel
     const potential = laborForce * (1 - naturalUnemployment) * productivity
     // Un SMIC plus cher pousse les entreprises à économiser du travail peu qualifié (élasticité modeste).
-    const employment = Math.min(laborForce * P.maxEmployment, real / (productivity * (1 + P.smicJobLoss * policy.smicBoost)))
+    const proportional = real / (productivity * (1 + P.smicJobLoss * policy.smicBoost))
+    // Loi d'Okun : les entreprises gardent une partie de leurs salariés quand l'activité baisse et embauchent moins vite
+    // qu'elles ne produisent quand elle monte. L'emploi ne suit qu'une partie de l'écart de l'année ; le retard se résorbe ensuite.
+    const employmentGap = init ? 0 : P.okunPersistence * prev.employmentGap + (P.okunElasticity - 1) * Math.log(proportional / laborForce / prev.proportionalRate)
+    const employment = Math.min(laborForce * P.maxEmployment, proportional * Math.exp(employmentGap))
     const unemployment = clamp(1 - employment / laborForce, 0.015, 0.45)
     const grossWages = avgWage * employment
     const employerContrib = grossWages * BASE.employerContribRate
@@ -609,7 +638,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const incomeTax = byGroup((k) => taxable[k] * (irRate[k] + policy.incomeTaxTop * GP.topRate[k]) * declared)
     const wealthTax = policy.wealthTax * wealthTaxBase(wealth.g5) + (BASE.ifiRevenue * trend)
     const inheritance = BASE.inheritanceFlows * trend
-    const inheritanceTax = inheritance * policy.inheritanceTax * (1 - P.inheritanceErosion * Math.max(0, policy.inheritanceTax - P.inheritanceErosionThreshold))
+    // Au-delà d'un certain taux, l'assiette fond de plus en plus vite (donations anticipées, assurance-vie, départs) : les recettes plafonnent.
+    const inheritanceTax = inheritance * policy.inheritanceTax * Math.exp(-P.inheritanceErosion * Math.max(0, policy.inheritanceTax - P.inheritanceErosionThreshold))
     const otherHouseholdTaxes = BASE.otherHouseholdTaxes * trend
     // Les autres impôts (carburants, taxe foncière, droits de mutation…) suivent la consommation, et pèsent selon les revenus.
     const otherTaxes = (BASE.otherTaxes / BASE.consumption) * lastConsumption * declared
@@ -673,7 +703,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const aidRef = aidShares(REF.firmAidSmeShare)
     const aidInvestment = bySize((c) => FS.cashFlowInvestment[c] * (firmAid * aidNow[c] - g(REF.firmAid) * aidRef[c]))
     // Électrifier coûte : bornes, pompes à chaleur, réseaux, véhicules (≈ 15 Md€ par point de rythme en plus).
-    const electrifyInvestment = P.electrificationInvestment * 100 * Math.max(0, policy.electrification - REF.electrification) * trend
+    // Une partie remplace des achats qui auraient eu lieu de toute façon (une chaudière, une voiture neuve) : seul le reste est une dépense en plus.
+    // Le chantier se rétrécit à mesure qu'il reste moins de pétrole et de gaz à remplacer.
+    const electrifyInvestment =
+      P.electrificationInvestment * 100 * Math.max(0, policy.electrification - REF.electrification) * trend * (1 - P.electrificationSubstitution) * (fossilShare / BASE.fossilShare)
     const investmentBy = bySize((c) => BASE.investment * trend * FS.investment[c] * firmFactor[c] + aidInvestment[c] + electrifyInvestment * FS.investment[c])
     const investment = sumSize(investmentBy)
     const housing = BASE.housing * trend * scale * clamp(1 - P.housingRateSensitivity * (rate - baseRate), P.housingMin, P.housingMax) * (1 - creditCrunch)
@@ -686,7 +719,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const absorption = totalConsumption + housing + investment + publicGoods + exports
     const importRatio = BASE.importsNonEnergy / (BASE.consumption + BASE.housing + BASE.investment + basePublicGoods() + BASE.exports)
     const overheating = 1 + P.overheatingImports * Math.max(0, real / potential - P.overheatingThreshold)
-    const imports = importRatio * absorption * Math.pow(priceLevel / worldPrice, P.importPriceElasticity) * (1 - P.tariffImportCut * policy.tariffs) * overheating
+    // Pompes à chaleur, batteries, véhicules : l'électrification est plus importée que l'investissement moyen.
+    const electrifyImports = electrifyInvestment * Math.max(0, P.electrificationImportShare - importRatio)
+    const imports = importRatio * absorption * Math.pow(priceLevel / worldPrice, P.importPriceElasticity) * (1 - P.tariffImportCut * policy.tariffs) * overheating + electrifyImports
     // On consomme un peu moins de pétrole quand il est cher (élasticité-prix ≈ −0,2).
     // Une taxe carbone plus forte fait consommer moins de pétrole et de gaz.
     const energyImports = (1 - (P.carbonDemandCut * carbonExtra) / 100) * BASE.energyImports * Math.pow(world.oil / BASE.oil, P.oilElasticity) * (fossilShare / BASE.fossilShare) * Math.pow(real / BASE.gdp, P.energyGdpElasticity) * worldPrice
@@ -723,6 +758,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     return {
       real,
       potential,
+      proportional,
+      employmentGap,
       employment,
       unemployment,
       grossWages,
@@ -869,9 +906,22 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const poverty0 = init ? dist.poverty : prev.poverty0
   const medianDrop = init ? 0 : Math.max(0, 1 - dist.median / prev.medianIncome)
   const pensionNow = prev.avgPension * (1 + inflation * policy.pensionIndexation + (init ? 0 : P.pensionRealGain))
+  // Ce que perd (ou gagne) chaque retraité : la pension moyenne monte aussi parce que les nouveaux retraités ont de meilleures carrières,
+  // mais celle de chacun ne suit les prix que selon l'indexation.
+  const pensionPower = init ? 1 : (prev.pensionPower * (1 + inflation * policy.pensionIndexation)) / (1 + inflation)
   // Les services publics du quotidien, en volume, rapportés à ceux de l'année de départ (1 = autant qu'au départ).
   const servicesIndex = (policy.health + policy.prevention + policy.education + policy.otherServices) / (REF.health + REF.prevention + REF.education + REF.otherServices)
+  // Les bonnes nouvelles comptent aussi, moins que les mauvaises (on remarque davantage ce qu'on perd) : un niveau de vie
+  // qui progresse plus vite que d'habitude, des prélèvements en baisse, un chômage bas, une pauvreté qui recule.
+  const medianRise = init ? 0 : Math.max(0, dist.median / prev.medianIncome - 1 - BASE.productivityGrowth)
+  const goodNews =
+    P.goodNewsWeight *
+    (medianRise / P.unrestIncomeDrop +
+      Math.max(0, taxBurden0 - taxBurden) / P.unrestTaxRange +
+      Math.max(0, P.unrestUnemployment - d.unemployment) / P.unrestUnemploymentRange +
+      Math.max(0, poverty0 - dist.poverty) / P.unrestPovertyRange)
   const anger =
+    -goodNews +
     medianDrop / P.unrestIncomeDrop +
     Math.max(0, taxBurden - taxBurden0) / P.unrestTaxRange +
     Math.max(0, d.unemployment - P.unrestUnemployment) / P.unrestUnemploymentRange +
@@ -885,14 +935,15 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     // Précarité quand on allège fortement les règles.
     P.regulationAnger * Math.max(0, deregulation) +
     // Des retraites qui perdent du pouvoir d'achat par rapport à l'année de départ : la colère dure tant que la perte dure.
-    Math.max(0, 1 - pensionNow / (priceLevel * BASE.avgPension)) / P.unrestPensionRange +
+    Math.max(0, 1 - pensionPower) / P.unrestPensionRange +
     // Des services publics qui reculent (santé, éducation, autres services), en volume, par rapport à l'année de départ.
     Math.max(0, 1 - servicesIndex) / P.unrestServicesRange +
     // La fierté d'un pays qui compte dans le monde (ou l'humiliation d'un pays qui décline).
     -P.influencePride * clout +
     // Un accueil débordé (bien plus d'arrivées qu'en 2025, sans moyens d'intégration) crée des tensions.
     (P.migrationAnger * Math.max(0, extraArrivals) * welcomeGap) / 100
-  const discontent = init ? 0 : P.unrestMemory * prev.discontent + (1 - P.unrestMemory) * anger
+  // Le climat social peut devenir serein (négatif), sans descendre sous un plancher : il y a toujours des mécontents.
+  const discontent = init ? 0 : Math.max(P.serenityFloor, P.unrestMemory * prev.discontent + (1 - P.unrestMemory) * anger)
   const ending: Ending | null = init
     ? null
     : climateDamage >= P.collapseDamage
@@ -910,7 +961,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // — 17. Les émissions françaises : pétrole et gaz (moins avec l'électrification et la taxe carbone), électricité, agriculture et déchets.
   const fossilEmissions =
     BASE.fossilEmissions * (fossilShare / BASE.fossilShare) * Math.pow(d.real / BASE.gdp, P.energyEmissionsGdp) * Math.max(0, 1 - (P.carbonDemandCut * carbonExtra) / 100)
-  const electricityEmissions = BASE.electricityEmissions * Math.max(0.2, 1 + P.gasForNuclear * (REF.nuclearShare - policy.nuclearShare)) * (1 + (BASE.fossilShare - fossilShare))
+  const electricityEmissions = BASE.electricityEmissions * Math.max(0.2, 1 + P.gasForNuclear * (REF.nuclearShare - nuclearShare)) * (1 + (BASE.fossilShare - fossilShare))
   const frenchEmissions = (fossilEmissions + electricityEmissions + BASE.otherEmissions * Math.pow(1 - P.otherEmissionsDecline, yearsIn)) * (1 + P.regulationEmissions * deregulation)
 
   // — 18. Les entreprises par taille : qui investit, qui exporte, qui emploie
@@ -1012,6 +1063,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     oil: world.oil,
     fossilShare,
     electricityPrice,
+    nuclearShare,
     energyPrice,
     currentAccount,
     profits: d.gos,
@@ -1055,18 +1107,24 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     productivity,
     avgWage,
     avgPension: pensionNow,
+    pensionPower,
     smic,
     smicBoost: policy.smicBoost,
     vat: policy.vat,
     tariffs: policy.tariffs,
     tariffChinaEV: policy.tariffChinaEV,
     inflation,
+    vatInflation,
+    vatPrice,
     unemployment: d.unemployment,
     gap: d.real / d.potential - 1,
+    proportionalRate: d.proportional / laborForce,
+    employmentGap: Math.log(d.employment / d.proportional),
     gdpReal,
     gdp,
     energyPrice,
     fossilShare,
+    nuclearShare,
     workingAge,
     retirees,
     young,

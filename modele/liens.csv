@@ -41,8 +41,8 @@ smicBoost;wages;+;smicWageSpillover;La hausse du SMIC se diffuse un peu aux sala
 smicBoost;unemployment;+;smicJobLoss;Un travail peu qualifié plus cher : un peu moins d’embauches.
 smicBoost;gini;-;smicGain.g1 smicGain.g2;Les salaires du bas progressent plus vite que ceux du haut.
 electrification;fossilShare;-;;On remplace pétrole et gaz par l’électricité.
-electrification;privateInvestment;+;electrificationInvestment;Il faut acheter bornes, pompes à chaleur, véhicules, réseaux.
-nuclearShare;electricityPrice;-;nuclearElectricityPrice;Le parc nucléaire existant produit une électricité bon marché.
+electrification;privateInvestment;+;electrificationInvestment electrificationSubstitution;Il faut acheter bornes, pompes à chaleur, véhicules, réseaux (une partie remplace des achats prévus de toute façon).
+nuclearShare;electricityPrice;-;nuclearElectricityPrice nuclearBuildRate nuclearCloseRate;Le parc nucléaire existant produit une électricité bon marché.
 tariffs;imports;-;tariffImportCut;Les produits étrangers deviennent plus chers.
 tariffs;inflation;+;tariffInflation tariffPriceShare;Les consommateurs paient une grande partie des droits de douane.
 tariffs;exports;-;tariffRetaliation;Les autres pays répliquent en taxant nos produits.
@@ -128,7 +128,7 @@ gdp;privateInvestment;+;accelerator acceleratorTrend;Les entreprises investissen
 gdp;imports;+;overheatingImports overheatingThreshold;Une économie qui tourne à plein importe plus.
 gdp;energyImports;+;energyGdpElasticity;
 gdp;inflation;+;gapInflation;Une économie en surchauffe fait monter les prix.
-gdp;unemployment;-;maxEmployment;Plus d’activité, plus d’emplois.
+gdp;unemployment;-;maxEmployment okunElasticity okunPersistence;Plus d’activité, plus d’emplois, mais avec retard : les entreprises gardent ou recrutent leurs salariés progressivement.
 gdp;profits;+;;
 gdp;taxes;+;;Presque tous les impôts suivent l’activité.
 profits;taxes;+;corporateTaxRevenue;
@@ -266,3 +266,4 @@ pensionIndexation;discontent;-;unrestPensionRange;Des pensions qui ne suivent pl
 health;discontent;-;unrestServicesRange;Couper dans les hôpitaux et les soins se voit vite : la colère monte.
 education;discontent;-;unrestServicesRange;Des classes sans professeur, des écoles fermées : les familles protestent.
 otherServices;discontent;-;unrestServicesRange;Police, justice, mairies : des services qui reculent nourrissent le mécontentement.
+electrification;imports;+;electrificationImportShare;Une bonne partie des équipements (pompes à chaleur, batteries, véhicules) est importée.

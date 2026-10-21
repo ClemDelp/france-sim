@@ -11,6 +11,8 @@ export type LeverDef = {
   hint: string
   /** Poids politique d'une réforme sur ce levier (1 = normal ; 2 = très contestée). */
   weight?: number
+  /** Un levier dont l'effet est lent : ce que le Conseil des ministres rappelle quand on le bouge. */
+  delay?: string
 }
 
 export type LeverGroup = { id: string; label: string; icon: string; levers: LeverDef[] }
@@ -37,8 +39,8 @@ export const LEVER_GROUPS: LeverGroup[] = [
     icon: '🏛️',
     levers: [
       { key: 'health', label: 'Santé (soins)', min: 150, max: 330, step: 5, unit: 'bn', hint: 'Hôpital, médecine de ville, médicaments (Md€ de 2025).' },
-      { key: 'prevention', label: 'Prévention et dépistage', min: 0, max: 40, step: 1, unit: 'bn', hint: '≈ 9 Md€ aujourd’hui. Ex. : dépistage annuel du cancer pour les 50 ans et plus. Allonge l’espérance de vie, avec retard.' },
-      { key: 'education', label: 'Éducation', min: 100, max: 230, step: 5, unit: 'bn', hint: 'Effet sur la productivité, lent : 10 à 20 ans.' },
+      { key: 'prevention', label: 'Prévention et dépistage', min: 0, max: 40, step: 1, unit: 'bn', hint: '≈ 9 Md€ aujourd’hui. Ex. : dépistage annuel du cancer pour les 50 ans et plus. Allonge l’espérance de vie, avec retard.', delay: 'Le dépistage allonge l’espérance de vie avec plusieurs années de retard.' },
+      { key: 'education', label: 'Éducation', min: 100, max: 230, step: 5, unit: 'bn', hint: 'Effet sur la productivité, lent : 10 à 20 ans.', delay: 'L’effet sur la productivité vient des élèves d’aujourd’hui : il se voit dans 10 à 20 ans.' },
       { key: 'defence', label: 'Défense', min: 30, max: 160, step: 5, unit: 'bn', hint: '≈ 60 Md€ aujourd’hui ; l’OTAN demande 3,5 % du PIB (≈ 105 Md€).' },
       { key: 'investment', label: 'Investissement public, grands chantiers', min: 60, max: 300, step: 5, unit: 'bn', hint: 'Routes, rail, logement, réseaux. Soutient l’activité et un peu la productivité.' },
       { key: 'otherServices', label: 'Autres services publics', min: 180, max: 340, step: 5, unit: 'bn', hint: 'Police, justice, collectivités, administration.' },
@@ -51,7 +53,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Sécurité sociale',
     icon: '🤝',
     levers: [
-      { key: 'retirementAge', weight: 2, label: 'Âge de départ à la retraite', min: 60, max: 67, step: 0.25, unit: 'years', hint: 'La loi actuelle mène à 64 ans en 2032. Monter se fait de 3 mois par an au plus.' },
+      { key: 'retirementAge', weight: 2, label: 'Âge de départ à la retraite', min: 60, max: 67, step: 0.25, unit: 'years', hint: 'La loi actuelle mène à 64 ans en 2032. Monter se fait de 3 mois par an au plus.', delay: 'L’âge effectif bouge de 3 mois par an au plus, à partir de 2028 : peu d’effet avant 2030.' },
       { key: 'pensionIndexation', label: 'Indexation des retraites sur les prix', min: 0, max: 1.2, step: 0.05, unit: 'share', hint: '100 % = les pensions suivent l’inflation. Moins = gel partiel.' },
       { key: 'unemploymentReplacement', label: 'Allocation chômage (taux de remplacement)', min: 0.3, max: 0.8, step: 0.01, unit: 'pct', hint: 'Part de l’ancien salaire versée aux chômeurs indemnisés.' },
       { key: 'minima', label: 'Minima sociaux en plus', min: -20, max: 80, step: 5, unit: 'bn', hint: 'RSA, prime d’activité, aides au logement : surtout aux 20 % les plus modestes.' },
@@ -72,7 +74,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     icon: '⚡',
     levers: [
       { key: 'electrification', label: 'Rythme d’électrification', min: 0, max: 0.08, step: 0.0025, unit: 'pct', hint: 'Part du pétrole et du gaz remplacée chaque année par l’électricité. Coûte de l’investissement, réduit la facture importée et l’exposition aux chocs.' },
-      { key: 'nuclearShare', label: 'Part du nucléaire dans l’électricité', min: 0, max: 0.85, step: 0.01, unit: 'pct', weight: 1.5, hint: '68 % en 2025. Moins de nucléaire = électricité plus chère et plus de gaz.' },
+      { key: 'nuclearShare', label: 'Part du nucléaire dans l’électricité', min: 0, max: 0.85, step: 0.01, unit: 'pct', weight: 1.5, hint: '68 % en 2025. C’est un objectif : le parc suit avec retard (≈ +1 point par an au plus, car un réacteur se construit en plus de dix ans ; −3 points par an au plus en fermant). Moins de nucléaire = électricité plus chère et plus de gaz.', delay: 'Construire des réacteurs prend plus de dix ans : la part du nucléaire monte d’un point par an au plus.' },
     ],
   },
   {
@@ -102,7 +104,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     icon: '🌍',
     levers: [
       { key: 'carbonTax', label: 'Taxe carbone', min: 0, max: 400, step: 5, unit: 'perTon', weight: 1.5, hint: '44,6 € la tonne en 2025 (gelée depuis la crise des gilets jaunes). Réduit les émissions et rapporte, mais renchérit le carburant et le chauffage : les modestes trinquent si on ne redistribue pas.' },
-      { key: 'adaptation', label: 'Adaptation au réchauffement', min: 0, max: 40, step: 1, unit: 'bn', hint: '≈ 3 Md€ par an aujourd’hui. Digues, eau, bâtiments, cultures : réduit les dégâts et la colère quand le climat se dérègle, mais jamais à 100 %.' },
+      { key: 'adaptation', label: 'Adaptation au réchauffement', min: 0, max: 40, step: 1, unit: 'bn', hint: '≈ 3 Md€ par an aujourd’hui. Digues, eau, bâtiments, cultures : réduit les dégâts et la colère quand le climat se dérègle, mais jamais à 100 %.', delay: 'Digues, réseaux, villes plus fraîches : la protection se construit sur plusieurs années.' },
       { key: 'climateAid', label: 'Aide climat aux pays du Sud', min: 0, max: 50, step: 1, unit: 'bn', hint: '≈ 6 Md€ par an. Une tonne évitée ailleurs coûte souvent moins cher qu’en France, et c’est le monde entier qui fait la température.' },
     ],
   },
@@ -111,7 +113,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Commerce',
     icon: '🚢',
     levers: [
-      { key: 'tariffs', label: 'Droits de douane (hors UE)', min: 0, max: 0.4, step: 0.01, unit: 'pct', hint: 'Protège la production, renchérit les prix, provoque des représailles sur nos exportations.' },
+      { key: 'tariffs', label: 'Droits de douane (hors UE)', min: 0, max: 0.4, step: 0.01, unit: 'pct', hint: 'Protège la production, renchérit les prix, provoque des représailles sur nos exportations. Les droits de douane reviennent au budget européen : ils ne rapportent rien à l’État.' },
       { key: 'tariffChinaEV', label: 'Droits sur les voitures électriques chinoises', min: 0, max: 1, step: 0.05, unit: 'pct', hint: '≈ 27 à 45 % aujourd’hui (10 % + droits compensateurs). Protège l’industrie automobile, ralentit l’électrification.' },
     ],
   },

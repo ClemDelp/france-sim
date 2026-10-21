@@ -64,7 +64,7 @@ export const SCENARIOS: Scenario[] = [
       { label: 'Chômage toujours sous 9 %', when: 'always', get: (s) => s.unemployment, op: 'below', target: 0.09, show: pct },
       { label: 'Déficit sous 5 % du PIB en 2030', when: 'end', get: (s) => s.deficit / s.gdp, op: 'below', target: 0.05, show: pct },
     ],
-    tip: 'Moins dépendre du pétrole, alléger les prix (TVA ?), soutenir les plus modestes : chaque choix a un coût.',
+    tip: 'Le choc frappe dès 2026 : ce que vous décidez maintenant compte le plus. Moins dépendre du pétrole, alléger les prix (TVA ?), soutenir les plus modestes : chaque choix a un coût.',
   },
   {
     id: 'electrique',
@@ -106,7 +106,7 @@ export const SCENARIOS: Scenario[] = [
     title: 'Sauver les retraites',
     tagline: 'Le baby-boom part à la retraite : équilibrer les comptes d’ici 2040.',
     story:
-      'D’ici 2040, il y aura un million de retraités de plus et presque autant d’actifs en moins. Ramenez le déficit public sous 3 % sans faire exploser la pauvreté ni perdre une élection.',
+      'D’ici 2040, il y aura un million de retraités de plus, alors que le nombre d’actifs stagne. Ramenez le déficit public sous 3,5 % du PIB sans faire exploser la pauvreté ni perdre une élection. Attention : un âge de départ plus tardif ne s’applique que progressivement (3 mois par an au plus, à partir de 2028).',
     difficulty: 2,
     end: 2040,
     events: [],
@@ -127,7 +127,7 @@ export const SCENARIOS: Scenario[] = [
     difficulty: 3,
     end: 2035,
     events: [],
-    locked: { keys: ['monetization'], why: 'La BCE est indépendante : la France ne peut pas faire tourner la planche à billets.' },
+    locked: { keys: ['monetization', 'cancelShare'], why: 'La BCE est indépendante, et les traités interdisent d’annuler une dette : ni planche à billets, ni annulation.' },
     objectives: [
       { label: 'Dette sous 115 % du PIB en 2035', when: 'end', get: (s) => s.debtRatio, op: 'below', target: 1.15, show: pct0 },
       { label: 'Taux à 10 ans toujours sous 4 %', when: 'always', get: (s) => s.rate, op: 'below', target: 0.04, show: pct },

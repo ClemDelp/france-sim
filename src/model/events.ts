@@ -135,7 +135,7 @@ export const EVENTS: EventDef[] = [
     icon: '🛢️',
     category: 'monde',
     summary: 'Le pétrole bondit de 60 $ le baril : l’énergie importée renchérit tous les prix.',
-    effects: [{ oil: 60, growth: -0.01 }, { oil: 40, growth: -0.005 }, { oil: 15 }],
+    effects: [{ oil: 88, growth: -0.01 }, { oil: 55, growth: -0.005 }, { oil: 20 }],
     chance: (s) => odds(0.025, mult(`la dépendance au pétrole et au gaz (${pct(s.fossilShare)} de l’énergie)`, s.fossilShare / 0.6)),
     cooldown: 8,
   },
@@ -156,7 +156,8 @@ export const EVENTS: EventDef[] = [
     category: 'economie',
     summary: 'Pour casser l’inflation en zone euro, la BCE ajoute 2 points à son taux directeur.',
     effects: [{ ecbRate: 0.02 }, { ecbRate: 0.02 }, { ecbRate: 0.01 }],
-    chance: (s) => odds(0.02, add(`l’inflation dépasse 3 % (${pct(s.inflation)})`, 4 * Math.max(0, s.inflation - 0.03))),
+    // La BCE regarde toute la zone euro, dont la France ne pèse qu'environ un cinquième.
+    chance: (s) => odds(0.02, add(`l’inflation en France dépasse 3 % (${pct(s.inflation)}), et la France pèse un cinquième de la zone euro`, 0.8 * Math.max(0, s.inflation - 0.03))),
     cooldown: 6,
   },
   {
