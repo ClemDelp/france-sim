@@ -1,26 +1,65 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`scénario « 2008 recommence » > la stratégie de référence : photo de fin de partie, et combien de parties elle gagne face au hasard 1`] = `
+{
+  "année": 2033,
+  "chômage": 5.7,
+  "colère": 0.02,
+  "croissance": -0,
+  "dette": 94,
+  "déficit": 0.8,
+  "espéranceDeVie": 84,
+  "inflation": 2.7,
+  "partFossile": 55,
+  "pauvreté": 12.5,
+  "popularité": 61,
+  "taux10ans": 3.4,
+  "température": 1.51,
+  "tiragesGagnés": "6 / 6",
+  "émissions": 361,
+  "étoiles": 2,
+}
+`;
+
 exports[`scénario « 2008 recommence » > sans rien faire : photo de fin de partie 1`] = `
 {
-  "année": 2032,
-  "chômage": 8.6,
-  "colère": 0.58,
-  "croissance": 2.5,
-  "dette": 133,
-  "déficit": 2.2,
-  "espéranceDeVie": 83.9,
-  "inflation": 0.6,
-  "partFossile": 56,
-  "pauvreté": 14.7,
-  "perdu": {
-    "reason": "election",
-    "year": 2032,
-  },
-  "popularité": 30,
-  "taux10ans": 4.1,
-  "température": 1.49,
-  "émissions": 359,
+  "année": 2033,
+  "chômage": 7.9,
+  "colère": 0.24,
+  "croissance": 1.7,
+  "dette": 137,
+  "déficit": 4.3,
+  "espéranceDeVie": 84,
+  "inflation": 1.3,
+  "partFossile": 55,
+  "pauvreté": 14.9,
+  "perdu": null,
+  "popularité": 49,
+  "taux10ans": 3.9,
+  "température": 1.51,
+  "émissions": 360,
   "étoiles": 0,
+}
+`;
+
+exports[`scénario « La France électrique » > la stratégie de référence : photo de fin de partie, et combien de parties elle gagne face au hasard 1`] = `
+{
+  "année": 2040,
+  "chômage": 6.7,
+  "colère": 0.04,
+  "croissance": 0.5,
+  "dette": 94,
+  "déficit": 1.6,
+  "espéranceDeVie": 84.9,
+  "inflation": 2.3,
+  "partFossile": 31,
+  "pauvreté": 13.3,
+  "popularité": 60,
+  "taux10ans": 3.3,
+  "température": 1.64,
+  "tiragesGagnés": "6 / 6",
+  "émissions": 216,
+  "étoiles": 3,
 }
 `;
 
@@ -28,7 +67,7 @@ exports[`scénario « La France électrique » > sans rien faire : photo de fin 
 {
   "année": 2040,
   "chômage": 6.8,
-  "colère": 0.26,
+  "colère": 0.19,
   "croissance": 0.6,
   "dette": 141,
   "déficit": 6.2,
@@ -37,56 +76,119 @@ exports[`scénario « La France électrique » > sans rien faire : photo de fin 
   "partFossile": 52,
   "pauvreté": 15.1,
   "perdu": null,
-  "popularité": 48,
+  "popularité": 51,
   "taux10ans": 3.7,
   "température": 1.65,
   "émissions": 347,
-  "étoiles": 2,
+  "étoiles": 0,
+}
+`;
+
+exports[`scénario « La planète brûle » > la stratégie de référence : photo de fin de partie, et combien de parties elle gagne face au hasard 1`] = `
+{
+  "année": 2050,
+  "chômage": 11.6,
+  "colère": 0.73,
+  "croissance": -0.6,
+  "dette": 192,
+  "déficit": 16.5,
+  "espéranceDeVie": 88.2,
+  "inflation": 1.6,
+  "partFossile": 7,
+  "pauvreté": 9.1,
+  "popularité": 22,
+  "taux10ans": 8.1,
+  "température": 1.9,
+  "tiragesGagnés": "5 / 6",
+  "émissions": 108,
+  "étoiles": 3,
 }
 `;
 
 exports[`scénario « La planète brûle » > sans rien faire : photo de fin de partie 1`] = `
 {
-  "année": 2047,
-  "chômage": 8.9,
-  "colère": 0.46,
-  "croissance": -1.5,
-  "dette": 166,
-  "déficit": 9.4,
-  "espéranceDeVie": 85.4,
-  "inflation": 2.2,
-  "partFossile": 48,
-  "pauvreté": 15,
+  "année": 2050,
+  "chômage": 9.2,
+  "colère": 1.09,
+  "croissance": 0.1,
+  "dette": 172,
+  "déficit": 4.9,
+  "espéranceDeVie": 85.7,
+  "inflation": 1.6,
+  "partFossile": 47,
+  "pauvreté": 14.8,
   "perdu": {
-    "reason": "election",
-    "year": 2047,
+    "reason": "revolte",
+    "year": 2050,
   },
-  "popularité": 36,
-  "taux10ans": 6.9,
-  "température": 1.84,
-  "émissions": 331,
+  "popularité": 5,
+  "taux10ans": 4.4,
+  "température": 1.91,
+  "émissions": 324,
   "étoiles": 0,
+}
+`;
+
+exports[`scénario « Le choc d’Ormuz » > la stratégie de référence : photo de fin de partie, et combien de parties elle gagne face au hasard 1`] = `
+{
+  "année": 2030,
+  "chômage": 5.7,
+  "colère": 0.03,
+  "croissance": 0.6,
+  "dette": 117,
+  "déficit": 3.1,
+  "espéranceDeVie": 83.7,
+  "inflation": 2.4,
+  "partFossile": 57,
+  "pauvreté": 14.7,
+  "popularité": 60,
+  "taux10ans": 3.4,
+  "température": 1.45,
+  "tiragesGagnés": "6 / 6",
+  "émissions": 366,
+  "étoiles": 3,
 }
 `;
 
 exports[`scénario « Le choc d’Ormuz » > sans rien faire : photo de fin de partie 1`] = `
 {
   "année": 2030,
-  "chômage": 6.2,
-  "colère": 0.1,
-  "croissance": 0.8,
+  "chômage": 6.4,
+  "colère": 0.01,
+  "croissance": 1,
   "dette": 125,
   "déficit": 4.7,
   "espéranceDeVie": 83.7,
-  "inflation": 2.2,
+  "inflation": 2,
   "partFossile": 57,
   "pauvreté": 14.9,
   "perdu": null,
-  "popularité": 56,
+  "popularité": 62,
   "taux10ans": 3.6,
   "température": 1.45,
   "émissions": 366,
-  "étoiles": 1,
+  "étoiles": 0,
+}
+`;
+
+exports[`scénario « Le grand chelem » > la stratégie de référence : photo de fin de partie, et combien de parties elle gagne face au hasard 1`] = `
+{
+  "année": 2045,
+  "chômage": 8,
+  "colère": 0.03,
+  "croissance": 0.4,
+  "dette": 68,
+  "déficit": -0.1,
+  "espéranceDeVie": 85.5,
+  "inflation": 2.2,
+  "partFossile": 28,
+  "pauvreté": 9.8,
+  "popularité": 60,
+  "taux10ans": 3.1,
+  "température": 1.74,
+  "tiragesGagnés": "5 / 6",
+  "émissions": 236,
+  "étoiles": 3,
 }
 `;
 
@@ -94,7 +196,7 @@ exports[`scénario « Le grand chelem » > sans rien faire : photo de fin de par
 {
   "année": 2045,
   "chômage": 6.9,
-  "colère": 0.32,
+  "colère": 0.27,
   "croissance": 0.6,
   "dette": 154,
   "déficit": 7,
@@ -103,11 +205,32 @@ exports[`scénario « Le grand chelem » > sans rien faire : photo de fin de par
   "partFossile": 49,
   "pauvreté": 15.1,
   "perdu": null,
-  "popularité": 44,
+  "popularité": 47,
   "taux10ans": 3.8,
   "température": 1.74,
-  "émissions": 338,
+  "émissions": 337,
   "étoiles": 0,
+}
+`;
+
+exports[`scénario « Premier mandat » > la stratégie de référence : photo de fin de partie, et combien de parties elle gagne face au hasard 1`] = `
+{
+  "année": 2032,
+  "chômage": 4.4,
+  "colère": -0.29,
+  "croissance": 0,
+  "dette": 102,
+  "déficit": 2.9,
+  "espéranceDeVie": 84,
+  "inflation": 3.4,
+  "partFossile": 56,
+  "pauvreté": 10.7,
+  "popularité": 78,
+  "taux10ans": 3.3,
+  "température": 1.49,
+  "tiragesGagnés": "6 / 6",
+  "émissions": 360,
+  "étoiles": 3,
 }
 `;
 
@@ -115,16 +238,16 @@ exports[`scénario « Premier mandat » > sans rien faire : photo de fin de part
 {
   "année": 2032,
   "chômage": 7,
-  "colère": 0.12,
-  "croissance": 0.9,
+  "colère": 0.06,
+  "croissance": 1,
   "dette": 126,
   "déficit": 5,
   "espéranceDeVie": 83.9,
-  "inflation": 2.1,
+  "inflation": 2,
   "partFossile": 56,
   "pauvreté": 15,
   "perdu": null,
-  "popularité": 55,
+  "popularité": 59,
   "taux10ans": 3.6,
   "température": 1.49,
   "émissions": 362,
@@ -132,11 +255,32 @@ exports[`scénario « Premier mandat » > sans rien faire : photo de fin de part
 }
 `;
 
+exports[`scénario « Sauver les retraites » > la stratégie de référence : photo de fin de partie, et combien de parties elle gagne face au hasard 1`] = `
+{
+  "année": 2040,
+  "chômage": 4.5,
+  "colère": 0.04,
+  "croissance": 0,
+  "dette": 90,
+  "déficit": 0.2,
+  "espéranceDeVie": 84.8,
+  "inflation": 2.5,
+  "partFossile": 52,
+  "pauvreté": 10.5,
+  "popularité": 60,
+  "taux10ans": 3.2,
+  "température": 1.65,
+  "tiragesGagnés": "6 / 6",
+  "émissions": 357,
+  "étoiles": 3,
+}
+`;
+
 exports[`scénario « Sauver les retraites » > sans rien faire : photo de fin de partie 1`] = `
 {
   "année": 2040,
   "chômage": 6.8,
-  "colère": 0.26,
+  "colère": 0.19,
   "croissance": 0.6,
   "dette": 141,
   "déficit": 6.2,
@@ -145,11 +289,32 @@ exports[`scénario « Sauver les retraites » > sans rien faire : photo de fin d
   "partFossile": 52,
   "pauvreté": 15.1,
   "perdu": null,
-  "popularité": 48,
+  "popularité": 51,
   "taux10ans": 3.7,
   "température": 1.65,
   "émissions": 347,
-  "étoiles": 2,
+  "étoiles": 0,
+}
+`;
+
+exports[`scénario « Sous l’œil des marchés » > la stratégie de référence : photo de fin de partie, et combien de parties elle gagne face au hasard 1`] = `
+{
+  "année": 2035,
+  "chômage": 6.6,
+  "colère": -0,
+  "croissance": 0.4,
+  "dette": 80,
+  "déficit": -0.8,
+  "espéranceDeVie": 84.2,
+  "inflation": 2.3,
+  "partFossile": 54,
+  "pauvreté": 14.1,
+  "popularité": 62,
+  "taux10ans": 3.2,
+  "température": 1.55,
+  "tiragesGagnés": "3 / 6",
+  "émissions": 355,
+  "étoiles": 3,
 }
 `;
 
@@ -157,7 +322,7 @@ exports[`scénario « Sous l’œil des marchés » > sans rien faire : photo de
 {
   "année": 2035,
   "chômage": 6.8,
-  "colère": 0.17,
+  "colère": 0.1,
   "croissance": 0.7,
   "dette": 131,
   "déficit": 5.3,
@@ -166,11 +331,32 @@ exports[`scénario « Sous l’œil des marchés » > sans rien faire : photo de
   "partFossile": 54,
   "pauvreté": 15.1,
   "perdu": null,
-  "popularité": 52,
+  "popularité": 56,
   "taux10ans": 3.6,
   "température": 1.55,
   "émissions": 357,
-  "étoiles": 2,
+  "étoiles": 0,
+}
+`;
+
+exports[`scénario « Zéro pauvreté ? » > la stratégie de référence : photo de fin de partie, et combien de parties elle gagne face au hasard 1`] = `
+{
+  "année": 2035,
+  "chômage": 8.7,
+  "colère": 0.19,
+  "croissance": 0.6,
+  "dette": 108,
+  "déficit": 3.4,
+  "espéranceDeVie": 84.3,
+  "inflation": 1.9,
+  "partFossile": 54,
+  "pauvreté": 9.2,
+  "popularité": 52,
+  "taux10ans": 3.4,
+  "température": 1.55,
+  "tiragesGagnés": "6 / 6",
+  "émissions": 352,
+  "étoiles": 3,
 }
 `;
 
@@ -178,7 +364,7 @@ exports[`scénario « Zéro pauvreté ? » > sans rien faire : photo de fin de p
 {
   "année": 2035,
   "chômage": 6.8,
-  "colère": 0.17,
+  "colère": 0.1,
   "croissance": 0.7,
   "dette": 131,
   "déficit": 5.3,
@@ -187,10 +373,10 @@ exports[`scénario « Zéro pauvreté ? » > sans rien faire : photo de fin de p
   "partFossile": 54,
   "pauvreté": 15.1,
   "perdu": null,
-  "popularité": 52,
+  "popularité": 56,
   "taux10ans": 3.6,
   "température": 1.55,
   "émissions": 357,
-  "étoiles": 2,
+  "étoiles": 1,
 }
 `;
