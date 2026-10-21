@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ACHIEVEMENTS } from '../../game/achievements'
 import { SCENARIOS, type Scenario } from '../../game/scenarios'
+import { VERSION_LABEL } from '../../version'
 import { REPO_URL } from '../links'
 import { promptInstall, useInstall } from './install'
 
@@ -172,6 +173,9 @@ export function Home({ name, onName, stars, earned, canResume, onResume, onTutor
             Le projet est libre sur GitHub
           </a>{' '}
           : venez le vérifier et l’améliorer.
+        </p>
+        <p className="home-version" title="Le numéro du jeu, le commit publié et la date de mise en ligne">
+          France·Sim {VERSION_LABEL}
         </p>
       </div>
     </div>

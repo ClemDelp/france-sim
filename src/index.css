@@ -4640,3 +4640,38 @@ label {
   color: var(--muted);
   font-size: 0.82rem;
 }
+
+.home-version {
+  margin: 8px 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.update-banner {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  z-index: 90;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  width: min(460px, calc(100% - 20px));
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--gold);
+  background: var(--bg-2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  font-weight: 700;
+}
+
+.update-banner small {
+  width: 100%;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 400;
+}

@@ -9,6 +9,7 @@ import { ReplayView } from './ReplayView'
 import { usePhone } from './game/usePhone'
 import { CONTRIBUTING_URL, DOCS_URL, ISSUES_URL, REPO_URL } from './links'
 import { SourcesView } from './SourcesView'
+import { VERSION_LABEL } from '../version'
 
 export type Impact = { year: number; rows: { label: string; withChanges: string; original: string; tone: 'good' | 'bad' | 'flat' }[] }
 
@@ -374,6 +375,9 @@ function Contribute() {
         <li>Signaler un lien qui manque ou qui va dans le mauvais sens.</li>
         <li>Comparer une trajectoire du simulateur au passé réel (2000–2024).</li>
       </ul>
+      <p className="note">
+        Version du jeu : <strong>{VERSION_LABEL}</strong> (le code après le numéro est le commit publié, visible sur GitHub).
+      </p>
       <p className="note">
         Le fonctionnement complet, avec des schémas, et le pas-à-pas pour modifier un paramètre et tester son changement sont dans{' '}
         <a href={DOCS_URL} target="_blank" rel="noreferrer">

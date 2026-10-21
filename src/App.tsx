@@ -32,6 +32,7 @@ import { Confetti, Council, Counter, EventFeed, Newspaper, Objectives, Popularit
 import { PhoneNav } from './ui/game/Phone'
 import { usePhone, type PhoneView } from './ui/game/usePhone'
 import { Tour, type TourStep } from './ui/game/Tour'
+import { UpdateBanner } from './ui/game/UpdateBanner'
 import { Robustness } from './ui/Robustness'
 import { FOCUS_METRICS, KPI_FOCUS } from './ui/robustnessMetrics'
 import { Trajectory } from './ui/Trajectory'
@@ -1087,6 +1088,8 @@ function App() {
       {why ? <Explain input={whyInput} year={year} onClose={() => setWhy(false)} /> : null}
 
       <Toasts items={ACHIEVEMENTS.filter((a) => fresh.includes(a.id))} />
+
+      <UpdateBanner />
 
       {brain ? (
         <Brain

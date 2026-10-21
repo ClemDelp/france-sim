@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
@@ -39,7 +40,25 @@ function serviceWorker(): Plugin {
   }
 }
 
+/** La version affichée dans le jeu : numéro du package, commit publié, date de construction (pour savoir laquelle on a sur son téléphone). */
+const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
+const commit = (() => {
+  if (process.env.GITHUB_SHA) {
+    return process.env.GITHUB_SHA.slice(0, 7)
+  }
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+  } catch {
+    return 'local'
+  }
+})()
+
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_COMMIT__: JSON.stringify(commit),
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+  },
   // Des chemins relatifs : le jeu marche à la racine d'un site comme dans un sous-dossier (GitHub Pages…).
   base: './',
   plugins: [react(), serviceWorker()],
