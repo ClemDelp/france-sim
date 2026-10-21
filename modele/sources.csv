@@ -1,0 +1,40 @@
+﻿id;nom;type;lien;apport;motifs
+insee;INSEE (Institut national de la statistique et des études économiques);Statistique publique;https://www.insee.fr;Comptes nationaux (PIB, consommation, investissement, revenus, comptes des administrations publiques), démographie (pyramide des âges, naissances, tables de mortalité, migrations), emploi et chômage (enquête Emploi), revenus et patrimoine des ménages (comptes distribués, enquête Patrimoine, budget des familles), entreprises (Ésane), espérance de vie selon le niveau de vie, historique 2000-2024.;insee,ésane
+bdf;Banque de France;Banque centrale nationale;https://www.banque-france.fr;Détenteurs de la dette, comptes financiers, taux des crédits, balance des paiements, financement des entreprises, modèle macroéconomique FR-BDF (ordres de grandeur des élasticités).;banque de france,fr-bdf
+aft;Agence France Trésor (AFT);Administration;https://www.aft.gouv.fr;Dette négociable de l’État, taux d’intérêt et durée de vie moyenne de la dette, courbe des taux.;aft
+budget;Lois de finances (PLF, LFSS, lois de règlement);Parlement et gouvernement;https://www.budget.gouv.fr;Recettes et dépenses de l’État et de la Sécurité sociale, contribution à l’Union européenne, budget voté de 2000 et de 2025.;plf,lfss,loi de financement,loi de règlement,voies et moyens
+dgfip;DGFiP (Direction générale des finances publiques);Administration;https://www.impots.gouv.fr;Impôt sur le revenu, impôt sur la fortune immobilière, droits de succession.;dgfip
+drees;DREES (statistiques de la santé et des solidarités);Statistique publique;https://drees.solidarites-sante.gouv.fr;Retraites, prestations sociales, minima sociaux, dépenses de santé.;drees
+cor;Conseil d’orientation des retraites (COR);Conseil d’expertise;https://www.cor-retraites.fr;Projections des retraites, effet noria, âge effectif de départ.;cor
+unedic;Unédic;Organisme paritaire;https://www.unedic.org;Indemnisation du chômage, taux de remplacement.;unédic,unedic
+urssaf;Urssaf;Sécurité sociale;https://www.urssaf.fr;Cotisations sociales, masse salariale.;urssaf
+cnaf;CNAF (Caisse nationale des allocations familiales);Sécurité sociale;https://www.caf.fr;Prestations familiales.;cnaf
+dares;DARES (statistiques du travail);Statistique publique;https://dares.travail-emploi.gouv.fr;Emploi des seniors, salariés au SMIC, diffusion des hausses du SMIC.;dares
+cour-comptes;Cour des comptes et Conseil des prélèvements obligatoires;Juridiction financière;https://www.ccomptes.fr;Politique d’asile et éloignements, catastrophes naturelles, évaluation de politiques publiques, prélèvements obligatoires.;cour des comptes,conseil des prélèvements obligatoires
+cae;Conseil d’analyse économique (CAE);Conseil d’expertise;https://www.cae-eco.fr;Ordres de grandeur sur la fiscalité, le marché du travail et la dette.;conseil d’analyse économique
+france-strategie;France Stratégie;Conseil d’expertise;https://www.strategie.gouv.fr;Évaluations du CICE et des aides aux entreprises.;france stratégie
+ofce;OFCE (Sciences Po);Recherche;https://www.ofce.sciences-po.fr;Estimation du chômage d’équilibre.;ofce
+citepa;Citepa;Inventaire national des émissions;https://www.citepa.org;Émissions françaises de gaz à effet de serre par secteur (rapport Secten).;citepa
+sdes;SDES (statistiques du ministère de la Transition écologique);Statistique publique;https://www.statistiques.developpement-durable.gouv.fr;Bilan énergétique, facture énergétique, part du pétrole et du gaz.;sdes
+ecologie;Ministère de la Transition écologique (DGEC, SNBC);Administration;https://www.ecologie.gouv.fr;Structure des prix des carburants, stratégie nationale bas-carbone et objectif 2030.;ministère de la transition écologique,dgec,snbc
+rte;RTE et CRE;Réseau et régulateur de l’électricité;https://www.rte-france.com;Bilan électrique, scénarios Futurs énergétiques 2050, prix de l’électricité.;rte,cre
+i4ce;I4CE (Institute for Climate Economics);Recherche;https://www.i4ce.org;Financements climat et besoins d’adaptation en France.;i4ce
+spf;Santé publique France;Agence sanitaire;https://www.santepubliquefrance.fr;Mortalité liée à la chaleur et à la pollution de l’air.;santé publique france
+ofpra;OFPRA et ministère de l’Intérieur;Administration;https://www.ofpra.gouv.fr;Demandes d’asile, titres de séjour.;ofpra
+douanes;Douanes;Administration;https://www.douane.gouv.fr;Commerce extérieur.;douanes
+acpr;ACPR (Autorité de contrôle prudentiel et de résolution) et Bâle III;Supervision bancaire;https://acpr.banque-france.fr;Fonds propres et solvabilité des banques.;acpr,bâle iii,commission bancaire
+euronext;Euronext;Marché financier;https://www.euronext.com;Valeur boursière des grandes entreprises françaises (ordre de grandeur).;euronext
+bce;Banque centrale européenne (BCE);Banque centrale;https://www.ecb.europa.eu;Taux directeurs, rachats de dette (PSPP, PEPP), écarts de taux souverains de 2010-2012, effets du climat sur l’inflation.;bce
+ue;Commission européenne, Eurostat et Mécanisme européen de stabilité;Union européenne;https://economy-finance.ec.europa.eu;Programmes d’ajustement (Grèce, Irlande, Portugal), chômage structurel (NAWRU), demandes d’asile, critères de Maastricht.;commission européenne,eurostat,mes,maastricht
+ocde;OCDE;Organisation internationale;https://www.oecd.org;Protection de l’emploi, réglementation des marchés, rendements de la santé, migrations internationales, évaluations de l’aide, élasticités-prix de l’énergie.;ocde
+fmi;FMI (Fonds monétaire international);Organisation internationale;https://www.imf.org;Soutenabilité de la dette, rendement de l’investissement public, croissance mondiale.;fmi
+banque-mondiale;Banque mondiale;Organisation internationale;https://www.worldbank.org;Migrations climatiques (Groundswell), coûts d’abattement du CO2.;banque mondiale
+giec;GIEC (Groupe d’experts intergouvernemental sur l’évolution du climat);Science du climat;https://www.ipcc.ch;Sixième rapport (AR6) : réchauffement par tonne de CO2, dégâts, limites de l’adaptation.;giec
+gcb;Global Carbon Budget;Science du climat;https://globalcarbonbudget.org;Émissions mondiales de CO2.;global carbon budget
+omm;Organisation météorologique mondiale (OMM);Science du climat;https://wmo.int;Réchauffement observé.;omm
+unep;ONU Environnement et Agence internationale de l’énergie;Organisations internationales;https://www.unep.org;Trajectoires d’émissions selon les politiques annoncées (rapport sur l’écart).;onu environnement,aie
+ngfs;NGFS (réseau des banques centrales pour le verdissement);Banques centrales;https://www.ngfs.net;Scénarios de dégâts climatiques sur l’économie.;ngfs
+ccr;Caisse centrale de réassurance;Assurance publique;https://www.ccr.fr;Coût des catastrophes naturelles.;caisse centrale de réassurance
+eia;EIA (agence américaine d’information sur l’énergie);Statistique publique;https://www.eia.gov;Prix du pétrole (Brent).;eia
+puissance;Lowy Institute et Soft Power 30;Recherche;https://power.lowyinstitute.org;Méthodes d’indices de puissance et d’influence (armée, économie, culture, diplomatie).;lowy,soft power 30
+lois;Textes de loi et règlements (Légifrance);Droit;https://www.legifrance.gouv.fr;Réformes des retraites (ordonnance de 1982, loi de 2023), SMIC (décrets annuels).;loi de 2023,décret,ordonnance

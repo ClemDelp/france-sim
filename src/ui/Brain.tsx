@@ -7,6 +7,8 @@ import { formatLever, LEVER_GROUPS, type LeverDef } from './levers'
 import { readNode } from './nodeValues'
 import { ReplayView } from './ReplayView'
 import { usePhone } from './game/usePhone'
+import { CONTRIBUTING_URL, DOCS_URL, ISSUES_URL, REPO_URL } from './links'
+import { SourcesView } from './SourcesView'
 
 export type Impact = { year: number; rows: { label: string; withChanges: string; original: string; tone: 'good' | 'bad' | 'flat' }[] }
 
@@ -28,7 +30,7 @@ type Props = {
   onClose: () => void
 }
 
-export type View = 'graphe' | 'parametres' | 'passe' | 'participer'
+export type View = 'graphe' | 'parametres' | 'sources' | 'passe' | 'participer'
 
 const LEVER_BY_KEY: Partial<Record<string, LeverDef>> = Object.fromEntries(LEVER_GROUPS.flatMap((g) => g.levers.map((l) => [l.key, l])))
 const ROW_BY_ID: Record<string, ParamRow> = Object.fromEntries(PARAM_ROWS.map((r) => [r.id, r]))
@@ -319,8 +321,26 @@ function Contribute() {
   return (
     <div className="contribute">
       <h3>Un modèle ouvert, que chacun peut vérifier et améliorer</h3>
+      <div className="contribute-links">
+        <a className="primary" href={REPO_URL} target="_blank" rel="noreferrer">
+          <span aria-hidden="true">🐙</span> Le projet sur GitHub
+        </a>
+        <a className="ghost" href={CONTRIBUTING_URL} target="_blank" rel="noreferrer">
+          <span aria-hidden="true">✍️</span> Proposer une correction
+        </a>
+        <a className="ghost" href={ISSUES_URL} target="_blank" rel="noreferrer">
+          <span aria-hidden="true">💬</span> Signaler un problème, suggérer une idée
+        </a>
+        <a className="ghost" href={DOCS_URL} target="_blank" rel="noreferrer">
+          <span aria-hidden="true">📖</span> La documentation
+        </a>
+      </div>
       <p>
-        Toutes les hypothèses du simulateur sont dans cinq fichiers du dossier <code>modele/</code> du dépôt, lisibles dans Excel, LibreOffice ou Google Sheets (séparateur
+        Le code du jeu, le modèle et sa documentation sont publics sur <a href={REPO_URL} target="_blank" rel="noreferrer">github.com/ClemDelp/france-sim</a>. Pas besoin de
+        savoir coder : un compte GitHub suffit pour proposer une meilleure valeur ou signaler une erreur.
+      </p>
+      <p>
+        Toutes les hypothèses du simulateur sont dans des fichiers du dossier <code>modele/</code> du dépôt, lisibles dans Excel, LibreOffice ou Google Sheets (séparateur
         « ; », virgule décimale) :
       </p>
       <ul>
@@ -337,6 +357,9 @@ function Contribute() {
         <li>
           <code>variables.csv</code> et <code>liens.csv</code> : le graphe que vous voyez ici, avec l’explication de chaque lien.
         </li>
+        <li>
+          <code>sources.csv</code> et <code>references.csv</code> : les organismes, méthodes et études sur lesquels repose le modèle (onglet « Sources »).
+        </li>
       </ul>
       <h3>Proposer une correction</h3>
       <ol>
@@ -351,7 +374,13 @@ function Contribute() {
         <li>Signaler un lien qui manque ou qui va dans le mauvais sens.</li>
         <li>Comparer une trajectoire du simulateur au passé réel (2000–2024).</li>
       </ul>
-      <p className="note">Le fonctionnement complet, avec des schémas, est décrit dans docs/COMMENT-CA-MARCHE.md.</p>
+      <p className="note">
+        Le fonctionnement complet, avec des schémas, et le pas-à-pas pour modifier un paramètre et tester son changement sont dans{' '}
+        <a href={DOCS_URL} target="_blank" rel="noreferrer">
+          la documentation
+        </a>
+        .
+      </p>
     </div>
   )
 }
@@ -359,6 +388,8 @@ function Contribute() {
 /** Le cerveau du modèle : le graphe des interactions, tous les paramètres, et comment participer. */
 export function Brain({ focus, onFocus, overrides, onOverride, onReset, impact, state, baseState, policy, initialView, initialQuery, onClose }: Props) {
   const [view, setView] = useState<View>(initialView ?? 'graphe')
+  /** La recherche de « Tous les paramètres » (on y arrive aussi depuis les sources). */
+  const [paramQuery, setParamQuery] = useState(initialQuery ?? '')
   const phone = usePhone()
   const [trail, setTrail] = useState<string[]>(focus ? [focus] : [])
   const go = (id: string | null) => {
@@ -379,7 +410,7 @@ export function Brain({ focus, onFocus, overrides, onOverride, onReset, impact, 
         <div>
           <h2>🧠 Le cerveau du modèle</h2>
           <p className="note">
-            {NODES.length} variables, {LINKS.length} liens de cause à effet, {PARAM_ROWS.length} paramètres sourcés. Tout est modifiable.
+            {NODES.length} variables, {LINKS.length} liens de cause à effet, {PARAM_ROWS.length} paramètres, chacun avec sa source ou déclaré comme hypothèse. Tout est modifiable.
           </p>
         </div>
         <nav className="tabs" aria-label="Vues">
@@ -387,6 +418,7 @@ export function Brain({ focus, onFocus, overrides, onOverride, onReset, impact, 
             [
               ['graphe', 'Graphe des interactions'],
               ['parametres', 'Tous les paramètres'],
+              ['sources', 'Sources'],
               ['passe', 'Face au passé (2000–2024)'],
               ['participer', 'Participer'],
             ] as const
@@ -490,7 +522,15 @@ export function Brain({ focus, onFocus, overrides, onOverride, onReset, impact, 
           </section>
         </div>
       ) : null}
-      {view === 'parametres' ? <ParamTable overrides={overrides} onOverride={onOverride} onReset={onReset} initialQuery={initialQuery} /> : null}
+      {view === 'parametres' ? <ParamTable key={paramQuery} overrides={overrides} onOverride={onOverride} onReset={onReset} initialQuery={paramQuery} /> : null}
+      {view === 'sources' ? (
+        <SourcesView
+          onInspect={(id) => {
+            setParamQuery(id)
+            setView('parametres')
+          }}
+        />
+      ) : null}
       {view === 'passe' ? <ReplayView overrides={overrides} /> : null}
       {view === 'participer' ? <Contribute /> : null}
     </div>

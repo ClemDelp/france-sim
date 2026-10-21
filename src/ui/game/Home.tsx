@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ACHIEVEMENTS } from '../../game/achievements'
 import { SCENARIOS, type Scenario } from '../../game/scenarios'
+import { REPO_URL } from '../links'
 import { promptInstall, useInstall } from './install'
 
 type Props = {
@@ -165,7 +166,13 @@ export function Home({ name, onName, stars, earned, canResume, onResume, onTutor
             ))}
           </ul>
         </section>
-        <p className="note home-foot">Un simulateur, pas une boule de cristal : il montre des mécanismes et des ordres de grandeur, toutes ses hypothèses sont ouvertes.</p>
+        <p className="note home-foot">
+          Un simulateur, pas une boule de cristal : il montre des mécanismes et des ordres de grandeur, toutes ses hypothèses sont ouvertes.{' '}
+          <a href={REPO_URL} target="_blank" rel="noreferrer">
+            Le projet est libre sur GitHub
+          </a>{' '}
+          : venez le vérifier et l’améliorer.
+        </p>
       </div>
     </div>
   )

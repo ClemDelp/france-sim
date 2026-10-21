@@ -4,6 +4,7 @@ import { LINKS, NODE_BY_ID, NODES } from './graph'
 import { DEFAULTS, exportCsv, parseCsv, PARAM_ROWS } from './params'
 import { simulate } from './sim'
 import { MISSIONS } from '../ui/missions'
+import { ORGANISATIONS, PARAM_USES, REFERENCES, sourcesOf } from './sources'
 
 /** Le code du moteur, pour vérifier que chaque paramètre des fichiers sert vraiment. */
 const SOURCES = Object.values(import.meta.glob(['./*.ts', '../ui/*.tsx', '!./*.test.ts'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>).join('\n')
@@ -113,5 +114,32 @@ describe('format des fichiers', () => {
     const lines = text.replace(/^﻿/, '').trimEnd().split(/\r?\n/)
     const n = lines[0].split(';').length
     expect(lines.filter((l) => l.split(';').length !== n)).toEqual([])
+  })
+})
+
+describe('les sources du modèle (modele/sources.csv, modele/references.csv)', () => {
+  test('chaque organisme et chaque étude listés sert à au moins une valeur du modèle', () => {
+    expect(ORGANISATIONS.filter((o) => o.params.length === 0).map((o) => o.id)).toEqual([])
+    expect(REFERENCES.filter((r) => r.kind === 'etude' && r.params.length === 0).map((r) => r.id)).toEqual([])
+  })
+
+  test('chaque organisme a un nom, un lien sûr et ce qu’il apporte', () => {
+    for (const o of ORGANISATIONS) {
+      expect(o.name, o.id).toBeTruthy()
+      expect(o.url, o.id).toMatch(/^https:\/\//)
+      expect(o.contribution, o.id).toBeTruthy()
+    }
+  })
+
+  test('chaque référence est une méthode, une étude ou une série de données', () => {
+    for (const r of REFERENCES) {
+      expect(['methode', 'etude', 'donnees'], r.id).toContain(r.kind)
+    }
+  })
+
+  test('la plupart des valeurs citent un organisme ou une étude reconnus', () => {
+    const cited = PARAM_USES.filter((u) => u.source)
+    const recognised = cited.filter((u) => sourcesOf(u.source).length > 0)
+    expect(recognised.length / cited.length).toBeGreaterThan(0.9)
   })
 })
