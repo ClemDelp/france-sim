@@ -189,7 +189,7 @@ export const MISSIONS: Mission[] = [
     patch: { foodSecurity: 150 },
     focus: ['poverty', 'poor', 'rich', 'gini', 'deficit'],
     mechanism: [
-      'Le coût est énorme (≈ 125 Md€ par an), mais il est financé par une cotisation sur tous les revenus : le budget public reste équilibré.',
+      'Le coût est énorme (≈ 125 Md€ par an), mais il est financé par une cotisation sur tous les revenus : le budget public reste équilibré, et le surcroît de consommation des plus modestes rapporte même un peu de recettes.',
       'Chacun reçoit la même somme et cotise selon ses revenus : les modestes y gagnent, les aisés y perdent.',
       'C’est le principe de la Sécu, appliqué à l’alimentation : une mutualisation.',
     ],

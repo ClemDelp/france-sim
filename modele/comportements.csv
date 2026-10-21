@@ -83,7 +83,7 @@ evTariffPrice;0,004;sensibilité;Prix;Effet des droits de douane sur les voiture
 tariffInflation;0,6;part;Prix;Part des droits de douane payée par les consommateurs;;estimé;Amiti, Redding et Weinstein (2019);;
 vatPassThrough;0,7;part;Prix;Part d’une hausse de TVA répercutée dans les prix;;estimé;Benzarti et al. (2020);;
 gapInflation;0,25;sensibilité;Prix;Inflation en plus quand l’économie tourne au-dessus de ses capacités;;estimé;Banque de France;;
-monetizationInflation;0,02;sensibilité;Prix;Inflation en plus quand la banque centrale finance le déficit;;hypothèse;;;
+monetizationInflation;0,012;sensibilité;Prix;Inflation en plus chaque année quand la banque centrale finance tout le déficit;Dans la zone euro, la France ne peut pas dévaluer : des prix qui montent plus vite que chez ses voisins renchérissent ses produits, les importations remplacent la production française et les exportations reculent.;hypothèse;;0,005;0,03
 panicInflation;0,003;sensibilité;Prix;Inflation en plus quand les marchés paniquent (fuite devant la monnaie);;hypothèse;;;
 pensionRealGain;0,003;taux/an;Sécurité sociale;Hausse de la pension moyenne due aux carrières plus favorables des nouveaux retraités;;mesuré;COR, effet noria;;
 assetInflationShare;0,5;part;Patrimoine;Part de l’inflation qui revalorise le patrimoine financier;;hypothèse;;;

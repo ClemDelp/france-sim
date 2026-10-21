@@ -915,7 +915,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const marketStress = init ? shielded : P.crisisSmoothing * shielded + (1 - P.crisisSmoothing) * prev.marketStress
 
   // — 16. La société : prélèvements, colère, et ce qui rendrait la situation intenable
-  const taxBurden = d.revenue / gdp
+  // Le poids des prélèvements ressenti : la cotisation alimentation, rendue à chacun sous forme d'une allocation égale, n'en fait pas partie
+  // (comme le dit le levier : une mutualisation, pas un impôt de plus) ; elle ne nourrit donc ni la fraude ni la colère fiscale.
+  const taxBurden = (d.revenue - d.taxes.foodContribution) / gdp
   const taxBurden0 = init ? taxBurden : prev.taxBurden0
   const poverty0 = init ? dist.poverty : prev.poverty0
   const medianDrop = init ? 0 : Math.max(0, 1 - dist.median / prev.medianIncome)

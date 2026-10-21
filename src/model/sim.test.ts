@@ -283,6 +283,18 @@ describe('constats du playtest : le modèle reste cohérent', () => {
     expect(year(play({ tariffs: 0.4 }, 2026), 2026).inflation - year(base, 2026).inflation).toBeLessThan(0.05)
   })
 
+    it('la planche à billets coûte en compétitivité, sans provoquer une dépression', () => {
+    const m = play({ monetization: 1 }, 2036)
+    expect(year(m, 2036).unemployment - year(base, 2036).unemployment).toBeLessThan(0.05)
+    expect(year(m, 2028).inflation).toBeGreaterThan(year(base, 2028).inflation)
+  })
+
+  it('une sécurité sociale de l’alimentation financée par sa cotisation ne creuse pas le déficit', () => {
+    const f = play({ foodSecurity: 250 }, 2035)
+    expect(year(f, 2035).deficit / year(f, 2035).gdp).toBeLessThan(year(base, 2035).deficit / year(base, 2035).gdp + 0.005)
+    expect(year(f, 2035).poverty).toBeLessThan(year(base, 2035).poverty - 0.01)
+  })
+
     it('le prix de l’électricité et le baril de référence ne cachent pas de crise en 2026', () => {
     expect(year(base, 2026).oil).toBeLessThan(80)
   })

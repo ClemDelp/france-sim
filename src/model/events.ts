@@ -115,7 +115,8 @@ export const EVENTS: EventDef[] = [
     icon: '🏦',
     category: 'economie',
     summary: 'Comme en 2008 : les banques se méfient, le crédit se tarit, le commerce mondial recule.',
-    effects: [{ growth: -0.05, panic: 1, demandShock: 0.02, bankLoss: 0.3 }, { growth: -0.02, panic: 0.5 }, { growth: 0.01 }],
+    // La demande ne revient que peu à peu (crédit rare, ménages prudents) : pas de rebond magique l'année suivante.
+    effects: [{ growth: -0.05, panic: 1, demandShock: 0.02, bankLoss: 0.3 }, { growth: -0.02, panic: 0.5, demandShock: 0.012 }, { growth: 0.01, demandShock: 0.005 }],
     chance: () => odds(0.025),
     cooldown: 10,
   },
@@ -220,7 +221,8 @@ export const EVENTS: EventDef[] = [
     effects: [
       // Comme en 2020, la BCE rachète massivement de la dette : les taux ne s'envolent pas.
       { growth: -0.04, demandShock: 0.07, qe: 1 },
-      { growth: 0.02, demandShock: 0.01, qe: 0.6 },
+      { growth: 0.02, demandShock: 0.025, qe: 0.6 },
+      { demandShock: 0.01 },
     ],
     chance: () => odds(0.015),
     cooldown: 15,
