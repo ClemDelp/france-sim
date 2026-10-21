@@ -217,8 +217,9 @@ export const EVENTS: EventDef[] = [
     category: 'monde',
     summary: 'Confinements : une partie de l’activité s’arrête net pendant un an.',
     effects: [
-      { growth: -0.04, demandShock: 0.07 },
-      { growth: 0.02, demandShock: 0.01 },
+      // Comme en 2020, la BCE rachète massivement de la dette : les taux ne s'envolent pas.
+      { growth: -0.04, demandShock: 0.07, qe: 1 },
+      { growth: 0.02, demandShock: 0.01, qe: 0.6 },
     ],
     chance: () => odds(0.015),
     cooldown: 15,
@@ -330,13 +331,37 @@ function random(seed: number, year: number, id: string): number {
 }
 
 /** Les événements qui surviennent `year`, compte tenu de l'état du pays l'année d'avant. Deux au plus par an. */
+/**
+ * Un choc économique majeur : récession, krach, pandémie, flambée du pétrole. Reconnu à son effet la première année
+ * (croissance mondiale −3 points ou plus, choc de demande d'au moins 1 % du PIB, pétrole +40 $ ou plus).
+ */
+export const isMajorShock = (e: EventDef) => {
+  const first = e.effects[0] ?? {}
+  return (first.growth ?? 0) <= -0.03 || (first.demandShock ?? 0) >= 0.01 || (first.oil ?? 0) >= 40
+}
+
+const BY_ID: Record<string, EventDef> = Object.fromEntries(EVENTS.map((e) => [e.id, e]))
+
+/**
+ * Les événements de l'année, tirés au sort (la même graine donne la même partie). Deux règles d'équité pour le joueur :
+ * pas de choc majeur la première année (il n'a pas encore pu agir), et au plus un choc majeur par an,
+ * en comptant ceux que le scénario impose déjà cette année-là.
+ */
 export function rollEvents(seed: number, year: number, last: YearState, start: YearState, past: { year: number; id: string }[]): { year: number; id: string }[] {
+  let majorAllowed = year > start.year + 1 && !past.some((p) => p.year === year && BY_ID[p.id] && isMajorShock(BY_ID[p.id]))
   const fired = EVENTS.filter((e) => {
     const previous = past.filter((p) => p.id === e.id).map((p) => p.year)
     if (previous.some((y) => year - y < e.cooldown)) {
       return false
     }
     return random(seed, year, e.id) < chanceOf(e.chance(last, start))
+  }).filter((e) => {
+    if (!isMajorShock(e)) {
+      return true
+    }
+    const ok = majorAllowed
+    majorAllowed = false
+    return ok
   })
   return fired.slice(0, 2).map((e) => ({ year, id: e.id }))
 }

@@ -1,0 +1,196 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`scénario « 2008 recommence » > sans rien faire : photo de fin de partie 1`] = `
+{
+  "année": 2032,
+  "chômage": 8.6,
+  "colère": 0.58,
+  "croissance": 2.5,
+  "dette": 133,
+  "déficit": 2.2,
+  "espéranceDeVie": 83.9,
+  "inflation": 0.6,
+  "partFossile": 56,
+  "pauvreté": 14.7,
+  "perdu": {
+    "reason": "election",
+    "year": 2032,
+  },
+  "popularité": 30,
+  "taux10ans": 4.1,
+  "température": 1.49,
+  "émissions": 359,
+  "étoiles": 0,
+}
+`;
+
+exports[`scénario « La France électrique » > sans rien faire : photo de fin de partie 1`] = `
+{
+  "année": 2040,
+  "chômage": 6.8,
+  "colère": 0.26,
+  "croissance": 0.6,
+  "dette": 141,
+  "déficit": 6.2,
+  "espéranceDeVie": 84.7,
+  "inflation": 2.2,
+  "partFossile": 52,
+  "pauvreté": 15.1,
+  "perdu": null,
+  "popularité": 48,
+  "taux10ans": 3.7,
+  "température": 1.65,
+  "émissions": 347,
+  "étoiles": 2,
+}
+`;
+
+exports[`scénario « La planète brûle » > sans rien faire : photo de fin de partie 1`] = `
+{
+  "année": 2047,
+  "chômage": 8.9,
+  "colère": 0.46,
+  "croissance": -1.5,
+  "dette": 166,
+  "déficit": 9.4,
+  "espéranceDeVie": 85.4,
+  "inflation": 2.2,
+  "partFossile": 48,
+  "pauvreté": 15,
+  "perdu": {
+    "reason": "election",
+    "year": 2047,
+  },
+  "popularité": 36,
+  "taux10ans": 6.9,
+  "température": 1.84,
+  "émissions": 331,
+  "étoiles": 0,
+}
+`;
+
+exports[`scénario « Le choc d’Ormuz » > sans rien faire : photo de fin de partie 1`] = `
+{
+  "année": 2030,
+  "chômage": 6.2,
+  "colère": 0.1,
+  "croissance": 0.8,
+  "dette": 125,
+  "déficit": 4.7,
+  "espéranceDeVie": 83.7,
+  "inflation": 2.2,
+  "partFossile": 57,
+  "pauvreté": 14.9,
+  "perdu": null,
+  "popularité": 56,
+  "taux10ans": 3.6,
+  "température": 1.45,
+  "émissions": 366,
+  "étoiles": 1,
+}
+`;
+
+exports[`scénario « Le grand chelem » > sans rien faire : photo de fin de partie 1`] = `
+{
+  "année": 2045,
+  "chômage": 6.9,
+  "colère": 0.32,
+  "croissance": 0.6,
+  "dette": 154,
+  "déficit": 7,
+  "espéranceDeVie": 85.2,
+  "inflation": 2.2,
+  "partFossile": 49,
+  "pauvreté": 15.1,
+  "perdu": null,
+  "popularité": 44,
+  "taux10ans": 3.8,
+  "température": 1.74,
+  "émissions": 338,
+  "étoiles": 0,
+}
+`;
+
+exports[`scénario « Premier mandat » > sans rien faire : photo de fin de partie 1`] = `
+{
+  "année": 2032,
+  "chômage": 7,
+  "colère": 0.12,
+  "croissance": 0.9,
+  "dette": 126,
+  "déficit": 5,
+  "espéranceDeVie": 83.9,
+  "inflation": 2.1,
+  "partFossile": 56,
+  "pauvreté": 15,
+  "perdu": null,
+  "popularité": 55,
+  "taux10ans": 3.6,
+  "température": 1.49,
+  "émissions": 362,
+  "étoiles": 0,
+}
+`;
+
+exports[`scénario « Sauver les retraites » > sans rien faire : photo de fin de partie 1`] = `
+{
+  "année": 2040,
+  "chômage": 6.8,
+  "colère": 0.26,
+  "croissance": 0.6,
+  "dette": 141,
+  "déficit": 6.2,
+  "espéranceDeVie": 84.7,
+  "inflation": 2.2,
+  "partFossile": 52,
+  "pauvreté": 15.1,
+  "perdu": null,
+  "popularité": 48,
+  "taux10ans": 3.7,
+  "température": 1.65,
+  "émissions": 347,
+  "étoiles": 2,
+}
+`;
+
+exports[`scénario « Sous l’œil des marchés » > sans rien faire : photo de fin de partie 1`] = `
+{
+  "année": 2035,
+  "chômage": 6.8,
+  "colère": 0.17,
+  "croissance": 0.7,
+  "dette": 131,
+  "déficit": 5.3,
+  "espéranceDeVie": 84.2,
+  "inflation": 2.1,
+  "partFossile": 54,
+  "pauvreté": 15.1,
+  "perdu": null,
+  "popularité": 52,
+  "taux10ans": 3.6,
+  "température": 1.55,
+  "émissions": 357,
+  "étoiles": 2,
+}
+`;
+
+exports[`scénario « Zéro pauvreté ? » > sans rien faire : photo de fin de partie 1`] = `
+{
+  "année": 2035,
+  "chômage": 6.8,
+  "colère": 0.17,
+  "croissance": 0.7,
+  "dette": 131,
+  "déficit": 5.3,
+  "espéranceDeVie": 84.2,
+  "inflation": 2.1,
+  "partFossile": 54,
+  "pauvreté": 15.1,
+  "perdu": null,
+  "popularité": 52,
+  "taux10ans": 3.6,
+  "température": 1.55,
+  "émissions": 357,
+  "étoiles": 2,
+}
+`;

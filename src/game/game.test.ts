@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { EVENTS, isMajorShock, rollEvents } from '../model/events'
 import { simulate } from '../model/sim'
 import type { Decision } from '../model/types'
 import { ACHIEVEMENTS } from './achievements'
@@ -124,5 +125,30 @@ describe('l’avis détaillé des ministres', () => {
 
   it('les mécanismes partent des causes de l’indicateur dans le graphe', () => {
     expect(adviceDetail(input, 'unemployment').mechanisms.map((m) => m.id)).toContain('gdp')
+  })
+})
+
+describe('le hasard reste équitable', () => {
+  const start = simulate({ decisions: [], events: [], until: 2025 })[0]
+  const majors = EVENTS.filter(isMajorShock).map((e) => e.id)
+
+  it('les chocs majeurs sont bien reconnus', () => {
+    expect(majors).toEqual(expect.arrayContaining(['financial-crisis', 'recession', 'pandemic', 'ormuz', 'war-europe']))
+  })
+
+  it('pas de choc majeur tiré au sort la première année, et jamais plus d’un par an', () => {
+    for (let seed = 1; seed <= 400; seed += 1) {
+      const first = rollEvents(seed, 2026, start, start, [])
+      expect(first.filter((e) => majors.includes(e.id)), `graine ${seed}`).toEqual([])
+      const later = rollEvents(seed, 2031, start, start, [])
+      expect(later.filter((e) => majors.includes(e.id)).length, `graine ${seed}`).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('un choc imposé par le scénario cette année-là bloque les autres chocs majeurs', () => {
+    for (let seed = 1; seed <= 400; seed += 1) {
+      const fired = rollEvents(seed, 2031, start, start, [{ year: 2031, id: 'ormuz' }])
+      expect(fired.filter((e) => majors.includes(e.id)), `graine ${seed}`).toEqual([])
+    }
   })
 })
