@@ -16,7 +16,9 @@ import { DOCTRINES } from './ui/doctrines'
 import { ENDINGS } from './ui/endings'
 import { focusLine } from './ui/story'
 import { ACHIEVEMENTS } from './game/achievements'
-import { adviseDraft, adviseState } from './game/advisors'
+import { adviseDraft, adviseState, type Advice } from './game/advisors'
+import { adviceDetail } from './game/adviceDetail'
+import { AdviceDetail } from './ui/game/AdviceDetail'
 import { headline } from './game/headlines'
 import { evaluate, SCENARIOS, type Scenario } from './game/scenarios'
 import { electionAt, isElectionYear, nextElection, popularity } from './game/score'
@@ -114,6 +116,8 @@ function App() {
   const [hint, setHint] = useState<string | null>(null)
   /** Sur téléphone, l'écran affiché (une zone à la fois). */
   const [view, setView] = useState<PhoneView>('pays')
+  /** L'avis de ministre ouvert en détail. */
+  const [adviceOpen, setAdviceOpen] = useState<Advice | null>(null)
   const phone = usePhone()
   /** Sur téléphone, seul l'écran choisi est rendu (les autres coûteraient du calcul à chaque geste). */
   const shows = (v: PhoneView) => !phone || view === v
@@ -230,6 +234,11 @@ function App() {
   const capital = mode.kind === 'myth' || sandbox ? null : politicalCapital(pop, year === START || (elections && isElectionYear(year)))
   const overBudget = capital !== null && draftCost > capital
   const advice = preview ? adviseDraft(preview) : adviseState(s, pop, upcoming ? upcoming - year : 99)
+  // L'avis détaillé, recalculé si le brouillon change pendant qu'on le lit (il disparaît si on annule les changements).
+  const detail = useMemo(
+    () => (adviceOpen?.topic && hasDraft && year < END ? adviceDetail({ decisions, events, year, params, draft }, adviceOpen.topic) : null),
+    [adviceOpen, hasDraft, decisions, events, year, params, draft],
+  )
 
   // Les étoiles du scénario en cours comptent dès qu'il est terminé (et on garde le meilleur score).
   // Une partie perdue puis continuée en bac à sable ne rapporte pas d'étoile.
@@ -1042,7 +1051,20 @@ function App() {
         endingTitle={preview?.ending ? ENDINGS[preview.ending].title : null}
         phone={phone}
         controls={phone ? timeButtons : null}
+        onAdvice={setAdviceOpen}
       />
+
+      {adviceOpen && detail ? (
+        <AdviceDetail
+          advice={adviceOpen}
+          detail={detail}
+          onClose={() => setAdviceOpen(null)}
+          onGraph={(node) => {
+            setAdviceOpen(null)
+            openBrain({ focus: node })
+          }}
+        />
+      ) : null}
 
       {phone ? (
         <PhoneNav

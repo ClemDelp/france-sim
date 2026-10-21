@@ -1,5 +1,6 @@
 import type { Ending, YearState } from '../model/types'
 import { num } from '../ui/format'
+import type { Topic } from './adviceDetail'
 
 /** Vos ministres : chacun regarde son domaine et vous le dit franchement. */
 export const ADVISORS = {
@@ -11,7 +12,8 @@ export const ADVISORS = {
 } as const
 
 export type AdvisorId = keyof typeof ADVISORS
-export type Advice = { who: AdvisorId; mood: 'warn' | 'good' | 'info'; text: string }
+/** Un avis ; `topic` : l'indicateur dont il parle, pour l'avis détaillé (au toucher). */
+export type Advice = { who: AdvisorId; mood: 'warn' | 'good' | 'info'; text: string; topic?: Topic }
 
 /** Ce que changerait la décision en préparation, l'an prochain. */
 export type Preview = { deficit: number; unemployment: number; poverty: number; discontent: number; ending: Ending | null; inflation: number; emissions: number }
@@ -22,32 +24,32 @@ const bn = (v: number) => `${num(Math.abs(v), 0)} Md€`
 export function adviseDraft(p: Preview): Advice[] {
   const out: (Advice & { weight: number })[] = []
   if (p.ending) {
-    out.push({ who: 'interieur', mood: 'warn', weight: 10000, text: 'Si vous faites ça, nous ne tiendrons pas l’année. Je ne réponds plus de rien.' })
+    out.push({ who: 'interieur', mood: 'warn', weight: 10000, topic: 'discontent', text: 'Si vous faites ça, nous ne tiendrons pas l’année. Je ne réponds plus de rien.' })
   } else if (p.discontent >= 0.6) {
-    out.push({ who: 'interieur', mood: 'warn', weight: 500, text: `Les préfets me remontent une colère inquiétante (climat social à ${num(p.discontent, 2)}). Attention à la rue.` })
+    out.push({ who: 'interieur', mood: 'warn', weight: 500, topic: 'discontent', text: `Les préfets me remontent une colère inquiétante (climat social à ${num(p.discontent, 2)}). Attention à la rue.` })
   }
   if (p.deficit > 15) {
-    out.push({ who: 'budget', mood: 'warn', weight: 20 + p.deficit / 5, text: `Ça creuse le déficit de ${bn(p.deficit)} dès l’an prochain. Qui paie ? Les prêteurs nous regardent.` })
+    out.push({ who: 'budget', mood: 'warn', weight: 20 + p.deficit / 5, topic: 'deficit', text: `Ça creuse le déficit de ${bn(p.deficit)} dès l’an prochain. Qui paie ? Les prêteurs nous regardent.` })
   } else if (p.deficit < -15) {
-    out.push({ who: 'budget', mood: 'good', weight: 15 + -p.deficit / 5, text: `Excellent pour les comptes : ${bn(p.deficit)} de déficit en moins.` })
+    out.push({ who: 'budget', mood: 'good', weight: 15 + -p.deficit / 5, topic: 'deficit', text: `Excellent pour les comptes : ${bn(p.deficit)} de déficit en moins.` })
   }
   if (p.unemployment > 0.002) {
-    out.push({ who: 'travail', mood: 'warn', weight: 15 + p.unemployment * 2000, text: `Je crains ${num(p.unemployment * 100, 1)} point de chômage en plus. Les entreprises vont freiner.` })
+    out.push({ who: 'travail', mood: 'warn', weight: 15 + p.unemployment * 2000, topic: 'unemployment', text: `Je crains ${num(p.unemployment * 100, 1)} point de chômage en plus. Les entreprises vont freiner.` })
   } else if (p.unemployment < -0.002) {
-    out.push({ who: 'travail', mood: 'good', weight: 15 + -p.unemployment * 2000, text: `Bonne nouvelle pour l’emploi : ${num(-p.unemployment * 100, 1)} point de chômage en moins.` })
+    out.push({ who: 'travail', mood: 'good', weight: 15 + -p.unemployment * 2000, topic: 'unemployment', text: `Bonne nouvelle pour l’emploi : ${num(-p.unemployment * 100, 1)} point de chômage en moins.` })
   }
   if (p.poverty > 0.002) {
-    out.push({ who: 'social', mood: 'warn', weight: 15 + p.poverty * 2000, text: `Ce sont les plus modestes qui vont trinquer : la pauvreté monte de ${num(p.poverty * 100, 1)} point.` })
+    out.push({ who: 'social', mood: 'warn', weight: 15 + p.poverty * 2000, topic: 'poverty', text: `Ce sont les plus modestes qui vont trinquer : la pauvreté monte de ${num(p.poverty * 100, 1)} point.` })
   } else if (p.poverty < -0.002) {
-    out.push({ who: 'social', mood: 'good', weight: 15 + -p.poverty * 2000, text: `Merci : la pauvreté recule de ${num(-p.poverty * 100, 1)} point. Des centaines de milliers de personnes respirent.` })
+    out.push({ who: 'social', mood: 'good', weight: 15 + -p.poverty * 2000, topic: 'poverty', text: `Merci : la pauvreté recule de ${num(-p.poverty * 100, 1)} point. Des centaines de milliers de personnes respirent.` })
   }
   if (p.emissions < -5) {
-    out.push({ who: 'energie', mood: 'good', weight: 12 + -p.emissions / 3, text: `Bravo : ${num(-p.emissions, 0)} millions de tonnes de CO2 en moins dès l’an prochain.` })
+    out.push({ who: 'energie', mood: 'good', weight: 12 + -p.emissions / 3, topic: 'emissions', text: `Bravo : ${num(-p.emissions, 0)} millions de tonnes de CO2 en moins dès l’an prochain.` })
   } else if (p.emissions > 5) {
-    out.push({ who: 'energie', mood: 'warn', weight: 12 + p.emissions / 3, text: `On recule : ${num(p.emissions, 0)} millions de tonnes de CO2 en plus.` })
+    out.push({ who: 'energie', mood: 'warn', weight: 12 + p.emissions / 3, topic: 'emissions', text: `On recule : ${num(p.emissions, 0)} millions de tonnes de CO2 en plus.` })
   }
   if (p.inflation > 0.005) {
-    out.push({ who: 'energie', mood: 'warn', weight: 10 + p.inflation * 1000, text: `Les prix vont grimper (${num(p.inflation * 100, 1)} point d’inflation en plus).` })
+    out.push({ who: 'energie', mood: 'warn', weight: 10 + p.inflation * 1000, topic: 'inflation', text: `Les prix vont grimper (${num(p.inflation * 100, 1)} point d’inflation en plus).` })
   }
   if (!out.length) {
     out.push({ who: 'budget', mood: 'info', weight: 0, text: 'Effet modeste l’an prochain. Les vraies conséquences se verront peut-être dans quelques années.' })

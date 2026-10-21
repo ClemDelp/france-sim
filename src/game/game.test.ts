@@ -6,6 +6,7 @@ import { adviseDraft } from './advisors'
 import { headline } from './headlines'
 import { evaluate, SCENARIOS } from './scenarios'
 import { electionAt, isElectionYear, nextElection, voteShare } from './score'
+import { adviceDetail } from './adviceDetail'
 import { parseSave } from './savegame'
 
 /** Pour chaque scénario, une stratégie qui marche : le jeu doit rester gagnable quand le modèle évolue. */
@@ -100,5 +101,28 @@ describe('la sauvegarde de la partie', () => {
     expect(parseSave({ ...game, mode: 'scenario-supprime' }, 2025, 2075)).toBeNull()
     expect(parseSave({ ...game, events: [{ year: 2027, id: 'evenement-inconnu' }] }, 2025, 2075)).toBeNull()
     expect(parseSave({ ...game, year: 2100 }, 2025, 2075)).toBeNull()
+  })
+})
+
+describe('l’avis détaillé des ministres', () => {
+  const input = { decisions: [], events: [], year: 2025, params: {}, draft: { electrification: 0.08, nuclearShare: 0.85 } }
+
+  it('la part de chaque levier plus l’effet de combinaison redonnent exactement l’effet annoncé', () => {
+    for (const topic of ['deficit', 'unemployment', 'poverty', 'emissions', 'inflation', 'discontent'] as const) {
+      const d = adviceDetail(input, topic)
+      expect(d.levers).toHaveLength(2)
+      expect(d.levers.reduce((a, l) => a + l.value, 0) + d.combination).toBeCloseTo(d.total, 9)
+    }
+  })
+
+  it('le budget dit qui paie : recettes, dépenses, et l’investissement privé quand il y en a', () => {
+    const d = adviceDetail(input, 'deficit')
+    expect(d.money).not.toBeNull()
+    expect(d.money!.revenue.length + d.money!.spending.length).toBeGreaterThan(0)
+    expect(d.money!.privateInvestment).toBeGreaterThan(50)
+  })
+
+  it('les mécanismes partent des causes de l’indicateur dans le graphe', () => {
+    expect(adviceDetail(input, 'unemployment').mechanisms.map((m) => m.id)).toContain('gdp')
   })
 })

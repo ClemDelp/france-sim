@@ -174,9 +174,11 @@ type CouncilProps = {
   /** Sur téléphone : une ligne en bas de l'écran, qui s'ouvre en panneau (avec les commandes du temps). */
   phone?: boolean
   controls?: ReactNode
+  /** Ouvre l'avis détaillé d'un ministre (pour un avis sur la décision en préparation). */
+  onAdvice?: (advice: Advice) => void
 }
 
-export function Council({ advice, preview, year, cost, capital, onCancel, endingTitle, phone = false, controls }: CouncilProps) {
+export function Council({ advice, preview, year, cost, capital, onCancel, endingTitle, phone = false, controls, onAdvice }: CouncilProps) {
   const [desktopOpen, setDesktopOpen] = useState(true)
   const [phoneOpen, setPhoneOpen] = useState(false)
   const open = phone ? phoneOpen : desktopOpen
@@ -254,8 +256,8 @@ export function Council({ advice, preview, year, cost, capital, onCancel, ending
             <div className="council-advice">
               {advice.map((a) => {
                 const who = ADVISORS[a.who]
-                return (
-                  <div key={a.who + a.text} className={`advice advice-${a.mood}`}>
+                const body = (
+                  <>
                     <span className="advice-avatar" title={`${who.name}, ${who.role}`}>
                       {who.avatar}
                     </span>
@@ -263,7 +265,18 @@ export function Council({ advice, preview, year, cost, capital, onCancel, ending
                       <strong>{who.name}</strong> <small>{who.role}</small>
                       <br />
                       {a.text}
+                      {a.topic && onAdvice ? <span className="advice-more">Pourquoi ? Comment ? ›</span> : null}
                     </p>
+                  </>
+                )
+                // Un avis sur la décision en préparation s'ouvre en détail : la part de chaque levier, les mécanismes, qui paie.
+                return a.topic && onAdvice ? (
+                  <button key={a.who + a.text} type="button" className={`advice advice-${a.mood} is-clickable`} onClick={() => onAdvice(a)}>
+                    {body}
+                  </button>
+                ) : (
+                  <div key={a.who + a.text} className={`advice advice-${a.mood}`}>
+                    {body}
                   </div>
                 )
               })}
