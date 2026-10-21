@@ -466,7 +466,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const wageGrowth = init
     ? 0
     : P.wageInertia * prev.inflation + (1 - P.wageInertia) * BASE.inflationAnchor + productivityGrowth + P.wageUnemployment * (naturalUnemployment - prev.unemployment) + P.smicWageSpillover * smicStep
-  const tariffStep = (policy.tariffs - prev.tariffs) * P.tariffPriceShare + (policy.tariffChinaEV - prev.tariffChinaEV) * P.evTariffPrice
+  // Un droit de douane ne renchérit que la part importée de ce qu'on achète (≈ un tiers), pas tous les prix.
+  const tariffStep = (policy.tariffs - prev.tariffs) * P.tariffPriceShare * (BASE.importsNonEnergy / BASE.gdp) + (policy.tariffChinaEV - prev.tariffChinaEV) * P.evTariffPrice
   // Un changement de TVA se répercute en grande partie dans les prix, une seule fois.
   const vatInflation = init ? 0 : (P.vatPassThrough * (policy.vat - prev.vat)) / (1 + prev.vat)
   const vatPrice = prev.vatPrice * (1 + vatInflation)
@@ -574,7 +575,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const real = nominal / priceLevel
     const potential = laborForce * (1 - naturalUnemployment) * productivity
     // Un SMIC plus cher pousse les entreprises à économiser du travail peu qualifié (élasticité modeste).
-    const proportional = real / (productivity * (1 + P.smicJobLoss * policy.smicBoost))
+    // Une partie des aides aux entreprises allège le coût du travail (CICE, aides à l'embauche) : les supprimer coûte des emplois.
+    const aidJobs = 1 + P.firmAidJobs * clamp((policy.firmAid - REF.firmAid) / REF.firmAid, -1, 1)
+    const proportional = (real / (productivity * (1 + P.smicJobLoss * policy.smicBoost))) * aidJobs
     // Loi d'Okun : les entreprises gardent une partie de leurs salariés quand l'activité baisse et embauchent moins vite
     // qu'elles ne produisent quand elle monte. L'emploi ne suit qu'une partie de l'écart de l'année ; le retard se résorbe ensuite.
     const employmentGap = init ? 0 : P.okunPersistence * prev.employmentGap + (P.okunElasticity - 1) * Math.log(proportional / laborForce / prev.proportionalRate)
@@ -901,7 +904,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
 
   // — 15. Tension sur la dette : de combien le solde public est-il loin de ce qui stabiliserait la dette ?
   // Il faudrait un excédent primaire (hors intérêts) de (taux − croissance) × dette ; tout écart fait grossir la dette.
-  const nominalGrowth = init ? BASE.inflationAnchor + BASE.productivityGrowth : gdp / prev.gdp - 1
+  // Les prêteurs jugent la soutenabilité sur la croissance de tendance, pas sur une seule année : une récession brève (2009) ne déclenche pas de crise à elle seule.
+  const nominalGrowth = BASE.inflationAnchor + BASE.productivityGrowth
   const primaryBalance = -(deficit - d.interest) / gdp
   const stabilizing = ((effectiveRate - nominalGrowth) / (1 + nominalGrowth)) * (debt / gdp)
   const stabilityGap = stabilizing - primaryBalance
@@ -942,6 +946,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     Math.max(0, dist.poverty - poverty0) / P.unrestPovertyRange +
     // L'austérité imposée nourrit la colère tant que le plan d'aide dure.
     (rescueYears > 0 ? rescueStep * (P.rescueYears - rescueYears + 1) : 0) / P.unrestAusterityRange +
+    // Une crise de la dette (taux qui s'envolent, banques et épargnants touchés) fâche le pays, avec ou sans plan d'aide.
+    (debtCrisis ? P.crisisAnger : 0) +
     // Catastrophes à répétition, pénuries d'eau : le réchauffement nourrit la colère, sauf si le pays s'est adapté.
     (Math.max(0, warming - world.heatShock) * exposure) / P.unrestClimateRange +
     // Une catastrophe ponctuelle (canicule, inondation) choque, mais moins qu'un réchauffement durable ; l'adaptation en atténue aussi la colère.

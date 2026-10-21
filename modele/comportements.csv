@@ -100,6 +100,7 @@ flightMax;0,15;part;Fiscalité du capital;Fuite des capitaux maximale;;hypothès
 inheritanceErosion;2,5;sensibilité;Fiscalité du capital;Fonte de l’assiette quand les droits de succession montent;Donations anticipées, assurance-vie, départs : l’assiette fond de plus en plus vite, les recettes plafonnent vers 50 % de taux moyen.;hypothèse;;1,5;4
 inheritanceErosionThreshold;0,1;taux;Fiscalité du capital;Taux moyen de succession au-delà duquel l’assiette fond;;hypothèse;;0,08;0,15
 smicJobLoss;0,06;sensibilité;Emploi;Emplois perdus quand le SMIC augmente (par 100 % de hausse);Élasticité modeste, débattue.;estimé;Conseil d’analyse économique (2013), Cahuc;;
+firmAidJobs;0,015;part;Emploi;Emplois liés aux aides aux entreprises (part de l’emploi si on les supprime toutes);Une partie des aides allège le coût du travail (CICE devenu baisse de cotisations, aides à l’embauche) : les évaluations du CICE trouvent 100 000 à 160 000 emplois pour ≈ 20 Md€.;estimé;Évaluations du CICE (France Stratégie, 2020), ordre de grandeur;0,005;0,03
 maxEmployment;0,985;part;Emploi;Part maximale des actifs en emploi;;hypothèse;;0,975;0,99
 okunElasticity;0,5;part;Emploi;Part d’un écart d’activité qui se traduit en emplois la même année;Loi d’Okun : en France, 1 % d’activité en plus ou en moins ne fait bouger le chômage que d’environ 0,3 à 0,5 point la même année (les entreprises gardent ou recrutent leurs salariés avec retard).;estimé;Loi d’Okun, estimations pour la France (INSEE, OFCE), ordre de grandeur;0,3;0,8
 okunPersistence;0,5;part;Emploi;Part du retard d’emploi qui reste l’année suivante;Le retard d’embauche (ou les salariés gardés) se résorbe en quelques années.;hypothèse;;0,3;0,7
@@ -134,6 +135,7 @@ crisisDebtRange;1;part du PIB;Crise de la dette;Dette en plus du seuil qui suffi
 crisisGapRange;0,06;part du PIB;Crise de la dette;Écart à l’effort qui stabiliserait la dette suffisant, seul, à déclencher une crise;L’écart mesure de combien le solde public est loin de ce qu’il faudrait pour que la dette cesse d’augmenter (en tenant compte du taux et de la croissance).;hypothèse;Blanchard, Fiscal Dominance (2023), ordre de grandeur;0,04;0,08
 crisisSmoothing;0,5;part;Crise de la dette;Poids de l’année en cours dans la tension (le reste vient des années passées);Les marchés regardent la tendance, pas une seule année.;hypothèse;;0,3;0,7
 crisisPanic;3;points;Crise de la dette;Prime de risque ajoutée quand une crise éclate;Grèce 2010 : + 10 points, Italie 2011 : + 4 points, France 2011 : + 1,5 point.;estimé;BCE, écarts de taux souverains 2010-2012;;
+crisisAnger;0,3;indice;Crise de la dette;Colère causée par une crise de la dette l’année où elle éclate;Taux qui s’envolent, épargne et banques touchées, peur du lendemain : Grèce, Italie, Espagne 2010-2012.;hypothèse;;0,15;0,5
 crisisShun;1;indice;Crise de la dette;Fuite des prêteurs étrangers quand une crise éclate;;hypothèse;;;
 crisisBondLoss;0,1;part;Crise de la dette;Perte de valeur des titres de dette détenus en France pendant une crise;Banques et assureurs voient fondre la valeur de leurs obligations.;estimé;Italie 2011, ordre de grandeur;;
 crisisDemandShock;0,015;part;Crise de la dette;Recul de la demande l’année d’une crise (peur, épargne de précaution);;hypothèse;;;
@@ -156,7 +158,7 @@ unrestUnemploymentRange;0,1;part;Mécontentement social;Chômage en plus qui, se
 unrestInflation;0,03;part;Mécontentement social;Inflation à partir de laquelle la colère monte;;hypothèse;;0,025;0,04
 unrestInflationRange;0,12;part;Mécontentement social;Inflation en plus qui, seule, provoquerait une révolte;;hypothèse;;;
 unrestPovertyRange;0,05;part;Mécontentement social;Hausse de la pauvreté qui, seule, provoquerait une révolte;;hypothèse;;;
-unrestPensionRange;0,15;part;Mécontentement social;Perte de pouvoir d’achat des retraites qui, seule, provoquerait une révolte;Les retraités votent et manifestent : un gel durable des pensions (sous-indexation) pèse sur le climat social tant qu’il dure.;hypothèse;;0,1;0,3
+unrestPensionRange;0,25;part;Mécontentement social;Perte de pouvoir d’achat des retraites qui, seule, provoquerait une révolte;Les retraités votent et manifestent : un gel durable des pensions (sous-indexation) pèse sur le climat social tant qu’il dure.;hypothèse;;0,15;0,4
 unrestServicesRange;0,3;part;Mécontentement social;Baisse des services publics (santé, éducation, autres services) qui, seule, provoquerait une révolte;Hôpitaux saturés, classes sans professeur, services fermés : la dégradation se voit et se paie dans les urnes.;hypothèse;;0,2;0,5
 unrestAusterityRange;0,1;part du PIB;Mécontentement social;Économies imposées qui, seules, provoqueraient une révolte;Grèce 2010-2015 : environ 15 points de PIB d’efforts, grèves générales.;hypothèse;;;
 bankruptcyPremium;0,08;taux;Fin de partie;Prime de risque à laquelle l’État ne trouve plus de prêteurs (faillite);Grèce 2011 : plus de 10 points d’écart avec l’Allemagne.;estimé;BCE, écarts de taux 2011-2012;0,06;0,12

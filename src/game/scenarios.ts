@@ -72,13 +72,13 @@ export const SCENARIOS: Scenario[] = [
     title: 'La France électrique',
     tagline: 'Sortir du pétrole et du gaz d’ici 2040.',
     story:
-      'Le pétrole et le gaz pèsent encore 60 % de l’énergie consommée, et chaque crise au Moyen-Orient se paie au prix fort. Votre mission : électrifier le pays d’ici 2040, avec une électricité moins chère qu’aujourd’hui, sans laisser filer la dette.',
+      'Le pétrole et le gaz pèsent encore 60 % de l’énergie consommée, et chaque crise au Moyen-Orient se paie au prix fort. Votre mission : électrifier le pays d’ici 2040, avec une électricité qui reste bon marché, sans laisser filer la dette.',
     difficulty: 2,
     end: 2040,
     events: [],
     objectives: [
       { label: 'Pétrole et gaz sous 35 % de l’énergie en 2040', when: 'end', get: (s) => s.fossilShare, op: 'below', target: 0.35, show: pct0 },
-      { label: 'Prix de l’électricité sous l’indice 100 en 2040 (moins cher qu’en 2025)', when: 'end', get: (s) => s.electricityPrice * 100, op: 'below', target: 100, show: (v) => num(v, 0) },
+      { label: 'Prix de l’électricité sous l’indice 102 en 2040 (à peine plus cher qu’en 2025)', when: 'end', get: (s) => s.electricityPrice * 100, op: 'below', target: 102, show: (v) => num(v, 1) },
       { label: 'Dette sous 138 % du PIB en 2040', when: 'end', get: (s) => s.debtRatio, op: 'below', target: 1.38, show: pct0 },
     ],
     tip: 'Le nucléaire existant rend l’électricité bon marché ; électrifier coûte cher au début.',
@@ -96,7 +96,7 @@ export const SCENARIOS: Scenario[] = [
     objectives: [
       { label: 'Émissions françaises sous 200 Mt en 2050', when: 'end', get: (s) => s.frenchEmissions, op: 'below', target: 200, show: (v) => `${num(v, 0)} Mt` },
       { label: 'Au moins 30 % des dégâts climatiques évités par l’adaptation en 2050', when: 'end', get: (s) => s.adaptationCoverage, op: 'above', target: 0.3, show: pct0 },
-      { label: 'Espérance de vie au-dessus de 86 ans en 2050', when: 'end', get: (s) => s.lifeExpectancy, op: 'above', target: 86, show: (v) => `${num(v, 1)} ans` },
+      { label: 'Dette sous 150 % du PIB en 2050 (une transition financée)', when: 'end', get: (s) => s.debtRatio, op: 'below', target: 1.5, show: pct0 },
     ],
     tip: 'Taxe carbone, électrification, adaptation, aide aux pays du Sud : il faudra financer, et ménager la colère.',
   },
@@ -113,7 +113,7 @@ export const SCENARIOS: Scenario[] = [
     objectives: [
       { label: 'Déficit sous 3,5 % du PIB en 2040', when: 'end', get: (s) => s.deficit / s.gdp, op: 'below', target: 0.035, show: pct },
       { label: 'Pauvreté sous 15 % en 2040', when: 'end', get: (s) => s.poverty, op: 'below', target: 0.15, show: pct },
-      { label: 'Chômage sous 6,5 % en 2040', when: 'end', get: (s) => s.unemployment, op: 'below', target: 0.065, show: pct },
+      { label: 'Chômage sous 7 % en 2040', when: 'end', get: (s) => s.unemployment, op: 'below', target: 0.07, show: pct },
     ],
     tip: 'Âge de départ, indexation, cotisations, immigration : chaque levier a ses gagnants et ses perdants.',
   },
@@ -123,15 +123,15 @@ export const SCENARIOS: Scenario[] = [
     title: 'Sous l’œil des marchés',
     tagline: 'Faire baisser la dette sans déclencher de crise.',
     story:
-      'Les agences de notation ont dégradé la France. Les prêteurs vous surveillent. La BCE est indépendante : pas de planche à billets. Ramenez la dette sous 115 % du PIB en 2035 sans jamais perdre la confiance des prêteurs : leur prime de risque doit rester sous 0,7 point (les décisions de la BCE, elles, ne dépendent pas de vous).',
+      'Les agences de notation ont dégradé la France. Les prêteurs vous surveillent. La BCE est indépendante : pas de planche à billets. Ramenez la dette sous 115 % du PIB en 2035 sans jamais perdre la confiance des prêteurs : leur prime de risque doit rester sous 0,6 point (les décisions de la BCE, elles, ne dépendent pas de vous).',
     difficulty: 3,
     end: 2035,
     events: [],
     locked: { keys: ['monetization', 'cancelShare'], why: 'La BCE est indépendante, et les traités interdisent d’annuler une dette : ni planche à billets, ni annulation.' },
     objectives: [
       { label: 'Dette sous 115 % du PIB en 2035', when: 'end', get: (s) => s.debtRatio, op: 'below', target: 1.15, show: pct0 },
-      { label: 'Prime de risque toujours sous 0,7 point (la confiance des prêteurs)', when: 'always', get: (s) => s.riskPremium, op: 'below', target: 0.007, show: (v) => `${num(v * 100, 2)} pt` },
-      { label: 'Jamais de tension sur la dette au-dessus de 0,5', when: 'always', get: (s) => s.marketStress, op: 'below', target: 0.5, show: (v) => num(v, 2) },
+      { label: 'Prime de risque toujours sous 0,6 point (la confiance des prêteurs)', when: 'always', get: (s) => s.riskPremium, op: 'below', target: 0.006, show: (v) => `${num(v * 100, 2)} pt` },
+      { label: 'Jamais de tension sur la dette au-dessus de 0,6', when: 'always', get: (s) => s.marketStress, op: 'below', target: 0.6, show: (v) => num(v, 2) },
     ],
     tip: 'Couper trop vite casse la croissance, et la dette rapportée au PIB peut monter quand même.',
   },
@@ -147,7 +147,7 @@ export const SCENARIOS: Scenario[] = [
     events: [],
     objectives: [
       { label: 'Pauvreté sous 13 % en 2035', when: 'end', get: (s) => s.poverty, op: 'below', target: 0.13, show: pct },
-      { label: 'Déficit toujours sous 5 % du PIB', when: 'always', get: (s) => s.deficit / s.gdp, op: 'below', target: 0.05, show: pct },
+      { label: 'Déficit toujours sous 5,5 % du PIB', when: 'always', get: (s) => s.deficit / s.gdp, op: 'below', target: 0.055, show: pct },
       { label: 'Climat social toujours calme (sous 0,6)', when: 'always', get: (s) => s.discontent, op: 'below', target: 0.6, show: (v) => num(v, 2) },
     ],
     tip: 'Minima sociaux, sécurité sociale de l’alimentation, SMIC, impôts : il faudra financer.',
@@ -166,7 +166,7 @@ export const SCENARIOS: Scenario[] = [
       { id: 'recession', year: 2028 },
     ],
     objectives: [
-      { label: 'Chômage toujours sous 8,5 %', when: 'always', get: (s) => s.unemployment, op: 'below', target: 0.085, show: pct },
+      { label: 'Chômage toujours sous 9,5 %', when: 'always', get: (s) => s.unemployment, op: 'below', target: 0.095, show: pct },
       { label: 'Dette sous 135 % du PIB en 2033', when: 'end', get: (s) => s.debtRatio, op: 'below', target: 1.35, show: pct0 },
       { label: 'Pas de crise de la dette', when: 'always', get: (s) => (s.debtCrisis ? 1 : 0), op: 'below', target: 0.5, show: (v) => (v ? 'crise' : 'non') },
     ],

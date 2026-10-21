@@ -53,7 +53,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Sécurité sociale',
     icon: '🤝',
     levers: [
-      { key: 'retirementAge', weight: 2, label: 'Âge de départ à la retraite', min: 60, max: 67, step: 0.25, unit: 'years', hint: 'La loi actuelle mène à 64 ans en 2032. Monter se fait de 3 mois par an au plus.', delay: 'L’âge effectif bouge de 3 mois par an au plus, à partir de 2028 : peu d’effet avant 2030.' },
+      { key: 'retirementAge', weight: 2, label: 'Âge de départ à la retraite', min: 60, max: 67, step: 0.25, unit: 'years', hint: 'La loi actuelle mène à 64 ans en 2032. Monter se fait de 3 mois par an au plus.', delay: 'L’âge effectif rejoint 64 ans vers 2032, puis bouge de 3 mois par an au plus : relever la cible n’a pas d’effet avant 2033 environ.' },
       { key: 'pensionIndexation', label: 'Indexation des retraites sur les prix', min: 0, max: 1.2, step: 0.05, unit: 'share', hint: '100 % = les pensions suivent l’inflation. Moins = gel partiel.' },
       { key: 'unemploymentReplacement', label: 'Allocation chômage (taux de remplacement)', min: 0.3, max: 0.8, step: 0.01, unit: 'pct', hint: 'Part de l’ancien salaire versée aux chômeurs indemnisés.' },
       { key: 'minima', label: 'Minima sociaux en plus', min: -20, max: 80, step: 5, unit: 'bn', hint: 'RSA, prime d’activité, aides au logement : surtout aux 20 % les plus modestes.' },

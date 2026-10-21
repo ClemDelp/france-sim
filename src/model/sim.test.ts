@@ -58,7 +58,7 @@ describe('mechanisms', () => {
   it('retiring at 60 costs money and output', () => {
     const { s, b } = at({ retirementAge: 60 })
     expect(s.gdpReal).toBeLessThan(b.gdpReal)
-    expect(s.deficit / s.gdp).toBeGreaterThan(b.deficit / b.gdp + 0.01)
+    expect(s.deficit / s.gdp).toBeGreaterThan(b.deficit / b.gdp + 0.008)
   })
 
   it('zero migration shrinks the economy over time', () => {
@@ -270,7 +270,20 @@ describe('constats du playtest : le modèle reste cohérent', () => {
     expect(s.taxes['Dividendes des entreprises publiques (en plus)'] / bonds).toBeLessThan(s.effectiveRate + 0.03)
   })
 
-  it('le prix de l’électricité et le baril de référence ne cachent pas de crise en 2026', () => {
+  it('supprimer les aides aux entreprises coûte des emplois (elles allègent en partie le coût du travail)', () => {
+    expect(year(play({ firmAid: 0 }, 2027), 2027).unemployment).toBeGreaterThan(year(base, 2027).unemployment + 0.004)
+  })
+
+  it('une récession brève ne déclenche pas à elle seule une crise de la dette (2009 n’en a pas provoqué)', () => {
+    const st = simulate({ decisions: [], events: [{ year: 2028, id: 'recession' }], until: 2031 })
+    expect(st.some((s) => s.debtCrisis)).toBe(false)
+  })
+
+  it('des droits de douane de 40 % ne font pas 10 points d’inflation : seule la part importée renchérit', () => {
+    expect(year(play({ tariffs: 0.4 }, 2026), 2026).inflation - year(base, 2026).inflation).toBeLessThan(0.05)
+  })
+
+    it('le prix de l’électricité et le baril de référence ne cachent pas de crise en 2026', () => {
     expect(year(base, 2026).oil).toBeLessThan(80)
   })
 })

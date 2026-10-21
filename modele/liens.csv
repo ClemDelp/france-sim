@@ -268,3 +268,4 @@ education;discontent;-;unrestServicesRange;Des classes sans professeur, des éco
 otherServices;discontent;-;unrestServicesRange;Police, justice, mairies : des services qui reculent nourrissent le mécontentement.
 electrification;imports;+;electrificationImportShare;Une bonne partie des équipements (pompes à chaleur, batteries, véhicules) est importée.
 lowIncome;discontent;-;unrestLowIncomeDrop;Quand les plus modestes perdent du pouvoir d’achat, la colère monte, même si le revenu médian tient.
+firmAid;unemployment;-;firmAidJobs;Une partie des aides allège le coût du travail : les supprimer coûte des emplois.

@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 424 paramètres du modèle et les 269 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 426 paramètres du modèle et les 270 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (424)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (426)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -1278,6 +1278,13 @@
   <td><span class="badge estime">estimé</span></td>
   <td><small>Conseil d’analyse économique (2013), Cahuc</small></td>
 </tr>
+<tr data-file="comportements" data-reliability="estime" data-text="firmaidjobs emplois liés aux aides aux entreprises (part de l’emploi si on les supprime toutes) emploi une partie des aides allège le coût du travail (cice devenu baisse de cotisations, aides à l’embauche) : les évaluations du cice trouvent 100 000 à 160 000 emplois pour ≈ 20 md€. évaluations du cice (france stratégie, 2020), ordre de grandeur">
+  <td><code>firmAidJobs</code><br /><small>Emploi</small></td>
+  <td><strong>Emplois liés aux aides aux entreprises (part de l’emploi si on les supprime toutes)</strong><br /><small>Une partie des aides allège le coût du travail (CICE devenu baisse de cotisations, aides à l’embauche) : les évaluations du CICE trouvent 100 000 à 160 000 emplois pour ≈ 20 Md€.</small><br /><small>Utilisé par : Aides aux entreprises → Chômage</small></td>
+  <td>0,015<br /><small>part</small><br /><small>plage 0,005 à 0,03</small></td>
+  <td><span class="badge estime">estimé</span></td>
+  <td><small>Évaluations du CICE (France Stratégie, 2020), ordre de grandeur</small></td>
+</tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="maxemployment part maximale des actifs en emploi emploi  ">
   <td><code>maxEmployment</code><br /><small>Emploi</small></td>
   <td><strong>Part maximale des actifs en emploi</strong><br /><small>Utilisé par : PIB (croissance) → Chômage</small></td>
@@ -1516,6 +1523,13 @@
   <td><span class="badge estime">estimé</span></td>
   <td><small>BCE, écarts de taux souverains 2010-2012</small></td>
 </tr>
+<tr data-file="comportements" data-reliability="hypothese" data-text="crisisanger colère causée par une crise de la dette l’année où elle éclate crise de la dette taux qui s’envolent, épargne et banques touchées, peur du lendemain : grèce, italie, espagne 2010-2012. ">
+  <td><code>crisisAnger</code><br /><small>Crise de la dette</small></td>
+  <td><strong>Colère causée par une crise de la dette l’année où elle éclate</strong><br /><small>Taux qui s’envolent, épargne et banques touchées, peur du lendemain : Grèce, Italie, Espagne 2010-2012.</small></td>
+  <td>0,3<br /><small>indice</small><br /><small>plage 0,15 à 0,5</small></td>
+  <td><span class="badge hypothese">hypothèse</span></td>
+  <td><small></small></td>
+</tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="crisisshun fuite des prêteurs étrangers quand une crise éclate crise de la dette  ">
   <td><code>crisisShun</code><br /><small>Crise de la dette</small></td>
   <td><strong>Fuite des prêteurs étrangers quand une crise éclate</strong></td>
@@ -1673,7 +1687,7 @@
 <tr data-file="comportements" data-reliability="hypothese" data-text="unrestpensionrange perte de pouvoir d’achat des retraites qui, seule, provoquerait une révolte mécontentement social les retraités votent et manifestent : un gel durable des pensions (sous-indexation) pèse sur le climat social tant qu’il dure. ">
   <td><code>unrestPensionRange</code><br /><small>Mécontentement social</small></td>
   <td><strong>Perte de pouvoir d’achat des retraites qui, seule, provoquerait une révolte</strong><br /><small>Les retraités votent et manifestent : un gel durable des pensions (sous-indexation) pèse sur le climat social tant qu’il dure.</small><br /><small>Utilisé par : Indexation des retraites → Mécontentement social</small></td>
-  <td>0,15<br /><small>part</small><br /><small>plage 0,1 à 0,3</small></td>
+  <td>0,25<br /><small>part</small><br /><small>plage 0,15 à 0,4</small></td>
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
@@ -3274,6 +3288,7 @@
 <tr data-file="liens" data-text="otherservices discontent autres services publics mécontentement social unrestservicesrange police, justice, mairies : des services qui reculent nourrissent le mécontentement."><td>Autres services publics</td><td>Mécontentement social</td><td>-</td><td><small><code>unrestServicesRange</code></small></td><td><small>Police, justice, mairies : des services qui reculent nourrissent le mécontentement.</small></td></tr>
 <tr data-file="liens" data-text="electrification imports rythme d’électrification importations electrificationimportshare une bonne partie des équipements (pompes à chaleur, batteries, véhicules) est importée."><td>Rythme d’électrification</td><td>Importations</td><td>+</td><td><small><code>electrificationImportShare</code></small></td><td><small>Une bonne partie des équipements (pompes à chaleur, batteries, véhicules) est importée.</small></td></tr>
 <tr data-file="liens" data-text="lowincome discontent revenu des 20 % les plus modestes mécontentement social unrestlowincomedrop quand les plus modestes perdent du pouvoir d’achat, la colère monte, même si le revenu médian tient."><td>Revenu des 20 % les plus modestes</td><td>Mécontentement social</td><td>-</td><td><small><code>unrestLowIncomeDrop</code></small></td><td><small>Quand les plus modestes perdent du pouvoir d’achat, la colère monte, même si le revenu médian tient.</small></td></tr>
+<tr data-file="liens" data-text="firmaid unemployment aides aux entreprises chômage firmaidjobs une partie des aides allège le coût du travail : les supprimer coûte des emplois."><td>Aides aux entreprises</td><td>Chômage</td><td>-</td><td><small><code>firmAidJobs</code></small></td><td><small>Une partie des aides allège le coût du travail : les supprimer coûte des emplois.</small></td></tr>
         </tbody></table></div>
         <script>
           const input = document.querySelector('.search')
