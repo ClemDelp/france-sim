@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>🧠 Comprendre le modèle</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <!-- Page générée par scripts/build-docs.mjs : ne pas la modifier à la main. -->
+    <div class="layout">
+      <main>
+        <h1>🧠 Comprendre le modèle</h1>
+        <p class="lead">Les grandes boucles du simulateur, en schémas. Source : <code>docs/COMMENT-CA-MARCHE.md</code>.</p>
+<div class="note"><p><strong>Sommaire</strong></p><ol><li><a href="#1-vue-d-ensemble-des-fichiers-ouverts-un-moteur-une-interface">Vue d’ensemble : des fichiers ouverts, un moteur, une interface</a></li><li><a href="#2-une-partie-vos-choix-compares-a-si-on-n-avait-rien-change">Une partie : vos choix comparés à « si on n’avait rien changé »</a></li><li><a href="#3-une-annee-dans-le-moteur">Une année dans le moteur</a></li><li><a href="#4-ou-circule-l-argent-le-modele-stock-flux">Où circule l’argent (le modèle stock-flux)</a></li><li><a href="#5-le-graphe-des-causes-en-version-simplifiee">Le graphe des causes, en version simplifiée</a></li><li><a href="#6-les-menages-de-5-tranches-a-la-pauvrete-et-aux-inegalites">Les ménages : de 5 tranches à la pauvreté et aux inégalités</a></li><li><a href="#7-le-climat">Le climat</a></li><li><a href="#8-l-immigration-tout-est-cause-et-effet">L’immigration : tout est cause et effet</a></li><li><a href="#9-l-influence-de-la-france">L’influence de la France</a></li><li><a href="#10-comprendre-pourquoi-causes-combinaisons-effets-emergents">Comprendre pourquoi : causes, combinaisons, effets émergents</a></li><li><a href="#11-le-monde-bouge-le-parlement-freine">Le monde bouge, le Parlement freine</a></li><li><a href="#12-crise-de-la-dette-et-fin-de-partie">Crise de la dette et fin de partie</a></li><li><a href="#13-les-entreprises-pme-eti-grands-groupes">Les entreprises : PME, ETI, grands groupes</a></li><li><a href="#14-le-test-de-verite-rejouer-2000-2024">Le test de vérité : rejouer 2000–2024</a></li><li><a href="#15-ce-resultat-est-il-solide">Ce résultat est-il solide ?</a></li><li><a href="#16-participer-du-tableur-au-modele">Participer : du tableur au modèle</a></li><li><a href="#17-ce-que-le-modele-ne-sait-pas-faire-limites-connues">Ce que le modèle ne sait pas faire (limites connues)</a></li></ol></div>
+<p>Ce document explique, avec des schémas, comment le simulateur fonctionne : d’où viennent les chiffres, ce qui se passe quand on avance d’un an, et comment les variables s’influencent. Les schémas sont en <a href="https://mermaid.js.org/">Mermaid</a> : GitHub les affiche directement.</p>
+<h2 id="1-vue-d-ensemble-des-fichiers-ouverts-un-moteur-une-interface">1. Vue d’ensemble : des fichiers ouverts, un moteur, une interface</h2>
+<p>Toutes les hypothèses sont dans des fichiers CSV du dossier <code>modele/</code>, lisibles dans un tableur. Le moteur les lit, simule la France année par année, et l’interface montre le résultat.</p>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+    subgraph modele[&quot;📂 modele/ (modifiable dans Excel)&quot;]
+        D[&quot;donnees-2025.csv&lt;br/&gt;la France de 2025&lt;br/&gt;(PIB, dette, population…)&quot;]
+        C[&quot;comportements.csv&lt;br/&gt;comment chacun réagit&lt;br/&gt;(élasticités, délais, seuils)&quot;]
+        T[&quot;tranches.csv + entreprises.csv&lt;br/&gt;qui reçoit et qui paie&lt;br/&gt;(5 tranches, 3 tailles d’entreprise)&quot;]
+        H[&quot;donnees-2000.csv, politiques-2000-2024.csv,&lt;br/&gt;monde.csv, historique.csv&lt;br/&gt;le passé, pour rejouer 2000–2024&quot;]
+        V[&quot;variables.csv + liens.csv&lt;br/&gt;le graphe des causes&lt;br/&gt;(ce qui fait bouger quoi)&quot;]
+    end
+    subgraph moteur[&quot;⚙️ src/model/&quot;]
+        P[&quot;params.ts&lt;br/&gt;lit les CSV,&lt;br/&gt;permet d’essayer une variante&quot;]
+        CAL[&quot;calibration.ts&lt;br/&gt;BASE, P, GROUP_PARAMS&quot;]
+        SIM[&quot;sim.ts&lt;br/&gt;simule une année,&lt;br/&gt;puis la suivante&quot;]
+        G[&quot;graph.ts&lt;br/&gt;le graphe des causes&quot;]
+        R[&quot;replay.ts&lt;br/&gt;rejoue 2000–2024&quot;]
+        ROB[&quot;robustness.ts&lt;br/&gt;teste la solidité&lt;br/&gt;d’un résultat&quot;]
+    end
+    subgraph ui[&quot;🖥️ src/ui/ + App.tsx&quot;]
+        GAME[&quot;Le jeu&lt;br/&gt;leviers, carte des flux,&lt;br/&gt;idées reçues, courbes&quot;]
+        BRAIN[&quot;🧠 Le modèle&lt;br/&gt;graphe, paramètres, variantes,&lt;br/&gt;face au passé&quot;]
+    end
+    D --&gt; P
+    C --&gt; P
+    T --&gt; P
+    P --&gt; CAL --&gt; SIM
+    V --&gt; G
+    H --&gt; R
+    SIM --&gt; R --&gt; BRAIN
+    SIM --&gt; ROB --&gt; GAME
+    SIM --&gt; GAME
+    G --&gt; BRAIN
+    CAL --&gt; BRAIN
+    BRAIN -- &quot;variante de paramètres&quot; --&gt; SIM
+    GAME -- &quot;décisions, événements&quot; --&gt; SIM
+</pre></div>
+<p>Le graphe (<code>variables.csv</code>, <code>liens.csv</code>) <strong>décrit</strong> le moteur pour qu’on puisse le lire et le discuter. Le moteur (<code>sim.ts</code>) reste la référence : des tests vérifient que chaque lien cite des paramètres qui existent, et que chaque paramètre des fichiers est vraiment utilisé.</p>
+<h2 id="2-une-partie-vos-choix-compares-a-si-on-n-avait-rien-change">2. Une partie : vos choix comparés à « si on n’avait rien changé »</h2>
+<p>À chaque affichage, le simulateur refait tout le chemin depuis 2025, deux fois : une fois avec vos décisions, une fois sans. Tous les écarts affichés sont la différence entre les deux. C’est ce qui permet de dire « la pauvreté baisse de 1,2 point <strong>à cause de</strong> votre décision », même quand le monde change en même temps (crise, pétrole, vieillissement).</p>
+<div class="diagram"><pre class="mermaid">
+sequenceDiagram
+    actor J as Joueur
+    participant UI as Interface
+    participant S as Simulateur
+    J-&gt;&gt;UI: bouge un levier (ex. impôt sur la fortune 2 %)
+    UI-&gt;&gt;S: aperçu : l’année prochaine avec / sans ce changement
+    S--&gt;&gt;UI: effet estimé (déficit, chômage, pauvreté)
+    J-&gt;&gt;UI: avance de 1, 5, 10 ans ou jusqu’en 2075
+    UI-&gt;&gt;S: simule 2025 → année, avec les décisions
+    UI-&gt;&gt;S: simule 2025 → année, sans décision (même monde)
+    S--&gt;&gt;UI: deux trajectoires
+    UI--&gt;&gt;J: chiffres clés, écarts, courbes, journal
+    J-&gt;&gt;UI: clique sur « Pauvreté »
+    UI--&gt;&gt;J: ce qui la fait bouger, et quelles causes ont bougé
+</pre></div>
+<h2 id="3-une-annee-dans-le-moteur">3. Une année dans le moteur</h2>
+<p>Chaque année suit les mêmes 18 étapes (numérotées ainsi dans <code>src/model/sim.ts</code>). L’étape 10 est une recherche d’équilibre : la production dépend de la demande, qui dépend des revenus, qui dépendent de la production. Le moteur tâtonne (jusqu’à 60 essais) jusqu’à ce que tout boucle.</p>
+<div class="diagram"><pre class="mermaid">
+flowchart TD
+    A[&quot;1-3. Début d’année&lt;br/&gt;annulation de dette, nationalisations,&lt;br/&gt;crise de la dette ?&quot;] --&gt; B
+    B[&quot;4-7. Le pays et le monde&lt;br/&gt;démographie, influence,&lt;br/&gt;migrations, climat&quot;] --&gt; C
+    C[&quot;8-9. Prix et taux&lt;br/&gt;énergie, inflation, salaires,&lt;br/&gt;taux d’intérêt&quot;] --&gt; D
+    D[&quot;10. Production, revenus, demande&lt;br/&gt;on cherche le PIB qui boucle&quot;] --&gt; E
+    E[&quot;11-12. Financement et bilans&lt;br/&gt;qui prête à l’État, dette,&lt;br/&gt;patrimoine, banques&quot;] --&gt; F
+    F[&quot;13-14. Inégalités et flux&lt;br/&gt;pauvreté, Gini, espérance de vie,&lt;br/&gt;matrice des flux (somme nulle)&quot;] --&gt; G
+    G[&quot;15-18. Conséquences&lt;br/&gt;tension sur la dette, colère et fin de partie,&lt;br/&gt;émissions, entreprises par taille&quot;]
+    G -. &quot;les stocks passent à l’année suivante&quot; .-&gt; A
+
+    subgraph boucle[&quot;10. la boucle d’équilibre&quot;]
+        direction LR
+        PIB[&quot;PIB supposé&quot;] --&gt; EMP[&quot;emplois, salaires,&lt;br/&gt;profits, impôts&quot;]
+        EMP --&gt; REV[&quot;revenus des&lt;br/&gt;5 tranches&quot;]
+        REV --&gt; DEM[&quot;consommation, investissement,&lt;br/&gt;exportations, importations&quot;]
+        DEM -- &quot;demande ≠ PIB ?&lt;br/&gt;on corrige&quot; --&gt; PIB
+    end
+    D --- boucle
+</pre></div>
+<p>Le détail de chaque étape est dans la documentation HTML, page « Le moteur pas à pas ».</p>
+<h2 id="4-ou-circule-l-argent-le-modele-stock-flux">4. Où circule l’argent (le modèle stock-flux)</h2>
+<p>Chaque euro a un payeur et un receveur. La somme des excédents et des déficits de tous les acteurs est nulle chaque année : si l’État est en déficit, quelqu’un d’autre (ménages, entreprises ou reste du monde) a épargné le montant correspondant. C’est le principe des modèles « stock-flux cohérents » (Godley et Lavoie), et un test le vérifie chaque année.</p>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+    M[&quot;👨‍👩‍👧 Ménages&lt;br/&gt;5 tranches&quot;]
+    E[&quot;🏭 Entreprises&quot;]
+    ET[&quot;🏛️ État&quot;]
+    SE[&quot;🤝 Sécurité sociale&quot;]
+    B[&quot;🏦 Banques&quot;]
+    BCE[&quot;💶 Banque de France&quot;]
+    W[&quot;🌍 Reste du monde&quot;]
+    EN[&quot;⚡ Énergie importée&quot;]
+
+    M -- &quot;consommation, logement&quot; --&gt; E
+    E -- &quot;salaires, dividendes&quot; --&gt; M
+    M -- &quot;impôt sur le revenu, fortune, succession&quot; --&gt; ET
+    M -- &quot;cotisations, CSG&quot; --&gt; SE
+    E -- &quot;cotisations patronales&quot; --&gt; SE
+    E -- &quot;TVA, impôts de production, IS&quot; --&gt; ET
+    SE -- &quot;retraites, chômage, famille&quot; --&gt; M
+    ET -- &quot;minima sociaux, aides&quot; --&gt; M
+    ET -- &quot;achats publics, aides&quot; --&gt; E
+    ET -- &quot;intérêts&quot; --&gt; B
+    ET -- &quot;intérêts (assurance-vie)&quot; --&gt; M
+    ET -- &quot;intérêts, contribution UE&quot; --&gt; W
+    ET -- &quot;intérêts&quot; --&gt; BCE
+    BCE -- &quot;bénéfices reversés&quot; --&gt; ET
+    E -- &quot;intérêts des crédits&quot; --&gt; B
+    M -- &quot;intérêts immobiliers&quot; --&gt; B
+    B -- &quot;intérêts des dépôts, dividendes&quot; --&gt; M
+    E -- &quot;importations&quot; --&gt; W
+    W -- &quot;exportations&quot; --&gt; E
+    E -- &quot;pétrole et gaz&quot; --&gt; EN
+    EN --&gt; W
+</pre></div>
+<h2 id="5-le-graphe-des-causes-en-version-simplifiee">5. Le graphe des causes, en version simplifiée</h2>
+<p>Le graphe complet (85 variables, 200 liens) est dans l’application, onglet « 🧠 Le modèle ». Voici ses grandes boucles. Un lien « + » veut dire « quand l’un monte, l’autre monte » ; « − » : « quand l’un monte, l’autre baisse ».</p>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+    subgraph leviers[&quot;Vos décisions&quot;]
+        IMP[&quot;Impôts&quot;]
+        DEP[&quot;Dépenses publiques&quot;]
+        RET[&quot;Âge de la retraite&quot;]
+        ENE[&quot;Électrification,&lt;br/&gt;nucléaire&quot;]
+        MIG[&quot;Immigration&quot;]
+    end
+    subgraph monde[&quot;Le monde&quot;]
+        OIL[&quot;Prix du pétrole&quot;]
+        BCE[&quot;Taux de la BCE&quot;]
+    end
+    REV[&quot;Revenu des ménages&quot;]
+    CONS[&quot;Consommation&quot;]
+    INV[&quot;Investissement&quot;]
+    PIB[&quot;PIB&quot;]
+    CHO[&quot;Chômage&quot;]
+    SAL[&quot;Salaires&quot;]
+    INF[&quot;Inflation&quot;]
+    REC[&quot;Recettes publiques&quot;]
+    DEF[&quot;Déficit&quot;]
+    DET[&quot;Dette&quot;]
+    TAUX[&quot;Taux d’emprunt&quot;]
+    INT[&quot;Charge de la dette&quot;]
+    POV[&quot;Pauvreté&quot;]
+    ACT[&quot;Actifs&quot;]
+
+    IMP -- &quot;+&quot; --&gt; REC
+    IMP -- &quot;−&quot; --&gt; REV
+    DEP -- &quot;+&quot; --&gt; PIB
+    DEP -- &quot;+&quot; --&gt; DEF
+    RET -- &quot;+&quot; --&gt; ACT
+    MIG -- &quot;+&quot; --&gt; ACT
+    ACT -- &quot;+&quot; --&gt; PIB
+    ENE -- &quot;−&quot; --&gt; OIL
+    OIL -- &quot;+&quot; --&gt; INF
+    BCE -- &quot;+&quot; --&gt; TAUX
+
+    REV -- &quot;+&quot; --&gt; CONS
+    CONS -- &quot;+&quot; --&gt; PIB
+    INV -- &quot;+&quot; --&gt; PIB
+    PIB -- &quot;+&quot; --&gt; REV
+    PIB -- &quot;−&quot; --&gt; CHO
+    CHO -- &quot;−&quot; --&gt; SAL
+    SAL -- &quot;+&quot; --&gt; INF
+    INF -- &quot;+&quot; --&gt; SAL
+    PIB -- &quot;+&quot; --&gt; REC
+    REC -- &quot;−&quot; --&gt; DEF
+    DEF -- &quot;+&quot; --&gt; DET
+    DET -- &quot;+&quot; --&gt; TAUX
+    TAUX -- &quot;+&quot; --&gt; INT
+    INT -- &quot;+&quot; --&gt; DEF
+    TAUX -- &quot;−&quot; --&gt; INV
+    REV -- &quot;−&quot; --&gt; POV
+</pre></div>
+<p>Trois boucles expliquent l’essentiel de ce qu’on voit en jouant :</p>
+<ul><li><strong>Le multiplicateur</strong> (revenu → consommation → PIB → revenu) : une dépense publique ou une baisse d’impôt soutient l’activité, d’autant plus qu’elle va à des ménages modestes, qui dépensent presque tout ce qu’ils reçoivent.</li><li><strong>La boucle salaires-prix</strong> (chômage → salaires → inflation → salaires) : quand le chômage passe sous 7 %, les salaires accélèrent et les prix suivent ; un choc pétrolier lance la même spirale par les prix.</li><li><strong>La boule de neige de la dette</strong> (déficit → dette → taux → intérêts → déficit) : quand le taux payé dépasse la croissance, la dette grossit d’elle-même, même sans nouvelle dépense. Le journal de la partie signale le moment où cela arrive.</li></ul>
+<h2 id="6-les-menages-de-5-tranches-a-la-pauvrete-et-aux-inegalites">6. Les ménages : de 5 tranches à la pauvreté et aux inégalités</h2>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+    subgraph revenus[&quot;Revenus de chaque tranche&quot;]
+        W[&quot;salaires&quot;]
+        K[&quot;dividendes, intérêts&quot;]
+        TR[&quot;retraites, chômage,&lt;br/&gt;famille, minima&quot;]
+    end
+    subgraph prelev[&quot;Prélèvements&quot;]
+        CO[&quot;cotisations, CSG&quot;]
+        IR[&quot;impôt sur le revenu&quot;]
+        PAT[&quot;impôts sur la fortune&quot;]
+    end
+    revenus --&gt; YD[&quot;Revenu disponible&lt;br/&gt;de la tranche&quot;]
+    prelev --&gt; YD
+    YD --&gt; PX[&quot;÷ prix vus par la tranche&lt;br/&gt;(TVA et énergie pèsent plus&lt;br/&gt;sur les modestes)&quot;]
+    PX --&gt; NIV[&quot;Niveau de vie moyen&lt;br/&gt;par personne&quot;]
+    NIV --&gt; DIST[&quot;Distribution à l’intérieur&lt;br/&gt;de chaque tranche&lt;br/&gt;(loi log-normale)&quot;]
+    DIST --&gt; POV[&quot;Pauvreté&lt;br/&gt;(sous 60 % du médian)&quot;]
+    DIST --&gt; GINI[&quot;Indice de Gini,&lt;br/&gt;rapport D9/D1&quot;]
+    POV --&gt; LE[&quot;Espérance de vie&quot;]
+</pre></div>
+<h2 id="7-le-climat">7. Le climat</h2>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+    FR[&quot;Émissions françaises&lt;br/&gt;≈ 370 Mt (0,8 % du monde)&quot;] -- &quot;exemple, diplomatie&quot; --&gt; W[&quot;Émissions mondiales&lt;br/&gt;≈ 42 Gt de CO2 par an&quot;]
+    AID[&quot;Aide climat&lt;br/&gt;aux pays du Sud&quot;] -- &quot;tonnes évitées&quot; --&gt; W
+    EV[&quot;Accord mondial ou renoncement&lt;br/&gt;(événements)&quot;] --&gt; W
+    W -- &quot;CO2 cumulé × 0,5 °C&lt;br/&gt;par 1000 Gt&quot; --&gt; T[&quot;Réchauffement mondial&quot;]
+    T -- &quot;au-delà de 2 °C&quot; --&gt; TIP[&quot;Points de bascule&lt;br/&gt;(pergélisol, forêts)&quot;] --&gt; W
+    T --&gt; D[&quot;Dégâts en France&lt;br/&gt;(part du PIB)&quot;]
+    AD[&quot;Adaptation&quot;] -- &quot;évite une partie&quot; --&gt; D
+    D --&gt; PROD[&quot;Productivité, prix,&lt;br/&gt;reconstruction&quot;]
+    T --&gt; LE[&quot;Espérance de vie&quot;]
+    FOS[&quot;Sortie du pétrole&lt;br/&gt;et du gaz&quot;] -- &quot;moins de pollution de l’air&quot; --&gt; LE
+    T --&gt; COL[&quot;Colère&quot;]
+    D -- &quot;≥ 10 % du PIB&quot; --&gt; END[&quot;🔥 Effondrement&quot;]
+    TAX[&quot;Taxe carbone&quot;] --&gt; FOS
+    TAX --&gt; FR
+</pre></div>
+<p>Sans changement de politique dans le monde, le réchauffement atteint environ +1,8 °C en 2050 et +2,3 °C en 2075 (soit une trajectoire vers +2,7 °C en 2100, comme l’estime l’ONU). Les chiffres viennent du GIEC (AR6), du Global Carbon Budget, de l’ONU Environnement, du Citepa et de Santé publique France ; les fonctions de dégâts sont des hypothèses, à discuter.</p>
+<h2 id="8-l-immigration-tout-est-cause-et-effet">8. L’immigration : tout est cause et effet</h2>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+    T[&quot;Réchauffement&quot;] -- &quot;sécheresses,&lt;br/&gt;terres perdues&quot; --&gt; PR[&quot;Pression migratoire&quot;]
+    T -- &quot;attise&quot; --&gt; CF[&quot;Conflits autour&lt;br/&gt;de l’Europe&quot;]
+    EV[&quot;Guerres, famines&lt;br/&gt;(événements)&quot;] --&gt; CF
+    CF --&gt; PR
+    AID[&quot;Aide au développement&lt;br/&gt;et à la paix&quot;] -- &quot;prévient (lentement)&quot; --&gt; CF
+    AID -- &quot;moins de départs&quot; --&gt; PR
+    PR --&gt; IR[&quot;Arrivées hors&lt;br/&gt;voies légales&quot;]
+    CTRL[&quot;Contrôle et reconduites&quot;] -- &quot;au mieux la moitié,&lt;br/&gt;de plus en plus cher&quot; --&gt; IR
+    LEG[&quot;Immigration légale&quot;] --&gt; POP[&quot;Actifs, population&quot;]
+    IR --&gt; POP
+    IR -- &quot;accueil&quot; --&gt; COST[&quot;Dépenses publiques&quot;]
+    CTRL --&gt; COST
+    INT[&quot;Intégration&quot;] --&gt; COST
+    IR -- &quot;accueil débordé&quot; --&gt; ANG[&quot;Tensions sociales&quot;]
+    INT -- &quot;apaise&quot; --&gt; ANG
+    INT -- &quot;emploi plus rapide&quot; --&gt; U[&quot;Chômage&quot;]
+</pre></div>
+<p>Le contrôle des frontières a des rendements décroissants : on n’empêche au mieux que la moitié des arrivées irrégulières, et la pression revient tant que guerres, misère et réchauffement poussent au départ. L’aide au développement et la lutte contre le réchauffement agissent sur les causes, mais sur des décennies. Toutes ces règles sont dans <code>modele/comportements.csv</code> (bloc Immigration), avec leurs sources ou leur statut d’hypothèse.</p>
+<h2 id="9-l-influence-de-la-france">9. L’influence de la France</h2>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+    ARM[&quot;Défense&quot;] --&gt; INF[&quot;Influence&lt;br/&gt;(1 = 2025)&quot;]
+    ECO[&quot;Croissance comparée&lt;br/&gt;au reste du monde&quot;] --&gt; INF
+    CUL[&quot;Rayonnement culturel&lt;br/&gt;et diplomatie&quot;] --&gt; INF
+    AID[&quot;Aide au développement&quot;] --&gt; INF
+    CLI[&quot;Exemplarité climatique&quot;] --&gt; INF
+    STA[&quot;Stabilité intérieure&lt;br/&gt;(paix sociale, pas de plan d’aide)&quot;] --&gt; INF
+    INF --&gt; DEAL[&quot;Accords climat et paix&lt;br/&gt;plus probables&quot;]
+    INF --&gt; TRADE[&quot;Moins de guerres commerciales&lt;br/&gt;et de représailles&quot;]
+    INF --&gt; EXP[&quot;Exportations&quot;]
+    INF --&gt; RATE[&quot;Taux d’emprunt plus bas&quot;]
+    INF --&gt; PEACE[&quot;Conflits apaisés&lt;br/&gt;(médiation, dissuasion)&quot;]
+    INF --&gt; PRIDE[&quot;Fierté : moins de colère&quot;]
+</pre></div>
+<p>L’influence suit la puissance avec retard (quelques années). Sans rien faire, elle s’érode doucement : le monde croît plus vite que la France. Toutes les pondérations et tous les effets sont dans <code>modele/comportements.csv</code> (bloc Influence) ; ce sont des hypothèses, inspirées des indices de puissance (Lowy Institute) et de soft power.</p>
+<h2 id="10-comprendre-pourquoi-causes-combinaisons-effets-emergents">10. Comprendre pourquoi : causes, combinaisons, effets émergents</h2>
+<p>Le jeu ne raconte rien d’écrit à l’avance : il mesure.</p>
+<ul><li><strong>Pourquoi un événement arrive</strong> : chaque probabilité est une somme de raisons nommées (« 8 % de base, +12 % parce que la planète a pris 0,4 °C, ×0,8 grâce à votre aide au développement »). Les mêmes raisons servent au tirage au sort et à l’explication.</li><li><strong>Pourquoi la France en est là</strong> : le bouton « 🔍 Pourquoi en est-on là ? » de la une rejoue la partie en retirant, une à une, chaque décision et chaque événement. La différence est la part de chacun. Ce qui reste une fois tout additionné est l’<strong>effet de combinaison</strong> : des causes qui se renforcent ou s’amortissent entre elles, sans qu’aucune règle ne l’ait prévu.</li></ul>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+    T[&quot;Tendance de fond&lt;br/&gt;(rien ne se passe)&quot;] --&gt; V[&quot;Valeur de l’année&quot;]
+    D1[&quot;Décision 1&quot;] -- &quot;part mesurée en la retirant&quot; --&gt; V
+    D2[&quot;Décision 2&quot;] --&gt; V
+    E1[&quot;Événement&quot;] --&gt; V
+    C[&quot;🌀 Effet de combinaison&lt;br/&gt;(ce que les causes font ensemble)&quot;] --&gt; V
+</pre></div>
+<p>Tendance + parts de chaque cause + effet de combinaison = la valeur réelle, exactement (un test le vérifie).</p>
+<h2 id="11-le-monde-bouge-le-parlement-freine">11. Le monde bouge, le Parlement freine</h2>
+<ul><li><strong>Événements</strong> : chaque année, 24 événements possibles sont tirés au sort (une partie différente à chaque fois). Leur probabilité dépend de la situation : plus il fait chaud, plus il y a de canicules et de sécheresses ; plus la colère monte, plus il y a de grèves ; une France qui réduit ses émissions rend un accord climatique mondial plus probable.</li><li><strong>Capital politique</strong> : chaque réforme coûte des points selon son ampleur et son poids politique (âge de la retraite, nationalisations, réglementation coûtent double). Les points dépendent de la popularité, avec un bonus juste après une élection.</li><li><strong>Modèle économique</strong> : nationaliser (l’État rachète en obligations, touche les dividendes, oriente l’investissement, mais perd en efficacité et fait fuir des capitaux) ou privatiser ; réglementer (protège les salaires du bas et les émissions, mais relève le chômage d’équilibre et freine la productivité) ou libéraliser.</li></ul>
+<h2 id="12-crise-de-la-dette-et-fin-de-partie">12. Crise de la dette et fin de partie</h2>
+<p>Une partie peut mal finir. Le moteur suit deux jauges, et quatre façons de perdre.</p>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+    subgraph dette[&quot;Tension sur la dette&quot;]
+        D1[&quot;Niveau de la dette&lt;br/&gt;au-delà de 100 % du PIB&quot;] --&gt; TS[&quot;Tension&quot;]
+        D2[&quot;Écart entre le solde public&lt;br/&gt;et ce qui stabiliserait la dette&lt;br/&gt;(taux payé − croissance) × dette&quot;] --&gt; TS
+        QE[&quot;Rachats de la BCE&quot;] -. &quot;protègent&quot; .-&gt; TS
+    end
+    TS -- &quot;≥ 1&quot; --&gt; CR[&quot;💥 Crise de la dette&lt;br/&gt;taux qui bondissent, obligations&lt;br/&gt;qui perdent de la valeur&quot;]
+    CR --&gt; CH{&quot;Le joueur choisit&quot;}
+    CH -- &quot;accepter&quot; --&gt; PL[&quot;🇪🇺 Plan d’aide européen&lt;br/&gt;taux plafonnés 3 ans,&lt;br/&gt;économies imposées&quot;]
+    CH -- &quot;refuser&quot; --&gt; RF[&quot;Emprunter au prix fort&quot;]
+    CH -- &quot;défaut&quot; --&gt; DF[&quot;Effacer une partie de la dette&lt;br/&gt;(étrangers ou épargnants)&quot;]
+    subgraph colere[&quot;Mécontentement social&quot;]
+        C1[&quot;Baisse du niveau de vie&quot;] --&gt; MC[&quot;Colère&quot;]
+        C2[&quot;Hausse des prélèvements&quot;] --&gt; MC
+        C3[&quot;Chômage, inflation,&lt;br/&gt;pauvreté&quot;] --&gt; MC
+        PL --&gt; C4[&quot;Austérité imposée&quot;] --&gt; MC
+    end
+    MC -- &quot;≥ 1&quot; --&gt; E1[&quot;🔥 Révolte&quot;]
+    RF -- &quot;prime ≥ 8 points ou&lt;br/&gt;intérêts ≥ 25 % des recettes&quot; --&gt; E2[&quot;💥 Faillite de l’État&quot;]
+    E3[&quot;🌀 Hyperinflation&lt;br/&gt;(inflation ≥ 25 %)&quot;]
+    E4[&quot;📉 Dépression&lt;br/&gt;(chômage ≥ 20 %)&quot;]
+</pre></div>
+<p>Quand les impôts s’envolent, une partie échappe au fisc (fraude, travail au noir) et les hauts revenus partent : chaque hausse rapporte de moins en moins. Tous les seuils sont dans <code>modele/comportements.csv</code>, avec leur plage plausible.</p>
+<h2 id="13-les-entreprises-pme-eti-grands-groupes">13. Les entreprises : PME, ETI, grands groupes</h2>
+<p>Le moteur garde une seule économie, mais chaque taille d’entreprise réagit à sa façon (<code>modele/entreprises.csv</code>) : les PME dépendent de leur banque et emploient plus de salariés au SMIC ; les ETI portent l’industrie qui consomme de l’énergie ; les grands groupes exportent et peuvent déclarer leurs bénéfices ailleurs. Une aide publique est en partie investie : beaucoup par une PME qui manque de trésorerie, peu par un grand groupe. Le levier « Part des aides allant aux PME » le montre.</p>
+<h2 id="14-le-test-de-verite-rejouer-2000-2024">14. Le test de vérité : rejouer 2000–2024</h2>
+<p>Le même moteur repart de la France de 2000 (<code>donnees-2000.csv</code>), avec les décisions réellement prises (<code>politiques-2000-2024.csv</code>) et le monde tel qu’il a été (<code>monde.csv</code>). On compare à ce qui s’est passé (<code>historique.csv</code>).</p>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+    A[&quot;France de 2000&quot;] --&gt; M[&quot;Même moteur,&lt;br/&gt;mêmes comportements&quot;]
+    B[&quot;Décisions réelles&lt;br/&gt;35 h, retraites, CICE,&lt;br/&gt;aides Covid…&quot;] --&gt; M
+    C[&quot;Monde réel&lt;br/&gt;2008, crise de l’euro,&lt;br/&gt;Covid, Ukraine&quot;] --&gt; M
+    M --&gt; R[&quot;Trajectoire rejouée&quot;]
+    H[&quot;Ce qui s’est vraiment passé&quot;] --&gt; CMP{&quot;Écarts&quot;}
+    R --&gt; CMP
+    CMP --&gt; T[&quot;Test automatique :&lt;br/&gt;une contribution ne doit pas&lt;br/&gt;dégrader le rejeu&quot;]
+</pre></div>
+<p>Aujourd’hui, l’écart moyen est d’environ 1,7 point sur la croissance et le chômage, 1,2 sur l’inflation, 1,5 sur le déficit, 0,4 sur le taux à 10 ans ; la dette de 2024 est retrouvée à une dizaine de points près. Ce rejeu a permis de corriger plusieurs défauts : un impôt sur le revenu deux fois et demie trop lourd, des chocs pétroliers qui ne touchaient que la France, des taux longs qui suivaient trop vite la BCE. L’onglet « Face au passé » du modèle montre les courbes, et dit si votre variante de paramètres reproduit mieux ou moins bien l’histoire.</p>
+<h2 id="15-ce-resultat-est-il-solide">15. Ce résultat est-il solide ?</h2>
+<p>Pour une décision et un indicateur, on refait le calcul en faisant varier chaque <strong>hypothèse</strong> du modèle (les paramètres dont la fiabilité est « hypothèse ») dans sa plage plausible (colonnes <code>min</code> et <code>max</code>, sinon ± 30 %). Verdict :</p>
+<ul><li><strong>solide</strong> : le sens et l’ampleur de l’effet tiennent ;</li><li><strong>à nuancer</strong> : le sens tient, l’ampleur dépend d’hypothèses ;</li><li><strong>fragile</strong> : l’effet peut changer de sens selon une hypothèse incertaine.</li></ul>
+<p>L’analyse nomme les hypothèses qui décident : ce sont elles qu’il faut documenter en priorité.</p>
+<h2 id="16-participer-du-tableur-au-modele">16. Participer : du tableur au modèle</h2>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+    A[&quot;Je doute d’un chiffre&lt;br/&gt;ou d’un lien&quot;] --&gt; B[&quot;🧠 Le modèle :&lt;br/&gt;j’essaie une autre valeur&quot;]
+    B --&gt; C[&quot;Toute la partie se recalcule ;&lt;br/&gt;le bandeau montre l’effet&quot;]
+    C --&gt; D[&quot;⬇ Je télécharge le CSV modifié&lt;br/&gt;(ou je l’édite dans Excel)&quot;]
+    D --&gt; E[&quot;Pull request sur GitHub,&lt;br/&gt;avec ma source&quot;]
+    E --&gt; F[&quot;Tests automatiques :&lt;br/&gt;bouclage comptable, stabilité&lt;br/&gt;sur 50 ans, graphe cohérent&quot;]
+    F --&gt; G[&quot;Relecture et discussion&quot;]
+    G --&gt; H[&quot;Le modèle s’améliore&quot;]
+</pre></div>
+<p>Voir <a href="parametres.html">CONTRIBUER.md</a> pour le détail, et la documentation HTML (<code>docs/index.html</code>) pour les guides pas à pas.</p>
+<h2 id="17-ce-que-le-modele-ne-sait-pas-faire-limites-connues">17. Ce que le modèle ne sait pas faire (limites connues)</h2>
+<p>Un simulateur honnête dit où il s’arrête. Les principales limites aujourd’hui :</p>
+<ul><li><strong>Les prévisions au-delà de 15 ans sont des tendances.</strong> Après 2040, l’interface grise les courbes : la démographie et la dette y sont crédibles, l’innovation, le climat ou la géopolitique non.</li><li><strong>La Banque centrale européenne ne réagit pas à la France.</strong> Son taux est fixé par le scénario mondial : une politique très inflationniste en France n’entraîne pas de hausse des taux de la BCE.</li><li><strong>Les crises et la colère sociale suivent des seuils.</strong> Ce sont des ordres de grandeur tirés de l’histoire (Grèce, Italie, gilets jaunes), pas des lois : leurs paramètres sont des hypothèses, à discuter.</li><li><strong>Les entreprises ne forment qu’une économie.</strong> Les trois tailles ont des sensibilités différentes, mais pas de secteurs (industrie, services, agriculture) ni de faillites d’entreprises.</li><li><strong>Les inégalités sont reconstituées à partir de 5 tranches.</strong> La pauvreté de départ (≈ 14,7 %) est proche de l’INSEE (15,4 %), mais l’indice de Gini (≈ 0,33) est plus élevé que celui de l’INSEE (0,29), car les tranches viennent des comptes nationaux « distribués », qui comptent plus largement les revenus du capital.</li><li><strong>Le rejeu 2000–2024 rate certaines périodes</strong> : le chômage de 2014-2018, la croissance de 2022-2024 (le bouclier tarifaire et l’énigme de la productivité ne sont pas modélisés). Les données de 2000 et l’historique sont des ordres de grandeur arrondis, à vérifier.</li><li><strong>Beaucoup de comportements sont des hypothèses.</strong> Leur colonne <code>fiabilite</code> le dit, et l’analyse de solidité montre lesquelles comptent : c’est là que les contributions sont les plus utiles.</li></ul>
+        <footer>Page générée automatiquement (npm run docs). Pour la corriger, modifiez sa source et relancez la génération.</footer>
+      </main>
+    </div>
+    <script type="module" src="assets/docs.js"></script>
+  </body>
+</html>

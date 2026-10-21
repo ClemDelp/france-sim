@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Glossaire</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <main>
+        <h1>📖 Glossaire</h1>
+        <p class="lead">Les mots du jeu, de l’économie et du code, en clair. Le nom entre parenthèses est celui utilisé dans le code ou les fichiers.</p>
+
+        <h2 id="jeu">Le jeu</h2>
+        <dl>
+          <dt>Levier</dt><dd>Une décision que le joueur peut prendre : un taux d’impôt, un budget, un âge de départ (<code>Policy</code>, <code>src/ui/levers.ts</code>).</dd>
+          <dt>Brouillon</dt><dd>Les leviers bougés mais pas encore appliqués. Les ministres en donnent un aperçu ; ils deviennent une décision quand on avance d’un an.</dd>
+          <dt>Décision</dt><dd>Un ensemble de leviers changés une année donnée (<code>Decision</code>). Une partie est une liste de décisions.</dd>
+          <dt>Capital politique</dt><dd>Le budget de réformes de l’année. Une grosse réforme coûte plus de points ; on en regagne avec la popularité, surtout juste après une élection (<code>src/game/capital.ts</code>).</dd>
+          <dt>Popularité</dt><dd>Part d’opinions favorables, qui baisse avec le mécontentement. Il faut plus de 40 % pour gagner une élection (tous les 5 ans à partir de 2027).</dd>
+          <dt>Mécontentement, climat social</dt><dd>La colère accumulée (<code>discontent</code>). À 1, c’est la révolte : la partie est perdue.</dd>
+          <dt>Fin de partie</dt><dd>Révolte, faillite, hyperinflation, dépression ou effondrement (<code>Ending</code>). En mode bac à sable, on peut continuer quand même.</dd>
+          <dt>Scénario</dt><dd>Une mission avec un récit, des objectifs et une année de fin ; jusqu’à 3 étoiles.</dd>
+          <dt>Idée reçue</dt><dd>Une croyance testée sur 10 ans : le modèle applique la décision et donne son verdict, chiffres à l’appui (<code>src/ui/missions.ts</code>).</dd>
+          <dt>Programme économique</dt><dd>Un ensemble de leviers cohérent appliqué d’un coup : nationalisations et règles fortes, entre-deux actuel, ou libéralisme (<code>src/ui/doctrines.ts</code>).</dd>
+          <dt>Événement</dt><dd>Ce que le monde ou le pays réserve au joueur (canicule, guerre, krach…), tiré au sort chaque année avec des probabilités qui dépendent de la situation.</dd>
+          <dt>Référence, « sans rien changer »</dt><dd>La même partie, avec les mêmes événements, mais sans aucune décision. Les écarts affichés se comparent à elle.</dd>
+          <dt>Pourquoi ?</dt><dd>L’explication d’un chiffre : la part de chaque décision et de chaque événement, la tendance de fond et l’effet de leur combinaison.</dd>
+        </dl>
+
+        <h2 id="modele">Le modèle</h2>
+        <dl>
+          <dt>Paramètre</dt><dd>Un nombre lu dans <code>modele/*.csv</code> : une donnée (ce qu’on observe) ou un comportement (comment les acteurs réagissent).</dd>
+          <dt>Donnée</dt><dd>Un chiffre observé pour l’année de départ : PIB, dette, population… (<code>donnees-2025.csv</code>, <code>BASE</code> dans le code).</dd>
+          <dt>Comportement</dt><dd>Une réaction : de combien la consommation baisse quand le revenu baisse, de combien la TVA passe dans les prix… (<code>comportements.csv</code>, <code>P</code> dans le code).</dd>
+          <dt>Hypothèse</dt><dd>Un comportement que les études ne fixent pas précisément. Il a une plage plausible (<code>min</code>, <code>max</code>) testée par l’analyse de solidité.</dd>
+          <dt>Variante</dt><dd>Le modèle avec des paramètres modifiés dans le jeu, gardée seulement dans le navigateur.</dd>
+          <dt>Tranche</dt><dd>Un cinquième des ménages, des plus modestes (g1) aux plus aisés (g5) (<code>tranches.csv</code>).</dd>
+          <dt>Taille d’entreprise</dt><dd>PME, ETI ou grands groupes, qui réagissent différemment aux taux, aux aides et aux impôts (<code>entreprises.csv</code>).</dd>
+          <dt>Stock et flux</dt><dd>Un stock se mesure à une date (dette, patrimoine, température) ; un flux sur une année (déficit, salaires, émissions). Les flux d’une année font varier les stocks.</dd>
+          <dt>Bouclage comptable</dt><dd>Ce que l’un paie, un autre le reçoit : la somme des soldes de tous les acteurs est nulle chaque année (<code>closure</code>).</dd>
+          <dt>Graphe des causes</dt><dd>Les variables et les liens entre elles, lisibles dans le jeu (« 🧠 Le modèle ») et modifiables dans <code>variables.csv</code> et <code>liens.csv</code>.</dd>
+          <dt>Rejeu</dt><dd>Le modèle relancé de 2000 à 2024 avec les décisions et le monde réels, comparé à l’histoire (<code>historique.csv</code>).</dd>
+          <dt>Solidité</dt><dd>Le résultat change-t-il si une hypothèse est à un bout de sa plage plausible ? L’analyse classe les hypothèses qui comptent.</dd>
+        </dl>
+
+        <h2 id="economie">Économie</h2>
+        <dl>
+          <dt>PIB</dt><dd>La richesse produite en un an. En volume (« réel ») : hors hausse des prix.</dd>
+          <dt>Déficit public</dt><dd>Ce que l’État et la Sécurité sociale dépensent de plus que leurs recettes. Solde primaire : le même, hors intérêts de la dette.</dd>
+          <dt>Dette publique</dt><dd>La somme des déficits passés, en % du PIB. Détenue par les étrangers, la BCE, l’assurance-vie des Français et les banques.</dd>
+          <dt>Prime de risque</dt><dd>Ce que les prêteurs demandent en plus du taux de la BCE pour prêter à la France ; elle monte avec la dette, le déficit et la panique.</dd>
+          <dt>Tension sur la dette</dt><dd>Un indice (<code>marketStress</code>) qui combine la dette et l’écart à l’excédent qui la stabiliserait. À 1, la crise de la dette éclate.</dd>
+          <dt>Plan d’aide européen</dt><dd>Après une crise, le Mécanisme européen de stabilité et la BCE prêtent à taux modéré, en échange d’économies imposées chaque année.</dd>
+          <dt>QE, planche à billets</dt><dd>La BCE rachète de la dette publique : les taux baissent, mais trop de rachats nourrissent l’inflation (<code>qe</code>, <code>monetization</code>).</dd>
+          <dt>Chômage d’équilibre (NAIRU)</dt><dd>Le chômage sous lequel les salaires et les prix s’emballent. Il dépend des règles du marché du travail, de l’intégration…</dd>
+          <dt>Taux de pauvreté</dt><dd>Part de la population sous 60 % du niveau de vie médian.</dd>
+          <dt>Gini, D9/D1</dt><dd>Mesures des inégalités : Gini de 0 (égalité) à 1 ; D9/D1, le rapport entre le revenu au-dessus duquel sont les 10 % les plus aisés et celui sous lequel sont les 10 % les plus modestes.</dd>
+          <dt>Fuite des capitaux</dt><dd>Les fortunes et les bénéfices qui partent ou se cachent quand les impôts sur le capital montent beaucoup.</dd>
+          <dt>Fraude, évasion</dt><dd>La part des prélèvements qui échappe à l’impôt quand ils dépassent beaucoup ceux de 2025.</dd>
+          <dt>Nationalisation, réglementation</dt><dd>Part des grandes entreprises détenue par l’État (<code>publicOwnership</code>) ; force des règles (licenciement, normes, concurrence, <code>regulation</code>).</dd>
+        </dl>
+
+        <h2 id="climat">Climat, immigration, influence</h2>
+        <dl>
+          <dt>TCRE</dt><dd>Réchauffement par tonne de CO2 émise : ≈ 0,5 °C pour 1 000 milliards de tonnes cumulées (GIEC).</dd>
+          <dt>Point de bascule</dt><dd>Au-delà d’environ 2 °C, la nature elle-même émet plus (permafrost, forêts) : le réchauffement s’accélère.</dd>
+          <dt>Dégâts climatiques</dt><dd>La part du PIB détruite chaque année par le réchauffement. À 10 %, c’est l’effondrement.</dd>
+          <dt>Adaptation</dt><dd>Digues, réseaux, villes plus fraîches : protège d’une partie des dégâts, sans jamais tout couvrir.</dd>
+          <dt>Taxe carbone</dt><dd>Prix par tonne de CO2 (44,6 €/t en 2025) : renchérit les fossiles, accélère l’électrification, rapporte des recettes.</dd>
+          <dt>Pression migratoire</dt><dd>Les départs forcés vers l’Europe : une base, plus les conflits, plus le réchauffement. Le contrôle des frontières n’en arrête qu’une partie.</dd>
+          <dt>Intégration</dt><dd>Moyens consacrés à l’accueil (langue, logement, emploi) : réduisent l’effet des arrivées sur le chômage et la colère.</dd>
+          <dt>Influence</dt><dd>Le poids de la France dans le monde (indice, 1 = 2025) : armée, économie, culture, aide, exemplarité climatique, stabilité.</dd>
+        </dl>
+
+        <h2 id="code">Le code</h2>
+        <dl>
+          <dt><code>YearState</code></dt><dd>Tout ce que produit une année simulée.</dd>
+          <dt><code>Carry</code></dt><dd>Ce qui passe d’une année à la suivante (stocks, mémoires).</dd>
+          <dt><code>Anchors</code></dt><dd>Les repères calés sur l’année de départ (revenus normaux, taux d’impôt implicites).</dd>
+          <dt><code>World</code></dt><dd>Le monde d’une année : pétrole, taux de la BCE, croissance mondiale, et les effets des événements.</dd>
+          <dt><code>REF</code>, <code>BASE_POLICY</code></dt><dd>La politique de l’année de départ, à laquelle se comparent les leviers.</dd>
+          <dt><code>withParams</code></dt><dd>Exécute une simulation avec une variante des paramètres, puis remet les valeurs des fichiers.</dd>
+          <dt>Point fixe</dt><dd>La recherche du PIB pour lequel la demande égale la production (étape 10 du moteur).</dd>
+          <dt>Graine</dt><dd>Le nombre qui fixe le hasard d’une partie : même graine, mêmes événements.</dd>
+        </dl>
+        <footer>Un mot manque ? Ajoutez-le dans <code>docs/glossaire.html</code>.</footer>
+      </main>
+    </div>
+    <script type="module" src="assets/docs.js"></script>
+  </body>
+</html>

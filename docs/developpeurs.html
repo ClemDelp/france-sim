@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guide du développeur</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <main>
+        <h1>💻 Guide du développeur</h1>
+        <p class="lead">
+          Tout ce qu’il faut pour travailler sur France·Sim : installer, comprendre l’architecture, savoir où vit chaque chose, et respecter les quelques règles qui gardent le
+          modèle honnête et le jeu jouable.
+        </p>
+
+        <h2 id="demarrer">Démarrer</h2>
+        <p>Prérequis : Node.js 20 ou plus récent. Aucune base de données, aucun serveur : tout tourne dans le navigateur.</p>
+        <pre><code>npm install
+npm run dev        # jeu en développement (Vite, rechargement à chaud), http://localhost:5173
+npm test           # tests (Vitest)
+npx vitest         # tests en continu
+npm run lint       # oxlint
+npm run build      # vérification des types (tsc -b) puis build de production dans dist/
+npm run check      # lint + tests + build : ce que vérifie GitHub
+npm run docs       # régénère docs/catalogue.html et docs/modele.html
+npm run phone      # build + serveur sur le Wi-Fi, pour jouer depuis un téléphone (port 4173)
+npm run deploy     # publie le jeu et cette documentation sur https://clemdelp.github.io/france-sim/</code></pre>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Outil</th>
+                <th>Rôle</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>TypeScript 6</td><td>Tout le code, en mode strict (variables et paramètres inutilisés interdits).</td></tr>
+              <tr><td>React 19</td><td>L’interface. Pas de bibliothèque d’état : l’état vit dans <code>App.tsx</code> et la simulation est recalculée.</td></tr>
+              <tr><td>Vite 8</td><td>Serveur de développement et build. Les CSV sont importés avec <code>?raw</code> : ils sont embarqués dans le build.</td></tr>
+              <tr><td>Vitest 5</td><td>Tests, dans <code>src/**/*.test.ts</code>.</td></tr>
+              <tr><td>oxlint</td><td>Lint, avec les règles React (pas de <code>setState</code> synchrone dans un effet, fonctions pures au rendu…).</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Aucune autre dépendance : graphiques, carte des flux, graphe des causes sont en SVG écrit à la main.</p>
+
+        <h2 id="architecture">Architecture</h2>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart TB
+    subgraph data["📂 modele/ — les données (CSV)"]
+        D25["donnees-2025.csv"]
+        CMP["comportements.csv"]
+        TR["tranches.csv · entreprises.csv"]
+        MON["monde.csv"]
+        HIS["donnees-2000.csv · politiques-2000-2024.csv · historique.csv"]
+        GR["variables.csv · liens.csv"]
+    end
+    subgraph model["⚙️ src/model/ — le moteur (sans React)"]
+        PAR["params.ts<br/>lecture CSV, DEFAULTS,<br/>withParams (variantes)"]
+        CAL["calibration.ts<br/>BASE, P, GROUP_PARAMS,<br/>FIRM_PARAMS, BASE_POLICY"]
+        WLD["world.ts · events.ts<br/>le monde, les événements"]
+        SIM["sim.ts<br/>simulate() → step() par année"]
+        REP["replay.ts<br/>rejeu 2000–2024"]
+        ROB["robustness.ts<br/>solidité d’un résultat"]
+        EXP["explain.ts<br/>Pourquoi ? (contrefactuels)"]
+        GRA["graph.ts<br/>graphe des causes"]
+    end
+    subgraph game["🎮 src/game/ — les règles du jeu (sans React)"]
+        SCN["scenarios.ts · score.ts · capital.ts"]
+        ADV["advisors.ts · headlines.ts · achievements.ts"]
+    end
+    subgraph ui["🖥️ src/App.tsx + src/ui/ — l’interface React"]
+        APP["App.tsx<br/>état de la partie,<br/>pauses, fenêtres"]
+        PAN["ui/ : panneaux, carte, graphe,<br/>ui/game/ : accueil, HUD, tutoriel, ambiance"]
+    end
+    D25 & CMP & TR --> PAR --> CAL --> SIM
+    MON --> WLD --> SIM
+    HIS --> REP
+    GR --> GRA
+    SIM --> REP & ROB & EXP
+    SIM --> APP
+    SCN & ADV --> APP
+    APP --> PAN
+    GRA --> PAN
+          </pre>
+          <figcaption>Le moteur et les règles du jeu n’importent jamais React : ils se testent seuls, et l’interface se contente de les appeler.</figcaption>
+        </div>
+
+        <h3>Le cycle d’un rendu</h3>
+        <p>
+          Il n’y a pas de « tour » mémorisé : à chaque rendu, <code>App.tsx</code> refait la simulation depuis l’année de départ, avec la liste des décisions et des
+          événements. C’est simple, déterministe, et assez rapide (≈ 0,4 ms par année simulée).
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+sequenceDiagram
+    participant J as Joueur
+    participant A as App.tsx
+    participant S as simulate()
+    participant G as src/game
+    J->>A: bouge un levier (brouillon, « draft »)
+    A->>S: aperçu : année suivante avec / sans le brouillon
+    A->>G: coût en capital politique, réactions des ministres
+    J->>A: avance d’un an
+    A->>A: le brouillon devient une décision (année + 1)
+    A->>A: tirage des événements de l’année (rollEvents, graine de la partie)
+    A->>S: states = la partie (décisions + événements)
+    A->>S: base = même monde, sans décision
+    A->>G: popularité, élection ?, objectifs du scénario, une du journal, succès
+    A-->>J: tableau de bord, écarts states / base, pauses éventuelles
+          </pre>
+        </div>
+
+        <h2 id="fichiers">Où vit chaque chose</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fichier</th>
+                <th>Contenu</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>src/model/types.ts</code></td><td>Les types partagés : <code>Policy</code> (les leviers), <code>World</code> (le monde d’une année), <code>YearState</code> (tout ce que produit une année), <code>Decision</code>, <code>EventDef</code>, <code>Ending</code>…</td></tr>
+              <tr><td><code>src/model/params.ts</code></td><td>Lecture des CSV (séparateur « ; », virgule décimale), <code>PARAM_ROWS</code>, <code>DEFAULTS</code>, <code>withParams()</code> pour simuler avec une variante, <code>exportCsv()</code>.</td></tr>
+              <tr><td><code>src/model/calibration.ts</code></td><td>Les vues typées sur les paramètres : <code>BASE</code> (données), <code>P</code> (comportements), <code>GROUP_PARAMS</code>, <code>FIRM_PARAMS</code> ; et <code>BASE_POLICY</code>, la politique de 2025. Les listes d’identifiants y sont déclarées.</td></tr>
+              <tr><td><code>src/model/sim.ts</code></td><td>Le moteur : <code>simulate()</code>, <code>policyAt()</code>, <code>worldAt()</code>, <code>baseWorld()</code>, et <code>step()</code> qui simule une année en 18 étapes. Voir <a href="moteur.html">le moteur pas à pas</a>.</td></tr>
+              <tr><td><code>src/model/world.ts</code>, <code>events.ts</code></td><td>Le monde année par année (<code>monde.csv</code>) ; les événements, leurs probabilités en facteurs nommés, et le tirage reproductible <code>rollEvents()</code>.</td></tr>
+              <tr><td><code>src/model/distribution.ts</code></td><td>Pauvreté, Gini, rapport D9/D1 à partir des 5 tranches (loi log-normale dans chaque tranche).</td></tr>
+              <tr><td><code>src/model/replay.ts</code></td><td>Le rejeu 2000–2024 et ses écarts à l’histoire.</td></tr>
+              <tr><td><code>src/model/robustness.ts</code></td><td>« Ce résultat est-il solide ? » : chaque hypothèse dans sa plage plausible.</td></tr>
+              <tr><td><code>src/model/explain.ts</code></td><td>« Pourquoi ? » : attribution contrefactuelle aux décisions et aux événements, et effet de combinaison.</td></tr>
+              <tr><td><code>src/model/graph.ts</code></td><td>Le graphe des causes lu dans <code>variables.csv</code> et <code>liens.csv</code>.</td></tr>
+              <tr><td><code>src/game/scenarios.ts</code></td><td>Les scénarios, leurs objectifs et <code>evaluate()</code>.</td></tr>
+              <tr><td><code>src/game/score.ts</code>, <code>capital.ts</code></td><td>Popularité, élections ; capital politique et coût des réformes.</td></tr>
+              <tr><td><code>src/game/advisors.ts</code>, <code>headlines.ts</code>, <code>achievements.ts</code></td><td>Les ministres, la une du journal, les succès.</td></tr>
+              <tr><td><code>src/App.tsx</code></td><td>L’état de la partie et l’orchestration : modes, pauses (crise, élection, fin de partie, fin de scénario), fenêtres.</td></tr>
+              <tr><td><code>src/ui/</code></td><td>Composants : leviers (<code>levers.ts</code>), indicateurs (<code>indicators.ts</code>), panneaux (<code>Panels.tsx</code>), carte des flux, courbes, cerveau du modèle (<code>Brain.tsx</code>), idées reçues (<code>missions.ts</code>), programmes économiques (<code>doctrines.ts</code>).</td></tr>
+              <tr><td><code>src/ui/game/</code></td><td>Accueil, HUD (popularité, objectifs, Conseil des ministres, fil d’actualité, journal), tutoriel, ambiance visuelle, fenêtre « Pourquoi ? » ; la barre d’onglets du téléphone (<code>Phone.tsx</code>, <code>usePhone.ts</code>) et l’installation de l’appli (<code>install.ts</code>).</td></tr>
+              <tr><td><code>src/game/savegame.ts</code></td><td>La sauvegarde automatique de la partie en cours (relue au lancement, validée).</td></tr>
+              <tr><td><code>pwa/sw.js</code>, <code>public/manifest.webmanifest</code>, <code>public/icons/</code></td><td>L’application installable : le modèle du service worker (complété au build par <code>vite.config.ts</code>), le manifeste et les icônes.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="concepts">Les concepts à connaître</h2>
+        <h3>Paramètres, variantes, scénarios de départ</h3>
+        <ul>
+          <li>
+            <strong>Aucun nombre magique dans le moteur.</strong> Chaque coefficient se lit dans <code>P.xxx</code> (comportements), chaque donnée dans <code>BASE.xxx</code>, chaque
+            part par tranche dans <code>GROUP_PARAMS.xxx[g]</code>. Ce sont des <em>getters</em> : ils renvoient la valeur en vigueur.
+          </li>
+          <li>
+            <strong>Variante</strong> : <code>simulate({ …, params: { vatPassThrough: 0.6 } })</code> applique temporairement d’autres valeurs (<code>withParams</code>), puis remet
+            celles des fichiers. C’est ce qu’utilisent le cerveau du modèle, l’analyse de solidité et le rejeu.
+          </li>
+          <li>
+            <strong>Point de départ</strong> : <code>simulate({ …, scenario: { reference, params } })</code> change l’année de départ, ses données et sa politique de référence
+            (<code>REF</code> dans <code>sim.ts</code>). C’est ainsi que le même moteur rejoue 2000–2024.
+          </li>
+        </ul>
+        <h3>Une partie = des décisions et des événements</h3>
+        <ul>
+          <li><code>Decision = { year, patch }</code> : à partir de <code>year</code>, les leviers du <code>patch</code> changent. <code>policyAt(decisions, year)</code> donne la politique en vigueur.</li>
+          <li><code>FiredEvent = { year, id }</code> : un événement et son année ; ses <code>effects</code> s’ajoutent au monde année après année (<code>worldAt</code>).</li>
+          <li><strong>Comparer à « sans rien changer »</strong> : la partie (<code>states</code>) et la référence (<code>base</code>) partagent les mêmes événements ; seules les décisions diffèrent.</li>
+          <li><strong>Hasard reproductible</strong> : <code>rollEvents(seed, year, …)</code> tire les événements avec une graine par partie. Même graine, mêmes événements.</li>
+        </ul>
+        <h3>Une année = <code>step(prev, policy, world, anchors)</code></h3>
+        <ul>
+          <li><code>Carry</code> : ce qui passe d’une année à l’autre (stocks, mémoires : dette, patrimoine, température cumulée, colère…).</li>
+          <li><code>Anchors</code> : les repères calés sur l’année de départ (revenus « normaux », taux d’impôt implicites).</li>
+          <li><code>YearState</code> : tout ce que l’interface affiche. La propriété <code>closure</code> doit rester nulle : la somme des soldes de tous les acteurs.</li>
+        </ul>
+
+        <h2 id="jeu">La machine d’états du jeu</h2>
+        <div class="diagram">
+          <pre class="mermaid">
+stateDiagram-v2
+    [*] --> Accueil
+    Accueil --> Briefing: choisir un scénario
+    Briefing --> Partie: prendre les commandes
+    Accueil --> Partie: partie libre / tutoriel
+    Accueil --> IdeeRecue: idée reçue
+    Partie --> Partie: avancer d'un an (temps qui défile)
+    Partie --> Crise: tension sur la dette ≥ 1
+    Crise --> Partie: réponse choisie
+    Partie --> Election: année d'élection
+    Election --> Partie: réélu
+    Election --> Perdu: battu
+    Partie --> Perdu: révolte, faillite, hyperinflation, dépression, effondrement
+    Perdu --> Partie: revenir avant la dernière décision / bac à sable
+    Partie --> FinScenario: dernière année du scénario
+    IdeeRecue --> Verdict: après 10 ans
+    Verdict --> Partie: continuer
+    FinScenario --> Accueil
+          </pre>
+          <figcaption>Les pauses sont <em>dérivées</em> de l’état (pas de drapeau à remettre à zéro) : <code>running</code> est faux tant qu’une crise, une élection ou une fin de partie attend une réponse.</figcaption>
+        </div>
+
+        <h2 id="mobile">Téléphone et application installable</h2>
+        <p>
+          Le jeu a deux mises en page. Au-delà de 760 px de large, l’écran ordinateur à trois colonnes. Jusqu’à 760 px (ou sur un téléphone tenu à l’horizontale :
+          écran tactile de moins de 500 px de haut), la mise en page téléphone : une zone à la fois. La règle est écrite deux fois, à garder identique :
+          <code>PHONE_QUERY</code> dans <code>src/ui/game/usePhone.ts</code> et les <code>@media (max-width: 760px), (pointer: coarse) and (max-height: 500px)</code> de
+          <code>src/index.css</code>.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart TB
+    TOP["En-tête : 🇫🇷 (menu) · année · popularité · 🧠"]
+    subgraph VUES["Une zone à la fois (classe .layout.phone.view-…)"]
+        P["🇫🇷 Le pays<br/>objectifs, une du journal, chiffres clés"]
+        D["🎛️ Décider<br/>leviers avec − / +"]
+        F["💶 L'argent<br/>carte des flux (disposition verticale), le monde bouge"]
+        A["📊 Analyses<br/>onglets qui défilent"]
+    end
+    C["Conseil des ministres : une ligne → panneau (avancer de 5, 10 ans…)"]
+    N["Onglets en bas · bouton ▶ au centre"]
+    TOP --> VUES --> C --> N
+          </pre>
+          <figcaption>Après ▶, le jeu revient sur « Le pays » pour montrer la une de l’année. La visite guidée change d’écran à chaque étape (champ <code>view</code> de <code>TourStep</code>).</figcaption>
+        </div>
+        <ul>
+          <li><strong>Afficher ou cacher une zone sur téléphone</strong> : règles <code>.layout.phone.view-… .classe { display: none }</code> dans <code>index.css</code>. Un composant qui doit changer de comportement (carte en hauteur, texte « Touchez » au lieu de « Survolez ») lit <code>usePhone()</code>.</li>
+          <li><strong>Pas de survol sur un écran tactile</strong> : toute information donnée au survol (<code>title</code>, <code>:hover</code>) doit aussi être accessible d’un toucher.</li>
+          <li><strong>Les fenêtres</strong> deviennent des panneaux qui montent du bas ; gardez leurs boutons dans <code>.verdict-actions</code> (pleine largeur sur téléphone).</li>
+          <li><strong>Hors ligne</strong> : <code>npm run build</code> écrit <code>dist/sw.js</code> à partir de <code>pwa/sw.js</code>, avec la liste exacte des fichiers et une version (empreinte du build). Le service worker n’est enregistré que dans la version construite (<code>import.meta.env.PROD</code>) et seulement en HTTPS ou sur <code>localhost</code>. Pour tester : <code>npm run build &amp;&amp; npx vite preview</code>, puis dans Chrome, DevTools → Application → Service workers / Manifest, et l’option « Offline ».</li>
+          <li><strong>Mise à jour</strong> : la page est demandée au réseau d’abord ; une nouvelle version s’installe en arrière-plan et sert au lancement suivant (aucun rechargement en pleine partie).</li>
+          <li><strong>Sauvegarde</strong> : tout état qui doit survivre à la fermeture de l’appli va dans <code>SavedGame</code> (<code>savegame.ts</code>) ; changez <code>v</code> si son format change (les anciennes sauvegardes sont alors ignorées).</li>
+          <li><strong>Icônes</strong> : <code>public/icons/icon.svg</code> (coins arrondis) et <code>maskable.svg</code> (plein cadre, dessin dans les 80 % du centre) ; les PNG en sont des rendus en 192, 512 et 180 px (Apple).</li>
+        </ul>
+
+        <h2 id="regles">Les règles du projet</h2>
+        <ol>
+          <li><strong>Tout coefficient dans un CSV</strong>, avec un nom, une explication, une fiabilité, une source ou le mot « hypothèse », et une plage plausible si c’est une hypothèse. Un test refuse un paramètre déclaré mais inutilisé.</li>
+          <li><strong>Chaque nouveau mécanisme dans le graphe des causes</strong> (<code>variables.csv</code>, <code>liens.csv</code>) : c’est ce que les joueurs lisent.</li>
+          <li><strong>La comptabilité boucle</strong> : tout euro versé est reçu par quelqu’un. Une nouvelle dépense publique va dans les biens publics ou dans un transfert existant, une recette dans <code>taxes</code> et sort du revenu de quelqu’un.</li>
+          <li><strong>Le passé reste reproduit</strong> : après un changement du moteur, vérifier le rejeu 2000–2024 (<code>npx vitest run replay</code>).</li>
+          <li><strong>Le jeu reste jouable</strong> : chaque scénario a une stratégie gagnante dans <code>src/game/game.test.ts</code>.</li>
+          <li><strong>L’interface explique</strong> : un nouvel événement a des facteurs de probabilité nommés ; un nouvel indicateur peut entrer dans la fenêtre « Pourquoi ? ».</li>
+          <li><strong>Textes en français clair</strong>, pour des non-spécialistes ; commentaires du code en français, qui disent le « pourquoi ».</li>
+          <li><strong>React</strong> : pas de <code>setState</code> synchrone dans un effet (dériver l’état, ou agir dans un rappel) ; pas d’appel impur au rendu (<code>Math.random</code>, <code>Date.now</code>).</li>
+          <li><strong>Interface</strong> : rien ne doit bouger sous la souris (pas d’explication qui s’ouvre au survol et décale les curseurs) ; tester les fenêtres avec un vrai clic (voir <a href="#ui">tester l’interface</a>).</li>
+          <li><strong>Commits</strong> : un commit par sujet, avec un message qui dit ce qui change et pourquoi.</li>
+        </ol>
+
+        <h2 id="ui">Tester l’interface</h2>
+        <p>
+          Les tests automatiques couvrent le moteur et les règles du jeu, pas l’affichage. Pour l’interface, vérifiez dans le navigateur, à plusieurs largeurs (1440, 1100, 820 et 390 px, plus 844 × 390 pour un téléphone à l’horizontale, avec l’émulation tactile des DevTools). Pour un bouton dans une fenêtre, assurez-vous qu’il est réellement cliquable : un clic déclenché par programme (<code>button.click()</code>) réussit même sur un
+          bouton caché derrière une autre couche. Dans la console du navigateur :
+        </p>
+        <pre><code>const b = [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Prendre les commandes'))
+const r = b.getBoundingClientRect()
+b.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)) // doit valoir true</code></pre>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Couche</th>
+                <th>z-index</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Ambiance (flammes, pancartes)</td><td>5 (ne capte jamais la souris)</td></tr>
+              <tr><td>En-tête</td><td>10</td></tr>
+              <tr><td>Conseil des ministres</td><td>20</td></tr>
+              <tr><td>Téléphone : barre d’onglets ; panneau du Conseil et son fond</td><td>25 ; 27 et 26</td></tr>
+              <tr><td>Fenêtres de la partie, cerveau du modèle</td><td>30</td></tr>
+              <tr><td>Accueil</td><td>40</td></tr>
+              <tr><td>Fenêtre ouverte depuis l’accueil (<code>.modal-backdrop.on-top</code>)</td><td>45</td></tr>
+              <tr><td>Confettis, succès, tutoriel</td><td>60 à 80</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>La suite : <a href="moteur.html">le moteur pas à pas</a>, puis <a href="recettes.html">les recettes</a> pour ajouter un levier, un événement, un scénario…</p>
+        <footer>Guide maintenu dans <code>docs/developpeurs.html</code>.</footer>
+      </main>
+    </div>
+    <script type="module" src="assets/docs.js"></script>
+  </body>
+</html>
