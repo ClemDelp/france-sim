@@ -14,7 +14,7 @@ import { parseSave } from './savegame'
 const WINNING: Record<string, Decision[]> = {
   'premier-mandat': [{ year: 2026, patch: { otherServices: 240, firmAid: 55, pensionIndexation: 0.85, firmAidSmeShare: 0.8, minima: 8, education: 170 } }],
   ormuz: [{ year: 2026, patch: { vat: 0.18 } }],
-  climat: [{ year: 2026, patch: { carbonTax: 130, electrification: 0.04, adaptation: 16, otherServices: 235, pensionIndexation: 0.85, firmAid: 55 } }],
+  climat: [{ year: 2026, patch: { carbonTax: 130, electrification: 0.04, adaptation: 16, firmAid: 55 } }],
   electrique: [{ year: 2026, patch: { electrification: 0.04, nuclearShare: 0.75 } }],
   retraites: [{ year: 2026, patch: { retirementAge: 66, pensionIndexation: 0.85, otherServices: 245 } }],
   marches: [{ year: 2026, patch: { otherServices: 230, firmAid: 50, pensionIndexation: 0.75, vat: 0.21 } }],

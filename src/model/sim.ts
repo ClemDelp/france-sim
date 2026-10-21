@@ -868,6 +868,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const taxBurden0 = init ? taxBurden : prev.taxBurden0
   const poverty0 = init ? dist.poverty : prev.poverty0
   const medianDrop = init ? 0 : Math.max(0, 1 - dist.median / prev.medianIncome)
+  const pensionNow = prev.avgPension * (1 + inflation * policy.pensionIndexation + (init ? 0 : P.pensionRealGain))
+  // Les services publics du quotidien, en volume, rapportés à ceux de l'année de départ (1 = autant qu'au départ).
+  const servicesIndex = (policy.health + policy.prevention + policy.education + policy.otherServices) / (REF.health + REF.prevention + REF.education + REF.otherServices)
   const anger =
     medianDrop / P.unrestIncomeDrop +
     Math.max(0, taxBurden - taxBurden0) / P.unrestTaxRange +
@@ -881,6 +884,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     world.unrest +
     // Précarité quand on allège fortement les règles.
     P.regulationAnger * Math.max(0, deregulation) +
+    // Des retraites qui perdent du pouvoir d'achat par rapport à l'année de départ : la colère dure tant que la perte dure.
+    Math.max(0, 1 - pensionNow / (priceLevel * BASE.avgPension)) / P.unrestPensionRange +
+    // Des services publics qui reculent (santé, éducation, autres services), en volume, par rapport à l'année de départ.
+    Math.max(0, 1 - servicesIndex) / P.unrestServicesRange +
     // La fierté d'un pays qui compte dans le monde (ou l'humiliation d'un pays qui décline).
     -P.influencePride * clout +
     // Un accueil débordé (bien plus d'arrivées qu'en 2025, sans moyens d'intégration) crée des tensions.
@@ -1047,7 +1054,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     worldIndex,
     productivity,
     avgWage,
-    avgPension: prev.avgPension * (1 + inflation * policy.pensionIndexation + (init ? 0 : P.pensionRealGain)),
+    avgPension: pensionNow,
     smic,
     smicBoost: policy.smicBoost,
     vat: policy.vat,

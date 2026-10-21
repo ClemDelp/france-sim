@@ -262,3 +262,7 @@ influence;riskPremium;-;influencePremium;Un pays puissant rassure les prêteurs.
 influence;crisis;±;influenceTrade influenceDiplomacy;Moins de guerres commerciales, plus d’accords de paix et de climat.
 influence;discontent;-;influencePride;La fierté d’un pays qui compte.
 softPower;spending;+;;
+pensionIndexation;discontent;-;unrestPensionRange;Des pensions qui ne suivent plus les prix : les retraités perdent du pouvoir d’achat et le font savoir.
+health;discontent;-;unrestServicesRange;Couper dans les hôpitaux et les soins se voit vite : la colère monte.
+education;discontent;-;unrestServicesRange;Des classes sans professeur, des écoles fermées : les familles protestent.
+otherServices;discontent;-;unrestServicesRange;Police, justice, mairies : des services qui reculent nourrissent le mécontentement.

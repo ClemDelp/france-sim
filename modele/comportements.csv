@@ -146,6 +146,8 @@ unrestUnemploymentRange;0,1;part;Mécontentement social;Chômage en plus qui, se
 unrestInflation;0,03;part;Mécontentement social;Inflation à partir de laquelle la colère monte;;hypothèse;;0,025;0,04
 unrestInflationRange;0,12;part;Mécontentement social;Inflation en plus qui, seule, provoquerait une révolte;;hypothèse;;;
 unrestPovertyRange;0,05;part;Mécontentement social;Hausse de la pauvreté qui, seule, provoquerait une révolte;;hypothèse;;;
+unrestPensionRange;0,15;part;Mécontentement social;Perte de pouvoir d’achat des retraites qui, seule, provoquerait une révolte;Les retraités votent et manifestent : un gel durable des pensions (sous-indexation) pèse sur le climat social tant qu’il dure.;hypothèse;;0,1;0,3
+unrestServicesRange;0,3;part;Mécontentement social;Baisse des services publics (santé, éducation, autres services) qui, seule, provoquerait une révolte;Hôpitaux saturés, classes sans professeur, services fermés : la dégradation se voit et se paie dans les urnes.;hypothèse;;0,2;0,5
 unrestAusterityRange;0,1;part du PIB;Mécontentement social;Économies imposées qui, seules, provoqueraient une révolte;Grèce 2010-2015 : environ 15 points de PIB d’efforts, grèves générales.;hypothèse;;;
 bankruptcyPremium;0,08;taux;Fin de partie;Prime de risque à laquelle l’État ne trouve plus de prêteurs (faillite);Grèce 2011 : plus de 10 points d’écart avec l’Allemagne.;estimé;BCE, écarts de taux 2011-2012;0,06;0,12
 bankruptcyInterestShare;0,25;part;Fin de partie;Part des recettes publiques absorbée par les intérêts à partir de laquelle l’État fait faillite;;hypothèse;;;

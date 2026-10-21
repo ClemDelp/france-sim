@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 410 paramètres du modèle et les 263 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 412 paramètres du modèle et les 267 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (410)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (412)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -1600,6 +1600,20 @@
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
+<tr data-file="comportements" data-reliability="hypothese" data-text="unrestpensionrange perte de pouvoir d’achat des retraites qui, seule, provoquerait une révolte mécontentement social les retraités votent et manifestent : un gel durable des pensions (sous-indexation) pèse sur le climat social tant qu’il dure. ">
+  <td><code>unrestPensionRange</code><br /><small>Mécontentement social</small></td>
+  <td><strong>Perte de pouvoir d’achat des retraites qui, seule, provoquerait une révolte</strong><br /><small>Les retraités votent et manifestent : un gel durable des pensions (sous-indexation) pèse sur le climat social tant qu’il dure.</small><br /><small>Utilisé par : Indexation des retraites → Mécontentement social</small></td>
+  <td>0,15<br /><small>part</small><br /><small>plage 0,1 à 0,3</small></td>
+  <td><span class="badge hypothese">hypothèse</span></td>
+  <td><small></small></td>
+</tr>
+<tr data-file="comportements" data-reliability="hypothese" data-text="unrestservicesrange baisse des services publics (santé, éducation, autres services) qui, seule, provoquerait une révolte mécontentement social hôpitaux saturés, classes sans professeur, services fermés : la dégradation se voit et se paie dans les urnes. ">
+  <td><code>unrestServicesRange</code><br /><small>Mécontentement social</small></td>
+  <td><strong>Baisse des services publics (santé, éducation, autres services) qui, seule, provoquerait une révolte</strong><br /><small>Hôpitaux saturés, classes sans professeur, services fermés : la dégradation se voit et se paie dans les urnes.</small><br /><small>Utilisé par : Dépenses de santé → Mécontentement social · Éducation → Mécontentement social · Autres services publics → Mécontentement social</small></td>
+  <td>0,3<br /><small>part</small><br /><small>plage 0,2 à 0,5</small></td>
+  <td><span class="badge hypothese">hypothèse</span></td>
+  <td><small></small></td>
+</tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="unrestausterityrange économies imposées qui, seules, provoqueraient une révolte mécontentement social grèce 2010-2015 : environ 15 points de pib d’efforts, grèves générales. ">
   <td><code>unrestAusterityRange</code><br /><small>Mécontentement social</small></td>
   <td><strong>Économies imposées qui, seules, provoqueraient une révolte</strong><br /><small>Grèce 2010-2015 : environ 15 points de PIB d’efforts, grèves générales.</small><br /><small>Utilisé par : Plan d’aide européen → Mécontentement social</small></td>
@@ -3170,6 +3184,10 @@
 <tr data-file="liens" data-text="influence crisis influence de la france crises et événements influencetrade influencediplomacy moins de guerres commerciales, plus d’accords de paix et de climat."><td>Influence de la France</td><td>Crises et événements</td><td>±</td><td><small><code>influenceTrade</code> <code>influenceDiplomacy</code></small></td><td><small>Moins de guerres commerciales, plus d’accords de paix et de climat.</small></td></tr>
 <tr data-file="liens" data-text="influence discontent influence de la france mécontentement social influencepride la fierté d’un pays qui compte."><td>Influence de la France</td><td>Mécontentement social</td><td>-</td><td><small><code>influencePride</code></small></td><td><small>La fierté d’un pays qui compte.</small></td></tr>
 <tr data-file="liens" data-text="softpower spending rayonnement culturel et diplomatie dépenses publiques  "><td>Rayonnement culturel et diplomatie</td><td>Dépenses publiques</td><td>+</td><td><small></small></td><td><small></small></td></tr>
+<tr data-file="liens" data-text="pensionindexation discontent indexation des retraites mécontentement social unrestpensionrange des pensions qui ne suivent plus les prix : les retraités perdent du pouvoir d’achat et le font savoir."><td>Indexation des retraites</td><td>Mécontentement social</td><td>-</td><td><small><code>unrestPensionRange</code></small></td><td><small>Des pensions qui ne suivent plus les prix : les retraités perdent du pouvoir d’achat et le font savoir.</small></td></tr>
+<tr data-file="liens" data-text="health discontent dépenses de santé mécontentement social unrestservicesrange couper dans les hôpitaux et les soins se voit vite : la colère monte."><td>Dépenses de santé</td><td>Mécontentement social</td><td>-</td><td><small><code>unrestServicesRange</code></small></td><td><small>Couper dans les hôpitaux et les soins se voit vite : la colère monte.</small></td></tr>
+<tr data-file="liens" data-text="education discontent éducation mécontentement social unrestservicesrange des classes sans professeur, des écoles fermées : les familles protestent."><td>Éducation</td><td>Mécontentement social</td><td>-</td><td><small><code>unrestServicesRange</code></small></td><td><small>Des classes sans professeur, des écoles fermées : les familles protestent.</small></td></tr>
+<tr data-file="liens" data-text="otherservices discontent autres services publics mécontentement social unrestservicesrange police, justice, mairies : des services qui reculent nourrissent le mécontentement."><td>Autres services publics</td><td>Mécontentement social</td><td>-</td><td><small><code>unrestServicesRange</code></small></td><td><small>Police, justice, mairies : des services qui reculent nourrissent le mécontentement.</small></td></tr>
         </tbody></table></div>
         <script>
           const input = document.querySelector('.search')
