@@ -27,6 +27,7 @@ neutralLoanRate;0,034;taux;Investissement;Taux du crédit aux entreprises de 202
 bankCapitalMin;0,09;ratio;Banques;Ratio de fonds propres sous lequel les banques prêtent moins;;estimé;Bâle III;;
 creditCrunchSensitivity;6;sensibilité;Banques;Vitesse à laquelle le crédit se raréfie quand les banques sont fragiles;;hypothèse;;;
 creditCrunchMax;0,5;part;Banques;Restriction maximale du crédit;;hypothèse;;0,3;0,7
+lossCrunch;0,5;sensibilité;Banques;Resserrement du crédit l’année d’un krach, par point de fonds propres perdus;En 2008-2009, les banques ont durci leurs conditions de prêt bien avant de manquer de fonds propres.;hypothèse;BCE, enquête sur la distribution du crédit (2008-2009), ordre de grandeur;0,2;0,8
 mortgageSpread;0,006;taux;Banques;Écart entre le taux immobilier et le taux à 10 ans;;mesuré;Banque de France;;
 depositRateShare;0,5;part;Banques;Part du taux BCE versée aux épargnants sur leurs dépôts;;estimé;Livret A, comptes à terme;;
 bankPayout;0,5;part;Banques;Part des profits bancaires distribuée en temps normal;;mesuré;ACPR;;
@@ -148,6 +149,7 @@ unrestMemory;0,5;part;Mécontentement social;Mémoire du mécontentement;Part de
 goodNewsWeight;0,5;part;Mécontentement social;Poids des bonnes nouvelles par rapport aux mauvaises;Un niveau de vie qui progresse, un chômage bas ou une pauvreté qui recule apaisent le pays, mais on remarque davantage ce qu’on perd que ce qu’on gagne (biais de négativité).;hypothèse;;0,3;0,8
 serenityFloor;-0,3;indice;Mécontentement social;Climat social le plus serein possible;Même dans un pays qui va bien, il reste des mécontents : la popularité ne dépasse pas environ 78 %.;hypothèse;;-0,5;-0,15
 unrestIncomeDrop;0,08;part;Mécontentement social;Baisse du niveau de vie médian en un an qui, seule, ferait descendre le pays dans la rue;Les gilets jaunes (2018) sont partis d’une hausse de la taxe sur les carburants de quelques centimes.;hypothèse;;;
+unrestLowIncomeDrop;0,12;part;Mécontentement social;Baisse du niveau de vie des 20 % les plus modestes en un an qui, seule, ferait descendre le pays dans la rue;Un SMIC qui ne suit plus les prix ou des minima sociaux rabotés : même si le revenu médian tient, la colère monte.;hypothèse;;0,08;0,2
 unrestTaxRange;0,15;part du PIB;Mécontentement social;Hausse des prélèvements qui, seule, provoquerait une révolte fiscale;;hypothèse;;;
 unrestUnemployment;0,08;part;Mécontentement social;Chômage à partir duquel la colère monte;;hypothèse;;0,07;0,09
 unrestUnemploymentRange;0,1;part;Mécontentement social;Chômage en plus qui, seul, provoquerait une révolte;;hypothèse;Grèce 2011-2013 : chômage à 25 %;;
@@ -162,6 +164,7 @@ bankruptcyInterestShare;0,25;part;Fin de partie;Part des recettes publiques abso
 hyperinflation;0,25;taux;Fin de partie;Inflation à partir de laquelle la monnaie perd la confiance;;hypothèse;;0,2;0,5
 depressionUnemployment;0,2;part;Fin de partie;Chômage qui signe une dépression;États-Unis 1933 : 25 %, Grèce 2013 : 27 %.;estimé;;0,18;0,25
 rescueEffortMax;0,02;part du PIB;Crise de la dette;Économies maximales imposées par an pendant un plan d’aide;Grèce 2010-2012 : jusqu’à 4 points par an, avec une récession de 25 %.;estimé;Commission européenne, programmes d’ajustement;;
+rescueUnwind;0,1;part par an;Crise de la dette;Part des économies imposées levée chaque année une fois le plan d’aide terminé;Après un plan d’aide, les gouvernements desserrent peu à peu la contrainte (Grèce, Portugal après 2015).;hypothèse;;0,05;0,2
 qeTermPremium;1;points;Taux;Baisse des taux longs quand la BCE rachète massivement de la dette;;estimé;BCE, évaluations de l’assouplissement quantitatif (2015-2022);;
 qeStressRelief;0,6;part;Crise de la dette;Baisse de la tension sur la dette quand la BCE rachète massivement de la dette;La BCE a évité une nouvelle crise de la dette en 2020-2021 en rachetant la dette des pays de la zone euro.;estimé;BCE, programme d’urgence pandémique (PEPP);;
 rateExpectationSpeed;0,4;part/an;Taux;Vitesse à laquelle les taux longs suivent un changement du taux de la BCE;Les prêteurs à 10 ans regardent les taux attendus sur toute la période : en 2023, ils anticipaient déjà des baisses.;estimé;AFT, BCE, courbe des taux;;
@@ -178,6 +181,7 @@ reconstructionShare;0,2;part;Climat;Part des dégâts réparée par l’argent p
 climateLifeLoss;0,4;an par °C;Climat;Espérance de vie perdue par degré de réchauffement supplémentaire;Canicules, maladies, pollution à l’ozone : 33 000 morts liés à la chaleur en France de 2014 à 2022.;hypothèse;Santé publique France, Lancet Countdown;0,2;0,8
 airPollutionLife;0,6;an;Climat;Espérance de vie gagnée en sortant complètement du pétrole et du gaz;La pollution de l’air due aux combustions fait perdre environ 8 mois d’espérance de vie en France.;estimé;Santé publique France (2021);0,3;0,9
 unrestClimateRange;2;°C;Mécontentement social;Réchauffement supplémentaire qui, seul et sans adaptation, provoquerait une révolte;Catastrophes à répétition, pénuries d’eau, migrations.;hypothèse;;1,5;3
+disasterAnger;0,15;par °C équivalent;Mécontentement social;Colère causée par une catastrophe ponctuelle (canicule, inondation, méga-feux);Une catastrophe choque le pays, mais beaucoup moins qu’un réchauffement durable : la canicule de 2003 (15 000 morts) n’a pas fait tomber le gouvernement. L’adaptation en atténue l’effet.;hypothèse;;0,05;0,3
 collapseDamage;0,1;part du PIB;Fin de partie;Dégâts climatiques à partir desquels la société s’effondre;Au-delà, les infrastructures, l’agriculture et l’ordre public ne suivent plus.;hypothèse;GIEC AR6, limites de l’adaptation;0,07;0,15
 adaptationMax;0,6;part;Climat;Part maximale des dégâts évitable par l’adaptation;Digues, climatisation des écoles, réseaux d’eau, cultures adaptées : on ne peut pas tout éviter.;estimé;GIEC AR6 groupe II (limites de l’adaptation);0,4;0,8
 adaptationHalf;300;Md€;Climat;Effort d’adaptation cumulé qui évite la moitié de ce qui est évitable;;hypothèse;I4CE, besoins d’adaptation;150;600

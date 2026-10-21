@@ -90,6 +90,7 @@
           <li><strong>Chaque facteur de probabilité a un nom lisible</strong> : <code>add(libellé, valeur)</code> s’ajoute, <code>mult(libellé, facteur)</code> multiplie. C’est ce que la fenêtre « Pourquoi cet événement ? » affiche au joueur ; un facteur négligeable est masqué automatiquement.</li>
           <li><strong>Les effets</strong> sont des champs de <code>World</code> : <code>growth</code>, <code>oil</code>, <code>ecbRate</code>, <code>panic</code>, <code>demandShock</code>, <code>qe</code>, <code>climateAmbition</code>, <code>heatShock</code>, <code>unrest</code>, <code>productivity</code>, <code>migrants</code>, <code>conflict</code>. Ils s’ajoutent au monde de l’année (<code>worldAt</code>). <code>repeat(n, effet)</code> pour un effet durable.</li>
           <li><strong>Un nouvel effet</strong> : ajoutez le champ à <code>World</code> (<code>types.ts</code>), à 0 dans <code>world.ts</code> et <code>baseWorld()</code>, et utilisez <code>world.x</code> dans <code>sim.ts</code>.</li>
+          <li><strong>Le hasard reste équitable</strong> : un événement est un <em>choc majeur</em> si sa première année fait baisser la croissance mondiale de 3 points ou plus, crée un choc de demande d’au moins 1 % du PIB, ou ajoute 40 $ au baril (<code>isMajorShock</code>). Le tirage n’en produit jamais la première année de la partie, ni plus d’un par an (en comptant ceux du scénario).</li>
           <li>Préférez des probabilités qui dépendent de l’état du pays : ce sont elles qui font émerger des enchaînements (réchauffement → réfugiés → tensions → colère).</li>
         </ul>
 
@@ -104,10 +105,20 @@
             <code>when: 'end'</code> se juge à la dernière année ; <code>'always'</code> chaque année, et un échec est définitif.
           </li>
           <li>
-            Ajoutez une <strong>stratégie gagnante</strong> à <code>WINNING</code> dans <code>src/game/game.test.ts</code>. Le test vérifie que ne rien faire ne donne pas 3 étoiles, que la
-            stratégie fait mieux, ne perd pas la partie et gagne chaque élection.
+            Ajoutez une <strong>stratégie de référence</strong> à <code>REFERENCE</code> dans <code>src/game/scenarios.test.ts</code> : un plan par année d’application, jouable par
+            un humain (chaque année dans la limite du capital politique). Le test rejoue la partie comme dans le jeu (<code>playSession</code> : capital, élections, fins de partie)
+            et vérifie que ne rien faire ne donne pas 3 étoiles, que la référence gagne au moins 2 étoiles sans dépasser le capital ni perdre, et que le modèle reste sain chaque année.
           </li>
-          <li>Réglez les cibles : jouez la référence (<code>simulate({ decisions: [], events: sc.events, until: sc.end })</code>), lisez les valeurs, et placez les cibles entre « rien faire » et « bien jouer ».</li>
+          <li>
+            Réglez les cibles : regardez ce que donne « ne rien faire », puis laissez le joueur automatique chercher une stratégie (<code>playBot(sc)</code> dans
+            <code>src/game/bot.ts</code>, ou <code>playAdaptive(sc, graine)</code> pour un joueur qui réagit au hasard). Placez les cibles entre les deux : chaque objectif doit être
+            raté sans rien faire, et atteignable en jouant bien.
+          </li>
+          <li>
+            Lancez <code>npx vitest run src/game</code> : la première fois, la photo de fin de partie du scénario est enregistrée dans
+            <code>src/game/__snapshots__/</code>. Si une modification du modèle fait ensuite bouger un scénario, le test montre ligne par ligne ce qui a changé ; après avoir vérifié
+            que c’est voulu, <code>npx vitest -u</code> met la photo à jour (et le commit montre le changement).
+          </li>
         </ol>
 
         <h2 id="mythe">Ajouter une idée reçue</h2>

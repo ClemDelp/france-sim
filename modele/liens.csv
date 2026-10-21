@@ -213,7 +213,7 @@ climateDamage;inflation;+;climateInflation;Récoltes perdues, assurances plus ch
 climateDamage;spending;+;reconstructionShare;L’État répare une partie des dégâts.
 temperature;lifeExpectancy;-;climateLifeLoss;Canicules, maladies : moins si l’on s’est adapté.
 fossilShare;lifeExpectancy;-;airPollutionLife;Brûler du pétrole et du gaz pollue l’air.
-temperature;discontent;+;unrestClimateRange;Catastrophes à répétition et pénuries d’eau nourrissent la colère.
+temperature;discontent;+;unrestClimateRange disasterAnger;Catastrophes à répétition et pénuries d’eau nourrissent la colère (moins si le pays s’est adapté).
 climateDamage;ending;+;collapseDamage;Au-delà de 10 % du PIB de dégâts, la société s’effondre.
 carbonTax;fossilShare;-;carbonElectrify;Pompes à chaleur et voitures électriques deviennent plus rentables.
 carbonTax;frenchEmissions;-;carbonDemandCut;On consomme moins de pétrole et de gaz.
@@ -267,3 +267,4 @@ health;discontent;-;unrestServicesRange;Couper dans les hôpitaux et les soins s
 education;discontent;-;unrestServicesRange;Des classes sans professeur, des écoles fermées : les familles protestent.
 otherServices;discontent;-;unrestServicesRange;Police, justice, mairies : des services qui reculent nourrissent le mécontentement.
 electrification;imports;+;electrificationImportShare;Une bonne partie des équipements (pompes à chaleur, batteries, véhicules) est importée.
+lowIncome;discontent;-;unrestLowIncomeDrop;Quand les plus modestes perdent du pouvoir d’achat, la colère monte, même si le revenu médian tient.

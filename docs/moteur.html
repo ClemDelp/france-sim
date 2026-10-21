@@ -139,10 +139,11 @@ flowchart LR
         <h2 id="s8">8 · Énergie, prix et salaires</h2>
         <ul>
           <li>Part fossile qui baisse avec l’électrification (levier, taxe carbone, droits de douane sur les véhicules chinois).</li>
-          <li>Prix de l’électricité (nucléaire, électrification, pétrole) et des carburants (<code>oilRetailPass</code>, <code>carbonRetailPass</code>).</li>
+          <li>Part du nucléaire réellement atteinte : elle suit le levier avec retard, +1 point par an au plus (<code>nuclearBuildRate</code>), −3 points en fermant (<code>nuclearCloseRate</code>).</li>
+          <li>Prix de l’électricité (nucléaire atteint, électrification, pétrole) et des carburants (<code>oilRetailPass</code>, <code>carbonRetailPass</code>).</li>
           <li>Productivité : tendance + éducation + investissement public − fuite des capitaux + dérégulation − nationalisation + monde − dégâts climatiques.</li>
           <li>Salaires : inertie de l’inflation passée, productivité, courbe de Phillips (<code>wageUnemployment</code>), SMIC.</li>
-          <li>Inflation : coûts salariaux, énergie, droits de douane, TVA, tension sur les capacités (<code>gapInflation</code>), planche à billets, panique, climat ; bornée entre −3 % et 40 %.</li>
+          <li>Inflation : coûts salariaux, énergie, droits de douane, TVA, tension sur les capacités (<code>gapInflation</code>), planche à billets, panique, climat ; bornée entre −3 % et 40 %. Le saut de prix dû à une hausse de TVA est suivi à part (<code>vatInflation</code>, <code>vatPrice</code>) : les budgets publics (votés en euros) et les taux d’intérêt l’ignorent.</li>
         </ul>
 
         <h2 id="s9">9 · Taux d’intérêt</h2>
@@ -158,6 +159,12 @@ taux moyen de la dette : rejoint le taux 10 ans au rythme du renouvellement (deb
           profits, dividendes (dont ceux des entreprises publiques pour l’État), banques, Sécurité sociale et transferts, revenus et impôts de chaque tranche, consommation
           (lissée autour de la normale des <code>Anchors</code>), investissement par taille d’entreprise, logement, commerce extérieur et énergie, recettes et dépenses
           publiques. Elle renvoie la <strong>demande</strong> qui en résulte.
+        </p>
+        <p>
+          <strong>Emploi et loi d’Okun.</strong> L’emploi « proportionnel » serait l’activité divisée par la productivité de tendance. Mais les entreprises gardent leurs salariés
+          quand l’activité baisse et embauchent avec retard quand elle monte : la moitié seulement d’un écart se traduit en emplois la même année
+          (<code>okunElasticity</code>), le retard se résorbant ensuite (<code>okunPersistence</code>). Les salaires des emplois en plus ou en moins vont aux tranches où sont les
+          chômeurs (<code>hireWageRatio</code>).
         </p>
         <div class="diagram">
           <pre class="mermaid">
@@ -199,8 +206,10 @@ tension           = lissage(tension brute × (1 − qeStressRelief × QE))</code
         <h2 id="s16">16 · Colère et fins de partie</h2>
         <p>
           La colère de l’année additionne des sources, chacune divisée par la « plage » qui suffirait à elle seule à provoquer une révolte : baisse du revenu médian, hausse des
-          prélèvements, chômage, inflation, pauvreté, austérité d’un plan d’aide, réchauffement non adapté, événements, dérégulation, accueil débordé, moins la fierté
-          (influence). Le mécontentement est une moyenne mobile (<code>unrestMemory</code>).
+          prélèvements, chômage, inflation, pauvreté, austérité d’un plan d’aide, perte de pouvoir d’achat des retraites (<code>unrestPensionRange</code>), recul des services
+          publics (<code>unrestServicesRange</code>), réchauffement non adapté, événements, dérégulation, accueil débordé, moins la fierté (influence). Les bonnes nouvelles
+          (niveau de vie qui progresse vite, prélèvements en baisse, chômage bas, pauvreté qui recule) comptent aussi, à moitié (<code>goodNewsWeight</code>) : le climat social
+          peut devenir serein, jusqu’au plancher <code>serenityFloor</code>. Le mécontentement est une moyenne mobile (<code>unrestMemory</code>).
         </p>
         <div class="table-wrap">
           <table>

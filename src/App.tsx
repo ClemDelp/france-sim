@@ -40,7 +40,8 @@ const START = 2025
 const END = 2075
 /** Au-delà, le simulateur montre des tendances (démographie, dette), pas des prévisions. */
 const RELIABLE_UNTIL = 2040
-const LONG_RUN = 2050
+/** L'horizon du long terme des idées reçues : avant que la France « sans rien changer » ne connaisse elle-même crise et révolte (vers 2047-2050), ce qui fausserait la comparaison. */
+const LONG_RUN = 2040
 const MISSION_YEARS = 10
 
 type Tab = 'groupes' | 'courbes' | 'climat' | 'immigration' | 'budget' | 'dette' | 'entreprises' | 'monde' | 'journal'
@@ -206,7 +207,7 @@ function App() {
     return () => window.clearTimeout(id)
   }, [running, year, delay, randomEvents, seed, s, states, events])
 
-  // Une idée reçue jouée : le même scénario prolongé jusqu'en 2050, pour voir le long terme.
+  // Une idée reçue jouée : le même scénario prolongé jusqu'en 2040, pour voir le long terme.
   const longRun = useMemo(() => {
     if (!verdict) {
       return null

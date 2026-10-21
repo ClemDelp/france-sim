@@ -45,7 +45,7 @@ const aidShares = (smeShare: number): BySize => {
 /** Ce que le monde fait sans nous (modele/monde.csv) : l'histoire jusqu'en 2024, la crise d'Ormuz de 2026, puis la tendance de long terme. */
 export function baseWorld(year: number): World {
   const known = WORLD_PATH[year]
-  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0, climateAmbition: 0, heatShock: 0, unrest: 0, productivity: 0, migrants: 0, conflict: 0 }
+  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0, climateAmbition: 0, heatShock: 0, unrest: 0, productivity: 0, migrants: 0, conflict: 0, bankLoss: 0 }
 }
 
 /**
@@ -147,6 +147,8 @@ type Carry = {
   taxBurden0: number
   poverty0: number
   medianIncome: number
+  /** Niveau de vie des 20 % les plus modestes l'an dernier (euros de 2025 par personne). */
+  lowIncome: number
   discontent: number
   /** Écart entre le solde public et celui qui stabiliserait la dette (part du PIB). */
   stabilityGap: number
@@ -226,6 +228,7 @@ function initialCarry(): Carry {
     taxBurden0: 0,
     poverty0: 0,
     medianIncome: 0,
+    lowIncome: 0,
     discontent: 0,
     stabilityGap: 0,
     rescueStep: 0,
@@ -301,6 +304,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const deregulation = REF.regulation - regulation
   let naturalUnemployment = BASE.naturalUnemployment - P.regulationNairu * deregulation
 
+  // Un krach ou la faillite d'une grande banque ampute les fonds propres des banques : si leur coussin devient trop mince, elles prêtent moins.
+  bankCapital -= bankCapital * world.bankLoss
+
   // — 3. Crise de la dette : quand la tension accumulée atteint 1, les prêteurs paniquent.
   let crisisCooldown = Math.max(0, prev.crisisCooldown - 1)
   const debtCrisis = !init && prev.marketStress >= 1 && crisisCooldown === 0
@@ -332,7 +338,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   } else if (crisisLastYear) {
     notes.push('La France refuse l’aide européenne : elle garde la main sur son budget, mais doit emprunter au prix fort.')
   }
-  const rescueEffort = prev.rescueEffort + (rescueYears > 0 ? rescueStep : 0)
+  // Pendant le plan, les économies s'additionnent ; ensuite, elles sont levées peu à peu (elles ne s'empilent pas d'un plan à l'autre pour toujours).
+  const rescueEffort = rescueYears > 0 ? prev.rescueEffort + rescueStep : prev.rescueEffort * (1 - P.rescueUnwind)
   const demandShock = world.demandShock + (debtCrisis ? P.crisisDemandShock : 0)
 
   // — 4. Démographie et espérance de vie
@@ -497,7 +504,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const effectiveRate = init ? prev.effectiveRate : prev.effectiveRate + (rate - prev.effectiveRate) / P.debtRollover
   const loanRate = world.ecbRate + BASE.firmLoanSpread + P.firmPremiumPass * premium
   const baseRate = P.neutralLoanRate
-  const creditCrunch = clamp((P.bankCapitalMin - bankCapital / (prev.firmDebt + prev.householdDebt)) * P.creditCrunchSensitivity, 0, P.creditCrunchMax)
+  // Des banques à court de fonds propres prêtent moins ; et l'année d'un krach, la peur fige le crédit, à proportion des pertes.
+  const creditCrunch = clamp(Math.max(0, (P.bankCapitalMin - bankCapital / (prev.firmDebt + prev.householdDebt)) * P.creditCrunchSensitivity) + P.lossCrunch * world.bankLoss, 0, P.creditCrunchMax)
 
   // — 10. Demande, revenus et emploi : on cherche le PIB qui boucle
   const trend = priceLevel * (productivity / initialCarry().productivity)
@@ -589,8 +597,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     // Les entreprises distribuent plus quand elles sont peu endettées, moins quand elles le sont trop : leur dette reste proportionnée à l'économie.
     const payout = clamp(BASE.dividendPayout - P.payoutLeverage * (prev.firmDebt / prev.gdp - BASE.firmDebt / BASE.gdp), 0.1, 0.9)
     const dividends = Math.max(0, payout * (gos - corporateTax - firmInterest))
-    // Les dividendes des entreprises nationalisées (au-delà de celles de 2025) reviennent à l'État.
-    const publicDividends = dividends * (ownership - REF.publicOwnership)
+    // Les dividendes des entreprises nationalisées (au-delà de celles de 2025) reviennent à l'État : on ne nationalise que des grands groupes,
+    // l'État ne touche donc qu'une part de leurs dividendes, pas de ceux des PME et des ETI.
+    const publicDividends = dividends * FS.valueAdded.ge * (ownership - REF.publicOwnership)
     const dividendsAbroad = (dividends - publicDividends) * BASE.dividendsAbroad
     const dividendsHome = dividends - publicDividends - dividendsAbroad
     const nonTax = BASE.nonTaxRevenue * trend
@@ -712,7 +721,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const housing = BASE.housing * trend * scale * clamp(1 - P.housingRateSensitivity * (rate - baseRate), P.housingMin, P.housingMax) * (1 - creditCrunch)
 
     // Commerce extérieur et énergie
-    const competitiveness = Math.pow(priceLevel / worldPrice, -P.priceCompetitiveness)
+    // La TVA ne frappe pas les exportations, et frappe autant les produits importés que les nôtres : le commerce se joue sur les prix hors TVA.
+    const competitiveness = Math.pow(priceLevel / vatPrice / worldPrice, -P.priceCompetitiveness)
     // Un pays influent subit moins de représailles commerciales.
     const retaliation = (P.tariffRetaliation * policy.tariffs + P.evRetaliation * (policy.tariffChinaEV - REF.tariffChinaEV)) * clamp(1 - P.influenceTrade * clout, 0.2, 2)
     const exports = BASE.exports * worldIndex * worldPrice * competitiveness * (1 - retaliation) * (1 - P.electricityExportLoss * (electricityPrice - 1))
@@ -721,7 +731,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const overheating = 1 + P.overheatingImports * Math.max(0, real / potential - P.overheatingThreshold)
     // Pompes à chaleur, batteries, véhicules : l'électrification est plus importée que l'investissement moyen.
     const electrifyImports = electrifyInvestment * Math.max(0, P.electrificationImportShare - importRatio)
-    const imports = importRatio * absorption * Math.pow(priceLevel / worldPrice, P.importPriceElasticity) * (1 - P.tariffImportCut * policy.tariffs) * overheating + electrifyImports
+    const imports = importRatio * absorption * Math.pow(priceLevel / vatPrice / worldPrice, P.importPriceElasticity) * (1 - P.tariffImportCut * policy.tariffs) * overheating + electrifyImports
     // On consomme un peu moins de pétrole quand il est cher (élasticité-prix ≈ −0,2).
     // Une taxe carbone plus forte fait consommer moins de pétrole et de gaz.
     const energyImports = (1 - (P.carbonDemandCut * carbonExtra) / 100) * BASE.energyImports * Math.pow(world.oil / BASE.oil, P.oilElasticity) * (fossilShare / BASE.fossilShare) * Math.pow(real / BASE.gdp, P.energyGdpElasticity) * worldPrice
@@ -905,6 +915,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const taxBurden0 = init ? taxBurden : prev.taxBurden0
   const poverty0 = init ? dist.poverty : prev.poverty0
   const medianDrop = init ? 0 : Math.max(0, 1 - dist.median / prev.medianIncome)
+  // Les plus modestes qui perdent du pouvoir d'achat (SMIC désindexé, minima rabotés) : la colère monte même si le revenu médian tient.
+  const lowIncomeDrop = init ? 0 : Math.max(0, 1 - perCapita.g1 / prev.lowIncome)
   const pensionNow = prev.avgPension * (1 + inflation * policy.pensionIndexation + (init ? 0 : P.pensionRealGain))
   // Ce que perd (ou gagne) chaque retraité : la pension moyenne monte aussi parce que les nouveaux retraités ont de meilleures carrières,
   // mais celle de chacun ne suit les prix que selon l'indexation.
@@ -923,6 +935,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const anger =
     -goodNews +
     medianDrop / P.unrestIncomeDrop +
+    lowIncomeDrop / P.unrestLowIncomeDrop +
     Math.max(0, taxBurden - taxBurden0) / P.unrestTaxRange +
     Math.max(0, d.unemployment - P.unrestUnemployment) / P.unrestUnemploymentRange +
     Math.max(0, inflation - P.unrestInflation) / P.unrestInflationRange +
@@ -930,7 +943,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     // L'austérité imposée nourrit la colère tant que le plan d'aide dure.
     (rescueYears > 0 ? rescueStep * (P.rescueYears - rescueYears + 1) : 0) / P.unrestAusterityRange +
     // Catastrophes à répétition, pénuries d'eau : le réchauffement nourrit la colère, sauf si le pays s'est adapté.
-    (Math.max(0, warming) * exposure) / P.unrestClimateRange +
+    (Math.max(0, warming - world.heatShock) * exposure) / P.unrestClimateRange +
+    // Une catastrophe ponctuelle (canicule, inondation) choque, mais moins qu'un réchauffement durable ; l'adaptation en atténue aussi la colère.
+    world.heatShock * exposure * P.disasterAnger +
     world.unrest +
     // Précarité quand on allège fortement les règles.
     P.regulationAnger * Math.max(0, deregulation) +
@@ -1170,6 +1185,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     taxBurden0,
     poverty0,
     medianIncome: dist.median,
+    lowIncome: perCapita.g1,
     discontent,
     stabilityGap,
     rescueStep,
@@ -1224,6 +1240,7 @@ export function worldAt(events: FiredEvent[], year: number): World {
     world.productivity += effect.productivity ?? 0
     world.migrants += effect.migrants ?? 0
     world.conflict += effect.conflict ?? 0
+    world.bankLoss += effect.bankLoss ?? 0
   }
   return world
 }

@@ -203,3 +203,74 @@ describe('emploi et pauvreté', () => {
     expect(loss('g5')).toBeLessThan(loss('g1'))
   })
 })
+
+/**
+ * Ce que le playtest des scénarios a fait corriger : chaque test fixe le comportement voulu,
+ * pour qu'une modification future ne réintroduise pas l'incohérence sans qu'on le voie.
+ */
+describe('constats du playtest : le modèle reste cohérent', () => {
+  type Patch = Parameters<typeof simulate>[0]['decisions'][0]['patch']
+  const base = simulate({ decisions: [], events: [], until: 2050 })
+  const play = (patch: Patch, until = 2050) => simulate({ decisions: [{ year: 2026, patch }], events: [], until })
+  const year = (st: ReturnType<typeof simulate>, y: number) => st.find((s) => s.year === y)!
+
+  it('loi d’Okun réaliste : 1 % d’activité en plus fait baisser le chômage de moins de 0,6 point la même année', () => {
+    const s = year(play({ health: 260 }, 2026), 2026)
+    const b = year(base, 2026)
+    const okun = -(s.unemployment - b.unemployment) / (s.gdpReal / b.gdpReal - 1)
+    expect(okun).toBeGreaterThan(0.2)
+    expect(okun).toBeLessThan(0.6)
+  })
+
+  it('une hausse de TVA réduit le déficit dès la première année, une baisse le creuse', () => {
+    expect(year(play({ vat: 0.21 }, 2026), 2026).deficit).toBeLessThan(year(base, 2026).deficit)
+    expect(year(play({ vat: 0.135 }, 2026), 2026).deficit).toBeGreaterThan(year(base, 2026).deficit + 20)
+  })
+
+  it('l’électrification n’est pas un plan de relance gratuit, et son coût baisse quand il reste peu de fossile', () => {
+    const e = play({ electrification: 0.08 })
+    expect(year(base, 2026).unemployment - year(e, 2026).unemployment).toBeLessThan(0.01)
+    const extra = (y: number) => year(e, y).investment - year(base, y).investment
+    expect(extra(2050)).toBeLessThan(0.5 * extra(2026))
+  })
+
+  it('le parc nucléaire suit l’objectif avec retard : au plus un point de plus par an', () => {
+    const n = play({ nuclearShare: 0.85 }, 2030)
+    expect(year(n, 2026).nuclearShare).toBeLessThanOrEqual(0.69 + 1e-9)
+    expect(year(n, 2030).nuclearShare).toBeLessThanOrEqual(0.73 + 1e-9)
+    expect(year(n, 2026).electricityPrice).toBeGreaterThan(year(base, 2026).electricityPrice - 0.02)
+  })
+
+  it('baisser l’âge de départ ne crée pas des millions de retraités en un an', () => {
+    expect(year(play({ retirementAge: 60 }, 2026), 2026).retirees - year(base, 2026).retirees).toBeLessThan(1)
+  })
+
+  it('des droits de succession à 100 % ne sont pas une manne : l’assiette fond', () => {
+    expect(year(base, 2026).deficit - year(play({ inheritanceTax: 1 }, 2026), 2026).deficit).toBeLessThan(30)
+  })
+
+  it('un an de gel des retraites se sent tout de suite dans le climat social', () => {
+    const st = simulate({ decisions: [{ year: 2026, patch: { pensionIndexation: 0 } }, { year: 2027, patch: { pensionIndexation: 1 } }], events: [], until: 2026 })
+    expect(year(st, 2026).discontent - year(base, 2026).discontent).toBeGreaterThan(0.02)
+  })
+
+  it('la popularité peut monter : de bonnes nouvelles apaisent le pays', () => {
+    const good = play({ minima: 30, foodSecurity: 100 }, 2027)
+    expect(year(good, 2027).discontent).toBeLessThan(year(base, 2027).discontent)
+  })
+
+  it('un krach bancaire resserre le crédit', () => {
+    const st = simulate({ decisions: [], events: [{ year: 2028, id: 'financial-crisis' }], until: 2028 })
+    expect(year(st, 2028).creditCrunch).toBeGreaterThan(0.05)
+  })
+
+  it('nationaliser ne rapporte pas plus que ce que coûte la dette émise pour le faire, plus 3 points', () => {
+    const s = year(play({ publicOwnership: 0.6 }, 2026), 2026)
+    const bonds = (0.6 - 0.1) * 2500
+    expect(s.taxes['Dividendes des entreprises publiques (en plus)'] / bonds).toBeLessThan(s.effectiveRate + 0.03)
+  })
+
+  it('le prix de l’électricité et le baril de référence ne cachent pas de crise en 2026', () => {
+    expect(year(base, 2026).oil).toBeLessThan(80)
+  })
+})

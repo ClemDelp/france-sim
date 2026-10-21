@@ -34,7 +34,8 @@ export function scorePlan(sc: Scenario, plan: Plan, events: FiredEvent[] = sc.ev
   })
   const elections = states.filter((s) => isElectionYear(s.year) && s.year > START).map((s) => Math.min(0.2, (popularity(s) - 41) / 100))
   const score = evaluation.stars * 10 + margins.reduce((a, m) => a + m, 0) * 5 + elections.reduce((a, m) => a + m, 0) - (lost ? 100 : 0)
-  return { score, stars: evaluation.stars, lost, states }
+  // Une partie perdue (élection, fin de partie) ne rapporte aucune étoile, comme dans le jeu.
+  return { score, stars: lost ? 0 : evaluation.stars, lost, states }
 }
 
 /** Les petits pas possibles sur un levier : un ou deux « crans » (un sixième de la plage) dans chaque sens. */

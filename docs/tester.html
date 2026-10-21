@@ -130,6 +130,14 @@ npm run dev            # le jeu, avec vos fichiers modifiés</code></pre>
                 <td><code>src/game/game.test.ts</code></td>
                 <td><strong>Le jeu reste jouable</strong> : chaque scénario se gagne avec une stratégie connue mais pas en ne faisant rien ; élections, une du journal, conseillers, succès, explication des événements.</td>
               </tr>
+              <tr>
+                <td><code>src/game/scenarios.test.ts</code></td>
+                <td>
+                  <strong>Chaque scénario, rejoué comme dans le jeu</strong> (capital politique, élections, fins de partie) : le modèle reste sain chaque année, ne rien faire ne suffit
+                  pas, la stratégie de référence gagne, et une <strong>photo de fin de partie</strong> est comparée à celle enregistrée. Si votre changement fait bouger un scénario,
+                  le test le montre ligne par ligne : vérifiez que c’est voulu, puis mettez la photo à jour avec <code>npx vitest -u</code>.
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -175,6 +183,11 @@ npm run dev            # le jeu, avec vos fichiers modifiés</code></pre>
                 <td>« reste stable jusqu’en 2075 »</td>
                 <td>Votre valeur fait s’emballer le modèle à long terme (inflation, chômage…).</td>
                 <td>La valeur est souvent hors de sa plage plausible. Essayez-la dans le jeu en avançant jusqu’en 2075.</td>
+              </tr>
+              <tr>
+                <td>« Snapshot … photo de fin de partie … mismatched »</td>
+                <td>Votre changement fait bouger le résultat d’un scénario : le message montre, ligne par ligne, l’ancienne valeur (−) et la nouvelle (+).</td>
+                <td>Si l’effet est voulu et raisonnable, mettez la photo à jour (<code>npx vitest -u</code>) et expliquez-le dans votre proposition ; sinon, votre valeur a un effet inattendu.</td>
               </tr>
               <tr>
                 <td>« ne rien faire ne suffit pas, une bonne stratégie rapporte des étoiles »</td>

@@ -123,6 +123,8 @@ export type World = {
   migrants: number
   /** Conflits en plus dans le voisinage de l'Europe (1 = une grande guerre). */
   conflict: number
+  /** Part des fonds propres des banques perdue cette année (krach, faillite d'une grande banque). */
+  bankLoss: number
 }
 
 /** Une décision prise une année donnée (le joueur bouge des leviers puis avance). */

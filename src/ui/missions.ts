@@ -83,7 +83,7 @@ export const MISSIONS: Mission[] = [
     focus: ['poor', 'unemployment', 'inflation', 'poverty', 'gini'],
     mechanism: [
       'Les salariés au SMIC et juste au-dessus gagnent nettement plus : la pauvreté au travail recule.',
-      'Mais le travail peu qualifié coûte plus cher : certaines entreprises embauchent moins ou automatisent, le chômage monte un peu.',
+      'Mais le travail peu qualifié coûte plus cher : certaines entreprises embauchent moins ou automatisent. Le chômage monte nettement la première année (plus d’un point), puis l’écart se réduit.',
       'Une partie de la hausse se diffuse aux prix la première année.',
     ],
   },
@@ -95,9 +95,9 @@ export const MISSIONS: Mission[] = [
     patch: { monetization: 0.8 },
     focus: ['inflation', 'rate', 'gdp', 'poor', 'debt'],
     mechanism: [
-      'La banque centrale achète la dette : à court terme, l’État emprunte moins cher.',
+      'La banque centrale achète une partie de la dette : l’État dépend moins des marchés.',
       'Mais créer de la monnaie sans production en face fait monter les prix : l’inflation ronge les salaires et les pensions, surtout ceux des plus modestes.',
-      'Les prêteurs anticipent l’inflation et la sortie des règles européennes : les taux finissent par remonter.',
+      'Les prêteurs anticipent l’inflation et la sortie des règles européennes : loin de baisser, les taux montent dès la première année, et l’activité recule.',
     ],
   },
   {
