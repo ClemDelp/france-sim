@@ -22,6 +22,13 @@ function probit(p: number): number {
 
 const POINTS = 300
 
+/** Fonction de répartition de la loi normale centrée réduite (Abramowitz et Stegun 7.1.26, précision ≈ 1e-7). */
+function normalCdf(x: number): number {
+  const t = 1 / (1 + (0.3275911 * Math.abs(x)) / Math.SQRT2)
+  const erf = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-(x * x) / 2)
+  return x >= 0 ? (1 + erf) / 2 : (1 - erf) / 2
+}
+
 export type Distribution = { median: number; poverty: number; gini: number; ratioD9D1: number }
 
 /**
@@ -40,18 +47,25 @@ export function distribution(mean: ByGroup, share: ByGroup, sigma: ByGroup): Dis
   }
   points.sort((a, b) => a.y - b.y)
   const total = points.reduce((acc, p) => acc + p.w, 0)
+  // Les quantiles et le taux de pauvreté se calculent sur les lois continues (pas sur les points) : une petite mesure
+  // déplace le taux de pauvreté d'un dixième de point, au lieu de le faire sauter par paliers.
+  const params = GROUPS.map((g) => ({ w: share[g] / total, mu: Math.log(Math.max(1e-6, mean[g])) - (sigma[g] * sigma[g]) / 2, s: sigma[g] }))
+  const below = (y: number) => params.reduce((acc, p) => acc + p.w * normalCdf((Math.log(y) - p.mu) / p.s), 0)
   const quantile = (q: number) => {
-    let acc = 0
-    for (const p of points) {
-      acc += p.w
-      if (acc >= q * total) {
-        return p.y
+    let lo = points[0].y
+    let hi = points[points.length - 1].y
+    for (let i = 0; i < 60; i += 1) {
+      const mid = Math.sqrt(lo * hi)
+      if (below(mid) < q) {
+        lo = mid
+      } else {
+        hi = mid
       }
     }
-    return points[points.length - 1].y
+    return Math.sqrt(lo * hi)
   }
   const median = quantile(0.5)
-  const poverty = points.filter((p) => p.y < 0.6 * median).reduce((acc, p) => acc + p.w, 0) / total
+  const poverty = below(0.6 * median)
   // Gini = 1 − 2 × aire sous la courbe de Lorenz.
   const income = points.reduce((acc, p) => acc + p.w * p.y, 0)
   let cumIncome = 0
