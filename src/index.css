@@ -3200,6 +3200,11 @@ input[type='range']:disabled {
   padding-bottom: 190px;
 }
 
+/* La colonne de droite défile seule : sa fin (l'Assemblée, les jokers) doit pouvoir remonter au-dessus du Conseil. */
+.side {
+  padding-bottom: 240px;
+}
+
 .council {
   position: fixed;
   /* À droite de la colonne des leviers : le bandeau ne recouvre jamais les curseurs. */
@@ -5067,52 +5072,228 @@ label {
 .jokers {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 12px;
+  perspective: 800px;
 }
 
-.joker {
+.joker-card {
+  --tone: #b3121b;
+  --tone-2: #5a0a10;
+  position: relative;
   display: grid;
   justify-items: center;
-  gap: 1px;
-  padding: 8px 6px;
-  border-radius: 10px;
-  border: 1px solid var(--rule);
-  background: var(--panel-2);
-  color: var(--ink);
+  align-content: start;
+  gap: 3px;
+  min-height: 190px;
+  padding: 8px 8px 10px;
+  border-radius: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.18), transparent 55%),
+    linear-gradient(160deg, var(--tone), var(--tone-2));
+  color: #fff;
+  text-align: center;
   cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  overflow: hidden;
 }
 
-.joker span {
-  font-size: 1.3rem;
+.joker-referendum {
+  --tone: #1f4fa8;
+  --tone-2: #0c2251;
 }
 
-.joker small {
-  color: var(--muted);
-  font-size: 0.72rem;
+.joker-dissolution {
+  --tone: #6b2fa0;
+  --tone-2: #2c0f47;
 }
 
-.joker:not(:disabled):hover {
+/* Un reflet qui passe sur les cartes jouables. */
+.joker-card::after {
+  content: '';
+  position: absolute;
+  inset: -40% auto -40% -60%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  transform: rotate(18deg);
+  opacity: 0;
+}
+
+.joker-card.is-playable {
   border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(245, 183, 10, 0.4), 0 0 18px rgba(245, 183, 10, 0.35), 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
-.joker:disabled {
-  opacity: 0.45;
+.joker-card.is-playable::after {
+  opacity: 1;
+  animation: joker-shine 2.8s ease-in-out infinite;
+}
+
+.joker-card.is-playable:hover {
+  transform: translateY(-6px) rotateX(6deg);
+}
+
+.joker-card.is-armed {
+  border-color: #fff;
+  transform: translateY(-12px) rotate(-2deg) scale(1.03);
+  box-shadow: 0 0 0 3px var(--gold), 0 0 28px rgba(245, 183, 10, 0.6), 0 14px 26px rgba(0, 0, 0, 0.5);
+  animation: joker-pulse 1.6s ease-in-out infinite;
+}
+
+.joker-card.is-locked {
   cursor: not-allowed;
+  filter: grayscale(0.7) brightness(0.8);
 }
 
-.joker.is-armed {
+.jc-top {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.jc-charges {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.jc-charges i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid #fff;
+}
+
+.jc-charges i.on {
+  background: var(--gold);
   border-color: var(--gold);
-  background: rgba(245, 183, 10, 0.16);
-  box-shadow: 0 0 0 2px rgba(245, 183, 10, 0.35);
+  box-shadow: 0 0 6px var(--gold);
 }
 
-.joker.is-armed small {
+.jc-art {
+  margin: 4px 0 0;
+  font-size: 2.4rem;
+  line-height: 1.1;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));
+}
+
+.jc-name {
+  max-width: 100%;
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.jc-effect {
+  font-size: 0.74rem;
+  line-height: 1.2;
+  opacity: 0.92;
+}
+
+.jc-risk {
+  margin-top: 2px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.jc-foot {
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  line-height: 1.2;
   color: var(--gold);
+}
+
+.is-locked .jc-foot {
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .jokers {
+    gap: 6px;
+  }
+
+  .joker-card {
+    padding: 6px 5px 8px;
+  }
+
+  .jc-top > span:first-child {
+    display: none;
+  }
+
+  .jc-name {
+    font-size: 0.76rem;
+  }
+}
+
+@keyframes joker-shine {
+  0%,
+  55% {
+    left: -60%;
+  }
+  100% {
+    left: 130%;
+  }
+}
+
+@keyframes joker-pulse {
+  50% {
+    box-shadow: 0 0 0 3px var(--gold), 0 0 40px rgba(245, 183, 10, 0.85), 0 14px 26px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .joker-card,
+  .joker-card::after {
+    animation: none !important;
+    transition: none;
+  }
 }
 
 .assembly-note {
   margin: 6px 0 0;
+}
+
+.joker-deal {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--gold);
+  background: rgba(245, 183, 10, 0.08);
+  font-size: 0.85rem;
+}
+
+.joker-deal ul {
+  margin: 6px 0;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.joker-deal li.good {
+  color: var(--good);
+}
+
+.joker-deal li.bad {
+  color: #ffb3b5;
+}
+
+.joker-deal small {
+  color: var(--muted);
 }
 
 .joker-badge {

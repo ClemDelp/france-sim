@@ -1,3 +1,4 @@
+import { num } from '../format'
 import { canDissolve, canForce, canReferendum, CENSURE_CHANCE, majorityOf, MAJORITY_CAPITAL, MAJORITY_LABEL, referendumChance, SEATS, type Politics } from '../../game/parliament'
 
 export type Joker = 'force' | 'referendum'
@@ -30,8 +31,10 @@ export function Assembly({
   year,
   popularity,
   color,
-  hasDraft,
   over,
+  cost,
+  capital,
+  forecast,
   armed,
   onArm,
   onDissolve,
@@ -40,9 +43,12 @@ export function Assembly({
   year: number
   popularity: number
   color: string
-  hasDraft: boolean
   /** Les réformes en préparation dépassent le capital politique. */
   over: boolean
+  cost: number
+  capital: number
+  /** Ce qu'un 49.3 coûterait, selon le modèle : colère en plus, popularité en moins. */
+  forecast: { anger: number; popularity: number; discontent: number } | null
   armed: Joker | null
   onArm: (j: Joker | null) => void
   onDissolve: () => void
@@ -51,8 +57,11 @@ export function Assembly({
   const shift = MAJORITY_CAPITAL[m]
   const censure = Math.round(CENSURE_CHANCE[m] * 100)
   const yes = Math.round(referendumChance(popularity) * 100)
-  const force = canForce(p, year + 1)
-  const ref = canReferendum(p, year + 1)
+  // Le 49.3 et le référendum ne servent qu'à une chose : faire passer des réformes qui dépassent le capital politique de l'année.
+  const force = canForce(p, year + 1) && (over || armed === 'force')
+  const ref = canReferendum(p, year + 1) && (over || armed === 'referendum')
+  const usedForce = !canForce(p, year + 1)
+  const usedRef = !canReferendum(p, year + 1)
   const dissolve = canDissolve(p, year)
   return (
     <section className={`assembly assembly-${m}`}>
@@ -68,47 +77,136 @@ export function Assembly({
           </small>
         </div>
       </div>
-      {over && !armed ? <p className="assembly-alert">Trop de réformes pour votre capital politique ? Jouez un joker, ou retirez des mesures.</p> : null}
+      {over && !armed ? (
+        <p className="assembly-alert">
+          Vos réformes coûtent ⚡{cost} et vous n’avez que ⚡{capital} : le Parlement ne suivra pas. Retirez des mesures, ou forcez le passage avec un joker.
+        </p>
+      ) : null}
       <div className="jokers">
-        <button
-          type="button"
-          className={armed === 'force' ? 'joker is-armed' : 'joker'}
-          disabled={!force || (!hasDraft && armed !== 'force')}
+        <JokerCard
+          art="📜"
+          name="49.3"
+          effect="Vos réformes passent sans vote"
+          risk={`Censure : ${censure} %`}
+          charges="1 par an"
+          left={!usedForce}
+          playable={force}
+          armed={armed === 'force'}
+          locked={usedForce ? 'Déjà joué cette année' : !over ? 'Utile quand vos réformes dépassent votre capital' : null}
+          tone="force"
           onClick={() => onArm(armed === 'force' ? null : 'force')}
-          title={force ? `Les réformes de l’année passent sans compter le capital politique. Risque de motion de censure : ${censure} %. Ensuite, −1 ⚡ l’an prochain (−2 si le gouvernement tombe).` : 'Déjà utilisé cette année.'}
-        >
-          <span>📜</span>
-          <strong>49.3</strong>
-          <small>{armed === 'force' ? 'Engagé ✓ (annuler)' : force ? `censure : ${censure} %` : 'déjà utilisé'}</small>
-        </button>
-        <button
-          type="button"
-          className={armed === 'referendum' ? 'joker is-armed' : 'joker'}
-          disabled={!ref || (!hasDraft && armed !== 'referendum')}
+        />
+        <JokerCard
+          art="🗳️"
+          name="Référendum"
+          effect="Le peuple tranche"
+          risk={`Oui ≈ ${yes} %`}
+          charges="1 par mandat"
+          left={!usedRef}
+          playable={ref}
+          armed={armed === 'referendum'}
+          locked={usedRef ? 'Déjà joué ce mandat' : !over ? 'Utile quand vos réformes dépassent votre capital' : null}
+          tone="referendum"
           onClick={() => onArm(armed === 'referendum' ? null : 'referendum')}
-          title={ref ? `Les Français votent les réformes de l’année : si le oui l’emporte (chance ≈ ${yes} %, selon votre popularité), elles passent sans compter le capital. Sinon, elles sont rejetées et vous perdez 2 ⚡. Une fois par mandat.` : 'Une fois par mandat : déjà utilisé.'}
-        >
-          <span>🗳️</span>
-          <strong>Référendum</strong>
-          <small>{armed === 'referendum' ? 'Convoqué ✓ (annuler)' : ref ? `oui ≈ ${yes} %` : 'déjà utilisé'}</small>
-        </button>
-        <button
-          type="button"
-          className="joker"
-          disabled={!dissolve}
+        />
+        <JokerCard
+          art="💥"
+          name="Dissolution"
+          effect="Rebattre les cartes"
+          risk={`Selon votre popularité (${popularity} %)`}
+          charges="1 par mandat"
+          left={dissolve}
+          playable={dissolve}
+          armed={false}
+          locked={dissolve ? null : 'Pas dans l’année qui suit des législatives, une fois par mandat'}
+          tone="dissolution"
           onClick={() => {
             if (window.confirm(`Dissoudre l’Assemblée ? De nouvelles législatives ont lieu tout de suite, selon votre popularité (${popularity} %). Vous pouvez gagner une majorité… ou tout perdre.`)) {
               onDissolve()
             }
           }}
-          title={dissolve ? 'De nouvelles législatives tout de suite, selon votre popularité du moment. Une fois par mandat.' : 'Pas dans l’année qui suit des législatives, et une fois par mandat.'}
-        >
-          <span>💥</span>
-          <strong>Dissolution</strong>
-          <small>{dissolve ? `popularité ${popularity} %` : 'pas maintenant'}</small>
-        </button>
+        />
       </div>
-      {!hasDraft && !armed ? <p className="assembly-note">Le 49.3 et le référendum s’appliquent aux réformes en préparation : bougez d’abord des leviers.</p> : null}
+      {armed === 'force' ? (
+        <div className="joker-deal">
+          <strong>📜 Le 49.3, concrètement</strong>
+          <ul>
+            <li className="good">✅ Vos réformes (⚡{cost}) passent cette année malgré votre capital de ⚡{capital}, sans vote de l’Assemblée.</li>
+            <li className="bad">
+              ⚠️ Risque de motion de censure : <strong>{censure} %</strong> ({MAJORITY_LABEL[m].toLowerCase()}). Si elle passe : réformes rejetées, gouvernement renversé, taux d’intérêt +0,3 point, et 2 ⚡ de moins l’an prochain.
+            </li>
+            {forecast ? (
+              <li className="bad">
+                😠 La colère monte de {num(forecast.anger, 2)}, soit <strong>{forecast.popularity === 0 ? 'moins d’un point' : `${num(forecast.popularity, 0).replace('-', '−')} point${Math.abs(forecast.popularity) > 1 ? 's' : ''}`} de popularité</strong> :{' '}
+                {forecast.discontent > 0.1 ? 'le pays est déjà en colère, le passage en force le choque d’autant plus (retraites 2023).' : 'le pays est plutôt calme, il le supporte (budget 2022) ; déjà en colère, il réagirait bien plus fort.'}
+              </li>
+            ) : null}
+            <li className="bad">⚡ Même si tout se passe bien : 1 ⚡ de moins l’an prochain (le passage en force use votre crédit).</li>
+          </ul>
+          <small>Avancez d’un an pour jouer le coup, ou touchez à nouveau « 49.3 » pour y renoncer.</small>
+        </div>
+      ) : armed === 'referendum' ? (
+        <div className="joker-deal">
+          <strong>🗳️ Le référendum, concrètement</strong>
+          <ul>
+            <li className="good">✅ Si le oui l’emporte (chance ≈ {yes} %, selon votre popularité), vos réformes (⚡{cost}) passent malgré votre capital de ⚡{capital}.</li>
+            <li className="bad">❌ Si le non l’emporte : réformes rejetées, et 2 ⚡ de moins l’an prochain.</li>
+            <li>Une seule fois par mandat.</li>
+          </ul>
+          <small>Avancez d’un an pour que les Français votent, ou touchez à nouveau « Référendum » pour y renoncer.</small>
+        </div>
+      ) : !over ? (
+        <p className="assembly-note">Le 49.3 et le référendum servent à faire passer, une année donnée, plus de réformes que votre capital politique ne le permet : ils s’activent quand vous en préparez trop.</p>
+      ) : null}
     </section>
+  )
+}
+
+/** Une carte joker, comme dans un jeu : elle brille quand on peut la jouer, se soulève quand elle est engagée. */
+function JokerCard({
+  art,
+  name,
+  effect,
+  risk,
+  charges,
+  left,
+  playable,
+  armed,
+  locked,
+  tone,
+  onClick,
+}: {
+  art: string
+  name: string
+  effect: string
+  risk: string
+  charges: string
+  /** Il reste une charge (une fois par an, une fois par mandat). */
+  left: boolean
+  playable: boolean
+  armed: boolean
+  /** Pourquoi on ne peut pas la jouer maintenant. */
+  locked: string | null
+  tone: 'force' | 'referendum' | 'dissolution'
+  onClick: () => void
+}) {
+  const state = armed ? 'is-armed' : playable ? 'is-playable' : 'is-locked'
+  return (
+    <button type="button" className={`joker-card joker-${tone} ${state}`} disabled={!playable && !armed} onClick={onClick} aria-pressed={armed} title={locked ?? effect}>
+      <span className="jc-top">
+        <span>Joker</span>
+        <span className="jc-charges" aria-label={`${charges} : ${left ? 'disponible' : 'épuisé'}`}>
+          <i className={left ? 'on' : ''} />
+          {charges}
+        </span>
+      </span>
+      <span className="jc-art" aria-hidden="true">
+        {art}
+      </span>
+      <strong className="jc-name">{name}</strong>
+      <span className="jc-effect">{effect}</span>
+      <span className="jc-risk">{risk}</span>
+      <span className="jc-foot">{armed ? '✓ Engagé · toucher pour annuler' : playable ? 'Jouer la carte' : `🔒 ${locked ?? ''}`}</span>
+    </button>
   )
 }

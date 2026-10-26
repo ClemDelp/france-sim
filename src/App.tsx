@@ -264,6 +264,16 @@ function App() {
   // La une : la politique fait l'actualité (censure, référendum, dissolution…), et les législatives suivent la présidentielle.
   const politicsNews = parliament && !s.ending && !s.debtCrisis ? politicsHeadline(politics, year) : null
   const legislatives = parliament && politics.legislative === year && isElectionYear(year) && !politics.dissolutions.includes(year) ? ` Législatives : ${MAJORITY_LABEL[majorityOf(politics.seats)].toLowerCase()} pour le président (${politics.seats} sièges sur 577).` : ''
+  // Ce que coûterait un 49.3 sur les réformes en préparation, calculé par le modèle : la colère en plus, la popularité en moins.
+  const forceForecast = useMemo(() => {
+    if (!parliament || !tooMuch || !hasDraft || year >= END) {
+      return null
+    }
+    const withDraft = [...decisions, { year: year + 1, patch: draft }]
+    const voted = simulate({ decisions: withDraft, events, until: year + 1, params }).at(-1)!
+    const forced = simulate({ decisions: withDraft, events: [...events, { year: year + 1, id: 'force-493' }], until: year + 1, params }).at(-1)!
+    return { anger: forced.discontent - voted.discontent, popularity: popularity(forced) - popularity(voted), discontent: s.discontent }
+  }, [parliament, tooMuch, hasDraft, year, decisions, draft, events, params, s.discontent])
   const frontPage = politicsNews ?? (legislatives ? { ...news, subtitle: news.subtitle + legislatives } : news)
   // Un joker engagé (49.3, référendum) fait passer les réformes sans compter le capital.
   const overBudget = tooMuch && !(parliament && armed)
@@ -585,6 +595,11 @@ function App() {
     </div>
   )
 
+  // L'Assemblée et les jokers : à droite sous les statistiques sur ordinateur, avec le pays sur téléphone.
+  const assembly =
+    parliament && capital !== null ? (
+      <Assembly politics={politics} year={year} popularity={pop} color={candidate?.color ?? 'var(--gold)'} over={tooMuch} cost={draftCost} capital={capital} forecast={forceForecast} armed={armed} onArm={setArmed} onDissolve={dissolveAssembly} />
+    ) : null
   return (
     <div className="app">
       <header className="top">
@@ -735,9 +750,7 @@ function App() {
         {shows('pays') || shows('flux') ? (
           <section className="center">
             {shows('pays') && candidate ? <PledgesPanel candidate={candidate} decisions={decisions} draft={draft} year={year} capital={capital} onApply={applyPledge} onRemove={removePledge} onShow={(p) => showLevers(pledgeKeys(p))} /> : null}
-            {shows('pays') && parliament && capital !== null ? (
-              <Assembly politics={politics} year={year} popularity={pop} color={candidate?.color ?? 'var(--gold)'} hasDraft={hasDraft} over={tooMuch} armed={armed} onArm={setArmed} onDissolve={dissolveAssembly} />
-            ) : null}
+            {phone && shows('pays') ? assembly : null}
             {shows('pays') && scenario && evaluation ? <Objectives scenario={scenario} year={year} start={START} evaluation={evaluation} onAbandon={() => setHome(true)} /> : null}
             {shows('pays') ? <Newspaper headline={frontPage} state={s} prev={states.at(-2)} start={states[0]} events={eventsThisYear} onWhy={year > START ? () => setWhy(true) : undefined} /> : null}
             {shows('pays') ? <Kpis states={states} base={base} changed={changed} onPick={(node) => openBrain({ focus: node })} /> : null}
@@ -800,6 +813,7 @@ function App() {
             {tab === 'entreprises' ? <FirmsPanel s={s} b={b} changed={changed} /> : null}
             {tab === 'monde' ? <WorldPanel s={s} b={b} changed={changed} /> : null}
             {tab === 'journal' ? <JournalPanel states={states} base={base} /> : null}
+            {!phone ? assembly : null}
           </section>
         ) : null}
       </main>
