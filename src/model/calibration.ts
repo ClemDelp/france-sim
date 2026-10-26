@@ -43,7 +43,7 @@ export const P = view([
   'nuclearElectricityPrice', 'nuclearBuildRate', 'nuclearFleetMax', 'nuclearFirstNew', 'nuclearLeadTime', 'nuclearCloseRate', 'electrificationElectricityPrice', 'oilElectricityPrice', 'electrificationInvestment', 'electrificationSubstitution', 'electrificationImportShare', 'electricityExportLoss',
   'oilElasticity', 'energyGdpElasticity', 'energyInflationPass', 'energyGroupPrice', 'hireWageRatio', 'educationProductivity', 'investmentProductivity',
   'flightProductivity', 'educationStockSpeed', 'wageInertia', 'wageUnemployment', 'smicWageSpillover', 'priceWagePass', 'tariffPriceShare',
-  'evTariffPrice', 'tariffInflation', 'vatPassThrough', 'gapInflation', 'monetizationInflation', 'panicInflation', 'pensionRealGain',
+  'evTariffPrice', 'tariffInflation', 'vatPassThrough', 'vatCutPassThrough', 'vatStandardShare', 'gapInflation', 'monetizationInflation', 'panicInflation', 'pensionRealGain',
   'assetInflationShare', 'wealthTaxBase', 'wealthTaxAvoidance', 'flightMemory', 'flightWealthTax', 'wealthTaxThreshold', 'flightInheritance',
   'inheritanceThreshold', 'flightCorporate', 'corporateThreshold', 'flightMax', 'inheritanceErosion', 'inheritanceErosionThreshold',
   'smicJobLoss', 'firmAidJobs', 'maxEmployment', 'okunElasticity', 'okunPersistence', 'consumptionSmoothing', 'wealthEffect', 'consumptionSplitMpc', 'accelerator',

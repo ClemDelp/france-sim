@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 438 paramètres du modèle et les 279 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 443 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (438)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (443)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -1166,12 +1166,26 @@
   <td><span class="badge estime">estimé</span></td>
   <td><small>Amiti, Redding et Weinstein (2019)</small></td>
 </tr>
-<tr data-file="comportements" data-reliability="estime" data-text="vatpassthrough part d’une hausse de tva répercutée dans les prix prix  benzarti et al. (2020)">
+<tr data-file="comportements" data-reliability="estime" data-text="vatpassthrough part d’une hausse de tva répercutée dans les prix prix relevé à 0,9 pour les hausses, appliqué aux seuls produits au taux normal (vatstandardshare) : une hausse est presque entièrement répercutée (benzarti et al., 2020). benzarti et al. (2020)">
   <td><code>vatPassThrough</code><br /><small>Prix</small></td>
-  <td><strong>Part d’une hausse de TVA répercutée dans les prix</strong><br /><small>Utilisé par : TVA → Inflation · TVA → Revenu des 20 % les plus modestes</small></td>
-  <td>0,7<br /><small>part</small></td>
+  <td><strong>Part d’une hausse de TVA répercutée dans les prix</strong><br /><small>Relevé à 0,9 pour les hausses, appliqué aux seuls produits au taux normal (vatStandardShare) : une hausse est presque entièrement répercutée (Benzarti et al., 2020).</small><br /><small>Utilisé par : TVA → Inflation · TVA → Revenu des 20 % les plus modestes</small></td>
+  <td>0,9<br /><small>part</small></td>
   <td><span class="badge estime">estimé</span></td>
   <td><small>Benzarti et al. (2020)</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="mesure" data-text="vatcutpassthrough part d’une baisse de tva répercutée dans les prix prix et salaires les baisses sont bien moins répercutées que les hausses : après la baisse de tva dans la restauration en 2009 (19,6 % à 5,5 %), les prix n’ont baissé que d’environ 2 %, les restaurateurs gardant l’essentiel du gain. benzarti et carloni (american economic journal: economic policy, 2019), benzarti, carloni, harju et kosonen (journal of political economy, 2020).">
+  <td><code>vatCutPassThrough</code><br /><small>Prix et salaires</small></td>
+  <td><strong>Part d’une baisse de TVA répercutée dans les prix</strong><br /><small>Les baisses sont bien moins répercutées que les hausses : après la baisse de TVA dans la restauration en 2009 (19,6 % à 5,5 %), les prix n’ont baissé que d’environ 2 %, les restaurateurs gardant l’essentiel du gain.</small></td>
+  <td>0,4<br /><small>part</small><br /><small>plage 0,3 à 0,6</small></td>
+  <td><span class="badge mesure">mesuré</span></td>
+  <td><small>Benzarti et Carloni (American Economic Journal: Economic Policy, 2019), Benzarti, Carloni, Harju et Kosonen (Journal of Political Economy, 2020).</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="mesure" data-text="vatstandardshare part de la tva qui dépend du taux normal finances publiques le taux normal ne s’applique qu’à une partie des achats : un point de taux normal rapporte environ 7 md€, contre 11,4 md€ pour un point sur tous les taux. terra nova (chiffrage d’une hausse de tva, via moneyvox, 2025), dgfip.">
+  <td><code>vatStandardShare</code><br /><small>Finances publiques</small></td>
+  <td><strong>Part de la TVA qui dépend du taux normal</strong><br /><small>Le taux normal ne s’applique qu’à une partie des achats : un point de taux normal rapporte environ 7 Md€, contre 11,4 Md€ pour un point sur tous les taux.</small></td>
+  <td>0,6<br /><small>part</small><br /><small>plage 0,5 à 0,7</small></td>
+  <td><span class="badge mesure">mesuré</span></td>
+  <td><small>Terra Nova (chiffrage d’une hausse de TVA, via Moneyvox, 2025), DGFiP.</small></td>
 </tr>
 <tr data-file="comportements" data-reliability="estime" data-text="gapinflation inflation en plus quand l’économie tourne au-dessus de ses capacités prix  banque de france">
   <td><code>gapInflation</code><br /><small>Prix</small></td>
@@ -1943,10 +1957,10 @@
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
-<tr data-file="comportements" data-reliability="hypothese" data-text="disasteranger colère causée par une catastrophe ponctuelle (canicule, inondation, méga-feux) mécontentement social une catastrophe choque le pays, mais beaucoup moins qu’un réchauffement durable : la canicule de 2003 (15 000 morts) n’a pas fait tomber le gouvernement. l’adaptation en atténue l’effet. ">
+<tr data-file="comportements" data-reliability="hypothese" data-text="disasteranger colère causée par une catastrophe ponctuelle (canicule, inondation, méga-feux) mécontentement social une catastrophe choque le pays, mais beaucoup moins qu’un réchauffement durable : la canicule de 2003 (15 000 morts) n’a pas fait tomber le gouvernement. l’adaptation en atténue l’effet. les chocs des catastrophes ont été divisés par 4 (leur coût économique était 5 à 10 fois trop fort : 2022, la pire année depuis 1999, ≈ 10 md€ de dommages assurés) : ce paramètre est multiplié d’autant pour garder la même colère. ">
   <td><code>disasterAnger</code><br /><small>Mécontentement social</small></td>
-  <td><strong>Colère causée par une catastrophe ponctuelle (canicule, inondation, méga-feux)</strong><br /><small>Une catastrophe choque le pays, mais beaucoup moins qu’un réchauffement durable : la canicule de 2003 (15 000 morts) n’a pas fait tomber le gouvernement. L’adaptation en atténue l’effet.</small><br /><small>Utilisé par : Réchauffement mondial → Mécontentement social</small></td>
-  <td>0,15<br /><small>par °C équivalent</small><br /><small>plage 0,05 à 0,3</small></td>
+  <td><strong>Colère causée par une catastrophe ponctuelle (canicule, inondation, méga-feux)</strong><br /><small>Une catastrophe choque le pays, mais beaucoup moins qu’un réchauffement durable : la canicule de 2003 (15 000 morts) n’a pas fait tomber le gouvernement. L’adaptation en atténue l’effet. Les chocs des catastrophes ont été divisés par 4 (leur coût économique était 5 à 10 fois trop fort : 2022, la pire année depuis 1999, ≈ 10 Md€ de dommages assurés) : ce paramètre est multiplié d’autant pour garder la même colère.</small><br /><small>Utilisé par : Réchauffement mondial → Mécontentement social</small></td>
+  <td>0,6<br /><small>par °C équivalent</small><br /><small>plage 0,2 à 1,2</small></td>
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
@@ -1985,12 +1999,26 @@
   <td><span class="badge mesure">mesuré</span></td>
   <td><small>Ministère de la Transition écologique</small></td>
 </tr>
-<tr data-file="comportements" data-reliability="estime" data-text="carbondemandcut baisse de la consommation de pétrole et de gaz pour 100 € de taxe carbone en plus climat à court terme on roule moins, on chauffe moins. ocde, élasticités-prix de l’énergie">
+<tr data-file="comportements" data-reliability="estime" data-text="carbondemandcut baisse de la consommation de pétrole et de gaz pour 100 € de taxe carbone en plus climat à long terme : on change de voiture, de chaudière, de mode de transport. l’effet arrive peu à peu (carbonadjust) : à court terme l’élasticité-prix des carburants n’est que de −0,2 à −0,4, contre −0,6 à −0,7 à long terme (insee). ocde, élasticités-prix de l’énergie">
   <td><code>carbonDemandCut</code><br /><small>Climat</small></td>
-  <td><strong>Baisse de la consommation de pétrole et de gaz pour 100 € de taxe carbone en plus</strong><br /><small>À court terme on roule moins, on chauffe moins.</small><br /><small>Utilisé par : Taxe carbone → Émissions françaises</small></td>
+  <td><strong>Baisse de la consommation de pétrole et de gaz pour 100 € de taxe carbone en plus</strong><br /><small>À long terme : on change de voiture, de chaudière, de mode de transport. L’effet arrive peu à peu (carbonAdjust) : à court terme l’élasticité-prix des carburants n’est que de −0,2 à −0,4, contre −0,6 à −0,7 à long terme (INSEE).</small><br /><small>Utilisé par : Taxe carbone → Émissions françaises</small></td>
   <td>0,08<br /><small>part par 100 €/t</small><br /><small>plage 0,04 à 0,15</small></td>
   <td><span class="badge estime">estimé</span></td>
   <td><small>OCDE, élasticités-prix de l’énergie</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="carbontaxedshare part des émissions fossiles soumises à la taxe carbone climat la composante carbone rapportait environ 8 md€ à 44,6 €/t, soit une assiette d’environ 180 mt sur 265 : l’aérien, le transport routier de marchandises (remboursements) et l’industrie soumise aux quotas européens en sont exonérés. assemblée nationale (amendement au plf 2019, rendement de la composante carbone), citepa.">
+  <td><code>carbonTaxedShare</code><br /><small>Climat</small></td>
+  <td><strong>Part des émissions fossiles soumises à la taxe carbone</strong><br /><small>La composante carbone rapportait environ 8 Md€ à 44,6 €/t, soit une assiette d’environ 180 Mt sur 265 : l’aérien, le transport routier de marchandises (remboursements) et l’industrie soumise aux quotas européens en sont exonérés.</small></td>
+  <td>0,7<br /><small>part</small><br /><small>plage 0,6 à 0,8</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Assemblée nationale (amendement au PLF 2019, rendement de la composante carbone), Citepa.</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="carbonadjust vitesse à laquelle la consommation d’énergies fossiles réagit à la taxe carbone climat environ un tiers de l’effet de long terme la première année, l’essentiel en cinq ans : les élasticités-prix de court terme sont deux à trois fois plus faibles que celles de long terme. insee (élasticités-prix des carburants), labandeira et al. (energy policy, 2017).">
+  <td><code>carbonAdjust</code><br /><small>Climat</small></td>
+  <td><strong>Vitesse à laquelle la consommation d’énergies fossiles réagit à la taxe carbone</strong><br /><small>Environ un tiers de l’effet de long terme la première année, l’essentiel en cinq ans : les élasticités-prix de court terme sont deux à trois fois plus faibles que celles de long terme.</small></td>
+  <td>0,35<br /><small>part par an</small><br /><small>plage 0,2 à 0,6</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>INSEE (élasticités-prix des carburants), Labandeira et al. (Energy Policy, 2017).</small></td>
 </tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="carbonelectrify électrification supplémentaire chaque année pour 100 € de taxe carbone en plus climat pompes à chaleur, voitures électriques deviennent plus rentables. ">
   <td><code>carbonElectrify</code><br /><small>Climat</small></td>
@@ -2174,12 +2202,19 @@
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
-<tr data-file="comportements" data-reliability="estime" data-text="migrantnairu hausse du chômage d’équilibre par million d’arrivées récentes mal intégrées immigration les nouveaux arrivants mettent du temps à trouver un emploi. insee, insertion des immigrés">
+<tr data-file="comportements" data-reliability="estimation" data-text="replacementnairu hausse du chômage d’équilibre quand l’assurance chômage devient plus généreuse emploi une indemnisation plus généreuse allonge un peu la recherche d’emploi (ocde, bassanini et duval 2006), et une réforme qui la réduit accélère le retour à l’emploi (la dares mesure un effet sur la réforme 2019-2021). effet modéré : 10 points de taux de remplacement en plus, environ 0,5 point de chômage d’équilibre. ocde (bassanini et duval, 2006), unédic et dares (évaluation de la réforme 2019-2021).">
+  <td><code>replacementNairu</code><br /><small>Emploi</small></td>
+  <td><strong>Hausse du chômage d’équilibre quand l’assurance chômage devient plus généreuse</strong><br /><small>Une indemnisation plus généreuse allonge un peu la recherche d’emploi (OCDE, Bassanini et Duval 2006), et une réforme qui la réduit accélère le retour à l’emploi (la DARES mesure un effet sur la réforme 2019-2021). Effet modéré : 10 points de taux de remplacement en plus, environ 0,5 point de chômage d’équilibre.</small><br /><small>Utilisé par : Indemnisation du chômage → Chômage</small></td>
+  <td>0,05<br /><small>part par point de remplacement</small><br /><small>plage 0,02 à 0,1</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>OCDE (Bassanini et Duval, 2006), Unédic et DARES (évaluation de la réforme 2019-2021).</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="migrantnairu hausse du chômage d’équilibre par million d’arrivées récentes mal intégrées immigration les nouveaux arrivants mettent du temps à trouver un emploi : le taux de chômage des immigrés est d’environ 12 %, contre 7 % pour les autres (ministère de l’intérieur, 2014-2024), et le choc est absorbé à long terme (cepii). abaissé de 0,01 à 0,004 : l’ancienne valeur faisait monter le chômage trois fois trop. insee, ministère de l’intérieur (activité, emploi et chômage des immigrés, 2014-2024), cepii (la lettre n° 347, 2014).">
   <td><code>migrantNairu</code><br /><small>Immigration</small></td>
-  <td><strong>Hausse du chômage d’équilibre par million d’arrivées récentes mal intégrées</strong><br /><small>Les nouveaux arrivants mettent du temps à trouver un emploi.</small><br /><small>Utilisé par : Intégration des arrivants → Chômage</small></td>
-  <td>0,01<br /><small>part par million</small><br /><small>plage 0,005 à 0,02</small></td>
-  <td><span class="badge estime">estimé</span></td>
-  <td><small>INSEE, insertion des immigrés</small></td>
+  <td><strong>Hausse du chômage d’équilibre par million d’arrivées récentes mal intégrées</strong><br /><small>Les nouveaux arrivants mettent du temps à trouver un emploi : le taux de chômage des immigrés est d’environ 12 %, contre 7 % pour les autres (ministère de l’Intérieur, 2014-2024), et le choc est absorbé à long terme (CEPII). Abaissé de 0,01 à 0,004 : l’ancienne valeur faisait monter le chômage trois fois trop.</small><br /><small>Utilisé par : Intégration des arrivants → Chômage</small></td>
+  <td>0,004<br /><small>part par million</small><br /><small>plage 0,005 à 0,02</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>INSEE, ministère de l’Intérieur (activité, emploi et chômage des immigrés, 2014-2024), CEPII (La Lettre n° 347, 2014).</small></td>
 </tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="migrationanger tensions sociales par 100 000 arrivées de plus qu’en 2025, quand l’accueil est insuffisant mécontentement social ce n’est pas la présence des immigrés qui crée la tension, c’est un accueil débordé (campements, hébergement saturé) et son exploitation politique. ">
   <td><code>migrationAnger</code><br /><small>Mécontentement social</small></td>
@@ -3324,6 +3359,7 @@
 <tr data-file="liens" data-text="publicownership discontent entreprises contrôlées par l’état mécontentement social privatisationanger vendre des entreprises publiques stratégiques déplaît (aéroports de paris, 2019)."><td>Entreprises contrôlées par l’État</td><td>Mécontentement social</td><td>-</td><td><small><code>privatisationAnger</code></small></td><td><small>Vendre des entreprises publiques stratégiques déplaît (Aéroports de Paris, 2019).</small></td></tr>
 <tr data-file="liens" data-text="wealthtax discontent impôt sur la fortune mécontentement social richtaxcutanger baisser les impôts des plus aisés fâche la majorité (« président des riches », 2017), les relever ne la fâche pas."><td>Impôt sur la fortune</td><td>Mécontentement social</td><td>-</td><td><small><code>richTaxCutAnger</code></small></td><td><small>Baisser les impôts des plus aisés fâche la majorité (« président des riches », 2017), les relever ne la fâche pas.</small></td></tr>
 <tr data-file="liens" data-text="incometaxtop discontent impôt sur le revenu des plus aisés mécontentement social richtaxcutanger même chose pour la surtaxe sur les hauts revenus."><td>Impôt sur le revenu des plus aisés</td><td>Mécontentement social</td><td>-</td><td><small><code>richTaxCutAnger</code></small></td><td><small>Même chose pour la surtaxe sur les hauts revenus.</small></td></tr>
+<tr data-file="liens" data-text="unemploymentreplacement unemployment indemnisation du chômage chômage replacementnairu une indemnisation plus généreuse allonge un peu la recherche d’emploi."><td>Indemnisation du chômage</td><td>Chômage</td><td>+</td><td><small><code>replacementNairu</code></small></td><td><small>Une indemnisation plus généreuse allonge un peu la recherche d’emploi.</small></td></tr>
 <tr data-file="liens" data-text="forced discontent 49.3 (passage en force) mécontentement social forceanger forcecontextanger un 49.3 fait passer une réforme sans vote : peu de colère dans un pays calme, beaucoup dans un pays déjà en colère."><td>49.3 (passage en force)</td><td>Mécontentement social</td><td>+</td><td><small><code>forceAnger</code> <code>forceContextAnger</code></small></td><td><small>Un 49.3 fait passer une réforme sans vote : peu de colère dans un pays calme, beaucoup dans un pays déjà en colère.</small></td></tr>
 <tr data-file="liens" data-text="instability riskpremium crise politique défiance des prêteurs instabilitypremium panicmemory gouvernement renversé ou assemblée dissoute : les prêteurs s’inquiètent, la prime de risque monte quelque temps."><td>Crise politique</td><td>Défiance des prêteurs</td><td>+</td><td><small><code>instabilityPremium</code> <code>panicMemory</code></small></td><td><small>Gouvernement renversé ou Assemblée dissoute : les prêteurs s’inquiètent, la prime de risque monte quelque temps.</small></td></tr>
 <tr data-file="liens" data-text="temperature discontent réchauffement mondial mécontentement social unrestclimaterange disasteranger catastrophes à répétition et pénuries d’eau nourrissent la colère (moins si le pays s’est adapté)."><td>Réchauffement mondial</td><td>Mécontentement social</td><td>+</td><td><small><code>unrestClimateRange</code> <code>disasterAnger</code></small></td><td><small>Catastrophes à répétition et pénuries d’eau nourrissent la colère (moins si le pays s’est adapté).</small></td></tr>

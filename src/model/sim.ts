@@ -513,7 +513,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // Un droit de douane ne renchérit que la part importée de ce qu'on achète (≈ un tiers), pas tous les prix.
   const tariffStep = (policy.tariffs - prev.tariffs) * P.tariffPriceShare * (BASE.importsNonEnergy / BASE.gdp) + (policy.tariffChinaEV - prev.tariffChinaEV) * P.evTariffPrice
   // Un changement de TVA se répercute en grande partie dans les prix, une seule fois.
-  const vatInflation = init ? 0 : (P.vatPassThrough * (policy.vat - prev.vat)) / (1 + prev.vat)
+  // Seuls les produits au taux normal changent de prix ; une hausse est vite répercutée, une baisse beaucoup moins (restauration, 2009).
+  const vatPass = (change: number) => P.vatStandardShare * (change >= 0 ? P.vatPassThrough : P.vatCutPassThrough)
+  const vatInflation = init ? 0 : (vatPass(policy.vat - prev.vat) * (policy.vat - prev.vat)) / (1 + prev.vat)
   const vatPrice = prev.vatPrice * (1 + vatInflation)
   const inflation = init
     ? BASE.inflationAnchor
@@ -635,7 +637,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const mixed = BASE.mixedIncome * trend * scale
     const otherProd = g(policy.productionTaxes) * (productivity / initialCarry().productivity)
     const firmAid = g(policy.firmAid)
-    const vatRevenue = vatRatio * policy.vat * lastConsumption * declared
+    // Le taux normal ne pèse que sur une partie de l'assiette (taux réduits sur l'alimentation, l'énergie, la restauration…).
+    const vatRevenue = vatRatio * REF.vat * (1 - P.vatStandardShare + (P.vatStandardShare * policy.vat) / REF.vat) * lastConsumption * declared
     const gos = nominal - vatRevenue - otherProd - grossWages - employerContrib - mixed + firmAid
     // Les entreprises mobiles (surtout les grands groupes) déclarent une partie de leurs bénéfices ailleurs quand les capitaux fuient.
     const shifting = P.profitShifting * capitalFlight * sumSize(bySize((c) => FS.valueAdded[c] * mobilityRel[c]))
@@ -904,7 +907,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // Prix vus par chaque tranche : la TVA et l'énergie pèsent plus lourd quand on dépense tout son revenu.
   const groupPrice = byGroup((k) => {
     const spendShare = d.consumption[k] / Math.max(1, d.disposable[k])
-    return priceLevel * (1 + ((P.vatPassThrough * (policy.vat - REF.vat)) / 1.2) * (spendShare - 0.83) + P.energyGroupPrice * (energyPrice - 1) * GP.energyExposure[k])
+    return priceLevel * (1 + ((vatPass(policy.vat - REF.vat) * (policy.vat - REF.vat)) / 1.2) * (spendShare - 0.83) + P.energyGroupPrice * (energyPrice - 1) * GP.energyExposure[k])
   })
   const perCapita = byGroup((k) => (d.disposable[k] / (population * GP.population[k])) * (1000 / groupPrice[k]))
   const dist = distribution(perCapita, GP.population, GP.sigma)
