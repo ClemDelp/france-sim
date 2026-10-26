@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 430 paramètres du modèle et les 273 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 438 paramètres du modèle et les 279 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (430)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (438)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -977,6 +977,27 @@
   <td><span class="badge estime">estimé</span></td>
   <td><small>RTE, Futurs énergétiques 2050, programme EPR2, ordre de grandeur</small></td>
 </tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="nuclearfleetmax part du nucléaire que le parc existant peut atteindre énergie sans nouveau réacteur, le parc peut produire un peu plus qu’en 2025 (meilleure disponibilité après la corrosion sous contrainte, flamanville 3 raccordé en décembre 2024), mais guère plus d’environ 72 % de l’électricité. rte (bilans électriques 2023-2024), edf.">
+  <td><code>nuclearFleetMax</code><br /><small>Énergie</small></td>
+  <td><strong>Part du nucléaire que le parc existant peut atteindre</strong><br /><small>Sans nouveau réacteur, le parc peut produire un peu plus qu’en 2025 (meilleure disponibilité après la corrosion sous contrainte, Flamanville 3 raccordé en décembre 2024), mais guère plus d’environ 72 % de l’électricité.</small></td>
+  <td>0,72<br /><small>part</small><br /><small>plage 0,68 à 0,76</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>RTE (bilans électriques 2023-2024), EDF.</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="mesure" data-text="nuclearfirstnew première année possible pour un nouveau réacteur énergie le premier epr2, à penly, est attendu en 2038 (conseil de politique nucléaire, mars 2025) : avant, aucune commande ne peut produire. conseil de politique nucléaire (mars 2025), programme epr2.">
+  <td><code>nuclearFirstNew</code><br /><small>Énergie</small></td>
+  <td><strong>Première année possible pour un nouveau réacteur</strong><br /><small>Le premier EPR2, à Penly, est attendu en 2038 (Conseil de politique nucléaire, mars 2025) : avant, aucune commande ne peut produire.</small></td>
+  <td>2038<br /><small>année</small><br /><small>plage 2035 à 2042</small></td>
+  <td><span class="badge mesure">mesuré</span></td>
+  <td><small>Conseil de politique nucléaire (mars 2025), programme EPR2.</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="nuclearleadtime délai entre la commande d’un réacteur et sa mise en service énergie flamanville 3 a mis 17 ans (2007-2024), les epr2, engagés en 2024 pour une mise en service vers 2038, en visent environ 14. douze ans est une hypothèse optimiste pour une série. edf, cour des comptes (rapport sur la filière epr, 2020), conseil de politique nucléaire (2025).">
+  <td><code>nuclearLeadTime</code><br /><small>Énergie</small></td>
+  <td><strong>Délai entre la commande d’un réacteur et sa mise en service</strong><br /><small>Flamanville 3 a mis 17 ans (2007-2024), les EPR2, engagés en 2024 pour une mise en service vers 2038, en visent environ 14. Douze ans est une hypothèse optimiste pour une série.</small></td>
+  <td>12<br /><small>années</small><br /><small>plage 10 à 17</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>EDF, Cour des comptes (rapport sur la filière EPR, 2020), Conseil de politique nucléaire (2025).</small></td>
+</tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="nuclearcloserate baisse maximale de la part du nucléaire en un an énergie fermer des réacteurs va plus vite que d’en construire, mais il faut remplacer leur production. ">
   <td><code>nuclearCloseRate</code><br /><small>Énergie</small></td>
   <td><strong>Baisse maximale de la part du nucléaire en un an</strong><br /><small>Fermer des réacteurs va plus vite que d’en construire, mais il faut remplacer leur production.</small><br /><small>Utilisé par : Part du nucléaire → Prix de l’électricité</small></td>
@@ -1530,6 +1551,41 @@
   <td><span class="badge estime">estimation</span></td>
   <td><small>Ministère de l’Intérieur (chiffres des manifestations du 12 octobre 2010, des 31 janvier et 7 mars 2023), Loi de 2023 (réforme des retraites).</small></td>
 </tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="carbontaxanger colère causée par une hausse de la taxe carbone votée mécontentement social la taxe sur les carburants se voit à la pompe dès le premier jour : le 17 novembre 2018, 282 710 gilets jaunes sur plus de 2 000 sites (ministère de l’intérieur), 73 à 75 % de soutien dans l’opinion (elabe), une popularité présidentielle à 23 % en décembre (ifop-jdd), et la trajectoire carbone gelée. en 2013, les bonnets rouges avaient déjà fait suspendre l’écotaxe. environ 24 €/t étaient en jeu en 2018 : une colère un peu inférieure à celle des retraites 2023. ministère de l’intérieur (mobilisation du 17 novembre 2018), elabe pour bfmtv (14 et 28 novembre 2018), ifop-jdd (décembre 2018), élysée (adresse du 10 décembre 2018).">
+  <td><code>carbonTaxAnger</code><br /><small>Mécontentement social</small></td>
+  <td><strong>Colère causée par une hausse de la taxe carbone votée</strong><br /><small>La taxe sur les carburants se voit à la pompe dès le premier jour : le 17 novembre 2018, 282 710 gilets jaunes sur plus de 2 000 sites (ministère de l’Intérieur), 73 à 75 % de soutien dans l’opinion (Elabe), une popularité présidentielle à 23 % en décembre (Ifop-JDD), et la trajectoire carbone gelée. En 2013, les bonnets rouges avaient déjà fait suspendre l’écotaxe. Environ 24 €/t étaient en jeu en 2018 : une colère un peu inférieure à celle des retraites 2023.</small><br /><small>Utilisé par : Taxe carbone → Mécontentement social</small></td>
+  <td>0,01<br /><small>indice par €/t</small><br /><small>plage 0,005 à 0,02</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Ministère de l’Intérieur (mobilisation du 17 novembre 2018), Elabe pour BFMTV (14 et 28 novembre 2018), Ifop-JDD (décembre 2018), Élysée (adresse du 10 décembre 2018).</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="pensionfreezeanger colère causée par un gel ou une sous-indexation des pensions votée mécontentement social les retraités réagissent dès l’annonce, pas seulement quand l’inflation grignote leur pension : manifestations du 15 mars 2018 contre la hausse de csg et la sous-indexation (mesure en partie annulée en décembre 2018), rejet de l’« année blanche » de 2025. un gel complet pèse à peu près comme la hausse de csg de 2018. force ouvrière (mobilisation des retraités du 15 mars 2018), toluna-harris interactive pour rtl (juillet 2025).">
+  <td><code>pensionFreezeAnger</code><br /><small>Mécontentement social</small></td>
+  <td><strong>Colère causée par un gel ou une sous-indexation des pensions votée</strong><br /><small>Les retraités réagissent dès l’annonce, pas seulement quand l’inflation grignote leur pension : manifestations du 15 mars 2018 contre la hausse de CSG et la sous-indexation (mesure en partie annulée en décembre 2018), rejet de l’« année blanche » de 2025. Un gel complet pèse à peu près comme la hausse de CSG de 2018.</small><br /><small>Utilisé par : Indexation des retraites → Mécontentement social</small></td>
+  <td>0,1<br /><small>indice par point d’indexation retiré</small><br /><small>plage 0,05 à 0,2</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Force ouvrière (mobilisation des retraités du 15 mars 2018), Toluna-Harris Interactive pour RTL (juillet 2025).</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="regulationreformanger colère causée par une flexibilisation du droit du travail votée mécontentement social la colère vient au vote de la réforme : loi travail, 390 000 manifestants le 31 mars 2016 selon les autorités, ordonnances de 2017, 223 000 le 12 septembre 2017 selon le ministère de l’intérieur, soit 20 à 30 % des cortèges des retraites 2023. une baisse de 0,1 de l’intensité des règles fâche environ un tiers d’un recul de deux ans de l’âge de départ. ministère de l’intérieur (31 mars 2016, 12 septembre 2017).">
+  <td><code>regulationReformAnger</code><br /><small>Mécontentement social</small></td>
+  <td><strong>Colère causée par une flexibilisation du droit du travail votée</strong><br /><small>La colère vient au vote de la réforme : loi Travail, 390 000 manifestants le 31 mars 2016 selon les autorités, ordonnances de 2017, 223 000 le 12 septembre 2017 selon le ministère de l’Intérieur, soit 20 à 30 % des cortèges des retraites 2023. Une baisse de 0,1 de l’intensité des règles fâche environ un tiers d’un recul de deux ans de l’âge de départ.</small><br /><small>Utilisé par : Intensité des règles → Mécontentement social</small></td>
+  <td>1<br /><small>indice par point de règles retiré</small><br /><small>plage 0,5 à 1,5</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Ministère de l’Intérieur (31 mars 2016, 12 septembre 2017).</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="privatisationanger colère causée par une privatisation votée mécontentement social les français s’opposent aux privatisations de services perçus comme stratégiques : aéroports de paris (2019), 50 % contre et 20 % pour (harris interactive), 1 093 030 signatures pour un référendum, et un projet abandonné. harris interactive (2019), conseil constitutionnel (décision du 26 mars 2020 sur le référendum adp).">
+  <td><code>privatisationAnger</code><br /><small>Mécontentement social</small></td>
+  <td><strong>Colère causée par une privatisation votée</strong><br /><small>Les Français s’opposent aux privatisations de services perçus comme stratégiques : Aéroports de Paris (2019), 50 % contre et 20 % pour (Harris Interactive), 1 093 030 signatures pour un référendum, et un projet abandonné.</small><br /><small>Utilisé par : Entreprises contrôlées par l’État → Mécontentement social</small></td>
+  <td>0,5<br /><small>indice par point de capital vendu</small><br /><small>plage 0,2 à 1</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Harris Interactive (2019), Conseil constitutionnel (décision du 26 mars 2020 sur le référendum ADP).</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="richtaxcutanger colère causée par une baisse des impôts des plus aisés mécontentement social baisser l’impôt sur la fortune ou la surtaxe sur les hauts revenus fâche la majorité, même sans rien lui coûter : la suppression de l’isf (2017, environ 0,13 % du pib) a installé l’image du « président des riches ». à l’inverse, les taxer ne fâche pas la majorité (isf rétabli : 77 % pour, ifop 2019, taxe zucman : 86 %, ifop 2025) : ces impôts sont retirés des prélèvements ressentis. ifop-jdd (août 2017, janvier 2019), ifop (septembre 2025), elabe pour bfmtv (septembre 2025).">
+  <td><code>richTaxCutAnger</code><br /><small>Mécontentement social</small></td>
+  <td><strong>Colère causée par une baisse des impôts des plus aisés</strong><br /><small>Baisser l’impôt sur la fortune ou la surtaxe sur les hauts revenus fâche la majorité, même sans rien lui coûter : la suppression de l’ISF (2017, environ 0,13 % du PIB) a installé l’image du « président des riches ». À l’inverse, les taxer ne fâche pas la majorité (ISF rétabli : 77 % pour, Ifop 2019, taxe Zucman : 86 %, Ifop 2025) : ces impôts sont retirés des prélèvements ressentis.</small><br /><small>Utilisé par : Impôt sur la fortune → Mécontentement social · Impôt sur le revenu des plus aisés → Mécontentement social</small></td>
+  <td>50<br /><small>indice par point de PIB rendu</small><br /><small>plage 20 à 80</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Ifop-JDD (août 2017, janvier 2019), Ifop (septembre 2025), Elabe pour BFMTV (septembre 2025).</small></td>
+</tr>
 <tr data-file="comportements" data-reliability="estimation" data-text="forceanger colère causée par un 49.3 dans un pays calme mécontentement social un passage en force, sans vote de l’assemblée, déplaît (66 % des français désapprouvent le 49.3 sur le budget 2023, elabe, octobre 2022) mais ne fait pas descendre le pays dans la rue quand il est calme. elabe pour bfmtv, « les français et la réforme des retraites », vague 9 (15 mars 2023) : rappel de la mesure du 18 octobre 2022 sur le budget.">
   <td><code>forceAnger</code><br /><small>Mécontentement social</small></td>
   <td><strong>Colère causée par un 49.3 dans un pays calme</strong><br /><small>Un passage en force, sans vote de l’Assemblée, déplaît (66 % des Français désapprouvent le 49.3 sur le budget 2023, Elabe, octobre 2022) mais ne fait pas descendre le pays dans la rue quand il est calme.</small><br /><small>Utilisé par : 49.3 (passage en force) → Mécontentement social</small></td>
@@ -2013,10 +2069,10 @@
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small>OCDE, inégalités et institutions du marché du travail</small></td>
 </tr>
-<tr data-file="comportements" data-reliability="hypothese" data-text="regulationanger colère due à la précarité quand on allège fortement les règles mécontentement social  ">
+<tr data-file="comportements" data-reliability="hypothese" data-text="regulationanger colère due à la précarité quand on allège fortement les règles mécontentement social la précarité qui s’installe nourrit une colère durable, en plus de celle du vote de la réforme (regulationreformanger) : abaissée de 0,4 à 0,3 pour ne pas compter deux fois la même colère. ">
   <td><code>regulationAnger</code><br /><small>Mécontentement social</small></td>
-  <td><strong>Colère due à la précarité quand on allège fortement les règles</strong><br /><small>Utilisé par : Intensité des règles → Mécontentement social</small></td>
-  <td>0,4<br /><small>sensibilité</small><br /><small>plage 0,2 à 0,8</small></td>
+  <td><strong>Colère due à la précarité quand on allège fortement les règles</strong><br /><small>La précarité qui s’installe nourrit une colère durable, en plus de celle du vote de la réforme (regulationReformAnger) : abaissée de 0,4 à 0,3 pour ne pas compter deux fois la même colère.</small><br /><small>Utilisé par : Intensité des règles → Mécontentement social</small></td>
+  <td>0,3<br /><small>sensibilité</small><br /><small>plage 0,2 à 0,8</small></td>
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
@@ -3262,6 +3318,12 @@
 <tr data-file="liens" data-text="temperature lifeexpectancy réchauffement mondial espérance de vie climatelifeloss canicules, maladies : moins si l’on s’est adapté."><td>Réchauffement mondial</td><td>Espérance de vie</td><td>-</td><td><small><code>climateLifeLoss</code></small></td><td><small>Canicules, maladies : moins si l’on s’est adapté.</small></td></tr>
 <tr data-file="liens" data-text="fossilshare lifeexpectancy part du pétrole et du gaz espérance de vie airpollutionlife brûler du pétrole et du gaz pollue l’air."><td>Part du pétrole et du gaz</td><td>Espérance de vie</td><td>-</td><td><small><code>airPollutionLife</code></small></td><td><small>Brûler du pétrole et du gaz pollue l’air.</small></td></tr>
 <tr data-file="liens" data-text="retirementage discontent âge de départ à la retraite mécontentement social retirementreformanger unrestmemory reculer l’âge de départ met le pays dans la rue dès le vote de la réforme (2010, 2023), bien avant que l’âge effectif ne bouge."><td>Âge de départ à la retraite</td><td>Mécontentement social</td><td>+</td><td><small><code>retirementReformAnger</code> <code>unrestMemory</code></small></td><td><small>Reculer l’âge de départ met le pays dans la rue dès le vote de la réforme (2010, 2023), bien avant que l’âge effectif ne bouge.</small></td></tr>
+<tr data-file="liens" data-text="carbontax discontent taxe carbone mécontentement social carbontaxanger une hausse de taxe carbone se voit à la pompe dès le vote : gilets jaunes (2018), bonnets rouges (2013)."><td>Taxe carbone</td><td>Mécontentement social</td><td>+</td><td><small><code>carbonTaxAnger</code></small></td><td><small>Une hausse de taxe carbone se voit à la pompe dès le vote : gilets jaunes (2018), bonnets rouges (2013).</small></td></tr>
+<tr data-file="liens" data-text="pensionindexation discontent indexation des retraites mécontentement social pensionfreezeanger geler les pensions met les retraités dans la rue dès l’annonce (2018)."><td>Indexation des retraites</td><td>Mécontentement social</td><td>-</td><td><small><code>pensionFreezeAnger</code></small></td><td><small>Geler les pensions met les retraités dans la rue dès l’annonce (2018).</small></td></tr>
+<tr data-file="liens" data-text="regulation discontent intensité des règles mécontentement social regulationreformanger flexibiliser le droit du travail fâche au vote de la réforme (loi travail 2016, ordonnances 2017)."><td>Intensité des règles</td><td>Mécontentement social</td><td>-</td><td><small><code>regulationReformAnger</code></small></td><td><small>Flexibiliser le droit du travail fâche au vote de la réforme (loi Travail 2016, ordonnances 2017).</small></td></tr>
+<tr data-file="liens" data-text="publicownership discontent entreprises contrôlées par l’état mécontentement social privatisationanger vendre des entreprises publiques stratégiques déplaît (aéroports de paris, 2019)."><td>Entreprises contrôlées par l’État</td><td>Mécontentement social</td><td>-</td><td><small><code>privatisationAnger</code></small></td><td><small>Vendre des entreprises publiques stratégiques déplaît (Aéroports de Paris, 2019).</small></td></tr>
+<tr data-file="liens" data-text="wealthtax discontent impôt sur la fortune mécontentement social richtaxcutanger baisser les impôts des plus aisés fâche la majorité (« président des riches », 2017), les relever ne la fâche pas."><td>Impôt sur la fortune</td><td>Mécontentement social</td><td>-</td><td><small><code>richTaxCutAnger</code></small></td><td><small>Baisser les impôts des plus aisés fâche la majorité (« président des riches », 2017), les relever ne la fâche pas.</small></td></tr>
+<tr data-file="liens" data-text="incometaxtop discontent impôt sur le revenu des plus aisés mécontentement social richtaxcutanger même chose pour la surtaxe sur les hauts revenus."><td>Impôt sur le revenu des plus aisés</td><td>Mécontentement social</td><td>-</td><td><small><code>richTaxCutAnger</code></small></td><td><small>Même chose pour la surtaxe sur les hauts revenus.</small></td></tr>
 <tr data-file="liens" data-text="forced discontent 49.3 (passage en force) mécontentement social forceanger forcecontextanger un 49.3 fait passer une réforme sans vote : peu de colère dans un pays calme, beaucoup dans un pays déjà en colère."><td>49.3 (passage en force)</td><td>Mécontentement social</td><td>+</td><td><small><code>forceAnger</code> <code>forceContextAnger</code></small></td><td><small>Un 49.3 fait passer une réforme sans vote : peu de colère dans un pays calme, beaucoup dans un pays déjà en colère.</small></td></tr>
 <tr data-file="liens" data-text="instability riskpremium crise politique défiance des prêteurs instabilitypremium panicmemory gouvernement renversé ou assemblée dissoute : les prêteurs s’inquiètent, la prime de risque monte quelque temps."><td>Crise politique</td><td>Défiance des prêteurs</td><td>+</td><td><small><code>instabilityPremium</code> <code>panicMemory</code></small></td><td><small>Gouvernement renversé ou Assemblée dissoute : les prêteurs s’inquiètent, la prime de risque monte quelque temps.</small></td></tr>
 <tr data-file="liens" data-text="temperature discontent réchauffement mondial mécontentement social unrestclimaterange disasteranger catastrophes à répétition et pénuries d’eau nourrissent la colère (moins si le pays s’est adapté)."><td>Réchauffement mondial</td><td>Mécontentement social</td><td>+</td><td><small><code>unrestClimateRange</code> <code>disasterAnger</code></small></td><td><small>Catastrophes à répétition et pénuries d’eau nourrissent la colère (moins si le pays s’est adapté).</small></td></tr>

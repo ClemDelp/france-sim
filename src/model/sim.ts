@@ -104,6 +104,8 @@ type Carry = {
   fossilShare: number
   /** La part du nucléaire réellement atteinte (on ne construit pas un réacteur en un an). */
   nuclearShare: number
+  /** L'année où de nouveaux réacteurs ont été commandés (0 si aucun) : ils ne produisent qu'une douzaine d'années plus tard. */
+  nuclearOrder: number
   workingAge: number
   retirees: number
   young: number
@@ -206,6 +208,7 @@ function initialCarry(): Carry {
     energyPrice: 1,
     fossilShare: BASE.fossilShare,
     nuclearShare: REF.nuclearShare,
+    nuclearOrder: 0,
     workingAge: BASE.workingAge,
     retirees: BASE.retirees,
     young: BASE.population - BASE.workingAge - BASE.retirees,
@@ -473,7 +476,14 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const electrifyPace = policy.electrification * (1 - P.evTariffSlowdown * Math.max(0, policy.tariffChinaEV - REF.tariffChinaEV)) + (P.carbonElectrify * Math.max(0, carbonExtra)) / 100
   const fossilShare = init ? prev.fossilShare : prev.fossilShare * (1 - electrifyPace)
   // Le parc nucléaire suit l'objectif avec retard : construire un réacteur prend plus de dix ans, en fermer va plus vite.
-  const nuclearShare = init ? REF.nuclearShare : clamp(policy.nuclearShare, prev.nuclearShare - P.nuclearCloseRate, prev.nuclearShare + P.nuclearBuildRate)
+  // Le parc existant peut produire un peu plus (meilleure disponibilité, Flamanville 3) jusqu'à un plafond ; au-delà, il faut de nouveaux réacteurs,
+  // commandés une année et mis en service une douzaine d'années plus tard, pas avant le premier EPR2 (2038).
+  const nuclearOrder = init ? 0 : prev.nuclearOrder || (policy.nuclearShare > P.nuclearFleetMax + 1e-9 ? year : 0)
+  const newBuildFrom = nuclearOrder ? Math.max(P.nuclearFirstNew, nuclearOrder + P.nuclearLeadTime) : Infinity
+  const nuclearCeiling = year >= newBuildFrom ? 1 : Math.max(P.nuclearFleetMax, prev.nuclearShare)
+  const nuclearShare = init
+    ? REF.nuclearShare
+    : clamp(policy.nuclearShare, prev.nuclearShare - P.nuclearCloseRate, Math.min(nuclearCeiling, prev.nuclearShare + P.nuclearBuildRate))
   const electricityPrice = 1 + P.nuclearElectricityPrice * (REF.nuclearShare - nuclearShare) + P.electrificationElectricityPrice * (BASE.fossilShare - fossilShare) + P.oilElectricityPrice * (world.oil / BASE.oil - 1)
   // Le prix payé pour le carburant et le gaz ne suit qu'une partie du baril : taxes fixes par litre, transport, distribution.
   const fossilPrice = 1 + P.oilRetailPass * (world.oil / BASE.oil - 1) + P.carbonRetailPass * carbonExtra
@@ -1199,6 +1209,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     energyPrice,
     fossilShare,
     nuclearShare,
+    nuclearOrder,
     workingAge,
     retirees,
     young,

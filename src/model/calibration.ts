@@ -40,7 +40,7 @@ export const P = view([
   'depositRateShare', 'bankPayout', 'bankCapitalAdjust', 'payoutLeverage', 'lifeTrend', 'healthStockSpeed', 'preventionStockSpeed', 'healthLifeGain', 'preventionLifeGain',
   'povertyLifeLoss', 'lifeGapElasticity', 'retirementPhaseIn', 'retirementCohortGrowth', 'babyBoomYears', 'retirementCohortDecline', 'retirementCohortLongRun', 'youthDecline', 'migrantWorkingShare', 'migrantYoungShare',
   'workingAgeOutflow', 'youngOutflow', 'retirementExtraYears', 'seniorParticipation', 'participationTrend', 'participationMax', 'evTariffSlowdown',
-  'nuclearElectricityPrice', 'nuclearBuildRate', 'nuclearCloseRate', 'electrificationElectricityPrice', 'oilElectricityPrice', 'electrificationInvestment', 'electrificationSubstitution', 'electrificationImportShare', 'electricityExportLoss',
+  'nuclearElectricityPrice', 'nuclearBuildRate', 'nuclearFleetMax', 'nuclearFirstNew', 'nuclearLeadTime', 'nuclearCloseRate', 'electrificationElectricityPrice', 'oilElectricityPrice', 'electrificationInvestment', 'electrificationSubstitution', 'electrificationImportShare', 'electricityExportLoss',
   'oilElasticity', 'energyGdpElasticity', 'energyInflationPass', 'energyGroupPrice', 'hireWageRatio', 'educationProductivity', 'investmentProductivity',
   'flightProductivity', 'educationStockSpeed', 'wageInertia', 'wageUnemployment', 'smicWageSpillover', 'priceWagePass', 'tariffPriceShare',
   'evTariffPrice', 'tariffInflation', 'vatPassThrough', 'gapInflation', 'monetizationInflation', 'panicInflation', 'pensionRealGain',
