@@ -19,14 +19,14 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Fabi
 {
   "chômage": 5.8,
   "croissance": 0.2,
-  "dette": 139,
-  "déficit": 7.6,
+  "dette": 138,
+  "déficit": 7.5,
   "fin": "réélu·e",
   "inflation": 3,
   "pauvreté": 14.7,
   "popularité": 60,
   "promessesAppliquées": "8 / 8",
-  "émissions": 351,
+  "émissions": 352,
 }
 `;
 
@@ -62,16 +62,16 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Gabr
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Jean-Luc Méluchon : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 7,
-  "croissance": 0.4,
-  "dette": 123,
-  "déficit": 9.2,
+  "chômage": 6.7,
+  "croissance": -0.1,
+  "dette": 122,
+  "déficit": 8.9,
   "fin": "réélu·e",
-  "inflation": 2.8,
+  "inflation": 3.1,
   "pauvreté": 13.7,
   "popularité": 64,
   "promessesAppliquées": "12 / 12",
-  "émissions": 362,
+  "émissions": 360,
 }
 `;
 
@@ -86,22 +86,22 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Mari
   "pauvreté": 15.3,
   "popularité": 51,
   "promessesAppliquées": "8 / 8",
-  "émissions": 361,
+  "émissions": 359,
 }
 `;
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Marine Tondeuse : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 6.8,
+  "chômage": 6.7,
   "croissance": 0.5,
-  "dette": 132,
-  "déficit": 6.8,
+  "dette": 131,
+  "déficit": 6.7,
   "fin": "réélu·e",
-  "inflation": 2.4,
+  "inflation": 2.5,
   "pauvreté": 14.9,
-  "popularité": 58,
+  "popularité": 59,
   "promessesAppliquées": "6 / 6",
-  "émissions": 360,
+  "émissions": 362,
 }
 `;
 
@@ -122,7 +122,7 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Raph
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Édouard Philippus : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 7.6,
+  "chômage": 7.5,
   "croissance": 1.1,
   "dette": 129,
   "déficit": 5.7,

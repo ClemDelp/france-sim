@@ -1,6 +1,6 @@
 import { rollEvents } from '../model/events'
 import { policyAt, simulate } from '../model/sim'
-import type { Decision, Ending, FiredEvent, Policy, PolicyKey, YearState } from '../model/types'
+import type { Decision, Ending, FiredEvent, Policy, YearState } from '../model/types'
 import { LEVER_GROUPS, type LeverDef } from '../ui/levers'
 import { CANCEL_COST, politicalCapital, reformCost } from './capital'
 import { evaluate, type Scenario } from './scenarios'
@@ -27,8 +27,6 @@ export type SessionInput = {
   seed?: number
   /** Élections tous les cinq ans (vrai par défaut, comme en partie libre et en scénario). */
   elections?: boolean
-  /** Le programme sur lequel le joueur a été élu : ses réformes coûtent moins de capital politique. */
-  mandate?: Programme
   /** L'année où le joueur prend les commandes (par défaut 2025) : avant, la France suit sa politique ; l'élection de cette année-là est celle qu'il vient de gagner. */
   from?: number
 }
@@ -47,26 +45,14 @@ export type Session = {
 const START = 2025
 const LEVERS: Record<string, LeverDef> = Object.fromEntries(LEVER_GROUPS.flatMap((g) => g.levers.map((l) => [l.key, l])))
 
-/** Le sens dans lequel un programme électoral pousse chaque levier (+1 : vers le haut, −1 : vers le bas). */
-export type Programme = Partial<Record<PolicyKey, 1 | -1>>
-
-/** Une mesure promise pendant la campagne passe plus facilement : les électeurs l'ont votée. Elle coûte moitié moins (au moins un point). */
-export const MANDATE_DISCOUNT = 0.5
-
-const discounted = (cost: number) => (cost > 0 ? Math.max(1, Math.ceil(cost * MANDATE_DISCOUNT)) : 0)
-
-/** Ce que coûte une réforme en capital politique (même règle que dans le jeu) ; moins cher si elle va dans le sens du programme sur lequel on a été élu. */
-export function planCost(patch: Partial<Policy>, current: Policy, mandate?: Programme): number {
+/** Ce que coûte une réforme en capital politique (même règle que dans le jeu). */
+export function planCost(patch: Partial<Policy>, current: Policy): number {
   return Object.entries(patch).reduce((total, [key, value]) => {
     if (key === 'cancelShare') {
-      return total + ((value as number) > 0 ? (mandate?.cancelShare === 1 ? discounted(CANCEL_COST) : CANCEL_COST) : 0)
+      return total + ((value as number) > 0 ? CANCEL_COST : 0)
     }
     const def = LEVERS[key]
-    if (!def) {
-      return total
-    }
-    const cost = reformCost(def, current[def.key] as number, value as number)
-    return total + (mandate?.[def.key] === Math.sign((value as number) - (current[def.key] as number)) ? discounted(cost) : cost)
+    return total + (def ? reformCost(def, current[def.key] as number, value as number) : 0)
   }, 0)
 }
 
@@ -81,7 +67,7 @@ function stopAt(s: YearState, elections: boolean, from: number): Session['lost']
   return null
 }
 
-export function playSession({ scenario, plan, until, seed, elections = true, from = START, mandate }: SessionInput): Session {
+export function playSession({ scenario, plan, until, seed, elections = true, from = START }: SessionInput): Session {
   const end = until ?? scenario?.end ?? 2075
   const events: FiredEvent[] = [...(scenario?.events ?? [])]
   const decisions: Decision[] = []
@@ -98,7 +84,7 @@ export function playSession({ scenario, plan, until, seed, elections = true, fro
     const current = policyAt(decisions, year + 1)
     const patch = year < from ? null : typeof plan === 'function' ? plan({ year: year + 1, state: s, current, capital }) : plan[year + 1]
     if (patch && Object.keys(patch).length) {
-      const cost = planCost(patch, current, mandate)
+      const cost = planCost(patch, current)
       if (cost > capital) {
         overBudget.push({ year: year + 1, cost, capital })
       }

@@ -2,7 +2,7 @@ import { BASE_POLICY } from '../model/calibration'
 import { rollEvents } from '../model/events'
 import { simulate } from '../model/sim'
 import type { FiredEvent, Policy } from '../model/types'
-import { isPlayable, mandateOf, partialPatch, promisePatch, promiseRemaining, type Candidate, type Pledge } from './candidates'
+import { isPlayable, partialPatch, promisePatch, promiseRemaining, type Candidate, type Pledge } from './candidates'
 import { playSession, planCost, type Session } from './session'
 
 /** Le mandat : élu en 2027, jusqu'à l'élection de 2032. */
@@ -25,14 +25,12 @@ export type Mandate = Session & {
  */
 export function playMandate(c: Candidate, options: { seed?: number } = {}): Mandate {
   const queue = c.promises.filter(isPlayable)
-  const mandate = mandateOf(c, BASE_POLICY)
   const applied: Mandate['applied'] = []
   let reverts: Partial<Policy> = {}
   const session = playSession({
     from: MANDATE_START,
     until: MANDATE_END,
     seed: options.seed,
-    mandate,
     plan: ({ year, current, capital }) => {
       // Les mesures temporaires (une « année blanche ») s'arrêtent d'elles-mêmes l'année suivante, sans coûter de capital.
       let patch: Partial<Policy> = { ...reverts }
@@ -41,9 +39,9 @@ export function playMandate(c: Candidate, options: { seed?: number } = {}): Mand
         const planned = { ...current, ...patch }
         const next = promiseRemaining(queue[0], BASE_POLICY, planned)
         const merged = { ...patch, ...next }
-        if (planCost(merged, current, mandate) > capital) {
+        if (planCost(merged, current) > capital) {
           // Trop cher pour cette année : on avance ce qu'on peut, le reste l'an prochain.
-          const step = partialPatch(next, planned, capital - planCost(patch, current, mandate), mandate)
+          const step = partialPatch(next, planned, capital - planCost(patch, current))
           if (step) {
             patch = { ...patch, ...step }
           }

@@ -33,7 +33,7 @@ import { PhoneNav } from './ui/game/Phone'
 import { usePhone, type PhoneView } from './ui/game/usePhone'
 import { Tour, type TourStep } from './ui/game/Tour'
 import { UpdateBanner } from './ui/game/UpdateBanner'
-import { candidateById, mandateOf, promisePatch, type Candidate, type Pledge } from './game/candidates'
+import { candidateById, promisePatch, type Candidate, type Pledge } from './game/candidates'
 import { planCost } from './game/session'
 import { eventsBeforeMandate, MANDATE_END, MANDATE_START } from './game/mandate'
 import { CandidateBriefing, CompareMandates, MandateReport, PledgesPanel } from './ui/game/Candidates'
@@ -196,8 +196,6 @@ function App() {
   const crisisPending = s.debtCrisis && !handled.includes(year) && !gameOver && !election
   const scenario = mode.kind === 'scenario' ? mode.scenario : null
   const candidate = mode.kind === 'candidate' ? mode.candidate : null
-  // Le programme sur lequel le candidat a été élu : ses réformes coûtent moins de capital politique.
-  const programme = useMemo(() => (candidate ? mandateOf(candidate, BASE_POLICY) : undefined), [candidate])
   const evaluation = scenario ? evaluate(scenario, states) : null
   const scenarioOver = !!scenario && !!evaluation && (evaluation.finished || !!gameOver || (!!election && !election.won))
   const running = target !== null && year < target && !crisisPending && !gameOver && !election
@@ -249,7 +247,7 @@ function App() {
 
   // Le capital politique : combien de réformes le Parlement et l'opinion acceptent cette année.
   const current = policyAt(decisions, year + 1)
-  const draftCost = planCost(draft, current, programme)
+  const draftCost = planCost(draft, current)
   const capital = mode.kind === 'myth' || sandbox ? null : politicalCapital(pop, year === START || (elections && isElectionYear(year)))
   const overBudget = capital !== null && draftCost > capital
   const advice = preview ? adviseDraft(preview) : adviseState(s, pop, upcoming ? upcoming - year : 99)
@@ -662,7 +660,7 @@ function App() {
 
         {shows('pays') || shows('flux') ? (
           <section className="center">
-            {shows('pays') && candidate ? <PledgesPanel candidate={candidate} decisions={decisions} draft={draft} year={year} capital={capital} programme={programme} onApply={applyPledge} onRemove={removePledge} onShow={(p) => showLevers(pledgeKeys(p))} /> : null}
+            {shows('pays') && candidate ? <PledgesPanel candidate={candidate} decisions={decisions} draft={draft} year={year} capital={capital} onApply={applyPledge} onRemove={removePledge} onShow={(p) => showLevers(pledgeKeys(p))} /> : null}
             {shows('pays') && scenario && evaluation ? <Objectives scenario={scenario} year={year} start={START} evaluation={evaluation} onAbandon={() => setHome(true)} /> : null}
             {shows('pays') ? <Newspaper headline={news} onWhy={year > START ? () => setWhy(true) : undefined} /> : null}
             {shows('pays') ? <Kpis states={states} base={base} changed={changed} onPick={(node) => openBrain({ focus: node })} /> : null}

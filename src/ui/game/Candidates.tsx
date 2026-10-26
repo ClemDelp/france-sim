@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 import { BASE_POLICY } from '../../model/calibration'
 import { policyAt } from '../../model/sim'
 import type { Decision, Policy, PolicyKey, YearState } from '../../model/types'
-import { CANDIDATES, isPlayable, PARODY_NOTE, partialPatch, promisePatch, promiseRemaining, promiseStatus, promisesKept, type Candidate, type Pledge } from '../../game/candidates'
+import { CANDIDATES, isPlayable, PARODY_NOTE, partialPatch, pledgeGoal, promisePatch, promiseRemaining, promiseStatus, promisesKept, type Candidate, type Pledge } from '../../game/candidates'
 import { MANDATE_END, MANDATE_START, playMandate } from '../../game/mandate'
-import { planCost, playSession, type Programme } from '../../game/session'
+import { planCost, playSession } from '../../game/session'
 import { electionAt, popularity } from '../../game/score'
 import { num } from '../format'
 import { ALL_LEVERS, formatLever } from '../levers'
@@ -87,7 +87,7 @@ export function CandidateBriefing({ candidate: c, onStart, onBack }: { candidate
           . {c.caveats}
         </p>
         <p className="note">
-          💡 Vous gouvernez de {MANDATE_START} à l’élection de {MANDATE_END}. Chaque année, le capital politique limite les réformes : choisissez l’ordre de vos promesses, et
+          🎯 Objectif : tenir au moins <strong>{pledgeGoal(c)}</strong> de vos {c.promises.filter(isPlayable).length} promesses jouables d’ici l’élection de {MANDATE_END}, et être réélu·e. Chaque année, le capital politique limite les réformes : impossible de tout faire d’un coup, choisissez lesquelles passer en premier, et
           gardez un œil sur votre popularité. Les promesses marquées ⚙️ ne sont pas encore représentées dans le simulateur.
         </p>
         <p className="note candidate-note">{PARODY_NOTE}</p>
@@ -122,7 +122,6 @@ export function PledgesPanel({
   draft,
   year,
   capital,
-  programme,
   onApply,
   onRemove,
   onShow,
@@ -132,8 +131,6 @@ export function PledgesPanel({
   draft: Partial<Policy>
   year: number
   capital: number | null
-  /** Le sens dans lequel le programme pousse chaque levier : ces réformes coûtent moins de capital. */
-  programme?: Programme
   /** Inscrire des changements de leviers au programme de l'an prochain (une promesse entière, ou le début d'une promesse). */
   onApply: (patch: Partial<Policy>) => void
   onRemove: (p: Pledge) => void
@@ -144,7 +141,7 @@ export function PledgesPanel({
   const voted = policyAt(decisions, year + 1)
   const planned = { ...voted, ...draft }
   const kept = promisesKept(c, decisions, year + 1, BASE_POLICY)
-  const used = planCost(draft, voted, programme)
+  const used = planCost(draft, voted)
   const left = capital === null ? Infinity : capital - used
   const shown = open ? c.promises : c.promises.filter((p) => isPlayable(p) && promiseStatus(p, BASE_POLICY, voted) !== 'tenue')
   const playing = year < MANDATE_END
@@ -159,7 +156,8 @@ export function PledgesPanel({
         </span>
       </div>
       <p className="pledges-score">
-        Promesses tenues : <strong>{kept.kept}</strong> / {kept.playable}
+        Promesses tenues : <strong className={kept.kept >= pledgeGoal(c) ? 'good' : undefined}>{kept.kept}</strong> / {kept.playable} · objectif : {pledgeGoal(c)}
+        {kept.kept >= pledgeGoal(c) ? ' ✅' : ''}
       </p>
       {playing ? (
         <p className="pledges-hint">
@@ -167,7 +165,7 @@ export function PledgesPanel({
           {capital !== null ? (
             <>
               {' '}
-              Capital politique restant : <strong className={left < 0 ? 'bad' : undefined}>⚡ {Math.max(0, left)}</strong> / {capital}. Vos promesses coûtent moitié moins que d’autres réformes (les électeurs les ont votées) ; trop chère pour cette année, une promesse peut être commencée et finie plus tard.
+              Capital politique restant : <strong className={left < 0 ? 'bad' : undefined}>⚡ {Math.max(0, left)}</strong> / {capital}. Trop chère pour cette année, une promesse peut être commencée et finie plus tard.
             </>
           ) : null}
         </p>
@@ -180,9 +178,9 @@ export function PledgesPanel({
           const inDraft = keys.some((k) => k in draft)
           const done = playable && promiseStatus(p, BASE_POLICY, planned) === 'tenue'
           const remaining = playable && !done ? promiseRemaining(p, BASE_POLICY, planned) : {}
-          const cost = planCost({ ...draft, ...remaining }, voted, programme) - used
-          const step = playable && !done && cost > left ? partialPatch(remaining, planned, left, programme) : null
-          const stepCost = step ? planCost({ ...draft, ...step }, voted, programme) - used : 0
+          const cost = planCost({ ...draft, ...remaining }, voted) - used
+          const step = playable && !done && cost > left ? partialPatch(remaining, planned, left) : null
+          const stepCost = step ? planCost({ ...draft, ...step }, voted) - used : 0
           const shownChanges = done || inDraft ? Object.fromEntries(keys.filter((k) => k in draft).map((k) => [k, draft[k]])) : remaining
           return (
             <li key={p.key} className={`pledge-${status}${inDraft ? ' is-draft' : ''}`}>
@@ -276,15 +274,16 @@ export function MandateReport({
   const b = base.at(-1)!
   const vote = electionAt(s)
   const kept = promisesKept(c, decisions, MANDATE_END, BASE_POLICY)
+  const goalMet = kept.kept >= pledgeGoal(c)
   return (
     <div className="modal-backdrop" role="presentation">
       <div className="modal scenario-end mandate-report" role="dialog" aria-modal="true" aria-label="Bilan du mandat" style={{ borderTop: `4px solid ${c.color}` }}>
         <p className="eyebrow">
           {c.emblem} {c.name} · bilan du mandat {MANDATE_START}–{MANDATE_END}
         </p>
-        <h2>{vote.won ? 'Réélu·e !' : 'Battu·e en 2032'}</h2>
+        <h2>{vote.won ? (goalMet ? 'Mandat réussi : réélu·e, parole tenue !' : 'Réélu·e… mais promesses non tenues') : goalMet ? 'Parole tenue, mais battu·e en 2032' : 'Battu·e en 2032'}</h2>
         <p className="belief">
-          {vote.vote} % des voix au second tour · promesses tenues : {kept.kept} / {kept.playable}
+          {vote.vote} % des voix au second tour · promesses tenues : {kept.kept} / {kept.playable} (objectif : {pledgeGoal(c)}) {goalMet ? '✅' : '❌'}
         </p>
         <ul className="end-objectives">
           {MANDATE_KPIS.map((k) => {
