@@ -118,6 +118,12 @@ export function canDissolve(p: Politics, year: number) {
   return year - p.legislative >= 1 && !p.dissolutions.some((d) => d > mandateStart(year) || d === year)
 }
 
+/** Ce qu'une dissolution peut donner, selon la popularité du moment : la fourchette de sièges (le hasard joue à ±5 points). */
+export function dissolutionOutlook(popularity: number): { low: number; high: number } {
+  const share = (noise: number) => Math.round(SEATS * clamp(0.5 + (2 * (popularity - 50)) / 100 + noise, 0.15, 0.85))
+  return { low: share(-0.05), high: share(0.05) }
+}
+
 export function dissolve(p: Politics, year: number, seed: number, popularity: number): Politics {
   return { ...p, seats: legislativeSeats(popularity, popularity, seed, year, true), legislative: year, dissolutions: [...p.dissolutions, year] }
 }
