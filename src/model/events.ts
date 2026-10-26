@@ -189,8 +189,9 @@ export const EVENTS: EventDef[] = [
     icon: '🇺🇸',
     category: 'monde',
     summary: 'Washington relève ses droits de douane sur les produits français (vins, luxe, aéronautique) en représailles.',
-    effects: [{ growth: -0.01, demandShock: 0.004 }, { growth: -0.005 }],
-    chance: (s) => odds(0.01, add(`la France taxe les importations hors UE à ${pct(s.tariffs)}`, 0.8 * Math.max(0, s.tariffs - 0.05)), influence(s, -P.influenceTrade)),
+    // Une riposte ciblée, comme en 2019 contre la taxe numérique française : 25 % sur 1,3 Md$ de produits (moins de 0,05 % du PIB). Probable, mais limitée.
+    effects: [{ growth: -0.003, demandShock: 0.001 }],
+    chance: (s) => odds(0.01, add(`la France taxe les importations hors UE à ${pct(s.tariffs)}`, 3 * Math.max(0, s.tariffs - 0.02)), influence(s, -P.influenceTrade)),
     cooldown: 5,
   },
   {
@@ -323,8 +324,10 @@ export const EVENTS: EventDef[] = [
     icon: '✊',
     category: 'societe',
     summary: 'Transports, raffineries, écoles à l’arrêt : le pays est bloqué.',
-    effects: [{ unrest: 0.15, demandShock: 0.004 }],
-    chance: (s) => odds(0.01, add(`la colère dans le pays (climat social ${s.discontent.toFixed(2).replace('.', ',')})`, 0.5 * Math.max(0, s.discontent - 0.35))),
+    // Sept grands mouvements de blocage en trente ans (1995, 2003, 2006, 2010, 2016, 2019-2020, 2023), dont quatre sur les retraites :
+    // ils naissent d'une colère modérée, pas seulement d'un pays au bord de la révolte. Coût limité : −0,1 % au 4e trimestre 2019 (Insee).
+    effects: [{ unrest: 0.08, demandShock: 0.0015 }],
+    chance: (s) => odds(0.03, add(`la colère dans le pays (climat social ${s.discontent.toFixed(2).replace('.', ',')})`, 0.6 * Math.max(0, s.discontent - 0.1))),
     cooldown: 3,
   },
   {
@@ -438,5 +441,9 @@ export function rollEvents(seed: number, year: number, last: YearState, start: Y
     majorAllowed = false
     return ok
   })
-  return fired.slice(0, 2).map((e) => ({ year, id: e.id }))
+  // Deux événements au plus par an, tirés dans un ordre aléatoire (sinon les premiers de la liste passeraient toujours avant les autres).
+  return fired
+    .sort((a, b) => random(seed, year, `${a.id}:ordre`) - random(seed, year, `${b.id}:ordre`))
+    .slice(0, 2)
+    .map((e) => ({ year, id: e.id }))
 }
