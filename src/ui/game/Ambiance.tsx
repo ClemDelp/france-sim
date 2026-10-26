@@ -9,6 +9,7 @@ const FIRE_EVENTS = ['heatwave', 'wildfires', 'drought']
 /** Ce que scandent les manifestants : les vraies raisons de la colère cette année. */
 function slogans(s: YearState, start: YearState): string[] {
   const out: string[] = []
+  if (s.retirementTarget > start.retirementTarget + 0.4) out.push('Retraites : pas touche !', `${Math.round(s.retirementTarget)} ans, c’est non !`)
   if (s.taxBurden - start.taxBurden > 0.02) out.push('Trop d’impôts !', 'Ras-le-bol fiscal !')
   if (s.unemployment > 0.085) out.push('Du travail !', 'Non aux licenciements !')
   if (s.inflation > 0.035) out.push('Pouvoir d’achat !', 'Les prix flambent !')

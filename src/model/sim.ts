@@ -149,6 +149,8 @@ type Carry = {
   medianIncome: number
   /** Niveau de vie des 20 % les plus modestes l'an dernier (euros de 2025 par personne). */
   lowIncome: number
+  /** L'âge de départ visé par la loi l'an dernier : le relever (même pour plus tard) met le pays dans la rue dès le vote. */
+  retirementTarget: number
   discontent: number
   /** Écart entre le solde public et celui qui stabiliserait la dette (part du PIB). */
   stabilityGap: number
@@ -229,6 +231,7 @@ function initialCarry(): Carry {
     poverty0: 0,
     medianIncome: 0,
     lowIncome: 0,
+    retirementTarget: 0,
     discontent: 0,
     stabilityGap: 0,
     rescueStep: 0,
@@ -939,7 +942,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       Math.max(0, taxBurden0 - taxBurden) / P.unrestTaxRange +
       Math.max(0, P.unrestUnemployment - d.unemployment) / P.unrestUnemploymentRange +
       Math.max(0, poverty0 - dist.poverty) / P.unrestPovertyRange)
-  const anger =
+  const angerBeforeForce =
     -goodNews +
     medianDrop / P.unrestIncomeDrop +
     lowIncomeDrop / P.unrestLowIncomeDrop +
@@ -956,10 +959,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     // Une catastrophe ponctuelle (canicule, inondation) choque, mais moins qu'un réchauffement durable ; l'adaptation en atténue aussi la colère.
     world.heatShock * exposure * P.disasterAnger +
     world.unrest +
-    // Un passage en force (49.3) choque peu un pays calme (budget 2022), beaucoup un pays déjà en colère (retraites 2023).
-    (init ? 0 : world.forced * (P.forceAnger + P.forceContextAnger * Math.max(0, prev.discontent))) +
     // Précarité quand on allège fortement les règles.
     P.regulationAnger * Math.max(0, deregulation) +
+    // Reculer l'âge de départ fait descendre le pays dans la rue l'année du vote, bien avant que l'âge effectif ne bouge (2010, 2023).
+    (init ? 0 : P.retirementReformAnger * Math.max(0, policy.retirementAge - prev.retirementTarget)) +
     // Des retraites qui perdent du pouvoir d'achat par rapport à l'année de départ : la colère dure tant que la perte dure.
     Math.max(0, 1 - pensionPower) / P.unrestPensionRange +
     // Des services publics qui reculent (santé, éducation, autres services), en volume, par rapport à l'année de départ.
@@ -968,6 +971,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     -P.influencePride * clout +
     // Un accueil débordé (bien plus d'arrivées qu'en 2025, sans moyens d'intégration) crée des tensions.
     (P.migrationAnger * Math.max(0, extraArrivals) * welcomeGap) / 100
+  // Un passage en force (49.3) choque peu un pays calme (budget 2022), beaucoup un pays en colère cette année-là,
+  // par exemple contre la réforme même qu'on fait passer (retraites 2023).
+  const angryBefore = init ? 0 : P.unrestMemory * prev.discontent + (1 - P.unrestMemory) * angerBeforeForce
+  const anger = angerBeforeForce + (init ? 0 : world.forced * (P.forceAnger + P.forceContextAnger * Math.max(0, angryBefore)))
   // Le climat social peut devenir serein (négatif), sans descendre sous un plancher : il y a toujours des mécontents.
   const discontent = init ? 0 : Math.max(P.serenityFloor, P.unrestMemory * prev.discontent + (1 - P.unrestMemory) * anger)
   const ending: Ending | null = init
@@ -1009,6 +1016,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   ) as YearState['firms']
   const state: YearState = {
     year,
+    retirementTarget: policy.retirementAge,
     gdp,
     gdpReal,
     growth,
@@ -1198,6 +1206,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     poverty0,
     medianIncome: dist.median,
     lowIncome: perCapita.g1,
+    retirementTarget: policy.retirementAge,
     discontent,
     stabilityGap,
     rescueStep,

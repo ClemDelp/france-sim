@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 429 paramètres du modèle et les 272 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 430 paramètres du modèle et les 273 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (429)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (430)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -1523,6 +1523,13 @@
   <td><span class="badge estime">estimé</span></td>
   <td><small>BCE, écarts de taux souverains 2010-2012</small></td>
 </tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="retirementreformanger colère causée par un recul de l’âge de départ à la retraite mécontentement social la colère éclate au vote de la réforme, pas quand l’âge effectif bouge des années plus tard. chaque recul de deux ans a mis le pays dans la rue pendant des mois : 1,23 million de manifestants le 12 octobre 2010 (60 à 62 ans), 1,27 million le 31 janvier et 1,28 million le 7 mars 2023 (62 à 64 ans), selon le ministère de l’intérieur. deux ans de recul pèsent autant qu’une crise de la dette (0,3) : la popularité perd environ 8 points l’année du vote, puis la colère s’estompe. ministère de l’intérieur (chiffres des manifestations du 12 octobre 2010, des 31 janvier et 7 mars 2023), loi de 2023 (réforme des retraites).">
+  <td><code>retirementReformAnger</code><br /><small>Mécontentement social</small></td>
+  <td><strong>Colère causée par un recul de l’âge de départ à la retraite</strong><br /><small>La colère éclate au vote de la réforme, pas quand l’âge effectif bouge des années plus tard. Chaque recul de deux ans a mis le pays dans la rue pendant des mois : 1,23 million de manifestants le 12 octobre 2010 (60 à 62 ans), 1,27 million le 31 janvier et 1,28 million le 7 mars 2023 (62 à 64 ans), selon le ministère de l’Intérieur. Deux ans de recul pèsent autant qu’une crise de la dette (0,3) : la popularité perd environ 8 points l’année du vote, puis la colère s’estompe.</small><br /><small>Utilisé par : Âge de départ à la retraite → Mécontentement social</small></td>
+  <td>0,15<br /><small>indice par année de recul</small><br /><small>plage 0,05 à 0,3</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Ministère de l’Intérieur (chiffres des manifestations du 12 octobre 2010, des 31 janvier et 7 mars 2023), Loi de 2023 (réforme des retraites).</small></td>
+</tr>
 <tr data-file="comportements" data-reliability="estimation" data-text="forceanger colère causée par un 49.3 dans un pays calme mécontentement social un passage en force, sans vote de l’assemblée, déplaît (66 % des français désapprouvent le 49.3 sur le budget 2023, elabe, octobre 2022) mais ne fait pas descendre le pays dans la rue quand il est calme. elabe pour bfmtv, « les français et la réforme des retraites », vague 9 (15 mars 2023) : rappel de la mesure du 18 octobre 2022 sur le budget.">
   <td><code>forceAnger</code><br /><small>Mécontentement social</small></td>
   <td><strong>Colère causée par un 49.3 dans un pays calme</strong><br /><small>Un passage en force, sans vote de l’Assemblée, déplaît (66 % des Français désapprouvent le 49.3 sur le budget 2023, Elabe, octobre 2022) mais ne fait pas descendre le pays dans la rue quand il est calme.</small><br /><small>Utilisé par : 49.3 (passage en force) → Mécontentement social</small></td>
@@ -1630,7 +1637,7 @@
 </tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="unrestmemory mémoire du mécontentement mécontentement social part de la colère d’une année qui reste l’année suivante. ">
   <td><code>unrestMemory</code><br /><small>Mécontentement social</small></td>
-  <td><strong>Mémoire du mécontentement</strong><br /><small>Part de la colère d’une année qui reste l’année suivante.</small><br /><small>Utilisé par : Mécontentement social → Fin de partie</small></td>
+  <td><strong>Mémoire du mécontentement</strong><br /><small>Part de la colère d’une année qui reste l’année suivante.</small><br /><small>Utilisé par : Mécontentement social → Fin de partie · Âge de départ à la retraite → Mécontentement social</small></td>
   <td>0,5<br /><small>part</small><br /><small>plage 0,3 à 0,7</small></td>
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
@@ -3254,6 +3261,7 @@
 <tr data-file="liens" data-text="climatedamage spending dégâts climatiques en france dépenses publiques reconstructionshare l’état répare une partie des dégâts."><td>Dégâts climatiques en France</td><td>Dépenses publiques</td><td>+</td><td><small><code>reconstructionShare</code></small></td><td><small>L’État répare une partie des dégâts.</small></td></tr>
 <tr data-file="liens" data-text="temperature lifeexpectancy réchauffement mondial espérance de vie climatelifeloss canicules, maladies : moins si l’on s’est adapté."><td>Réchauffement mondial</td><td>Espérance de vie</td><td>-</td><td><small><code>climateLifeLoss</code></small></td><td><small>Canicules, maladies : moins si l’on s’est adapté.</small></td></tr>
 <tr data-file="liens" data-text="fossilshare lifeexpectancy part du pétrole et du gaz espérance de vie airpollutionlife brûler du pétrole et du gaz pollue l’air."><td>Part du pétrole et du gaz</td><td>Espérance de vie</td><td>-</td><td><small><code>airPollutionLife</code></small></td><td><small>Brûler du pétrole et du gaz pollue l’air.</small></td></tr>
+<tr data-file="liens" data-text="retirementage discontent âge de départ à la retraite mécontentement social retirementreformanger unrestmemory reculer l’âge de départ met le pays dans la rue dès le vote de la réforme (2010, 2023), bien avant que l’âge effectif ne bouge."><td>Âge de départ à la retraite</td><td>Mécontentement social</td><td>+</td><td><small><code>retirementReformAnger</code> <code>unrestMemory</code></small></td><td><small>Reculer l’âge de départ met le pays dans la rue dès le vote de la réforme (2010, 2023), bien avant que l’âge effectif ne bouge.</small></td></tr>
 <tr data-file="liens" data-text="forced discontent 49.3 (passage en force) mécontentement social forceanger forcecontextanger un 49.3 fait passer une réforme sans vote : peu de colère dans un pays calme, beaucoup dans un pays déjà en colère."><td>49.3 (passage en force)</td><td>Mécontentement social</td><td>+</td><td><small><code>forceAnger</code> <code>forceContextAnger</code></small></td><td><small>Un 49.3 fait passer une réforme sans vote : peu de colère dans un pays calme, beaucoup dans un pays déjà en colère.</small></td></tr>
 <tr data-file="liens" data-text="instability riskpremium crise politique défiance des prêteurs instabilitypremium panicmemory gouvernement renversé ou assemblée dissoute : les prêteurs s’inquiètent, la prime de risque monte quelque temps."><td>Crise politique</td><td>Défiance des prêteurs</td><td>+</td><td><small><code>instabilityPremium</code> <code>panicMemory</code></small></td><td><small>Gouvernement renversé ou Assemblée dissoute : les prêteurs s’inquiètent, la prime de risque monte quelque temps.</small></td></tr>
 <tr data-file="liens" data-text="temperature discontent réchauffement mondial mécontentement social unrestclimaterange disasteranger catastrophes à répétition et pénuries d’eau nourrissent la colère (moins si le pays s’est adapté)."><td>Réchauffement mondial</td><td>Mécontentement social</td><td>+</td><td><small><code>unrestClimateRange</code> <code>disasterAnger</code></small></td><td><small>Catastrophes à répétition et pénuries d’eau nourrissent la colère (moins si le pays s’est adapté).</small></td></tr>

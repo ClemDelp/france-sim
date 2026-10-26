@@ -166,6 +166,8 @@ export type Ending = 'revolte' | 'faillite' | 'hyperinflation' | 'depression' | 
 /** L'état de la France à la fin d'une année. Montants en milliards d'euros courants. */
 export type YearState = {
   year: number
+  /** L'âge de départ visé par la loi cette année. */
+  retirementTarget: number
   // Macro
   gdp: number
   gdpReal: number
