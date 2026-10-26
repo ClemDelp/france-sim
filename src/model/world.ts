@@ -4,7 +4,7 @@ import type { World } from './types'
 
 /**
  * Le monde année par année (modele/monde.csv) : prix du pétrole, taux de la BCE, croissance de nos partenaires,
- * panique sur les marchés, chocs de demande, rachats de dette par la BCE. De 2000 à 2024, c'est l'histoire ;
+ * panique sur les marchés, chocs de demande, rachats de dette par la BCE, chômage partiel (2020-2021). De 2000 à 2024, c'est l'histoire ;
  * ensuite, un scénario. Au-delà de la dernière année, le monde reste sur sa tendance de long terme.
  */
 export const WORLD_PATH: Readonly<Record<number, World>> = Object.fromEntries(
@@ -26,6 +26,7 @@ export const WORLD_PATH: Readonly<Record<number, World>> = Object.fromEntries(
       bankLoss: 0,
       forced: 0,
       instability: 0,
+      jobRetention: r.chomagePartiel ? parseNumber(r.chomagePartiel) : 0,
     },
   ]),
 )

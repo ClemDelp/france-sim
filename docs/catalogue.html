@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 445 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 446 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (445)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (446)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -1319,6 +1319,13 @@
   <td>0,015<br /><small>part</small><br /><small>plage 0,005 à 0,03</small></td>
   <td><span class="badge estime">estimé</span></td>
   <td><small>Évaluations du CICE (France Stratégie, 2020), ordre de grandeur</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="mesure" data-text="retentionpay part du salaire payée par l’état pour un emploi gardé en chômage partiel emploi en 2020, l’indemnité valait 70 % du salaire brut (84 % du net), entièrement remboursée aux entreprises par l’état et l’unédic pendant les confinements : environ 27 md€ pour des millions de salariés, et un chômage qui a baissé à 8 % malgré une récession de 8 %. dares (activité partielle 2020), insee (chômage 2020), unédic.">
+  <td><code>retentionPay</code><br /><small>Emploi</small></td>
+  <td><strong>Part du salaire payée par l’État pour un emploi gardé en chômage partiel</strong><br /><small>En 2020, l’indemnité valait 70 % du salaire brut (84 % du net), entièrement remboursée aux entreprises par l’État et l’Unédic pendant les confinements : environ 27 Md€ pour des millions de salariés, et un chômage qui a baissé à 8 % malgré une récession de 8 %.</small></td>
+  <td>0,7<br /><small>part du salaire brut</small><br /><small>plage 0,6 à 0,9</small></td>
+  <td><span class="badge mesure">mesuré</span></td>
+  <td><small>DARES (activité partielle 2020), INSEE (chômage 2020), Unédic.</small></td>
 </tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="maxemployment part maximale des actifs en emploi emploi  ">
   <td><code>maxEmployment</code><br /><small>Emploi</small></td>

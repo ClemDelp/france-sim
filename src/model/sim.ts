@@ -59,7 +59,7 @@ const aidShares = (smeShare: number): BySize => {
 /** Ce que le monde fait sans nous (modele/monde.csv) : l'histoire jusqu'en 2024, la crise d'Ormuz de 2026, puis la tendance de long terme. */
 export function baseWorld(year: number): World {
   const known = WORLD_PATH[year]
-  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0, climateAmbition: 0, heatShock: 0, unrest: 0, productivity: 0, migrants: 0, conflict: 0, bankLoss: 0, forced: 0, instability: 0 }
+  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0, climateAmbition: 0, heatShock: 0, unrest: 0, productivity: 0, migrants: 0, conflict: 0, bankLoss: 0, forced: 0, instability: 0, jobRetention: 0 }
 }
 
 /**
@@ -634,14 +634,18 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const proportional = (real / (productivity * (1 + P.smicJobLoss * policy.smicBoost))) * aidJobs
     // Loi d'Okun : les entreprises gardent une partie de leurs salariés quand l'activité baisse et embauchent moins vite
     // qu'elles ne produisent quand elle monte. L'emploi ne suit qu'une partie de l'écart de l'année ; le retard se résorbe ensuite.
-    const employmentGap = init ? 0 : P.okunPersistence * prev.employmentGap + (P.okunElasticity - 1) * Math.log(proportional / laborForce / prev.proportionalRate)
+    // Avec le chômage partiel (2020), l'État fait garder aux entreprises la plupart des emplois menacés, et paie une grande partie des salaires.
+    const gapWith = (retention: number) =>
+      init ? 0 : P.okunPersistence * prev.employmentGap + (P.okunElasticity * (1 - retention) - 1) * Math.log(proportional / laborForce / prev.proportionalRate)
+    const employmentGap = gapWith(world.jobRetention)
     const employment = Math.min(laborForce * P.maxEmployment, proportional * Math.exp(employmentGap))
+    const jobsRetained = Math.max(0, employment - Math.min(laborForce * P.maxEmployment, proportional * Math.exp(gapWith(0))))
     const unemployment = clamp(1 - employment / laborForce, 0.015, 0.45)
     const grossWages = avgWage * employment
     const employerContrib = grossWages * BASE.employerContribRate
     const mixed = BASE.mixedIncome * trend * scale
     const otherProd = g(policy.productionTaxes) * (productivity / initialCarry().productivity)
-    const firmAid = g(policy.firmAid)
+    const firmAid = g(policy.firmAid) + P.retentionPay * avgWage * jobsRetained
     // Le taux normal ne pèse que sur une partie de l'assiette (taux réduits sur l'alimentation, l'énergie, la restauration…).
     const vatRevenue = vatRatio * REF.vat * (1 - P.vatStandardShare + (P.vatStandardShare * policy.vat) / REF.vat) * lastConsumption * declared
     const gos = nominal - vatRevenue - otherProd - grossWages - employerContrib - mixed + firmAid
@@ -1341,6 +1345,7 @@ export function worldAt(events: FiredEvent[], year: number): World {
     world.bankLoss += effect.bankLoss ?? 0
     world.forced += effect.forced ?? 0
     world.instability += effect.instability ?? 0
+    world.jobRetention += effect.jobRetention ?? 0
   }
   return world
 }

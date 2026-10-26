@@ -127,6 +127,8 @@ export type World = {
   bankLoss: number
   /** Une réforme passée en force par le 49.3 cette année (1), sans vote de l'Assemblée. */
   forced: number
+  /** Chômage partiel (0 à 1) : la part des emplois menacés que l'État fait garder aux entreprises (confinements de 2020). */
+  jobRetention: number
   /** Une crise politique cette année (1) : gouvernement renversé par une motion de censure, ou Assemblée dissoute. */
   instability: number
 }

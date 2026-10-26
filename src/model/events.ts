@@ -258,8 +258,9 @@ export const EVENTS: EventDef[] = [
     summary: 'Confinements : une partie de l’activité s’arrête net pendant un an.',
     effects: [
       // Comme en 2020, la BCE rachète massivement de la dette : les taux ne s'envolent pas.
-      { growth: -0.04, demandShock: 0.07, qe: 1 },
-      { growth: 0.02, demandShock: 0.025, qe: 0.6 },
+      // Le chômage partiel garde la plupart des emplois : en 2020, le chômage a même baissé (8 %), au prix de ≈ 27 Md€ de dépenses publiques.
+      { growth: -0.04, demandShock: 0.07, qe: 1, jobRetention: 0.85 },
+      { growth: 0.02, demandShock: 0.025, qe: 0.6, jobRetention: 0.4 },
       { demandShock: 0.01 },
     ],
     chance: () => odds(0.015),
