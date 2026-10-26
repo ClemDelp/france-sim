@@ -106,6 +106,8 @@ type Carry = {
   nuclearShare: number
   /** L'année où de nouveaux réacteurs ont été commandés (0 si aucun) : ils ne produisent qu'une douzaine d'années plus tard. */
   nuclearOrder: number
+  /** La baisse de consommation d'énergies fossiles déjà obtenue par la taxe carbone (elle rejoint peu à peu son niveau de long terme). */
+  carbonCut: number
   workingAge: number
   retirees: number
   young: number
@@ -209,6 +211,7 @@ function initialCarry(): Carry {
     fossilShare: BASE.fossilShare,
     nuclearShare: REF.nuclearShare,
     nuclearOrder: 0,
+    carbonCut: 0,
     workingAge: BASE.workingAge,
     retirees: BASE.retirees,
     young: BASE.population - BASE.workingAge - BASE.retirees,
@@ -573,7 +576,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const publicFactor = plannedPublicGoods > 0 ? publicGoods / plannedPublicGoods : 1
   const rescueTax = P.rescueTaxShare * rescueBase
   // La taxe carbone en plus (ou en moins) de celle de 2025, sur les émissions fossiles de l'an dernier.
-  const carbonRevenue = init ? 0 : ((carbonExtra * prev.fossilEmissions) / 1000) * priceLevel
+  // Une partie des émissions échappe à la taxe carbone (aérien, transport routier de marchandises, industrie soumise aux quotas européens).
+  const carbonRevenue = init ? 0 : ((carbonExtra * prev.fossilEmissions * P.carbonTaxedShare) / 1000) * priceLevel
+  // On ne change pas de voiture ni de chaudière en un an : la baisse de consommation due à la taxe arrive peu à peu.
+  const carbonCut = init ? 0 : prev.carbonCut + P.carbonAdjust * ((P.carbonDemandCut * carbonExtra) / 100 - prev.carbonCut)
   // L'aide climat aux pays du Sud, au-delà de celle de départ (versée au reste du monde, comme la contribution à l'UE).
   const climateAidOut = g(policy.climateAid - REF.climateAid) + g(policy.developmentAid - REF.developmentAid)
   const foodTransfer = (policy.foodSecurity * 12 * population) / 1000 * priceLevel
@@ -780,7 +786,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const imports = importRatio * absorption * Math.pow(priceLevel / vatPrice / worldPrice, P.importPriceElasticity) * (1 - P.tariffImportCut * policy.tariffs) * overheating + electrifyImports
     // On consomme un peu moins de pétrole quand il est cher (élasticité-prix ≈ −0,2).
     // Une taxe carbone plus forte fait consommer moins de pétrole et de gaz.
-    const energyImports = (1 - (P.carbonDemandCut * carbonExtra) / 100) * BASE.energyImports * Math.pow(world.oil / BASE.oil, P.oilElasticity) * (fossilShare / BASE.fossilShare) * Math.pow(real / BASE.gdp, P.energyGdpElasticity) * worldPrice
+    const energyImports = (1 - carbonCut) * BASE.energyImports * Math.pow(world.oil / BASE.oil, P.oilElasticity) * (fossilShare / BASE.fossilShare) * Math.pow(real / BASE.gdp, P.energyGdpElasticity) * worldPrice
 
     const demand = totalConsumption + housing + investment + publicGoods + exports - imports - energyImports
 
@@ -1044,7 +1050,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
 
   // — 17. Les émissions françaises : pétrole et gaz (moins avec l'électrification et la taxe carbone), électricité, agriculture et déchets.
   const fossilEmissions =
-    BASE.fossilEmissions * (fossilShare / BASE.fossilShare) * Math.pow(d.real / BASE.gdp, P.energyEmissionsGdp) * Math.max(0, 1 - (P.carbonDemandCut * carbonExtra) / 100)
+    BASE.fossilEmissions * (fossilShare / BASE.fossilShare) * Math.pow(d.real / BASE.gdp, P.energyEmissionsGdp) * Math.max(0, 1 - carbonCut)
   const electricityEmissions = BASE.electricityEmissions * Math.max(0.2, 1 + P.gasForNuclear * (REF.nuclearShare - nuclearShare)) * (1 + (BASE.fossilShare - fossilShare))
   const frenchEmissions = (fossilEmissions + electricityEmissions + BASE.otherEmissions * Math.pow(1 - P.otherEmissionsDecline, yearsIn)) * (1 + P.regulationEmissions * deregulation)
 
@@ -1212,6 +1218,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     fossilShare,
     nuclearShare,
     nuclearOrder,
+    carbonCut,
     workingAge,
     retirees,
     young,
