@@ -5318,3 +5318,58 @@ label {
     grid-template-columns: 100px minmax(0, 1fr);
   }
 }
+
+.dissolution-modal {
+  width: min(520px, 100%);
+  border-top: 4px solid #8b45c9;
+}
+
+.dissolution-compare {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.dissolution-compare > div {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+}
+
+.dissolution-compare small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.dissolution-compare strong {
+  font-size: 1.15rem;
+}
+
+.dissolution-compare span {
+  font-size: 0.85rem;
+}
+
+.dissolution-compare > span {
+  font-size: 1.4rem;
+  color: var(--muted);
+}
+
+.dissolution-risks {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
+button.primary.danger {
+  background: linear-gradient(135deg, #8b45c9, #b3121b);
+  color: #fff;
+}

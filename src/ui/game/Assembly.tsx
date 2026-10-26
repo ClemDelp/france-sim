@@ -1,5 +1,6 @@
 import { num } from '../format'
-import { canDissolve, canForce, canReferendum, CENSURE_CHANCE, majorityOf, MAJORITY_CAPITAL, MAJORITY_LABEL, referendumChance, SEATS, type Politics } from '../../game/parliament'
+import { useState } from 'react'
+import { canDissolve, dissolutionOutlook, canForce, canReferendum, CENSURE_CHANCE, majorityOf, MAJORITY_CAPITAL, MAJORITY_LABEL, referendumChance, SEATS, type Politics } from '../../game/parliament'
 
 export type Joker = 'force' | 'referendum'
 
@@ -63,6 +64,9 @@ export function Assembly({
   const usedForce = !canForce(p, year + 1)
   const usedRef = !canReferendum(p, year + 1)
   const dissolve = canDissolve(p, year)
+  const [confirm, setConfirm] = useState(false)
+  const outlook = dissolutionOutlook(popularity)
+  const outcome = (seats: number) => MAJORITY_LABEL[majorityOf(seats)].toLowerCase()
   return (
     <section className={`assembly assembly-${m}`}>
       <div className="assembly-head">
@@ -120,11 +124,7 @@ export function Assembly({
           armed={false}
           locked={dissolve ? null : 'Pas dans l’année qui suit des législatives, une fois par mandat'}
           tone="dissolution"
-          onClick={() => {
-            if (window.confirm(`Dissoudre l’Assemblée ? De nouvelles législatives ont lieu tout de suite, selon votre popularité (${popularity} %). Vous pouvez gagner une majorité… ou tout perdre.`)) {
-              onDissolve()
-            }
-          }}
+          onClick={() => setConfirm(true)}
         />
       </div>
       {armed === 'force' ? (
@@ -157,6 +157,49 @@ export function Assembly({
         </div>
       ) : !over ? (
         <p className="assembly-note">Le 49.3 et le référendum servent à faire passer, une année donnée, plus de réformes que votre capital politique ne le permet : ils s’activent quand vous en préparez trop.</p>
+      ) : null}
+      {confirm ? (
+        <div className="modal-backdrop" role="presentation" onClick={() => setConfirm(false)}>
+          <div className="modal dissolution-modal" role="dialog" aria-modal="true" aria-label="Dissoudre l’Assemblée ?" onClick={(e) => e.stopPropagation()}>
+            <p className="eyebrow">💥 Joker · une fois par mandat</p>
+            <h2>Dissoudre l’Assemblée nationale ?</h2>
+            <p>De nouvelles législatives ont lieu tout de suite. Les Français votent selon votre popularité du moment, pas selon votre score de l’élection.</p>
+            <div className="dissolution-compare">
+              <div>
+                <small>Aujourd’hui</small>
+                <strong>{p.seats} sièges</strong>
+                <span>{MAJORITY_LABEL[m]}</span>
+              </div>
+              <span aria-hidden="true">→</span>
+              <div>
+                <small>Après, avec {popularity} % de popularité</small>
+                <strong>
+                  {outlook.low} à {outlook.high} sièges
+                </strong>
+                <span>{outcome(outlook.low) === outcome(outlook.high) ? MAJORITY_LABEL[majorityOf(outlook.low)] : `de ${outcome(outlook.low)} à ${outcome(outlook.high)}`}</span>
+              </div>
+            </div>
+            <ul className="dissolution-risks">
+              <li>📉 La crise politique inquiète les prêteurs : taux d’intérêt +0,3 point l’an prochain (juin 2024).</li>
+              <li>🎲 Le résultat est incertain : en 1997 comme en 2024, le président a perdu son pari.</li>
+            </ul>
+            <div className="verdict-actions">
+              <button
+                type="button"
+                className="primary danger"
+                onClick={() => {
+                  setConfirm(false)
+                  onDissolve()
+                }}
+              >
+                💥 Dissoudre
+              </button>
+              <button type="button" className="ghost" onClick={() => setConfirm(false)}>
+                Garder cette Assemblée
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </section>
   )
