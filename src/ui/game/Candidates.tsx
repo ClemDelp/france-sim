@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react'
 import { BASE_POLICY } from '../../model/calibration'
 import { policyAt } from '../../model/sim'
 import type { Decision, Policy, YearState } from '../../model/types'
-import { CANDIDATES, isPlayable, PARODY_NOTE, promiseStatus, promisesKept, type Candidate, type Pledge } from '../../game/candidates'
+import { CANDIDATES, isPlayable, PARODY_NOTE, promisePatch, promiseStatus, promisesKept, type Candidate, type Pledge } from '../../game/candidates'
 import { MANDATE_END, MANDATE_START, playMandate } from '../../game/mandate'
-import { playSession } from '../../game/session'
+import { planCost, playSession } from '../../game/session'
 import { electionAt, popularity } from '../../game/score'
 import { num } from '../format'
+import { ALL_LEVERS, formatLever } from '../levers'
 
 const STATUS: Record<ReturnType<typeof promiseStatus>, { icon: string; label: string }> = {
   tenue: { icon: '✅', label: 'Appliquée' },
@@ -103,25 +104,45 @@ export function CandidateBriefing({ candidate: c, onStart, onBack }: { candidate
   )
 }
 
-/** Pendant le mandat : les promesses, leur état, et un bouton pour inscrire chacune au programme de l'année. */
+/** Les leviers qu'une promesse fait bouger, lisibles : « Âge de départ : 64 ans → 60 ans ». */
+function leverChanges(patch: Partial<Policy>, from: Policy): string[] {
+  return Object.entries(patch).flatMap(([key, value]) => {
+    if (key === 'cancelShare') {
+      return (value as number) > 0 ? [`Annulation de ${num((value as number) * 100, 0)} % de la dette visée`] : []
+    }
+    const def = ALL_LEVERS.find((l) => l.key === key)
+    return def ? [`${def.label} : ${formatLever(def, from[def.key] as number)} → ${formatLever(def, value as number)}`] : []
+  })
+}
+
+/** Pendant le mandat : les promesses, leur état, ce qu'elles changent, et de quoi les inscrire au programme de l'année (ou les retirer). */
 export function PledgesPanel({
   candidate: c,
   decisions,
   draft,
   year,
+  capital,
   onApply,
+  onRemove,
+  onShow,
 }: {
   candidate: Candidate
   decisions: Decision[]
   draft: Partial<Policy>
   year: number
+  capital: number | null
   onApply: (p: Pledge) => void
+  onRemove: (p: Pledge) => void
+  /** Montrer, dans « Vos décisions », les curseurs que la promesse fait bouger. */
+  onShow: (p: Pledge) => void
 }) {
   const [open, setOpen] = useState(false)
   const voted = policyAt(decisions, year + 1)
   const planned = { ...voted, ...draft }
   const kept = promisesKept(c, decisions, year + 1, BASE_POLICY)
+  const left = capital === null ? Infinity : capital - planCost(draft, voted)
   const shown = open ? c.promises : c.promises.filter((p) => isPlayable(p) && promiseStatus(p, BASE_POLICY, voted) !== 'tenue')
+  const playing = year < MANDATE_END
   return (
     <div className="objectives pledges" style={{ borderColor: c.color }}>
       <div className="objectives-head">
@@ -135,22 +156,59 @@ export function PledgesPanel({
       <p className="pledges-score">
         Promesses tenues : <strong>{kept.kept}</strong> / {kept.playable}
       </p>
+      {playing ? (
+        <p className="pledges-hint">
+          Touchez <strong>➕ Inscrire</strong> pour mettre une promesse au programme de {year + 1} : ses curseurs bougent dans « Vos décisions » (surlignés), et vous pouvez encore les ajuster.
+          {capital !== null ? (
+            <>
+              {' '}
+              Capital politique restant : <strong className={left < 0 ? 'bad' : undefined}>⚡ {Math.max(0, left)}</strong> / {capital}.
+            </>
+          ) : null}
+        </p>
+      ) : null}
       <ul className="pledge-rows">
         {shown.map((p) => {
           const status = promiseStatus(p, BASE_POLICY, voted)
-          const inDraft = status !== 'tenue' && isPlayable(p) && promiseStatus(p, BASE_POLICY, planned) === 'tenue'
+          const playable = isPlayable(p) && status !== 'tenue'
+          const inDraft = playable && promiseStatus(p, BASE_POLICY, planned) === 'tenue'
+          const { patch } = playable ? promisePatch(p, inDraft ? voted : planned) : { patch: {} }
+          const cost = playable ? planCost(patch, voted) : 0
+          const tooDear = !inDraft && cost > left
           return (
-            <li key={p.key} className={`pledge-${status}`}>
-              <span title={STATUS[status].label}>{inDraft ? '📝' : STATUS[status].icon}</span>
+            <li key={p.key} className={`pledge-${status}${inDraft ? ' is-draft' : ''}`}>
+              <span title={inDraft ? 'Inscrite au programme de l’an prochain' : STATUS[status].label}>{inDraft ? '📝' : STATUS[status].icon}</span>
               <span>
                 {p.measure?.name ?? p.quote.slice(0, 60)} {amountLabel(p) ? <small>({amountLabel(p)})</small> : null}
+                {playable ? (
+                  <span className="pledge-levers">
+                    {leverChanges(patch, voted).map((line) => (
+                      <small key={line}>{line}</small>
+                    ))}
+                  </span>
+                ) : null}
               </span>
-              {isPlayable(p) && status !== 'tenue' && !inDraft && year < MANDATE_END ? (
-                <button type="button" className="ghost small" onClick={() => onApply(p)}>
-                  Inscrire
-                </button>
-              ) : inDraft ? (
-                <small>l’an prochain</small>
+              {playable && playing ? (
+                inDraft ? (
+                  <span className="pledge-actions">
+                    <button type="button" className="ghost small" onClick={() => onShow(p)} title="Voir les curseurs que cette promesse a bougés">
+                      🎚️ Voir
+                    </button>
+                    <button type="button" className="ghost small" onClick={() => onRemove(p)} title="Retirer cette promesse du programme de l’an prochain">
+                      ↩︎ Retirer
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="primary small"
+                    onClick={() => onApply(p)}
+                    disabled={tooDear}
+                    title={tooDear ? 'Pas assez de capital politique cette année : retirez une autre mesure, ou attendez l’an prochain.' : `Coûte ${cost} point${cost > 1 ? 's' : ''} de capital politique`}
+                  >
+                    ➕ Inscrire <small>⚡{cost}</small>
+                  </button>
+                )
               ) : null}
             </li>
           )

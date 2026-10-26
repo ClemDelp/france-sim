@@ -322,7 +322,52 @@ function App() {
   }
 
   // Inscrire une promesse au programme de l'année : ses leviers s'ajoutent à la décision en préparation.
-  const applyPledge = (p: Pledge) => setDraft((d) => ({ ...d, ...promisePatch(p, { ...policyAt(decisions, year + 1), ...d }).patch }))
+  // Montrer les curseurs qu'une promesse vient de bouger : leur groupe s'ouvre, la liste défile jusqu'à eux, ils clignotent.
+  const [flash, setFlash] = useState<string[]>([])
+  const [openGroups, setOpenGroups] = useState<string[]>(['impots'])
+  useEffect(() => {
+    if (!flash.length) {
+      return
+    }
+    const scroll = window.setTimeout(() => {
+      const el = document.querySelector(`[data-lever="${flash[0]}"]`)
+      const box = el?.closest('.levers')
+      // Sur ordinateur, seule la colonne des leviers défile : le reste de l'écran ne bouge pas.
+      if (el && box && box.scrollHeight > box.clientHeight + 1) {
+        const r = el.getBoundingClientRect()
+        const b = box.getBoundingClientRect()
+        box.scrollBy({ top: r.top - b.top - (b.height - r.height) / 2, behavior: 'smooth' })
+      } else {
+        el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }
+    }, 80)
+    const stop = window.setTimeout(() => setFlash([]), 2600)
+    return () => {
+      window.clearTimeout(scroll)
+      window.clearTimeout(stop)
+    }
+  }, [flash])
+  const showLevers = (keys: string[]) => {
+    setOpenGroups((open) => [...open, ...LEVER_GROUPS.filter((g) => g.levers.some((l) => keys.includes(l.key)) || (keys.includes('cancelShare') && g.id === 'dette')).map((g) => g.id)])
+    if (phone) {
+      setView('decider')
+    }
+    setFlash([...keys])
+  }
+  const pledgeKeys = (p: Pledge) => Object.keys(promisePatch(p, policyAt(decisions, year + 1)).patch)
+  const applyPledge = (p: Pledge) => {
+    const patch = promisePatch(p, { ...policyAt(decisions, year + 1), ...draft }).patch
+    setDraft((d) => ({ ...d, ...patch }))
+    if (!phone) {
+      showLevers(Object.keys(patch))
+    }
+  }
+  // Retirer une promesse du programme de l'an prochain : ses leviers reviennent à la politique votée.
+  const removePledge = (p: Pledge) =>
+    setDraft((d) => {
+      const keys = pledgeKeys(p)
+      return Object.fromEntries(Object.entries(d).filter(([k]) => !keys.includes(k)))
+    })
 
   const startScenario = (sc: Scenario) => begin({ kind: 'scenario', scenario: sc }, sc.events)
 
@@ -526,7 +571,7 @@ function App() {
               <p>Bougez un levier, puis avancez d’un an : la décision s’applique en {year + 1}.</p>
             </div>
             {LEVER_GROUPS.map((g) => (
-              <details key={g.id} className="lever-group" open={g.id === 'impots'}>
+              <details key={g.id} className="lever-group" open={openGroups.includes(g.id)}>
                 <summary>
                   <span>{g.icon}</span> {g.label}
                 </summary>
@@ -556,7 +601,7 @@ function App() {
                   const moved = Math.abs(v - (BASE_POLICY[l.key] as number)) > 1e-9
                   const locked = scenario?.locked?.keys.includes(l.key)
                   return (
-                    <label key={l.key} className={`lever${l.key in draft ? ' is-draft' : moved ? ' is-moved' : ''}${hint === l.key ? ' show-hint' : ''}`}>
+                    <label key={l.key} data-lever={l.key} className={`lever${l.key in draft ? ' is-draft' : moved ? ' is-moved' : ''}${hint === l.key ? ' show-hint' : ''}${flash.includes(l.key) ? ' is-flash' : ''}`}>
                       <span className="lever-top">
                         <span>{l.label}</span>
                         <span className="lever-value">
@@ -596,7 +641,7 @@ function App() {
                 })}
               </details>
             ))}
-            <details className="lever-group">
+            <details className="lever-group" open={openGroups.includes('dette')} data-lever="cancelShare">
               <summary>
                 <span>✂️</span> Annuler une partie de la dette
               </summary>
@@ -621,7 +666,7 @@ function App() {
 
         {shows('pays') || shows('flux') ? (
           <section className="center">
-            {shows('pays') && candidate ? <PledgesPanel candidate={candidate} decisions={decisions} draft={draft} year={year} onApply={applyPledge} /> : null}
+            {shows('pays') && candidate ? <PledgesPanel candidate={candidate} decisions={decisions} draft={draft} year={year} capital={capital} onApply={applyPledge} onRemove={removePledge} onShow={(p) => showLevers(pledgeKeys(p))} /> : null}
             {shows('pays') && scenario && evaluation ? <Objectives scenario={scenario} year={year} start={START} evaluation={evaluation} onAbandon={() => setHome(true)} /> : null}
             {shows('pays') ? <Newspaper headline={news} onWhy={year > START ? () => setWhy(true) : undefined} /> : null}
             {shows('pays') ? <Kpis states={states} base={base} changed={changed} onPick={(node) => openBrain({ focus: node })} /> : null}

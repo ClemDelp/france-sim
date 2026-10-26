@@ -4762,6 +4762,54 @@ label {
   color: var(--muted);
 }
 
+.pledges-hint {
+  margin: 0 0 8px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.pledge-levers {
+  display: grid;
+}
+
+.pledge-levers small {
+  font-size: 0.76rem;
+}
+
+.pledge-rows li.is-draft {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-radius: 6px;
+}
+
+.pledge-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.lever.is-flash {
+  animation: lever-flash 0.65s ease-in-out 4;
+  border-radius: 6px;
+}
+
+@keyframes lever-flash {
+  50% {
+    background: color-mix(in srgb, var(--accent) 28%, transparent);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lever.is-flash {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+}
+
+.pledge-rows li button small {
+  color: inherit;
+  opacity: 0.8;
+}
+
 .pledge-tenue {
   color: var(--good);
 }
