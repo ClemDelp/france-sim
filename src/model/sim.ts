@@ -335,6 +335,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const regulation = init ? REF.regulation : prev.regulation + 0.3 * (policy.regulation - prev.regulation)
   const deregulation = REF.regulation - regulation
   let naturalUnemployment = BASE.naturalUnemployment - P.regulationNairu * deregulation
+  // Une assurance chômage plus généreuse allonge un peu la recherche d'emploi (et l'inverse).
+  naturalUnemployment += P.replacementNairu * (policy.unemploymentReplacement - REF.unemploymentReplacement)
 
   // Un krach ou la faillite d'une grande banque ampute les fonds propres des banques : si leur coussin devient trop mince, elles prêtent moins.
   bankCapital -= bankCapital * world.bankLoss

@@ -220,6 +220,7 @@ regulation;discontent;-;regulationReformAnger;Flexibiliser le droit du travail f
 publicOwnership;discontent;-;privatisationAnger;Vendre des entreprises publiques stratégiques déplaît (Aéroports de Paris, 2019).
 wealthTax;discontent;-;richTaxCutAnger;Baisser les impôts des plus aisés fâche la majorité (« président des riches », 2017), les relever ne la fâche pas.
 incomeTaxTop;discontent;-;richTaxCutAnger;Même chose pour la surtaxe sur les hauts revenus.
+unemploymentReplacement;unemployment;+;replacementNairu;Une indemnisation plus généreuse allonge un peu la recherche d’emploi.
 forced;discontent;+;forceAnger forceContextAnger;Un 49.3 fait passer une réforme sans vote : peu de colère dans un pays calme, beaucoup dans un pays déjà en colère.
 instability;riskPremium;+;instabilityPremium panicMemory;Gouvernement renversé ou Assemblée dissoute : les prêteurs s’inquiètent, la prime de risque monte quelque temps.
 temperature;discontent;+;unrestClimateRange disasterAnger;Catastrophes à répétition et pénuries d’eau nourrissent la colère (moins si le pays s’est adapté).
