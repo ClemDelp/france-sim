@@ -40,6 +40,9 @@ const EVENT_ART: Record<string, Art> = {
   'general-strike': 'manif',
   scandal: 'hemicycle',
   'world-cup': 'foot',
+  'force-493': 'hemicycle',
+  censure: 'hemicycle',
+  dissolution: 'urne',
 }
 const CATEGORY_ART: Record<EventDef['category'], Art> = { climat: 'canicule', economie: 'krach', monde: 'globe', societe: 'manif', technologie: 'ordi' }
 

@@ -356,6 +356,41 @@ export const EVENTS: EventDef[] = [
     chance: () => odds(0.02),
     cooldown: 20,
   },
+  // Les actes politiques : décidés par le joueur (les jokers du pouvoir), jamais tirés au sort. Leurs effets passent par le modèle
+  // (paramètres forceAnger, forceContextAnger, instabilityPremium dans modele/comportements.csv).
+  {
+    id: 'force-493',
+    label: 'Réforme adoptée par le 49.3',
+    icon: '📜',
+    category: 'societe',
+    summary: 'Le gouvernement engage sa responsabilité : la réforme passe sans vote. La colère monte, d’autant plus que le pays était déjà en colère.',
+    effects: [{ forced: 1 }],
+    chance: () => odds(0),
+    cooldown: 1,
+    decided: 'Vous avez engagé le 49.3, et la motion de censure a échoué.',
+  },
+  {
+    id: 'censure',
+    label: 'Gouvernement renversé',
+    icon: '🏛️',
+    category: 'societe',
+    summary: 'Une motion de censure est adoptée après un 49.3 : la réforme tombe, le gouvernement aussi. Les prêteurs s’inquiètent.',
+    effects: [{ instability: 1 }],
+    chance: () => odds(0),
+    cooldown: 1,
+    decided: 'Vous avez engagé le 49.3, et l’Assemblée a voté la censure.',
+  },
+  {
+    id: 'dissolution',
+    label: 'Assemblée dissoute',
+    icon: '💥',
+    category: 'societe',
+    summary: 'Législatives anticipées : l’incertitude politique fait monter la prime de risque (juin 2024 : +0,3 point en trois semaines).',
+    effects: [{ instability: 1 }],
+    chance: () => odds(0),
+    cooldown: 1,
+    decided: 'Vous avez dissous l’Assemblée nationale.',
+  },
 ]
 
 /** Un tirage au sort reproductible : la même partie (même graine) produit les mêmes événements. */

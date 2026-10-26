@@ -38,3 +38,6 @@ ccr;Caisse centrale de réassurance;Assurance publique;https://www.ccr.fr;Coût 
 eia;EIA (agence américaine d’information sur l’énergie);Statistique publique;https://www.eia.gov;Prix du pétrole (Brent).;eia
 puissance;Lowy Institute et Soft Power 30;Recherche;https://power.lowyinstitute.org;Méthodes d’indices de puissance et d’influence (armée, économie, culture, diplomatie).;lowy,soft power 30
 lois;Textes de loi et règlements (Légifrance);Droit;https://www.legifrance.gouv.fr;Réformes des retraites (ordonnance de 1982, loi de 2023), SMIC (décrets annuels).;loi de 2023,décret,ordonnance
+elabe;Elabe (instituts de sondage);Sondages;https://elabe.fr;Opinion sur le recours au 49.3 : budget 2023 (octobre 2022) et réforme des retraites (mars 2023).;elabe
+interieur;Ministère de l’Intérieur (chiffres des manifestations);Administration;https://www.interieur.gouv.fr;Nombre de manifestants des journées contre la réforme des retraites (2023), avant et après le 49.3.;ministère de l’intérieur
+mni;MNI Market News;Presse financière;https://www.mnimarkets.com;Suivi quotidien de l’écart de taux entre la France et l’Allemagne (OAT-Bund), notamment après la dissolution de juin 2024.;mni market news

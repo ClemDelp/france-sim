@@ -24,6 +24,8 @@ export const WORLD_PATH: Readonly<Record<number, World>> = Object.fromEntries(
       migrants: 0,
       conflict: 0,
       bankLoss: 0,
+      forced: 0,
+      instability: 0,
     },
   ]),
 )

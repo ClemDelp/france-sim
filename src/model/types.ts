@@ -125,6 +125,10 @@ export type World = {
   conflict: number
   /** Part des fonds propres des banques perdue cette année (krach, faillite d'une grande banque). */
   bankLoss: number
+  /** Une réforme passée en force par le 49.3 cette année (1), sans vote de l'Assemblée. */
+  forced: number
+  /** Une crise politique cette année (1) : gouvernement renversé par une motion de censure, ou Assemblée dissoute. */
+  instability: number
 }
 
 /** Une décision prise une année donnée (le joueur bouge des leviers puis avance). */
@@ -145,6 +149,8 @@ export type EventDef = {
   chance: (s: YearState, start: YearState) => { base: number; factors: { label: string; kind: 'add' | 'mult'; value: number }[] }
   /** Années minimum entre deux occurrences. */
   cooldown: number
+  /** Un acte politique décidé par le joueur (49.3, censure, dissolution) : jamais tiré au sort ; dit ce qui l'a provoqué. */
+  decided?: string
 }
 
 export type FiredEvent = { year: number; id: string }

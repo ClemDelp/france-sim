@@ -41,6 +41,8 @@ cancelDebt;Annulation de dette;Leviers;0;Effacer d’un coup une partie de la de
 oil;Prix du pétrole;Monde;1;Fixé par le marché mondial : on le subit.
 ecbRate;Taux de la BCE;Monde;1;Fixé à Francfort pour toute la zone euro.
 worldGrowth;Croissance mondiale;Monde;1;La demande de nos clients étrangers.
+forced;49.3 (passage en force);Leviers;0;Une réforme adoptée sans vote de l’Assemblée, au risque d’une motion de censure : un joker du jeu, pas un levier.
+instability;Crise politique;Monde;1;Un gouvernement renversé par une motion de censure, ou une Assemblée dissoute.
 crisis;Crises et événements;Monde;1;Pandémies, crises financières, guerres, accords ou renoncements climatiques : le jeu les tire au sort chaque année.
 population;Population;Population;1;Jeunes, actifs et retraités.
 workingAge;Personnes en âge de travailler;Population;1;De 20 ans à l’âge de la retraite.

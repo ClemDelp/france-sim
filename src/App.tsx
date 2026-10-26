@@ -449,6 +449,8 @@ function App() {
       if (armed === 'force') {
         const r = force(politics, year + 1, seed)
         setPolitics(r.politics)
+        // L'acte entre dans le modèle : un 49.3 fâche (selon le climat social), une censure inquiète les prêteurs.
+        setEvents((ev) => [...ev, { year: year + 1, id: r.censured ? 'censure' : 'force-493' }])
         setJokerResult(
           r.censured
             ? { title: 'Censure ! Le gouvernement est renversé', text: `L’opposition dépose une motion de censure… adoptée (risque : ${Math.round(r.chance * 100)} %). Vos réformes de l’année sont rejetées, et l’an prochain vous aurez 2 ⚡ de moins.`, good: false, passes: false, years }
@@ -495,7 +497,11 @@ function App() {
     }
   }
 
-  const dissolveAssembly = () => setPolitics((p) => dissolve(p, year, seed, pop))
+  const dissolveAssembly = () => {
+    setPolitics((p) => dissolve(p, year, seed, pop))
+    // L'incertitude politique fait monter la prime de risque (modele/comportements.csv : instabilityPremium).
+    setEvents((ev) => [...ev, { year: year + 1, id: 'dissolution' }])
+  }
 
   const reset = () => (scenario ? startScenario(scenario) : candidate ? startCandidate(candidate) : begin({ kind: 'free' }))
 
@@ -537,6 +543,7 @@ function App() {
     setTarget(null)
     setHandled((h) => h.filter((y) => y < latest.year))
     setElectionsSeen((e) => e.filter((y) => y < latest.year))
+    setEvents((ev) => ev.filter((e) => !(['force-493', 'censure'].includes(e.id) && e.year >= latest.year)))
     setPolitics((p) => ({ ...p, forced: p.forced.filter((y) => y < latest.year), censured: p.censured.filter((y) => y < latest.year), referendums: p.referendums.filter((r) => r.year < latest.year) }))
     setVerdict(null)
   }

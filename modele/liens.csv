@@ -213,6 +213,8 @@ climateDamage;inflation;+;climateInflation;Récoltes perdues, assurances plus ch
 climateDamage;spending;+;reconstructionShare;L’État répare une partie des dégâts.
 temperature;lifeExpectancy;-;climateLifeLoss;Canicules, maladies : moins si l’on s’est adapté.
 fossilShare;lifeExpectancy;-;airPollutionLife;Brûler du pétrole et du gaz pollue l’air.
+forced;discontent;+;forceAnger forceContextAnger;Un 49.3 fait passer une réforme sans vote : peu de colère dans un pays calme, beaucoup dans un pays déjà en colère.
+instability;riskPremium;+;instabilityPremium panicMemory;Gouvernement renversé ou Assemblée dissoute : les prêteurs s’inquiètent, la prime de risque monte quelque temps.
 temperature;discontent;+;unrestClimateRange disasterAnger;Catastrophes à répétition et pénuries d’eau nourrissent la colère (moins si le pays s’est adapté).
 climateDamage;ending;+;collapseDamage;Au-delà de 10 % du PIB de dégâts, la société s’effondre.
 carbonTax;fossilShare;-;carbonElectrify;Pompes à chaleur et voitures électriques deviennent plus rentables.

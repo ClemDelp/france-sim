@@ -45,7 +45,7 @@ const aidShares = (smeShare: number): BySize => {
 /** Ce que le monde fait sans nous (modele/monde.csv) : l'histoire jusqu'en 2024, la crise d'Ormuz de 2026, puis la tendance de long terme. */
 export function baseWorld(year: number): World {
   const known = WORLD_PATH[year]
-  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0, climateAmbition: 0, heatShock: 0, unrest: 0, productivity: 0, migrants: 0, conflict: 0, bankLoss: 0 }
+  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0, climateAmbition: 0, heatShock: 0, unrest: 0, productivity: 0, migrants: 0, conflict: 0, bankLoss: 0, forced: 0, instability: 0 }
 }
 
 /**
@@ -245,7 +245,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const init = anchors === null
   const notes: string[] = []
   const holders = { ...prev.holders }
-  let panic = prev.panic * P.panicMemory + world.panic
+  // Une crise politique (censure, dissolution) inquiète aussi les prêteurs : la prime de risque monte, puis l'inquiétude s'estompe.
+  let panic = prev.panic * P.panicMemory + world.panic + P.instabilityPremium * world.instability
   let shun = prev.shun * P.shunMemory
   // Mémoire d'un défaut : les prêteurs se souviennent plusieurs années (écarts de taux élevés 3 à 5 ans).
   let stigma = prev.stigma * P.stigmaMemory
@@ -955,6 +956,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     // Une catastrophe ponctuelle (canicule, inondation) choque, mais moins qu'un réchauffement durable ; l'adaptation en atténue aussi la colère.
     world.heatShock * exposure * P.disasterAnger +
     world.unrest +
+    // Un passage en force (49.3) choque peu un pays calme (budget 2022), beaucoup un pays déjà en colère (retraites 2023).
+    (init ? 0 : world.forced * (P.forceAnger + P.forceContextAnger * Math.max(0, prev.discontent))) +
     // Précarité quand on allège fortement les règles.
     P.regulationAnger * Math.max(0, deregulation) +
     // Des retraites qui perdent du pouvoir d'achat par rapport à l'année de départ : la colère dure tant que la perte dure.
@@ -1250,6 +1253,8 @@ export function worldAt(events: FiredEvent[], year: number): World {
     world.migrants += effect.migrants ?? 0
     world.conflict += effect.conflict ?? 0
     world.bankLoss += effect.bankLoss ?? 0
+    world.forced += effect.forced ?? 0
+    world.instability += effect.instability ?? 0
   }
   return world
 }

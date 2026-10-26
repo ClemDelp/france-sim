@@ -374,6 +374,9 @@ const pctOf = (v: number) => `${num(v * 100, v < 0.1 ? 1 : 0)} %`
 function EventWhy({ event, states, forced }: { event: FiredEvent; states: YearState[]; forced: boolean }) {
   const def = EVENTS.find((d) => d.id === event.id)!
   const before = states.find((x) => x.year === event.year - 1)
+  if (def.decided) {
+    return <p className="why">🏛️ Décidé par vous : {def.decided}</p>
+  }
   if (forced || !before) {
     return <p className="why">📜 Prévu par le scénario : c’est le point de départ de votre mission.</p>
   }
