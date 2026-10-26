@@ -173,3 +173,22 @@ describe('les cicatrices des crises', () => {
     expect(slump.at(-1)!.unemployment - base.at(-1)!.unemployment).toBeGreaterThan(0.001)
   })
 })
+
+describe('la santé publique', () => {
+  it('la prévention allonge la vie sur des années, pas l’année même', () => {
+    const base = simulate({ decisions: [], events: [], until: 2036 })
+    const more = simulate({ decisions: [{ year: 2026, patch: { prevention: BASE_POLICY.prevention + 10 } }], events: [], until: 2036 })
+    const gain = (i: number) => more[i].lifeExpectancy - base[i].lifeExpectancy
+    expect(gain(1)).toBeLessThan(gain(10) * 0.25)
+  })
+})
+
+describe('les aides aux entreprises', () => {
+  it('créent des emplois (CICE : 100 000 à 160 000 pour ≈ 20 Md€) sans faire baisser le PIB à long terme', () => {
+    const base = simulate({ decisions: [], events: [], until: 2035 })
+    const aid = simulate({ decisions: [{ year: 2026, patch: { firmAid: BASE_POLICY.firmAid + 20 } }], events: [], until: 2035 })
+    const jobs = (aid.at(-1)!.employment - base.at(-1)!.employment) * 1000
+    expect(jobs).toBeGreaterThan(50)
+    expect(aid.at(-1)!.gdpReal).toBeGreaterThanOrEqual(base.at(-1)!.gdpReal)
+  })
+})

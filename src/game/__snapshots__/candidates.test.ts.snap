@@ -41,7 +41,7 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Fran
   "pauvreté": 14.9,
   "popularité": 58,
   "promessesAppliquées": "3 / 3",
-  "émissions": 359,
+  "émissions": 358,
 }
 `;
 
@@ -122,16 +122,16 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Raph
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Édouard Philippus : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 7.7,
-  "croissance": 1,
+  "chômage": 7.9,
+  "croissance": 0.9,
   "dette": 128,
-  "déficit": 5.7,
+  "déficit": 5.9,
   "fin": "réélu·e",
-  "inflation": 2.1,
+  "inflation": 2.2,
   "pauvreté": 14.7,
-  "popularité": 63,
+  "popularité": 61,
   "promessesAppliquées": "6 / 6",
-  "émissions": 359,
+  "émissions": 357,
 }
 `;
 

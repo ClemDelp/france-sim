@@ -357,6 +357,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   let naturalUnemployment = BASE.naturalUnemployment - P.regulationNairu * deregulation
   // Une assurance chômage plus généreuse allonge un peu la recherche d'emploi (et l'inverse).
   naturalUnemployment += P.replacementNairu * (policy.unemploymentReplacement - REF.unemploymentReplacement)
+  // Une partie des aides aux entreprises allège le coût du travail (CICE, aides à l'embauche) : plus d'emplois durables, sans baisser la productivité.
+  naturalUnemployment -= P.firmAidJobs * clamp((policy.firmAid - REF.firmAid) / REF.firmAid, -1, 1)
 
   // Un krach ou la faillite d'une grande banque ampute les fonds propres des banques : si leur coussin devient trop mince, elles prêtent moins.
   bankCapital -= bankCapital * world.bankLoss
@@ -651,9 +653,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const real = nominal / priceLevel
     const potential = laborForce * (1 - naturalUnemployment) * productivity
     // Un SMIC plus cher pousse les entreprises à économiser du travail peu qualifié (élasticité modeste).
-    // Une partie des aides aux entreprises allège le coût du travail (CICE, aides à l'embauche) : les supprimer coûte des emplois.
-    const aidJobs = 1 + P.firmAidJobs * clamp((policy.firmAid - REF.firmAid) / REF.firmAid, -1, 1)
-    const proportional = (real / (productivity * (1 + P.smicJobLoss * policy.smicBoost))) * aidJobs
+    const proportional = real / (productivity * (1 + P.smicJobLoss * policy.smicBoost))
     // Loi d'Okun : les entreprises gardent une partie de leurs salariés quand l'activité baisse et embauchent moins vite
     // qu'elles ne produisent quand elle monte. L'emploi ne suit qu'une partie de l'écart de l'année ; le retard se résorbe ensuite.
     // Avec le chômage partiel (2020), l'État fait garder aux entreprises la plupart des emplois menacés, et paie une grande partie des salaires.
