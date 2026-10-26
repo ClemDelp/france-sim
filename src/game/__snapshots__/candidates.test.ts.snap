@@ -11,7 +11,7 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Brun
   "pauvreté": 15.7,
   "popularité": 41,
   "promessesAppliquées": "8 / 8",
-  "émissions": 363,
+  "émissions": 364,
 }
 `;
 
@@ -86,7 +86,7 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Mari
   "pauvreté": 15.3,
   "popularité": 50,
   "promessesAppliquées": "8 / 8",
-  "émissions": 359,
+  "émissions": 360,
 }
 `;
 
@@ -140,7 +140,7 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Éri
   "chômage": 6.6,
   "croissance": 0.8,
   "dette": 128,
-  "déficit": 5.5,
+  "déficit": 5.4,
   "fin": "réélu·e",
   "inflation": 2.2,
   "pauvreté": 15.3,

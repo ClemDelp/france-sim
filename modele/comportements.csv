@@ -35,7 +35,7 @@ bankCapitalAdjust;0,3;part/an;Banques;Vitesse à laquelle les banques reconstitu
 payoutLeverage;0,5;sensibilité;Entreprises;Hausse des dividendes quand les entreprises sont peu endettées;Les entreprises gardent une dette proportionnée à leur activité.;hypothèse;;;
 lifeTrend;0,1;an/an;Santé;Gain tendanciel d’espérance de vie par an;;mesuré;INSEE, tendance 2000-2024;;
 healthStockSpeed;0,2;part/an;Santé;Vitesse à laquelle les dépenses de santé changent l’état de santé;;hypothèse;;;
-preventionStockSpeed;0,25;part/an;Santé;Vitesse à laquelle la prévention produit ses effets;;hypothèse;;;
+preventionStockSpeed;0,1;part/an;Santé;Vitesse à laquelle la prévention produit ses effets;Dépistages, vaccination, lutte contre le tabac et l’alcool : les gains d’espérance de vie viennent sur des années, pas l’année même (abaissé de 0,25 à 0,1 : environ 10 % de l’effet la première année, la moitié en sept ans).;hypothèse;;0,05;0,3
 healthLifeGain;1,5;ans;Santé;Années de vie gagnées si les dépenses de santé augmentent de 100 % (échelle log);;estimé;OCDE, rendements des dépenses de santé;;
 preventionLifeGain;0,05;an par Md€;Santé;Années de vie gagnées par milliard de prévention en plus;;hypothèse;;;
 povertyLifeLoss;0,015;an par point;Santé;Espérance de vie perdue par point de pauvreté en plus;;estimé;INSEE (écarts de mortalité selon le revenu);;
@@ -47,6 +47,7 @@ retirementCohortDecline;0,006;millions/an;Population;Baisse annuelle des génér
 retirementCohortLongRun;0,76;millions/an;Population;Taille d’une génération qui part en retraite à long terme;Naissances des années 1980-2000, moins les décès avant la retraite.;estimé;INSEE;;
 youthDecline;0,005;millions/an;Population;Baisse annuelle des jeunes qui arrivent à l’âge de travailler;Conséquence de la baisse des naissances.;mesuré;INSEE;;
 migrantWorkingShare;0,85;part;Population;Part des immigrés nets en âge de travailler;;mesuré;INSEE, flux migratoires;;
+newcomerParticipationGap;0,15;part;Population;Moindre activité des immigrés arrivés récemment;Les premières années, les nouveaux arrivants sont moins souvent actifs que les autres (apprentissage de la langue, reconnaissance des diplômes, démarches) : dans l’OCDE, 71 % des immigrés ont un emploi en 2024, moins encore à l’arrivée. Ils rattrapent ensuite, au rythme où le stock d’arrivées récentes vieillit.;estimation;OCDE (Perspectives des migrations internationales, 2025), INSEE (Immigrés et descendants d’immigrés, 2023).;0,1;0,4
 migrantYoungShare;0,15;part;Population;Part des immigrés nets de moins de 20 ans;;mesuré;INSEE;;
 workingAgeOutflow;0,12;millions/an;Population;Décès et départs à l’étranger des 20-64 ans;;estimé;INSEE;;
 youngOutflow;0,01;millions/an;Population;Décès des moins de 20 ans;;estimé;INSEE;;

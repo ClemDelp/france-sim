@@ -476,6 +476,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // reculer ou avancer l'âge de départ ne déplace donc pas des cohortes entières de travailleurs.
   const seniors = cohort * Math.max(0, retirementAge - 60)
   const laborForce = (workingAge - seniors) * Math.min(P.participationMax, coreParticipation() + P.participationTrend * yearsIn) + seniors * P.seniorParticipation
+    // Les nouveaux arrivants sont moins souvent actifs les premières années (langue, diplômes, démarches) : ils rattrapent ensuite.
+    - P.newcomerParticipationGap * P.migrantWorkingShare * (recentMigrants - initialCarry().recentMigrants)
 
   // — 7. Climat : le monde émet, la planète se réchauffe, la France encaisse (et s'adapte)
   // La France pèse environ 0,8 % du CO2 mondial : son effet direct est faible, mais son exemple et son aide comptent un peu.

@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 452 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 453 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (452)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (453)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -823,10 +823,10 @@
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
-<tr data-file="comportements" data-reliability="hypothese" data-text="preventionstockspeed vitesse à laquelle la prévention produit ses effets santé  ">
+<tr data-file="comportements" data-reliability="hypothese" data-text="preventionstockspeed vitesse à laquelle la prévention produit ses effets santé dépistages, vaccination, lutte contre le tabac et l’alcool : les gains d’espérance de vie viennent sur des années, pas l’année même (abaissé de 0,25 à 0,1 : environ 10 % de l’effet la première année, la moitié en sept ans). ">
   <td><code>preventionStockSpeed</code><br /><small>Santé</small></td>
-  <td><strong>Vitesse à laquelle la prévention produit ses effets</strong><br /><small>Utilisé par : Prévention → Espérance de vie</small></td>
-  <td>0,25<br /><small>part/an</small></td>
+  <td><strong>Vitesse à laquelle la prévention produit ses effets</strong><br /><small>Dépistages, vaccination, lutte contre le tabac et l’alcool : les gains d’espérance de vie viennent sur des années, pas l’année même (abaissé de 0,25 à 0,1 : environ 10 % de l’effet la première année, la moitié en sept ans).</small><br /><small>Utilisé par : Prévention → Espérance de vie</small></td>
+  <td>0,1<br /><small>part/an</small><br /><small>plage 0,05 à 0,3</small></td>
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
 </tr>
@@ -906,6 +906,13 @@
   <td>0,85<br /><small>part</small></td>
   <td><span class="badge mesure">mesuré</span></td>
   <td><small>INSEE, flux migratoires</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="newcomerparticipationgap moindre activité des immigrés arrivés récemment population les premières années, les nouveaux arrivants sont moins souvent actifs que les autres (apprentissage de la langue, reconnaissance des diplômes, démarches) : dans l’ocde, 71 % des immigrés ont un emploi en 2024, moins encore à l’arrivée. ils rattrapent ensuite, au rythme où le stock d’arrivées récentes vieillit. ocde (perspectives des migrations internationales, 2025), insee (immigrés et descendants d’immigrés, 2023).">
+  <td><code>newcomerParticipationGap</code><br /><small>Population</small></td>
+  <td><strong>Moindre activité des immigrés arrivés récemment</strong><br /><small>Les premières années, les nouveaux arrivants sont moins souvent actifs que les autres (apprentissage de la langue, reconnaissance des diplômes, démarches) : dans l’OCDE, 71 % des immigrés ont un emploi en 2024, moins encore à l’arrivée. Ils rattrapent ensuite, au rythme où le stock d’arrivées récentes vieillit.</small></td>
+  <td>0,15<br /><small>part</small><br /><small>plage 0,1 à 0,4</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>OCDE (Perspectives des migrations internationales, 2025), INSEE (Immigrés et descendants d’immigrés, 2023).</small></td>
 </tr>
 <tr data-file="comportements" data-reliability="mesure" data-text="migrantyoungshare part des immigrés nets de moins de 20 ans population  insee">
   <td><code>migrantYoungShare</code><br /><small>Population</small></td>

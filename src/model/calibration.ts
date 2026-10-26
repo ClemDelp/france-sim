@@ -38,7 +38,7 @@ export const P = view([
   'premiumPerDeficitPoint', 'deficitThreshold', 'monetizationCredibility', 'monetizationFear', 'inflationRatePass', 'inflationRateThreshold',
   'debtRollover', 'firmPremiumPass', 'neutralLoanRate', 'bankCapitalMin', 'creditCrunchSensitivity', 'creditCrunchMax', 'lossCrunch', 'mortgageSpread',
   'depositRateShare', 'bankPayout', 'bankCapitalAdjust', 'payoutLeverage', 'lifeTrend', 'healthStockSpeed', 'preventionStockSpeed', 'healthLifeGain', 'preventionLifeGain',
-  'povertyLifeLoss', 'lifeGapElasticity', 'retirementPhaseIn', 'retirementCohortGrowth', 'babyBoomYears', 'retirementCohortDecline', 'retirementCohortLongRun', 'youthDecline', 'migrantWorkingShare', 'migrantYoungShare',
+  'povertyLifeLoss', 'lifeGapElasticity', 'retirementPhaseIn', 'retirementCohortGrowth', 'babyBoomYears', 'retirementCohortDecline', 'retirementCohortLongRun', 'youthDecline', 'migrantWorkingShare', 'newcomerParticipationGap', 'migrantYoungShare',
   'workingAgeOutflow', 'youngOutflow', 'retirementExtraYears', 'seniorParticipation', 'participationTrend', 'participationMax', 'evTariffSlowdown',
   'nuclearElectricityPrice', 'nuclearBuildRate', 'nuclearFleetMax', 'nuclearFirstNew', 'nuclearLeadTime', 'nuclearCloseRate', 'electrificationElectricityPrice', 'oilElectricityPrice', 'electrificationInvestment', 'electrificationSubstitution', 'electrificationImportShare', 'electricityExportLoss',
   'oilElasticity', 'energyGdpElasticity', 'energyInflationPass', 'energyGroupPrice', 'hireWageRatio', 'educationProductivity', 'investmentProductivity',
