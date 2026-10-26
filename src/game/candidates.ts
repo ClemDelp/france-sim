@@ -6,6 +6,7 @@ import { parseCsv, parseNumber } from '../model/params'
 import { policyAt } from '../model/sim'
 import type { Decision, Policy, PolicyKey } from '../model/types'
 import { LEVER_GROUPS, type LeverDef } from '../ui/levers'
+import { planCost, type Programme } from './session'
 
 /**
  * Incarner un candidat : des personnages parodiques, inspirés des programmes publiés pour 2027 (sources citées),
@@ -154,6 +155,61 @@ export function promiseStatus(p: Pledge, start: Policy, now: Policy): 'tenue' | 
   })
   const mean = progress.reduce((a, v) => a + v, 0) / progress.length
   return mean >= 0.95 ? 'tenue' : mean > 0.05 ? 'partielle' : 'a-faire'
+}
+
+/**
+ * Ce qu'il reste à faire pour tenir une promesse. Pas encore commencée : la promesse appliquée à la politique en vigueur
+ * (elle s'ajoute aux autres). Commencée : aller jusqu'à ce qu'elle demande, sans recompter ce qui est déjà fait.
+ */
+export function promiseRemaining(p: Pledge, start: Policy, now: Policy): Partial<Policy> {
+  if (promiseStatus(p, start, now) !== 'partielle') {
+    return promisePatch(p, now).patch
+  }
+  const target = promisePatch(p, start).patch
+  return Object.fromEntries(
+    Object.entries(target).filter(([k, v]) => typeof v !== 'number' || Math.abs((now[k as PolicyKey] as number) - v) > 1e-9),
+  ) as Partial<Policy>
+}
+
+/** Le sens dans lequel le programme d'un candidat pousse chaque levier : ses réformes y coûtent moins de capital politique. */
+export function mandateOf(c: Candidate, start: Policy): Programme {
+  const mandate: Record<string, 1 | -1 | 0> = {}
+  for (const p of c.promises.filter(isPlayable)) {
+    const { patch } = promisePatch(p, start)
+    for (const k of numericKeys(patch)) {
+      const dir = Math.sign((patch[k] as number) - (start[k] as number)) as 1 | -1 | 0
+      // Deux promesses qui tirent en sens contraires : pas de réduction sur ce levier.
+      mandate[k] = mandate[k] === undefined || mandate[k] === dir ? dir : 0
+    }
+  }
+  return Object.fromEntries(Object.entries(mandate).filter(([, d]) => d)) as Programme
+}
+
+/**
+ * Commencer une promesse quand le capital politique ne suffit pas à la tenir d'un coup : on fait la plus grande part
+ * possible (tous ses leviers avancent ensemble, au cran près), le reste attendra. Null si rien n'est faisable.
+ */
+export function partialPatch(patch: Partial<Policy>, current: Policy, budget: number, mandate?: Programme): Partial<Policy> | null {
+  const keys = Object.keys(patch) as PolicyKey[]
+  if (keys.some((k) => !LEVERS[k])) {
+    return null
+  }
+  for (let share = 0.95; share > 0.01; share -= 0.05) {
+    const step: Record<string, number> = {}
+    for (const k of keys) {
+      const def = LEVERS[k]
+      const from = current[k] as number
+      const raw = from + ((patch[k] as number) - from) * share
+      const v = clampLever(k, def.min + Math.round((raw - def.min) / def.step) * def.step)
+      if (Math.abs(v - from) > 1e-9) {
+        step[k] = v
+      }
+    }
+    if (Object.keys(step).length && planCost(step as Partial<Policy>, current, mandate) <= budget) {
+      return step as Partial<Policy>
+    }
+  }
+  return null
 }
 
 /** La part des promesses jouables que les leviers en vigueur respectent. */

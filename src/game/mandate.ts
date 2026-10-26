@@ -2,7 +2,7 @@ import { BASE_POLICY } from '../model/calibration'
 import { rollEvents } from '../model/events'
 import { simulate } from '../model/sim'
 import type { FiredEvent, Policy } from '../model/types'
-import { isPlayable, promisePatch, type Candidate, type Pledge } from './candidates'
+import { isPlayable, mandateOf, partialPatch, promisePatch, promiseRemaining, type Candidate, type Pledge } from './candidates'
 import { playSession, planCost, type Session } from './session'
 
 /** Le mandat : élu en 2027, jusqu'à l'élection de 2032. */
@@ -19,29 +19,38 @@ export type Mandate = Session & {
 
 /**
  * Le mandat joué « à la lettre » : chaque année, le président applique les promesses suivantes de son programme,
- * dans l'ordre, tant que son capital politique le permet. Sert à comparer les programmes avec les mêmes règles
- * (mêmes tirages au sort), et aux tests de non-régression.
+ * dans l'ordre, tant que son capital politique le permet ; une promesse trop chère est commencée (en partie)
+ * et finie les années suivantes. Sert à comparer les programmes avec les mêmes règles (mêmes tirages au sort),
+ * et aux tests de non-régression.
  */
 export function playMandate(c: Candidate, options: { seed?: number } = {}): Mandate {
   const queue = c.promises.filter(isPlayable)
+  const mandate = mandateOf(c, BASE_POLICY)
   const applied: Mandate['applied'] = []
   let reverts: Partial<Policy> = {}
   const session = playSession({
     from: MANDATE_START,
     until: MANDATE_END,
     seed: options.seed,
+    mandate,
     plan: ({ year, current, capital }) => {
       // Les mesures temporaires (une « année blanche ») s'arrêtent d'elles-mêmes l'année suivante, sans coûter de capital.
       let patch: Partial<Policy> = { ...reverts }
       reverts = {}
       while (queue.length) {
-        const { patch: next, revert } = promisePatch(queue[0], { ...current, ...patch })
+        const planned = { ...current, ...patch }
+        const next = promiseRemaining(queue[0], BASE_POLICY, planned)
         const merged = { ...patch, ...next }
-        // La première promesse passe toujours, même chère : un président élu applique au moins sa mesure phare.
-        if (applied.some((a) => a.year === year) && planCost(merged, current) > capital) {
+        if (planCost(merged, current, mandate) > capital) {
+          // Trop cher pour cette année : on avance ce qu'on peut, le reste l'an prochain.
+          const step = partialPatch(next, planned, capital - planCost(patch, current, mandate), mandate)
+          if (step) {
+            patch = { ...patch, ...step }
+          }
           break
         }
         patch = merged
+        const { revert } = promisePatch(queue[0], planned)
         if (revert) {
           reverts = { ...reverts, ...revert }
         }

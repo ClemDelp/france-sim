@@ -3,7 +3,8 @@ import { BASE_POLICY } from '../model/calibration'
 import { chanceOf, EVENTS } from '../model/events'
 import { simulate } from '../model/sim'
 import { LEVER_GROUPS } from '../ui/levers'
-import { CANDIDATES, isPlayable, MEASURES, promisePatch, promiseStatus } from './candidates'
+import { CANDIDATES, isPlayable, mandateOf, MEASURES, partialPatch, promisePatch, promiseStatus } from './candidates'
+import { planCost } from './session'
 import { MANDATE_END, playMandate } from './mandate'
 import { electionAt, popularity } from './score'
 
@@ -78,6 +79,23 @@ describe('le mandat de chaque candidat, joué à la lettre de 2027 à 2032', () 
       pauvreté: r(s.poverty * 100, 1),
       émissions: r(s.frenchEmissions, 0),
     }).toMatchSnapshot()
+  })
+})
+
+describe('tenir ses promesses est possible', () => {
+  it.each(CANDIDATES.map((c) => [c.name, c] as const))('%s : tout le programme jouable tient dans un mandat', (_, c) => {
+    expect(playMandate(c).pending.map((p) => p.measure!.id)).toEqual([])
+  })
+
+  it('une promesse trop chère pour une année peut être commencée, et coûte moins qu’une réforme hors programme', () => {
+    const c = CANDIDATES.find((x) => x.id === 'melenchon')!
+    const p = c.promises.find((x) => x.measure?.id === 'retirement-age')!
+    const programme = mandateOf(c, BASE_POLICY)
+    const { patch } = promisePatch(p, BASE_POLICY)
+    expect(planCost(patch, BASE_POLICY, programme)).toBeLessThan(planCost(patch, BASE_POLICY))
+    const step = partialPatch(patch, BASE_POLICY, 2, programme)!
+    expect(planCost(step, BASE_POLICY, programme)).toBeLessThanOrEqual(2)
+    expect(promiseStatus(p, BASE_POLICY, { ...BASE_POLICY, ...step })).toBe('partielle')
   })
 })
 

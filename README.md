@@ -33,7 +33,8 @@ npm run dev
 
 Dix personnages **parodiques** (« Marine Tondeuse », « Édouard Philippus »…), inspirés des programmes réellement
 publiés pour 2027 : chaque promesse cite sa source. On joue leur mandat de 2027 à l’élection de 2032 : chaque année,
-le capital politique limite les réformes, il faut choisir l’ordre de ses promesses, et le monde réagit au programme
+le capital politique limite les réformes (mais une promesse de campagne coûte moitié moins, et une promesse trop chère
+peut être commencée puis finie plus tard), il faut choisir l’ordre de ses promesses, et le monde réagit au programme
 (Bruxelles sanctionne un gros déficit, les États-Unis répliquent à des droits de douane…). À la fin : promesses tenues,
 résultat de l’élection, et bilan face à la France « sans rien changer ». Un comparateur joue les dix programmes « à la
 lettre » avec les mêmes règles. Les programmes et la traduction de chaque mesure en leviers du modèle sont dans

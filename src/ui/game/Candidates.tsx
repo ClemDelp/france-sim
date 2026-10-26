@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { BASE_POLICY } from '../../model/calibration'
 import { policyAt } from '../../model/sim'
-import type { Decision, Policy, YearState } from '../../model/types'
-import { CANDIDATES, isPlayable, PARODY_NOTE, promisePatch, promiseStatus, promisesKept, type Candidate, type Pledge } from '../../game/candidates'
+import type { Decision, Policy, PolicyKey, YearState } from '../../model/types'
+import { CANDIDATES, isPlayable, PARODY_NOTE, partialPatch, promisePatch, promiseRemaining, promiseStatus, promisesKept, type Candidate, type Pledge } from '../../game/candidates'
 import { MANDATE_END, MANDATE_START, playMandate } from '../../game/mandate'
-import { planCost, playSession } from '../../game/session'
+import { planCost, playSession, type Programme } from '../../game/session'
 import { electionAt, popularity } from '../../game/score'
 import { num } from '../format'
 import { ALL_LEVERS, formatLever } from '../levers'
@@ -122,6 +122,7 @@ export function PledgesPanel({
   draft,
   year,
   capital,
+  programme,
   onApply,
   onRemove,
   onShow,
@@ -131,7 +132,10 @@ export function PledgesPanel({
   draft: Partial<Policy>
   year: number
   capital: number | null
-  onApply: (p: Pledge) => void
+  /** Le sens dans lequel le programme pousse chaque levier : ces réformes coûtent moins de capital. */
+  programme?: Programme
+  /** Inscrire des changements de leviers au programme de l'an prochain (une promesse entière, ou le début d'une promesse). */
+  onApply: (patch: Partial<Policy>) => void
   onRemove: (p: Pledge) => void
   /** Montrer, dans « Vos décisions », les curseurs que la promesse fait bouger. */
   onShow: (p: Pledge) => void
@@ -140,7 +144,8 @@ export function PledgesPanel({
   const voted = policyAt(decisions, year + 1)
   const planned = { ...voted, ...draft }
   const kept = promisesKept(c, decisions, year + 1, BASE_POLICY)
-  const left = capital === null ? Infinity : capital - planCost(draft, voted)
+  const used = planCost(draft, voted, programme)
+  const left = capital === null ? Infinity : capital - used
   const shown = open ? c.promises : c.promises.filter((p) => isPlayable(p) && promiseStatus(p, BASE_POLICY, voted) !== 'tenue')
   const playing = year < MANDATE_END
   return (
@@ -162,7 +167,7 @@ export function PledgesPanel({
           {capital !== null ? (
             <>
               {' '}
-              Capital politique restant : <strong className={left < 0 ? 'bad' : undefined}>⚡ {Math.max(0, left)}</strong> / {capital}.
+              Capital politique restant : <strong className={left < 0 ? 'bad' : undefined}>⚡ {Math.max(0, left)}</strong> / {capital}. Vos promesses coûtent moitié moins que d’autres réformes (les électeurs les ont votées) ; trop chère pour cette année, une promesse peut être commencée et finie plus tard.
             </>
           ) : null}
         </p>
@@ -171,44 +176,59 @@ export function PledgesPanel({
         {shown.map((p) => {
           const status = promiseStatus(p, BASE_POLICY, voted)
           const playable = isPlayable(p) && status !== 'tenue'
-          const inDraft = playable && promiseStatus(p, BASE_POLICY, planned) === 'tenue'
-          const { patch } = playable ? promisePatch(p, inDraft ? voted : planned) : { patch: {} }
-          const cost = playable ? planCost(patch, voted) : 0
-          const tooDear = !inDraft && cost > left
+          const keys = playable ? (Object.keys(promisePatch(p, BASE_POLICY).patch) as PolicyKey[]) : []
+          const inDraft = keys.some((k) => k in draft)
+          const done = playable && promiseStatus(p, BASE_POLICY, planned) === 'tenue'
+          const remaining = playable && !done ? promiseRemaining(p, BASE_POLICY, planned) : {}
+          const cost = planCost({ ...draft, ...remaining }, voted, programme) - used
+          const step = playable && !done && cost > left ? partialPatch(remaining, planned, left, programme) : null
+          const stepCost = step ? planCost({ ...draft, ...step }, voted, programme) - used : 0
+          const shownChanges = done || inDraft ? Object.fromEntries(keys.filter((k) => k in draft).map((k) => [k, draft[k]])) : remaining
           return (
             <li key={p.key} className={`pledge-${status}${inDraft ? ' is-draft' : ''}`}>
-              <span title={inDraft ? 'Inscrite au programme de l’an prochain' : STATUS[status].label}>{inDraft ? '📝' : STATUS[status].icon}</span>
+              <span title={done ? 'Inscrite au programme de l’an prochain' : inDraft ? 'Commencée au programme de l’an prochain' : STATUS[status].label}>{done ? '📝' : inDraft ? '✏️' : STATUS[status].icon}</span>
               <span>
                 {p.measure?.name ?? p.quote.slice(0, 60)} {amountLabel(p) ? <small>({amountLabel(p)})</small> : null}
                 {playable ? (
                   <span className="pledge-levers">
-                    {leverChanges(patch, voted).map((line) => (
+                    {leverChanges(shownChanges as Partial<Policy>, done || inDraft ? voted : planned).map((line) => (
                       <small key={line}>{line}</small>
                     ))}
+                    {inDraft && !done ? <small>Commencée cette année ; objectif du programme : {leverChanges(promisePatch(p, BASE_POLICY).patch, BASE_POLICY).join(' ; ')}. La suite l’an prochain.</small> : null}
                   </span>
                 ) : null}
               </span>
               {playable && playing ? (
-                inDraft ? (
-                  <span className="pledge-actions">
+                <span className="pledge-actions">
+                  {inDraft ? (
                     <button type="button" className="ghost small" onClick={() => onShow(p)} title="Voir les curseurs que cette promesse a bougés">
                       🎚️ Voir
                     </button>
+                  ) : null}
+                  {inDraft ? (
                     <button type="button" className="ghost small" onClick={() => onRemove(p)} title="Retirer cette promesse du programme de l’an prochain">
                       ↩︎ Retirer
                     </button>
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    className="primary small"
-                    onClick={() => onApply(p)}
-                    disabled={tooDear}
-                    title={tooDear ? 'Pas assez de capital politique cette année : retirez une autre mesure, ou attendez l’an prochain.' : `Coûte ${cost} point${cost > 1 ? 's' : ''} de capital politique`}
-                  >
-                    ➕ Inscrire <small>⚡{cost}</small>
-                  </button>
-                )
+                  ) : null}
+                  {done ? null : cost <= left ? (
+                    <button type="button" className="primary small" onClick={() => onApply(remaining)} title={`Coûte ${cost} point${cost > 1 ? 's' : ''} de capital politique`}>
+                      ➕ {status === 'partielle' ? 'Finir' : 'Inscrire'} <small>⚡{cost}</small>
+                    </button>
+                  ) : step && !inDraft ? (
+                    <button
+                      type="button"
+                      className="primary small"
+                      onClick={() => onApply(step)}
+                      title={`Pas assez de capital pour tout faire cette année (il faudrait ⚡${cost}) : on en fait une partie — ${leverChanges(step, planned).join(' ; ')} — et le reste plus tard.`}
+                    >
+                      ➕ Commencer <small>⚡{stepCost}</small>
+                    </button>
+                  ) : !inDraft ? (
+                    <button type="button" className="primary small" disabled title="Plus de capital politique cette année : retirez une autre mesure, ou attendez l’an prochain.">
+                      ➕ Inscrire <small>⚡{cost}</small>
+                    </button>
+                  ) : null}
+                </span>
               ) : null}
             </li>
           )
