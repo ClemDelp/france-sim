@@ -15,9 +15,23 @@ import {
   type Flow,
   type Holder,
   type Policy,
+  type PolicyKey,
   type World,
   type YearState,
 } from './types'
+
+
+/**
+ * Les réformes qui fâchent au moment du vote, avant tout effet économique (la colère vient de l'annonce) :
+ * le levier, le paramètre de colère par unité, et le sens impopulaire (+1 : monter fâche, −1 : baisser fâche).
+ */
+const VOTE_ANGER: { key: PolicyKey; perUnit: () => number; direction: 1 | -1 }[] = [
+  { key: 'retirementAge', perUnit: () => P.retirementReformAnger, direction: 1 },
+  { key: 'carbonTax', perUnit: () => P.carbonTaxAnger, direction: 1 },
+  { key: 'pensionIndexation', perUnit: () => P.pensionFreezeAnger, direction: -1 },
+  { key: 'regulation', perUnit: () => P.regulationReformAnger, direction: -1 },
+  { key: 'publicOwnership', perUnit: () => P.privatisationAnger, direction: -1 },
+]
 
 const basePublicGoods = () => REF.health + REF.prevention + REF.education + REF.defence + REF.investment + REF.otherServices
 /** Taux d'activité des 20–59 ans, calé pour retrouver 31,1 millions d'actifs en 2025. */
@@ -151,6 +165,13 @@ type Carry = {
   lowIncome: number
   /** L'âge de départ visé par la loi l'an dernier : le relever (même pour plus tard) met le pays dans la rue dès le vote. */
   retirementTarget: number
+  /** Les leviers votés l'an dernier : certaines réformes fâchent dès le vote, avant tout effet économique. */
+  voted: Partial<Record<PolicyKey, number>>
+  /** Prélèvements ressentis par la majorité (hors impôts sur les plus aisés et les grandes entreprises), l'an dernier et en 2025. */
+  feltBurden: number
+  feltBurden0: number
+  /** Impôts sur les plus aisés (fortune, surtaxe sur les hauts revenus), en part du PIB, l'an dernier. */
+  richTaxRatio: number
   discontent: number
   /** Écart entre le solde public et celui qui stabiliserait la dette (part du PIB). */
   stabilityGap: number
@@ -232,6 +253,10 @@ function initialCarry(): Carry {
     medianIncome: 0,
     lowIncome: 0,
     retirementTarget: 0,
+    voted: {},
+    feltBurden: 0,
+    feltBurden0: 0,
+    richTaxRatio: 0,
     discontent: 0,
     stabilityGap: 0,
     rescueStep: 0,
@@ -652,6 +677,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     // Le taux moyen d'impôt sur le revenu de chaque tranche est calé pour retrouver la recette et sa répartition de l'année de départ.
     const irRate = anchors ? anchors.irRate : byGroup((k) => (BASE.incomeTaxRevenue * GP.incomeTax[k]) / Math.max(1, taxable[k]))
     const incomeTax = byGroup((k) => taxable[k] * (irRate[k] + policy.incomeTaxTop * GP.topRate[k]) * declared)
+    // La part qui vient de la surtaxe sur les plus aisés (pour la colère : un impôt sur les riches ne fâche pas la majorité).
+    const topIncomeTax = sum(byGroup((k) => taxable[k] * policy.incomeTaxTop * GP.topRate[k] * declared))
     const wealthTax = policy.wealthTax * wealthTaxBase(wealth.g5) + (BASE.ifiRevenue * trend)
     const inheritance = BASE.inheritanceFlows * trend
     // Au-delà d'un certain taux, l'assiette fond de plus en plus vite (donations anticipées, assurance-vie, départs) : les recettes plafonnent.
@@ -775,6 +802,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     return {
       real,
       potential,
+      topIncomeTax,
       proportional,
       employmentGap,
       employment,
@@ -923,6 +951,15 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // (comme le dit le levier : une mutualisation, pas un impôt de plus) ; elle ne nourrit donc ni la fraude ni la colère fiscale.
   const taxBurden = (d.revenue - d.taxes.foodContribution) / gdp
   const taxBurden0 = init ? taxBurden : prev.taxBurden0
+  // Ce que ressent la majorité : sans les impôts sur les plus aisés et les grandes entreprises, que les Français approuvent
+  // (ISF rétabli : 77 % pour, Ifop 2019 ; taxe Zucman : 86 %, Ifop 2025). Les baisser, en revanche, fâche (« président des riches », 2017).
+  const richTaxes = d.taxes.wealthTax + d.topIncomeTax
+  const feltBurden = (d.revenue - d.taxes.foodContribution - richTaxes - d.taxes.corporateTax) / gdp
+  const feltBurden0 = init ? feltBurden : prev.feltBurden0
+  const richTaxRatio = richTaxes / gdp
+  // Les réformes qui fâchent dès le vote, avant tout effet économique : chaque cran voté dans le sens impopulaire.
+  const voteAnger = init ? 0 : VOTE_ANGER.reduce((total, v) => total + v.perUnit() * Math.max(0, v.direction * ((policy[v.key] as number) - (prev.voted[v.key] ?? (policy[v.key] as number)))), 0)
+  const richCutAnger = init ? 0 : P.richTaxCutAnger * Math.max(0, prev.richTaxRatio - richTaxRatio)
   const poverty0 = init ? dist.poverty : prev.poverty0
   const medianDrop = init ? 0 : Math.max(0, 1 - dist.median / prev.medianIncome)
   // Les plus modestes qui perdent du pouvoir d'achat (SMIC désindexé, minima rabotés) : la colère monte même si le revenu médian tient.
@@ -939,14 +976,14 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const goodNews =
     P.goodNewsWeight *
     (medianRise / P.unrestIncomeDrop +
-      Math.max(0, taxBurden0 - taxBurden) / P.unrestTaxRange +
+      Math.max(0, feltBurden0 - feltBurden) / P.unrestTaxRange +
       Math.max(0, P.unrestUnemployment - d.unemployment) / P.unrestUnemploymentRange +
       Math.max(0, poverty0 - dist.poverty) / P.unrestPovertyRange)
   const angerBeforeForce =
     -goodNews +
     medianDrop / P.unrestIncomeDrop +
     lowIncomeDrop / P.unrestLowIncomeDrop +
-    Math.max(0, taxBurden - taxBurden0) / P.unrestTaxRange +
+    Math.max(0, feltBurden - feltBurden0) / P.unrestTaxRange +
     Math.max(0, d.unemployment - P.unrestUnemployment) / P.unrestUnemploymentRange +
     Math.max(0, inflation - P.unrestInflation) / P.unrestInflationRange +
     Math.max(0, dist.poverty - poverty0) / P.unrestPovertyRange +
@@ -961,8 +998,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     world.unrest +
     // Précarité quand on allège fortement les règles.
     P.regulationAnger * Math.max(0, deregulation) +
-    // Reculer l'âge de départ fait descendre le pays dans la rue l'année du vote, bien avant que l'âge effectif ne bouge (2010, 2023).
-    (init ? 0 : P.retirementReformAnger * Math.max(0, policy.retirementAge - prev.retirementTarget)) +
+    // Les réformes qui fâchent dès le vote (âge de départ, taxe carbone, gel des pensions, droit du travail, privatisations),
+    // et les cadeaux fiscaux aux plus aisés.
+    voteAnger +
+    richCutAnger +
     // Des retraites qui perdent du pouvoir d'achat par rapport à l'année de départ : la colère dure tant que la perte dure.
     Math.max(0, 1 - pensionPower) / P.unrestPensionRange +
     // Des services publics qui reculent (santé, éducation, autres services), en volume, par rapport à l'année de départ.
@@ -1207,6 +1246,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     medianIncome: dist.median,
     lowIncome: perCapita.g1,
     retirementTarget: policy.retirementAge,
+    voted: Object.fromEntries(VOTE_ANGER.map((v) => [v.key, policy[v.key]])),
+    feltBurden,
+    feltBurden0,
+    richTaxRatio,
     discontent,
     stabilityGap,
     rescueStep,

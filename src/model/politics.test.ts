@@ -59,3 +59,36 @@ describe('un 49.3 sur une réforme qui fâche', () => {
     expect(extra({ retirementAge: 66 })).toBeGreaterThan(extra({ investment: 135 }) * 2)
   })
 })
+
+describe('les réformes qui fâchent dès le vote (audit de cohérence)', () => {
+  const at = (patch: Record<string, number>) => {
+    const calm = simulate({ decisions: [], events: [], until: 2026 }).at(-1)!
+    const voted = simulate({ decisions: [{ year: 2026, patch }], events: [], until: 2026 }).at(-1)!
+    return voted.discontent - calm.discontent
+  }
+
+  it('une hausse de taxe carbone comme celle de 2019 met le pays en colère (gilets jaunes)', () => {
+    expect(at({ carbonTax: 55 })).toBeGreaterThan(0.04)
+  })
+
+  it('un gel des pensions fâche dès l’annonce (retraités, 2018)', () => {
+    expect(at({ pensionIndexation: 0 })).toBeGreaterThan(0.06)
+  })
+
+  it('flexibiliser le droit du travail fâche au vote (loi Travail 2016, ordonnances 2017)', () => {
+    expect(at({ regulation: 0.5 })).toBeGreaterThan(0.04)
+  })
+
+  it('privatiser déplaît (Aéroports de Paris, 2019) au lieu de plaire', () => {
+    expect(at({ publicOwnership: 0.05 })).toBeGreaterThan(0)
+  })
+
+  it('taxer les plus aisés ne fâche pas la majorité ; leur faire un cadeau, si', () => {
+    expect(at({ wealthTax: 0.01 })).toBeLessThan(0.005)
+    expect(at({ incomeTaxTop: 0.02 })).toBeLessThan(0.005)
+    const raised = [{ year: 2026, patch: { incomeTaxTop: 0.03 } }]
+    const kept = simulate({ decisions: raised, events: [], until: 2027 }).at(-1)!
+    const cut = simulate({ decisions: [...raised, { year: 2027, patch: { incomeTaxTop: 0 } }], events: [], until: 2027 }).at(-1)!
+    expect(cut.discontent - kept.discontent).toBeGreaterThan(0.02)
+  })
+})
