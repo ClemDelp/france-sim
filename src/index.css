@@ -1594,7 +1594,7 @@ button.kpi:focus-visible {
 @media (max-width: 800px) {
   /* Sur téléphone, l'en-tête prend deux lignes : il défile avec la page pour laisser la place au contenu. */
   .top {
-    position: static;
+    position: relative;
     flex-wrap: wrap;
     padding: 8px 12px;
   }
@@ -3362,9 +3362,10 @@ input[type='range']:disabled {
 
 .amb-panic {
   position: absolute;
-  top: 68px;
+  top: 100%;
   left: 0;
   right: 0;
+  pointer-events: none;
   overflow: hidden;
   background: repeating-linear-gradient(45deg, #b3121b 0 18px, #8a0d14 18px 36px);
   color: #fff;

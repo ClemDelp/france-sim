@@ -25,7 +25,7 @@ import { electionAt, isElectionYear, nextElection, popularity } from './game/sco
 import { loadGame, saveGame } from './game/savegame'
 import { load, save } from './game/storage'
 import { politicalCapital } from './game/capital'
-import { Ambiance } from './ui/game/Ambiance'
+import { Ambiance, PanicTicker } from './ui/game/Ambiance'
 import { Explain } from './ui/game/Explain'
 import { Briefing, Home, Stars } from './ui/game/Home'
 import { Confetti, Council, Counter, EventFeed, Newspaper, Objectives, Popularity, Toasts } from './ui/game/Hud'
@@ -542,6 +542,7 @@ function App() {
             🎛️ Leviers
           </button>
         </div>
+        <PanicTicker state={s} />
       </header>
 
       {variant ? (

@@ -22,13 +22,12 @@ function slogans(s: YearState, start: YearState): string[] {
 
 /**
  * L'ambiance du pays, à l'écran : la planète qui brûle (rouge, flammes), la colère qui gronde (pancartes),
- * la panique des marchés (bandeau rouge). Purement décoratif : rien ne bloque la souris.
+ * (la panique des marchés : PanicTicker, accroché sous l'en-tête). Purement décoratif : rien ne bloque la souris.
  */
 export function Ambiance({ state: s, start, eventsThisYear }: Props) {
   const heatEvent = eventsThisYear.some((e) => FIRE_EVENTS.includes(e.id))
   const fire = Math.max(clamp01((s.temperature - 1.5) / 1.2), clamp01(s.climateDamage / 0.05), heatEvent ? 0.6 : 0)
   const anger = clamp01((s.discontent - 0.3) / 0.6)
-  const panic = s.debtCrisis || s.marketStress >= 0.85
   const words = slogans(s, start)
   const signs = Math.round(anger * 8)
   const flames = Math.round(fire * 16)
@@ -54,11 +53,21 @@ export function Ambiance({ state: s, start, eventsThisYear }: Props) {
           ))}
         </div>
       ) : null}
-      {panic ? (
-        <div className="amb-panic">
-          <span>📉 PANIQUE SUR LES MARCHÉS · TAUX À {(s.rate * 100).toFixed(1).replace('.', ',')} % · LES PRÊTEURS DOUTENT · 📉 PANIQUE SUR LES MARCHÉS · TAUX À {(s.rate * 100).toFixed(1).replace('.', ',')} %</span>
-        </div>
-      ) : null}
+    </div>
+  )
+}
+
+/** La panique des marchés : un bandeau rouge qui défile juste sous l'en-tête (quelle que soit sa hauteur). */
+export function PanicTicker({ state: s }: { state: YearState }) {
+  if (!s.debtCrisis && s.marketStress < 0.85) {
+    return null
+  }
+  const rate = (s.rate * 100).toFixed(1).replace('.', ',')
+  return (
+    <div className="amb-panic" aria-hidden="true">
+      <span>
+        📉 PANIQUE SUR LES MARCHÉS · TAUX À {rate} % · LES PRÊTEURS DOUTENT · 📉 PANIQUE SUR LES MARCHÉS · TAUX À {rate} %
+      </span>
     </div>
   )
 }
