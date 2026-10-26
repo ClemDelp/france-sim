@@ -2,6 +2,7 @@ import type { EventDef, YearState } from '../model/types'
 import { WORLD_NOTES } from '../model/world'
 import { num } from '../ui/format'
 import type { Art } from '../ui/game/illustrations'
+import { majorityOf, MAJORITY_LABEL, type Politics } from './parliament'
 import { electionAt, isElectionYear } from './score'
 
 export type Headline = { year: number; kicker: string; title: string; subtitle: string; tone: 'good' | 'bad' | 'neutral'; art: Art }
@@ -156,4 +157,26 @@ export function cartoon(s: YearState, start: YearState): { them: string; you: st
   ]
   const hit = quips.find(([when]) => when)
   return hit ? { them: hit[1], you: hit[2] } : { them: 'Alors, comment va le pays ?', you: 'Il tourne. Lentement, mais il tourne.' }
+}
+
+/** La une quand la politique fait l'actualité : censure, 49.3, référendum, dissolution, législatives. */
+export function politicsHeadline(p: Politics, year: number): Headline | null {
+  const h = (kicker: string, title: string, subtitle: string, tone: Headline['tone'], art: Art): Headline => ({ year, kicker, title, subtitle, tone, art })
+  const m = majorityOf(p.seats)
+  if (p.censured.includes(year)) {
+    return h('Assemblée nationale', 'Censure ! Le gouvernement est renversé', 'Le 49.3 de trop : la motion de censure est adoptée, la réforme est rejetée. Un nouveau gouvernement est nommé.', 'bad', 'hemicycle')
+  }
+  const vote = p.referendums.find((r) => r.year === year)
+  if (vote) {
+    return vote.won
+      ? h('Référendum', `Le oui l’emporte avec ${num(vote.yes, 1)} %`, 'Les Français approuvent les réformes du gouvernement : elles s’appliquent dès cette année.', 'good', 'urne')
+      : h('Référendum', `Le non l’emporte avec ${num(100 - vote.yes, 1)} %`, 'Désaveu pour le président : les réformes sont rejetées, et son autorité en sort affaiblie.', 'bad', 'urne')
+  }
+  if (p.dissolutions.includes(year)) {
+    return h('Dissolution', `${MAJORITY_LABEL[m]} : ${p.seats} sièges pour le camp présidentiel`, m === 'absolue' ? 'Le pari du président est gagné : il a les mains libres.' : m === 'cohabitation' ? 'Le pari a échoué : l’opposition contrôle l’Assemblée.' : 'Pas de majorité claire : il faudra négocier chaque texte.', m === 'cohabitation' ? 'bad' : m === 'absolue' ? 'good' : 'neutral', 'urne')
+  }
+  if (p.forced.includes(year)) {
+    return h('Assemblée nationale', '49.3 : le gouvernement passe en force', 'La motion de censure échoue de peu. L’opposition dénonce un « déni de démocratie ».', 'neutral', 'hemicycle')
+  }
+  return null
 }

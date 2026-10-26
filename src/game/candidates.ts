@@ -206,9 +206,19 @@ export const PLEDGE_GOAL_SHARE = 2 / 3
 
 export const pledgeGoal = (c: Candidate) => Math.ceil(c.promises.filter(isPlayable).length * PLEDGE_GOAL_SHARE - 1e-9)
 
+/**
+ * La politique votée jusqu'à `year`, pour juger des promesses : une annulation de dette est un coup unique
+ * (absente de la politique en vigueur), mais une fois faite, la promesse est tenue.
+ */
+export function votedPolicy(decisions: Decision[], year: number): Policy {
+  const policy = policyAt(decisions, year)
+  const cancel = decisions.filter((d) => d.year <= year && (d.patch.cancelShare ?? 0) > 0).sort((a, b) => (b.patch.cancelShare ?? 0) - (a.patch.cancelShare ?? 0))[0]
+  return cancel ? { ...policy, cancelShare: cancel.patch.cancelShare!, cancelHolder: cancel.patch.cancelHolder ?? policy.cancelHolder } : policy
+}
+
 /** La part des promesses jouables que les leviers en vigueur respectent. */
 export function promisesKept(c: Candidate, decisions: Decision[], year: number, start: Policy): { kept: number; playable: number } {
-  const now = policyAt(decisions, year)
+  const now = votedPolicy(decisions, year)
   const playable = c.promises.filter(isPlayable)
   const kept = playable.filter((p) => promiseStatus(p, start, now) === 'tenue').length
   return { kept, playable: playable.length }

@@ -246,14 +246,16 @@ type CouncilProps = {
   onAdvice?: (advice: Advice) => void
   /** Les leviers bougés dont l'effet est lent, et pourquoi. */
   slow?: string[]
+  /** Un joker engagé (49.3, référendum) : les réformes passent sans compter le capital politique. */
+  joker?: string | null
 }
 
-export function Council({ advice, preview, year, cost, capital, onCancel, endingTitle, phone = false, controls, onAdvice, slow = [] }: CouncilProps) {
+export function Council({ advice, preview, year, cost, capital, onCancel, endingTitle, phone = false, controls, onAdvice, slow = [], joker = null }: CouncilProps) {
   const [desktopOpen, setDesktopOpen] = useState(true)
   const [phoneOpen, setPhoneOpen] = useState(false)
   const open = phone ? phoneOpen : desktopOpen
   const setOpen = phone ? setPhoneOpen : setDesktopOpen
-  const over = capital !== null && cost > capital
+  const over = capital !== null && cost > capital && !joker
   const first = advice[0]
   if (phone && !open) {
     // La ligne repliée : le conseil le plus important, et le capital politique.
@@ -263,7 +265,7 @@ export function Council({ advice, preview, year, cost, capital, onCancel, ending
           {first ? ADVISORS[first.who].avatar : '🏛️'}
         </span>
         <span className="council-line-text">
-          {endingTitle ? <strong className="bad">⚠️ {endingTitle} </strong> : over ? <strong className="bad">Trop de réformes d’un coup. </strong> : null}
+          {endingTitle ? <strong className="bad">⚠️ {endingTitle} </strong> : over ? <strong className="bad">Trop de réformes d’un coup. </strong> : joker ? <strong>{joker}. </strong> : null}
           {first?.text}
         </span>
         {capital !== null ? (
@@ -297,6 +299,7 @@ export function Council({ advice, preview, year, cost, capital, onCancel, ending
               </strong>
             </span>
           ) : null}
+          {joker ? <span className="joker-badge">{joker}</span> : null}
           {preview ? (
             <button type="button" className="ghost small" onClick={onCancel}>
               Annuler les changements

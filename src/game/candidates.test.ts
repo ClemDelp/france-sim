@@ -3,7 +3,7 @@ import { BASE_POLICY } from '../model/calibration'
 import { chanceOf, EVENTS } from '../model/events'
 import { simulate } from '../model/sim'
 import { LEVER_GROUPS } from '../ui/levers'
-import { CANDIDATES, isPlayable, MEASURES, partialPatch, pledgeGoal, promisePatch, promisesKept, promiseStatus } from './candidates'
+import { CANDIDATES, isPlayable, MEASURES, partialPatch, pledgeGoal, promisePatch, promisesKept, promiseStatus, votedPolicy } from './candidates'
 import { planCost } from './session'
 import { MANDATE_END, playMandate } from './mandate'
 import { electionAt, popularity } from './score'
@@ -112,5 +112,14 @@ describe('le monde réagit au programme', () => {
 
   it('des comptes tenus rendent un soutien européen plus probable', () => {
     expect(chance('eu-support', { ...start, deficit: start.gdp * 0.02 })).toBeGreaterThan(chance('eu-support', start))
+  })
+})
+
+describe('une annulation de dette promise, une fois faite, reste tenue', () => {
+  it('la promesse est comptée tenue les années suivantes (le coup unique n’est pas dans la politique en vigueur)', () => {
+    const c = CANDIDATES.find((x) => x.id === 'melenchon')!
+    const p = c.promises.find((x) => x.measure?.id === 'ecb-debt')!
+    const decisions = [{ year: 2028, patch: promisePatch(p, BASE_POLICY).patch }]
+    expect(promiseStatus(p, BASE_POLICY, votedPolicy(decisions, 2030))).toBe('tenue')
   })
 })

@@ -1,6 +1,7 @@
 import type { Decision, FiredEvent, Policy } from '../model/types'
 import { EVENTS } from '../model/events'
 import { CANDIDATES } from './candidates'
+import { parsePolitics, type Politics } from './parliament'
 import { SCENARIOS } from './scenarios'
 import { load, save } from './storage'
 
@@ -21,6 +22,8 @@ export type SavedGame = {
   handled: number[]
   electionsSeen: number[]
   sandbox: boolean
+  /** L'Assemblée et les jokers joués (absent des sauvegardes plus anciennes). */
+  politics?: Politics
 }
 
 const KEY = 'game'
@@ -60,6 +63,7 @@ export function parseSave(raw: unknown, start: number, end: number): SavedGame |
     handled: g.handled!,
     electionsSeen: g.electionsSeen!,
     sandbox: g.sandbox === true,
+    politics: parsePolitics(g.politics) ?? undefined,
   }
 }
 

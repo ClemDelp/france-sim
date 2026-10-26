@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import { BASE_POLICY } from '../../model/calibration'
-import { policyAt } from '../../model/sim'
 import type { Decision, Policy, PolicyKey, YearState } from '../../model/types'
-import { CANDIDATES, isPlayable, PARODY_NOTE, partialPatch, pledgeGoal, promisePatch, promiseRemaining, promiseStatus, promisesKept, type Candidate, type Pledge } from '../../game/candidates'
+import { CANDIDATES, isPlayable, votedPolicy, PARODY_NOTE, partialPatch, pledgeGoal, promisePatch, promiseRemaining, promiseStatus, promisesKept, type Candidate, type Pledge } from '../../game/candidates'
 import { MANDATE_END, MANDATE_START, playMandate } from '../../game/mandate'
 import { planCost, playSession } from '../../game/session'
 import { electionAt, popularity } from '../../game/score'
@@ -138,7 +137,7 @@ export function PledgesPanel({
   onShow: (p: Pledge) => void
 }) {
   const [open, setOpen] = useState(false)
-  const voted = policyAt(decisions, year + 1)
+  const voted = votedPolicy(decisions, year + 1)
   const planned = { ...voted, ...draft }
   const kept = promisesKept(c, decisions, year + 1, BASE_POLICY)
   const used = planCost(draft, voted)

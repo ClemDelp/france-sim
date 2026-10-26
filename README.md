@@ -39,6 +39,15 @@ résultat de l’élection, et bilan face à la France « sans rien changer ». 
 lettre » avec les mêmes règles. Les programmes et la traduction de chaque mesure en leviers du modèle sont dans
 `modele/candidats.csv`, `promesses.csv`, `mesures.csv` et `mesures-leviers.csv`, modifiables comme le reste du modèle.
 
+### L’Assemblée et les jokers du pouvoir
+
+Les législatives suivent chaque présidentielle : plus le président est élu largement et populaire, plus son camp a de
+sièges. Une majorité absolue donne +2 ⚡ de capital politique par an ; une cohabitation en retire 2. Quand le capital
+ne suffit pas, trois jokers : le **49.3** (une fois par an : les réformes passent, au risque d’une motion de censure,
+d’autant plus probable que l’opposition est forte), le **référendum** (une fois par mandat : le oui suit la popularité)
+et la **dissolution** (une fois par mandat : de nouvelles législatives, selon la popularité du moment). Règles dans
+`src/game/parliament.ts` (en partie libre et en incarnant un candidat ; les scénarios gardent leurs règles).
+
 ### Sur téléphone, comme une appli
 
 Le jeu s’adapte au téléphone (une zone à la fois, onglets en bas, grand bouton ▶ sous le pouce, à la verticale comme à

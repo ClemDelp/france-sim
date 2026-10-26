@@ -10,6 +10,7 @@
   --gold: #f5b70a;
   --good: #2fbf71;
   --bad: #ff5d62;
+  --opposition: #4a5677;
   --radius: 14px;
   color-scheme: dark;
   font-family: 'Nunito', system-ui, sans-serif;
@@ -5001,4 +5002,138 @@ label {
 .mandate-report .end-objectives small {
   color: var(--muted);
   font-weight: 400;
+}
+
+/* — L'Assemblée et les jokers du pouvoir */
+
+.assembly {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.assembly-absolue {
+  border-color: rgba(47, 191, 113, 0.55);
+}
+
+.assembly-cohabitation {
+  border-color: rgba(255, 93, 98, 0.55);
+}
+
+.assembly-head {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.assembly-head > div {
+  display: grid;
+  gap: 2px;
+}
+
+.assembly-head span {
+  font-size: 0.86rem;
+}
+
+.assembly-head small,
+.assembly-note {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.assembly-absolue .assembly-head strong {
+  color: var(--good);
+}
+
+.assembly-cohabitation .assembly-head strong {
+  color: var(--bad);
+}
+
+.hemicycle {
+  display: block;
+  width: 100%;
+}
+
+.assembly-alert {
+  margin: 8px 0 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--bad);
+}
+
+.jokers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.joker {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--rule);
+  background: var(--panel-2);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.joker span {
+  font-size: 1.3rem;
+}
+
+.joker small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.joker:not(:disabled):hover {
+  border-color: var(--gold);
+}
+
+.joker:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.joker.is-armed {
+  border-color: var(--gold);
+  background: rgba(245, 183, 10, 0.16);
+  box-shadow: 0 0 0 2px rgba(245, 183, 10, 0.35);
+}
+
+.joker.is-armed small {
+  color: var(--gold);
+}
+
+.assembly-note {
+  margin: 6px 0 0;
+}
+
+.joker-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(245, 183, 10, 0.16);
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.joker-result.is-good {
+  border-top: 4px solid var(--good);
+}
+
+.joker-result.is-bad {
+  border-top: 4px solid var(--bad);
+}
+
+@media (max-width: 480px) {
+  .assembly-head {
+    grid-template-columns: 100px minmax(0, 1fr);
+  }
 }

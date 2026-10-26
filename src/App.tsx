@@ -19,13 +19,15 @@ import { ACHIEVEMENTS } from './game/achievements'
 import { adviseDraft, adviseState, type Advice } from './game/advisors'
 import { adviceDetail } from './game/adviceDetail'
 import { AdviceDetail } from './ui/game/AdviceDetail'
-import { headline } from './game/headlines'
+import { headline, politicsHeadline } from './game/headlines'
 import { evaluate, SCENARIOS, type Scenario } from './game/scenarios'
 import { electionAt, isElectionYear, nextElection, popularity } from './game/score'
 import { loadGame, saveGame } from './game/savegame'
 import { load, save } from './game/storage'
 import { politicalCapital } from './game/capital'
 import { Ambiance, PanicTicker } from './ui/game/Ambiance'
+import { Assembly, type Joker } from './ui/game/Assembly'
+import { afterPresidential, capitalShift, dissolve, force, majorityOf, MAJORITY_LABEL, referendum, START_POLITICS, type Politics } from './game/parliament'
 import { Explain } from './ui/game/Explain'
 import { Briefing, Home, Stars } from './ui/game/Home'
 import { Confetti, Council, Counter, EventFeed, Newspaper, Objectives, Popularity, Toasts } from './ui/game/Hud'
@@ -121,6 +123,11 @@ function App() {
   const [handled, setHandled] = useState<number[]>(SAVED?.handled ?? [])
   /** Le joueur a choisi de continuer après une défaite (mode bac à sable). */
   const [sandbox, setSandbox] = useState(SAVED?.sandbox ?? false)
+  /** L'Assemblée (la majorité du président) et les jokers déjà joués. */
+  const [politics, setPolitics] = useState<Politics>(SAVED?.politics ?? START_POLITICS(SAVED?.year ?? START))
+  /** Le joker engagé sur les réformes en préparation (49.3 ou référendum), et son résultat à annoncer. */
+  const [armed, setArmed] = useState<Joker | null>(null)
+  const [jokerResult, setJokerResult] = useState<{ title: string; text: string; good: boolean; passes: boolean; years: number } | null>(null)
   /** Le levier dont l'explication est ouverte (au clic, pas au survol : rien ne bouge sous la souris). */
   const [hint, setHint] = useState<string | null>(null)
   /** Sur téléphone, l'écran affiché (une zone à la fois). */
@@ -139,9 +146,9 @@ function App() {
   // Chaque changement de la partie est sauvegardé : on la retrouve en rouvrant le jeu.
   useEffect(() => {
     if (mode.kind !== 'myth') {
-      saveGame({ v: 1, mode: mode.kind === 'scenario' ? mode.scenario.id : mode.kind === 'candidate' ? `candidat:${mode.candidate.id}` : 'free', decisions, events, year, seed, draft, handled, electionsSeen, sandbox })
+      saveGame({ v: 1, mode: mode.kind === 'scenario' ? mode.scenario.id : mode.kind === 'candidate' ? `candidat:${mode.candidate.id}` : 'free', decisions, events, year, seed, draft, handled, electionsSeen, sandbox, politics })
     }
-  }, [mode, decisions, events, year, seed, draft, handled, electionsSeen, sandbox])
+  }, [mode, decisions, events, year, seed, draft, handled, electionsSeen, sandbox, politics])
   const whyInput = useMemo(() => ({ decisions, events, params: overrides }), [decisions, events, overrides])
   const states = useMemo(() => simulate({ decisions, events, until: year, params }), [decisions, events, year, params])
   const base = useMemo(() => simulate({ decisions: [], events, until: year, params }), [events, year, params])
@@ -249,8 +256,17 @@ function App() {
   // Le capital politique : combien de réformes le Parlement et l'opinion acceptent cette année.
   const current = policyAt(decisions, year + 1)
   const draftCost = planCost(draft, current)
-  const capital = mode.kind === 'myth' || sandbox ? null : politicalCapital(pop, year === START || (elections && isElectionYear(year)))
-  const overBudget = capital !== null && draftCost > capital
+  // L'Assemblée pèse sur le capital politique, en partie libre et en incarnant un candidat (les scénarios gardent leurs règles).
+  const parliament = (mode.kind === 'free' || mode.kind === 'candidate') && !sandbox
+  const shift = parliament ? capitalShift(politics, year) : null
+  const capital = mode.kind === 'myth' || sandbox ? null : Math.max(1, politicalCapital(pop, year === START || (elections && isElectionYear(year))) + (shift?.total ?? 0))
+  const tooMuch = capital !== null && draftCost > capital
+  // La une : la politique fait l'actualité (censure, référendum, dissolution…), et les législatives suivent la présidentielle.
+  const politicsNews = parliament && !s.ending && !s.debtCrisis ? politicsHeadline(politics, year) : null
+  const legislatives = parliament && politics.legislative === year && isElectionYear(year) && !politics.dissolutions.includes(year) ? ` Législatives : ${MAJORITY_LABEL[majorityOf(politics.seats)].toLowerCase()} pour le président (${politics.seats} sièges sur 577).` : ''
+  const frontPage = politicsNews ?? (legislatives ? { ...news, subtitle: news.subtitle + legislatives } : news)
+  // Un joker engagé (49.3, référendum) fait passer les réformes sans compter le capital.
+  const overBudget = tooMuch && !(parliament && armed)
   const advice = preview ? adviseDraft(preview) : adviseState(s, pop, upcoming ? upcoming - year : 99)
   // L'avis détaillé, recalculé si le brouillon change pendant qu'on le lit (il disparaît si on annule les changements).
   const detail = useMemo(
@@ -293,7 +309,7 @@ function App() {
     }
   }
 
-  const begin = (next: Mode, eventsAtStart: FiredEvent[] = [], options: { seed?: number; year?: number; electionsSeen?: number[] } = {}) => {
+  const begin = (next: Mode, eventsAtStart: FiredEvent[] = [], options: { seed?: number; year?: number; electionsSeen?: number[]; politics?: Politics } = {}) => {
     setMode(next)
     setDecisions([])
     setEvents(eventsAtStart)
@@ -304,6 +320,9 @@ function App() {
     setHandled([])
     setSandbox(false)
     setElectionsSeen(options.electionsSeen ?? [])
+    setPolitics(options.politics ?? START_POLITICS(options.year ?? START))
+    setArmed(null)
+    setJokerResult(null)
     setSeed((x) => options.seed ?? (Math.imul(x, 1103515245) + 12345) >>> 0)
     setHome(false)
     setBriefing(null)
@@ -314,7 +333,11 @@ function App() {
   // Un candidat prend ses fonctions après l'élection de 2027 : la France a déjà vécu 2026 et 2027 (événements tirés au sort).
   const startCandidate = (c: Candidate) => {
     const nextSeed = (Math.imul(seed, 1103515245) + 12345) >>> 0
-    begin({ kind: 'candidate', candidate: c }, eventsBeforeMandate(nextSeed), { seed: nextSeed, year: MANDATE_START, electionsSeen: [MANDATE_START] })
+    const before = eventsBeforeMandate(nextSeed)
+    // Les législatives suivent l'élection : la majorité dépend du score et de la popularité du nouvel élu.
+    const elected = simulate({ decisions: [], events: before, until: MANDATE_START }).at(-1)!
+    const assembly = afterPresidential(START_POLITICS(MANDATE_START), MANDATE_START, electionAt(elected).vote, popularity(elected), nextSeed)
+    begin({ kind: 'candidate', candidate: c }, before, { seed: nextSeed, year: MANDATE_START, electionsSeen: [MANDATE_START], politics: assembly })
   }
 
   // Inscrire une promesse au programme de l'année : ses leviers s'ajoutent à la décision en préparation.
@@ -421,6 +444,28 @@ function App() {
     if (overBudget) {
       return
     }
+    if (parliament && armed && hasDraft) {
+      // Le joker se joue au moment où les réformes s'appliqueraient : censure, ou verdict des urnes.
+      if (armed === 'force') {
+        const r = force(politics, year + 1, seed)
+        setPolitics(r.politics)
+        setJokerResult(
+          r.censured
+            ? { title: 'Censure ! Le gouvernement est renversé', text: `L’opposition dépose une motion de censure… adoptée (risque : ${Math.round(r.chance * 100)} %). Vos réformes de l’année sont rejetées, et l’an prochain vous aurez 2 ⚡ de moins.`, good: false, passes: false, years }
+            : { title: '49.3 : la réforme passe en force', text: `La motion de censure échoue (risque : ${Math.round(r.chance * 100)} %). Vos réformes s’appliquent, mais le passage en force use votre crédit : 1 ⚡ de moins l’an prochain.`, good: true, passes: true, years },
+        )
+      } else {
+        const r = referendum(politics, year + 1, seed, pop)
+        setPolitics(r.politics)
+        setJokerResult(
+          r.won
+            ? { title: `Référendum : le oui l’emporte (${num(r.yes, 1)} %)`, text: 'Les Français approuvent vos réformes : elles s’appliquent sans entamer votre capital politique.', good: true, passes: true, years }
+            : { title: `Référendum : le non l’emporte (${num(100 - r.yes, 1)} %)`, text: 'Désaveu : vos réformes sont rejetées, et votre autorité en sort affaiblie (2 ⚡ de moins l’an prochain).', good: false, passes: false, years },
+        )
+      }
+      setArmed(null)
+      return
+    }
     if (hasDraft) {
       setDecisions((ds) => [...ds, { year: year + 1, patch: draft }])
       setDraft({})
@@ -432,6 +477,25 @@ function App() {
       window.scrollTo({ top: 0 })
     }
   }
+
+  // Après l'annonce du résultat d'un joker : les réformes s'appliquent (ou sont rejetées), et le temps reprend.
+  const afterJoker = () => {
+    if (!jokerResult) {
+      return
+    }
+    if (jokerResult.passes) {
+      setDecisions((ds) => [...ds, { year: year + 1, patch: draft }])
+    }
+    setDraft({})
+    setTarget(Math.min(last, year + jokerResult.years))
+    setJokerResult(null)
+    if (phone) {
+      setView('pays')
+      window.scrollTo({ top: 0 })
+    }
+  }
+
+  const dissolveAssembly = () => setPolitics((p) => dissolve(p, year, seed, pop))
 
   const reset = () => (scenario ? startScenario(scenario) : candidate ? startCandidate(candidate) : begin({ kind: 'free' }))
 
@@ -473,6 +537,7 @@ function App() {
     setTarget(null)
     setHandled((h) => h.filter((y) => y < latest.year))
     setElectionsSeen((e) => e.filter((y) => y < latest.year))
+    setPolitics((p) => ({ ...p, forced: p.forced.filter((y) => y < latest.year), censured: p.censured.filter((y) => y < latest.year), referendums: p.referendums.filter((r) => r.year < latest.year) }))
     setVerdict(null)
   }
 
@@ -663,8 +728,11 @@ function App() {
         {shows('pays') || shows('flux') ? (
           <section className="center">
             {shows('pays') && candidate ? <PledgesPanel candidate={candidate} decisions={decisions} draft={draft} year={year} capital={capital} onApply={applyPledge} onRemove={removePledge} onShow={(p) => showLevers(pledgeKeys(p))} /> : null}
+            {shows('pays') && parliament && capital !== null ? (
+              <Assembly politics={politics} year={year} popularity={pop} color={candidate?.color ?? 'var(--gold)'} hasDraft={hasDraft} over={tooMuch} armed={armed} onArm={setArmed} onDissolve={dissolveAssembly} />
+            ) : null}
             {shows('pays') && scenario && evaluation ? <Objectives scenario={scenario} year={year} start={START} evaluation={evaluation} onAbandon={() => setHome(true)} /> : null}
-            {shows('pays') ? <Newspaper headline={news} state={s} prev={states.at(-2)} start={states[0]} events={eventsThisYear} onWhy={year > START ? () => setWhy(true) : undefined} /> : null}
+            {shows('pays') ? <Newspaper headline={frontPage} state={s} prev={states.at(-2)} start={states[0]} events={eventsThisYear} onWhy={year > START ? () => setWhy(true) : undefined} /> : null}
             {shows('pays') ? <Kpis states={states} base={base} changed={changed} onPick={(node) => openBrain({ focus: node })} /> : null}
             {shows('flux') ? (
               <>
@@ -959,6 +1027,21 @@ function App() {
           </div>
         </div>
       ) : null}
+      {jokerResult ? (
+        <div className="modal-backdrop" role="presentation">
+          <div className={`modal joker-result ${jokerResult.good ? 'is-good' : 'is-bad'}`} role="dialog" aria-modal="true" aria-label={jokerResult.title}>
+            <p className="eyebrow">🏛️ Assemblée nationale · {year + 1}</p>
+            <h2>{jokerResult.title}</h2>
+            <p>{jokerResult.text}</p>
+            <div className="verdict-actions">
+              <button type="button" className="primary big" onClick={afterJoker}>
+                Continuer
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {election ? (
         <div className="modal-backdrop" role="presentation">
           <div className={`modal election ${election.won ? 'is-won' : 'is-lost'}`} role="dialog" aria-modal="true" aria-label="Soirée électorale">
@@ -986,7 +1069,17 @@ function App() {
                   Voir le bilan du mandat
                 </button>
               ) : election.won ? (
-                <button type="button" className="primary big" onClick={() => setElectionsSeen((e) => [...e, election.year])}>
+                <button
+                  type="button"
+                  className="primary big"
+                  onClick={() => {
+                    setElectionsSeen((e) => [...e, election.year])
+                    // Les législatives suivent : la nouvelle majorité dépend du score et de la popularité.
+                    if (parliament) {
+                      setPolitics((p) => afterPresidential(p, election.year, election.vote, election.popularity, seed))
+                    }
+                  }}
+                >
                   Entamer un nouveau mandat
                 </button>
               ) : (
@@ -1161,6 +1254,7 @@ function App() {
         controls={phone ? timeButtons : null}
         onAdvice={setAdviceOpen}
         slow={LEVER_GROUPS.flatMap((g) => g.levers).filter((l) => l.key in draft && l.delay).map((l) => l.delay!)}
+        joker={parliament && armed && hasDraft ? (armed === 'force' ? '📜 49.3 engagé' : '🗳️ Référendum convoqué') : null}
       />
 
       {adviceOpen && detail ? (

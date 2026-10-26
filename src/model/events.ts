@@ -359,7 +359,7 @@ export const EVENTS: EventDef[] = [
 ]
 
 /** Un tirage au sort reproductible : la même partie (même graine) produit les mêmes événements. */
-function random(seed: number, year: number, id: string): number {
+export function random(seed: number, year: number, id: string): number {
   let h = (seed ^ (year * 2654435761)) >>> 0
   for (let i = 0; i < id.length; i += 1) {
     h = Math.imul(h ^ id.charCodeAt(i), 2246822507) >>> 0
