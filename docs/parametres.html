@@ -141,6 +141,21 @@
           modestes aux 10 % les plus aisés) ou de taille (<code>pme</code>, <code>eti</code>, <code>ge</code>).
         </p>
 
+        <h2 id="candidats">Les candidats et leurs promesses</h2>
+        <p>Le mode « Incarner un candidat » repose sur quatre fichiers, que l’on peut corriger comme les autres (par exemple quand un programme est publié ou change) :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fichier</th><th>Contenu</th></tr></thead>
+            <tbody>
+              <tr><td><code>candidats.csv</code></td><td>Les personnages parodiques : nom affiché, famille politique, couleur, résumé, programme de référence (lien, date), réserves. La colonne <code>inspire_de</code> garde le nom réel pour les mainteneurs ; il n’est pas affiché dans le jeu.</td></tr>
+              <tr><td><code>promesses.csv</code></td><td>Une ligne par promesse : candidat, mesure du catalogue (vide si le simulateur ne sait pas encore la représenter), montant, citation exacte, source (lien).</td></tr>
+              <tr><td><code>mesures.csv</code></td><td>Le catalogue des mesures : nom, domaine, explication, montant réglable (unité, bornes, valeur par défaut), obstacles juridiques.</td></tr>
+              <tr><td><code>mesures-leviers.csv</code></td><td>Comment chaque mesure agit sur les leviers du modèle : <code>fixe</code> (le levier prend une valeur) ou <code>ajout</code> (il s’ajoute à la valeur en vigueur), à partir d’une <code>valeur</code> ou du <code>montant</code> de la promesse multiplié par un <code>facteur</code> ; <code>annees</code> pour une mesure temporaire. Une ligne sans levier explique pourquoi la mesure n’est pas encore dans le moteur.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Exemple : <code>smic-up;smicBoost;fixe;montant;0,01</code> traduit « SMIC +10 % » en un coup de pouce de 10 % au SMIC. Les tests vérifient que chaque mesure vise un levier qui existe, que chaque promesse cite sa source, et rejouent le mandat de chaque candidat (photo de fin de mandat).</p>
+
         <h2 id="regles">Les règles d’or du format</h2>
         <div class="warn">
           <ul>

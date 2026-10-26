@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { ACHIEVEMENTS } from '../../game/achievements'
 import { SCENARIOS, type Scenario } from '../../game/scenarios'
+import type { Candidate } from '../../game/candidates'
+import { CandidatePicker } from './Candidates'
 import { VERSION_LABEL } from '../../version'
 import { REPO_URL } from '../links'
 import { promptInstall, useInstall } from './install'
@@ -18,6 +20,8 @@ type Props = {
   onFree: () => void
   onMyths: () => void
   onModel: () => void
+  onCandidate: (c: Candidate) => void
+  onCompare: () => void
 }
 
 const Difficulty = ({ level }: { level: number }) => (
@@ -70,8 +74,9 @@ function InstallCard() {
 }
 
 /** L'écran d'accueil : choisir comment jouer. */
-export function Home({ name, onName, stars, earned, canResume, onResume, onTutorial, onScenario, onFree, onMyths, onModel }: Props) {
+export function Home({ name, onName, stars, earned, canResume, onResume, onTutorial, onScenario, onFree, onMyths, onModel, onCandidate, onCompare }: Props) {
   const [showScenarios, setShowScenarios] = useState(false)
+  const [showCandidates, setShowCandidates] = useState(false)
   const totalStars = Object.values(stars).reduce((a, n) => a + n, 0)
   return (
     <div className="home" role="dialog" aria-modal="true" aria-label="Accueil">
@@ -90,7 +95,17 @@ export function Home({ name, onName, stars, earned, canResume, onResume, onTutor
           </label>
         </header>
 
-        {showScenarios ? (
+        {showCandidates ? (
+          <section>
+            <div className="home-section-head">
+              <h2>🗳️ Incarner un candidat</h2>
+              <button type="button" className="ghost small" onClick={() => setShowCandidates(false)}>
+                ← Retour
+              </button>
+            </div>
+            <CandidatePicker onPick={onCandidate} onCompare={onCompare} />
+          </section>
+        ) : showScenarios ? (
           <section>
             <div className="home-section-head">
               <h2>🎯 Scénarios</h2>
@@ -134,6 +149,11 @@ export function Home({ name, onName, stars, earned, canResume, onResume, onTutor
               <small>
                 {SCENARIOS.length} défis avec objectifs et étoiles · ⭐ {totalStars}/{SCENARIOS.length * 3}
               </small>
+            </button>
+            <button type="button" className="menu-card menu-candidates" onClick={() => setShowCandidates(true)}>
+              <span>🗳️</span>
+              <strong>Incarner un candidat</strong>
+              <small>Un mandat 2027–2032 avec le programme d’un candidat (version parodique) : tiendrez-vous vos promesses ?</small>
             </button>
             <button type="button" className="menu-card" onClick={onFree}>
               <span>🎮</span>

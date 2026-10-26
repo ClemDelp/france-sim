@@ -4675,3 +4675,133 @@ label {
   color: var(--muted);
   font-weight: 400;
 }
+
+/* ===================== Incarner un candidat ===================== */
+
+.candidate-note {
+  font-size: 0.8rem;
+}
+
+.candidate-card {
+  border-left-width: 4px;
+}
+
+.candidate-family {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.compare-button {
+  margin-top: 12px;
+}
+
+.menu-candidates {
+  border-color: rgba(201, 70, 44, 0.6);
+  background: linear-gradient(135deg, rgba(91, 141, 239, 0.14), rgba(255, 93, 98, 0.14));
+}
+
+.pledge-list {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.pledge-list li {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+}
+
+.pledge-list li.is-off {
+  opacity: 0.75;
+}
+
+.pledge-quote {
+  font-style: italic;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.pledge-note {
+  color: var(--muted);
+}
+
+.pledge-list a {
+  color: #8fb4ff;
+  font-size: 0.8rem;
+}
+
+.pledges .pledges-score {
+  margin: 4px 0 8px;
+}
+
+.pledge-rows {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.pledge-rows li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.pledge-rows li small {
+  color: var(--muted);
+}
+
+.pledge-tenue {
+  color: var(--good);
+}
+
+.compare-mandates {
+  max-width: 1100px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--rule);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.compare-table th:first-child {
+  text-align: left;
+}
+
+.link-button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-weight: 800;
+  text-align: left;
+}
+
+.mandate-report .end-objectives small {
+  color: var(--muted);
+  font-weight: 400;
+}

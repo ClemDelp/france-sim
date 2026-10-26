@@ -33,6 +33,9 @@ import { PhoneNav } from './ui/game/Phone'
 import { usePhone, type PhoneView } from './ui/game/usePhone'
 import { Tour, type TourStep } from './ui/game/Tour'
 import { UpdateBanner } from './ui/game/UpdateBanner'
+import { candidateById, promisePatch, type Candidate, type Pledge } from './game/candidates'
+import { eventsBeforeMandate, MANDATE_END, MANDATE_START } from './game/mandate'
+import { CandidateBriefing, CompareMandates, MandateReport, PledgesPanel } from './ui/game/Candidates'
 import { Robustness } from './ui/Robustness'
 import { FOCUS_METRICS, KPI_FOCUS } from './ui/robustnessMetrics'
 import { Trajectory } from './ui/Trajectory'
@@ -72,11 +75,14 @@ type Verdict = { mission: Mission; start: number }
 const linked = MISSIONS.find((m) => m.id === new URLSearchParams(window.location.hash.slice(1)).get('idee'))
 
 /** Comment on joue : partie libre (avec élections), idée reçue (10 ans, sans élection), ou scénario à objectifs. */
-type Mode = { kind: 'free' } | { kind: 'myth' } | { kind: 'scenario'; scenario: Scenario }
+type Mode = { kind: 'free' } | { kind: 'myth' } | { kind: 'scenario'; scenario: Scenario } | { kind: 'candidate'; candidate: Candidate }
 
 /** La partie laissée en cours à la dernière visite (sauf si un lien lance une idée reçue). */
 const SAVED = linked ? null : loadGame(START, END)
 const SAVED_SCENARIO = SCENARIOS.find((s) => s.id === SAVED?.mode)
+const SAVED_CANDIDATE = SAVED?.mode.startsWith('candidat:') ? candidateById(SAVED.mode.slice('candidat:'.length)) : undefined
+/** Un lien #candidat=<id> ouvre directement la présentation d'un candidat (pratique pour la partager). */
+const linkedCandidate = candidateById(new URLSearchParams(window.location.hash.slice(1)).get('candidat'))
 
 const STAR_TITLES = ['Mission échouée', 'Peut mieux faire', 'Beau mandat', 'Mandat historique !']
 
@@ -95,7 +101,7 @@ function App() {
   const [leversOpen, setLeversOpen] = useState(false)
   const [overrides, setOverrides] = useState<Overrides>({})
   const [brain, setBrain] = useState<{ focus: string | null; view?: View; query?: string } | null>(null)
-  const [mode, setMode] = useState<Mode>(linked ? { kind: 'myth' } : SAVED_SCENARIO ? { kind: 'scenario', scenario: SAVED_SCENARIO } : { kind: 'free' })
+  const [mode, setMode] = useState<Mode>(linked ? { kind: 'myth' } : SAVED_SCENARIO ? { kind: 'scenario', scenario: SAVED_SCENARIO } : SAVED_CANDIDATE ? { kind: 'candidate', candidate: SAVED_CANDIDATE } : { kind: 'free' })
   const [home, setHome] = useState(!linked)
   const [briefing, setBriefing] = useState<Scenario | null>(null)
   const [tour, setTour] = useState(false)
@@ -120,6 +126,9 @@ function App() {
   const [view, setView] = useState<PhoneView>('pays')
   /** L'avis de ministre ouvert en détail. */
   const [adviceOpen, setAdviceOpen] = useState<Advice | null>(null)
+  /** La présentation d'un candidat ouverte, et le comparateur des mandats. */
+  const [candidateBriefing, setCandidateBriefing] = useState<Candidate | null>(linkedCandidate ?? null)
+  const [compareOpen, setCompareOpen] = useState(false)
   const phone = usePhone()
   /** Sur téléphone, seul l'écran choisi est rendu (les autres coûteraient du calcul à chaque geste). */
   const shows = (v: PhoneView) => !phone || view === v
@@ -129,7 +138,7 @@ function App() {
   // Chaque changement de la partie est sauvegardé : on la retrouve en rouvrant le jeu.
   useEffect(() => {
     if (mode.kind !== 'myth') {
-      saveGame({ v: 1, mode: mode.kind === 'scenario' ? mode.scenario.id : 'free', decisions, events, year, seed, draft, handled, electionsSeen, sandbox })
+      saveGame({ v: 1, mode: mode.kind === 'scenario' ? mode.scenario.id : mode.kind === 'candidate' ? `candidat:${mode.candidate.id}` : 'free', decisions, events, year, seed, draft, handled, electionsSeen, sandbox })
     }
   }, [mode, decisions, events, year, seed, draft, handled, electionsSeen, sandbox])
   const whyInput = useMemo(() => ({ decisions, events, params: overrides }), [decisions, events, overrides])
@@ -185,6 +194,7 @@ function App() {
   const election = elections && isElectionYear(year) && year > START && !electionsSeen.includes(year) && !gameOver ? electionAt(s) : null
   const crisisPending = s.debtCrisis && !handled.includes(year) && !gameOver && !election
   const scenario = mode.kind === 'scenario' ? mode.scenario : null
+  const candidate = mode.kind === 'candidate' ? mode.candidate : null
   const evaluation = scenario ? evaluate(scenario, states) : null
   const scenarioOver = !!scenario && !!evaluation && (evaluation.finished || !!gameOver || (!!election && !election.won))
   const running = target !== null && year < target && !crisisPending && !gameOver && !election
@@ -222,7 +232,17 @@ function App() {
   const pop = popularity(s)
   const upcoming = elections ? nextElection(year) : null
   const eventsThisYear = events.filter((e) => e.year === year).map((e) => EVENTS.find((d) => d.id === e.id)!).filter(Boolean)
-  const news = headline(s, states.at(-2), elections, eventsThisYear)
+  // Un candidat vient d'être élu en 2027 : c'est une élection, pas une réélection.
+  const news =
+    candidate && year === MANDATE_START
+      ? {
+          year,
+          kicker: 'Présidentielle',
+          title: `${candidate.name} élu·e avec ${num(electionAt(s).vote, 1)} % des voix`,
+          subtitle: 'Un nouveau mandat commence : les Français attendent les promesses de campagne.',
+          tone: 'good' as const,
+        }
+      : headline(s, states.at(-2), elections, eventsThisYear)
 
   // Le capital politique : combien de réformes le Parlement et l'opinion acceptent cette année.
   const current = policyAt(decisions, year + 1)
@@ -251,7 +271,7 @@ function App() {
   }, [allStars])
 
   // Les succès : ceux de la partie en cours, plus ceux déjà gagnés. Les nouveaux s'affichent quelques secondes.
-  const earnedNow = ACHIEVEMENTS.filter((a) => a.check({ states, elections: mode.kind !== 'myth', lost: !!gameOver || (!!election && !election.won), stars: allStars, myths, openedModel })).map((a) => a.id)
+  const earnedNow = ACHIEVEMENTS.filter((a) => a.check({ states: candidate ? [states[0], ...states.filter((x) => x.year > MANDATE_START)] : states, elections: mode.kind !== 'myth', lost: !!gameOver || (!!election && !election.won), stars: allStars, myths, openedModel })).map((a) => a.id)
   const fresh = earnedNow.filter((id) => !seen.includes(id))
   const freshKey = fresh.join(',')
   const earned = [...new Set([...seen, ...earnedNow])]
@@ -277,21 +297,32 @@ function App() {
     }
   }
 
-  const begin = (next: Mode, eventsAtStart: FiredEvent[] = []) => {
+  const begin = (next: Mode, eventsAtStart: FiredEvent[] = [], options: { seed?: number; year?: number; electionsSeen?: number[] } = {}) => {
     setMode(next)
     setDecisions([])
     setEvents(eventsAtStart)
     setDraft({})
-    setYear(START)
+    setYear(options.year ?? START)
     setTarget(null)
     setVerdict(null)
     setHandled([])
     setSandbox(false)
-    setElectionsSeen([])
-    setSeed((x) => (Math.imul(x, 1103515245) + 12345) >>> 0)
+    setElectionsSeen(options.electionsSeen ?? [])
+    setSeed((x) => options.seed ?? (Math.imul(x, 1103515245) + 12345) >>> 0)
     setHome(false)
     setBriefing(null)
+    setCandidateBriefing(null)
+    setCompareOpen(false)
   }
+
+  // Un candidat prend ses fonctions après l'élection de 2027 : la France a déjà vécu 2026 et 2027 (événements tirés au sort).
+  const startCandidate = (c: Candidate) => {
+    const nextSeed = (Math.imul(seed, 1103515245) + 12345) >>> 0
+    begin({ kind: 'candidate', candidate: c }, eventsBeforeMandate(nextSeed), { seed: nextSeed, year: MANDATE_START, electionsSeen: [MANDATE_START] })
+  }
+
+  // Inscrire une promesse au programme de l'année : ses leviers s'ajoutent à la décision en préparation.
+  const applyPledge = (p: Pledge) => setDraft((d) => ({ ...d, ...promisePatch(p, { ...policyAt(decisions, year + 1), ...d }).patch }))
 
   const startScenario = (sc: Scenario) => begin({ kind: 'scenario', scenario: sc }, sc.events)
 
@@ -345,7 +376,7 @@ function App() {
       return next
     })
 
-  const last = scenario ? scenario.end : END
+  const last = scenario ? scenario.end : candidate ? MANDATE_END : END
   const advance = (years: number) => {
     if (overBudget) {
       return
@@ -362,7 +393,7 @@ function App() {
     }
   }
 
-  const reset = () => (scenario ? startScenario(scenario) : begin({ kind: 'free' }))
+  const reset = () => (scenario ? startScenario(scenario) : candidate ? startCandidate(candidate) : begin({ kind: 'free' }))
 
   const play = (m: Mission) => {
     setMissionsOpen(false)
@@ -590,6 +621,7 @@ function App() {
 
         {shows('pays') || shows('flux') ? (
           <section className="center">
+            {shows('pays') && candidate ? <PledgesPanel candidate={candidate} decisions={decisions} draft={draft} year={year} onApply={applyPledge} /> : null}
             {shows('pays') && scenario && evaluation ? <Objectives scenario={scenario} year={year} start={START} evaluation={evaluation} onAbandon={() => setHome(true)} /> : null}
             {shows('pays') ? <Newspaper headline={news} onWhy={year > START ? () => setWhy(true) : undefined} /> : null}
             {shows('pays') ? <Kpis states={states} base={base} changed={changed} onPick={(node) => openBrain({ focus: node })} /> : null}
@@ -907,7 +939,12 @@ function App() {
                 : 'Les Français ont choisi l’alternance. Votre popularité était trop basse : le climat social (baisse du niveau de vie, impôts, chômage, inflation, pauvreté, austérité) a pesé dans les urnes.'}
             </p>
             <div className="verdict-actions">
-              {election.won ? (
+              {candidate && election.year === MANDATE_END ? (
+                // Le mandat d'un candidat s'achève à cette élection, gagnée ou perdue : place au bilan.
+                <button type="button" className="primary big" onClick={() => setElectionsSeen((e) => [...e, election.year])}>
+                  Voir le bilan du mandat
+                </button>
+              ) : election.won ? (
                 <button type="button" className="primary big" onClick={() => setElectionsSeen((e) => [...e, election.year])}>
                   Entamer un nouveau mandat
                 </button>
@@ -1038,10 +1075,36 @@ function App() {
             setHome(false)
             openBrain({ focus: null })
           }}
+          onCandidate={setCandidateBriefing}
+          onCompare={() => setCompareOpen(true)}
         />
       ) : null}
 
       {briefing ? <Briefing scenario={briefing} best={allStars[briefing.id] ?? 0} onStart={() => startScenario(briefing)} onBack={() => setBriefing(null)} /> : null}
+
+      {candidateBriefing ? <CandidateBriefing candidate={candidateBriefing} onStart={() => startCandidate(candidateBriefing)} onBack={() => setCandidateBriefing(null)} /> : null}
+
+      {compareOpen ? (
+        <CompareMandates
+          onClose={() => setCompareOpen(false)}
+          onPick={(c) => {
+            setCompareOpen(false)
+            setCandidateBriefing(c)
+          }}
+        />
+      ) : null}
+
+      {candidate && year >= MANDATE_END && electionsSeen.includes(MANDATE_END) && !gameOver && !running && !home && !candidateBriefing && !compareOpen ? (
+        <MandateReport
+          candidate={candidate}
+          states={states}
+          base={base}
+          decisions={decisions}
+          onReplay={() => startCandidate(candidate)}
+          onCompare={() => setCompareOpen(true)}
+          onMenu={() => setHome(true)}
+        />
+      ) : null}
 
       {tour ? <Tour steps={tourSteps} onClose={() => setTour(false)} onStep={onTourStep} /> : null}
 
