@@ -121,6 +121,8 @@ type Carry = {
   deficitRatioBefore: number
   /** L'an dernier était une année de crise mondiale (récession ou choc de demande) : un déficit qui s'y creuse n'inquiète pas. */
   worldCrisis: boolean
+  /** La hausse du chômage d'équilibre laissée par des années de chômage élevé (hystérèse). */
+  unemploymentScar: number
   holders: Record<Holder, number>
   effectiveRate: number
   panic: number
@@ -228,6 +230,7 @@ function initialCarry(): Carry {
     deficitRatio: BASE.deficitRatio,
     deficitRatioBefore: BASE.deficitRatio,
     worldCrisis: false,
+    unemploymentScar: 0,
     holders: Object.fromEntries(HOLDERS.map((h) => [h, BASE.debt * BASE.holders[h]])) as Record<Holder, number>,
     effectiveRate: BASE.effectiveRate,
     panic: 0,
@@ -452,6 +455,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const recentMigrants = init ? prev.recentMigrants : prev.recentMigrants * 0.8 + migrants
   const welcomeGap = (1 - integrationCoverage) / (1 - integrationOf(REF.integration))
   naturalUnemployment += P.migrantNairu * (recentMigrants - initialCarry().recentMigrants) * welcomeGap
+  // Les cicatrices du chômage : quand il reste longtemps au-dessus de son niveau d'équilibre, les chômeurs de longue durée
+  // décrochent et le chômage d'équilibre monte (hystérèse) ; la trace s'efface lentement quand l'emploi repart.
+  const unemploymentScar = init ? 0 : prev.unemploymentScar * (1 - P.hysteresisDecay) + P.hysteresis * Math.max(0, prev.unemployment - naturalUnemployment - prev.unemploymentScar)
+  naturalUnemployment += unemploymentScar
   const extraArrivals = migrationLegal + migrationIrregular - (REF.netMigration + irregularStart)
   const births = BASE.births
   // Les jeunes qui arrivent à 20 ans reflètent les naissances d'il y a 20 ans : leur nombre baisse, puis rejoint celui des naissances d'aujourd'hui.
@@ -517,7 +524,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       P.regulationProductivity * deregulation -
       P.ownershipEfficiency * ownershipStep -
       // Les droits de douane renchérissent les biens intermédiaires importés et abritent les moins efficaces : la production en pâtit.
-      P.tariffSupplyCost * (policy.tariffs - prev.tariffs) +
+      P.tariffSupplyCost * (policy.tariffs - prev.tariffs) -
+      // Une crise bancaire laisse une perte de production durable (Cerra et Saxena, 2008) : la productivité ne rattrape pas tout.
+      P.crisisScar * world.bankLoss +
       world.productivity -
       // Les dégâts climatiques détruisent une part de la capacité de production.
       damageStep
@@ -1258,6 +1267,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     deficitRatio: deficit / gdp,
     deficitRatioBefore: prev.deficitRatio,
     worldCrisis: world.demandShock > 0 || world.growth < 0,
+    unemploymentScar,
     holders,
     effectiveRate,
     panic,

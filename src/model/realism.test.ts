@@ -158,3 +158,18 @@ describe('les prêteurs et le budget', () => {
     expect(stimulus[2].rate - base[2].rate).toBeLessThan(0.002)
   })
 })
+
+describe('les cicatrices des crises', () => {
+  it('une crise bancaire laisse une perte de production durable (Cerra et Saxena, 2008)', () => {
+    const base = simulate({ decisions: [], events: [], until: 2035 })
+    const crisis = simulate({ decisions: [], events: [{ year: 2027, id: 'financial-crisis' }], until: 2035 })
+    expect(crisis.at(-1)!.gdpReal / base.at(-1)!.gdpReal - 1).toBeLessThan(-0.01)
+  })
+
+  it('des années de chômage élevé laissent un chômage d’équilibre plus haut (hystérèse, Ball 2014)', () => {
+    const base = simulate({ decisions: [], events: [], until: 2036 })
+    // Une récession longue, puis la reprise : le chômage ne revient pas tout de suite à son niveau.
+    const slump = simulate({ decisions: [], events: [{ year: 2027, id: 'recession' }, { year: 2028, id: 'financial-crisis' }], until: 2036 })
+    expect(slump.at(-1)!.unemployment - base.at(-1)!.unemployment).toBeGreaterThan(0.001)
+  })
+})

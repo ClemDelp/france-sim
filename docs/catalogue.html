@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 449 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 452 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (449)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (452)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -2257,6 +2257,27 @@
   <td>0,004<br /><small>part par million</small><br /><small>plage 0,005 à 0,02</small></td>
   <td><span class="badge estime">estimation</span></td>
   <td><small>INSEE, ministère de l’Intérieur (activité, emploi et chômage des immigrés, 2014-2024), CEPII (La Lettre n° 347, 2014).</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="hysteresis chômage d’équilibre ajouté par chaque point de chômage au-dessus de l’équilibre emploi les chômeurs de longue durée perdent le contact avec l’emploi : après la grande récession, le chômage d’équilibre et la production potentielle des pays de l’ocde ont été durablement atteints, d’autant plus que la récession avait été profonde. un point de chômage en trop pendant un an laisse 0,2 point de chômage d’équilibre en plus (la valeur qui reproduit le mieux le chômage français de 2009-2015 dans le rejeu de l’histoire). blanchard et summers (1986), ball (« long-term damage from the great recession in oecd countries », 2014).">
+  <td><code>hysteresis</code><br /><small>Emploi</small></td>
+  <td><strong>Chômage d’équilibre ajouté par chaque point de chômage au-dessus de l’équilibre</strong><br /><small>Les chômeurs de longue durée perdent le contact avec l’emploi : après la Grande Récession, le chômage d’équilibre et la production potentielle des pays de l’OCDE ont été durablement atteints, d’autant plus que la récession avait été profonde. Un point de chômage en trop pendant un an laisse 0,2 point de chômage d’équilibre en plus (la valeur qui reproduit le mieux le chômage français de 2009-2015 dans le rejeu de l’histoire).</small></td>
+  <td>0,2<br /><small>part par point et par an</small><br /><small>plage 0,05 à 0,3</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Blanchard et Summers (1986), Ball (« Long-term damage from the Great Recession in OECD countries », 2014).</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="hysteresisdecay vitesse à laquelle s’efface la trace du chômage de longue durée emploi quand l’emploi repart, les chômeurs de longue durée retrouvent peu à peu un travail : la cicatrice s’efface en quelques années, sans disparaître tout de suite. ball (2014).">
+  <td><code>hysteresisDecay</code><br /><small>Emploi</small></td>
+  <td><strong>Vitesse à laquelle s’efface la trace du chômage de longue durée</strong><br /><small>Quand l’emploi repart, les chômeurs de longue durée retrouvent peu à peu un travail : la cicatrice s’efface en quelques années, sans disparaître tout de suite.</small></td>
+  <td>0,25<br /><small>part par an</small><br /><small>plage 0,1 à 0,5</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Ball (2014).</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="crisisscar perte durable de production après une crise bancaire crise de la dette après une crise bancaire, la production ne retrouve pas sa tendance d’avant : la perte reste d’environ 7,5 % en moyenne (cerra et saxena), dont une partie vient de la demande, déjà comptée ailleurs. un krach qui détruit 30 % des fonds propres des banques retire ici 1,5 % de productivité, durablement. cerra et saxena (« growth dynamics: the myth of economic recovery », american economic review, 2008).">
+  <td><code>crisisScar</code><br /><small>Crise de la dette</small></td>
+  <td><strong>Perte durable de production après une crise bancaire</strong><br /><small>Après une crise bancaire, la production ne retrouve pas sa tendance d’avant : la perte reste d’environ 7,5 % en moyenne (Cerra et Saxena), dont une partie vient de la demande, déjà comptée ailleurs. Un krach qui détruit 30 % des fonds propres des banques retire ici 1,5 % de productivité, durablement.</small></td>
+  <td>0,05<br /><small>part de productivité par part de fonds propres perdue</small><br /><small>plage 0,02 à 0,1</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Cerra et Saxena (« Growth dynamics: the myth of economic recovery », American Economic Review, 2008).</small></td>
 </tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="migrationanger tensions sociales par 100 000 arrivées de plus qu’en 2025, quand l’accueil est insuffisant mécontentement social ce n’est pas la présence des immigrés qui crée la tension, c’est un accueil débordé (campements, hébergement saturé) et son exploitation politique. ">
   <td><code>migrationAnger</code><br /><small>Mécontentement social</small></td>

@@ -285,7 +285,9 @@ describe('constats du playtest : le modèle reste cohérent', () => {
 
     it('la planche à billets coûte en compétitivité, sans provoquer une dépression', () => {
     const m = play({ monetization: 1 }, 2036)
-    expect(year(m, 2036).unemployment - year(base, 2036).unemployment).toBeLessThan(0.05)
+    // Le chômage monte durablement (compétitivité perdue, puis hystérèse), mais sans basculer dans la dépression.
+    expect(m.some((x) => x.ending === 'depression')).toBe(false)
+    expect(year(m, 2036).unemployment - year(base, 2036).unemployment).toBeLessThan(0.09)
     expect(year(m, 2028).inflation).toBeGreaterThan(year(base, 2028).inflation)
   })
 
