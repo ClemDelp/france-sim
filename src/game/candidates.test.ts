@@ -123,3 +123,24 @@ describe('une annulation de dette promise, une fois faite, reste tenue', () => {
     expect(promiseStatus(p, BASE_POLICY, votedPolicy(decisions, 2030))).toBe('tenue')
   })
 })
+
+describe('chaque promesse chiffrée coûte ou rapporte ce que le candidat annonce (audit de cohérence)', () => {
+  const base = simulate({ decisions: [], events: [], until: 2027 })[2]
+  const priced = CANDIDATES.flatMap((c) => c.promises.filter((p) => isPlayable(p) && p.measure?.param?.unit === 'Md€ / an').map((p) => [`${c.name} · ${p.measure!.name}`, p] as const))
+
+  it.each(priced)('%s', (_, p) => {
+    const amount = p.amount ?? p.measure!.param!.default
+    const s = simulate({ decisions: [{ year: 2027, patch: promisePatch(p, BASE_POLICY).patch }], events: [], until: 2027 })[2]
+    // Le déficit bouge du montant annoncé, un peu moins une fois comptés les effets en retour sur l'économie (60 à 115 %).
+    const ratio = Math.abs(s.deficit - base.deficit) / amount
+    expect(ratio).toBeGreaterThan(0.6)
+    expect(ratio).toBeLessThan(1.15)
+  })
+
+  it('un ISF qui remplace l’IFI ne rapporte que le gain net (≈ 2,7 Md€ : 5,1 en 2017 moins 2,35 d’IFI)', () => {
+    const p = CANDIDATES.find((c) => c.id === 'melenchon')!.promises.find((x) => x.measure?.id === 'isf')!
+    const s = simulate({ decisions: [{ year: 2027, patch: promisePatch(p, BASE_POLICY).patch }], events: [], until: 2027 })[2]
+    expect(s.revenue - base.revenue).toBeGreaterThan(1.5)
+    expect(s.revenue - base.revenue).toBeLessThan(4)
+  })
+})
