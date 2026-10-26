@@ -1,10 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { ADVISORS, type Advice, type Preview } from '../../game/advisors'
 import { chanceOf, EVENTS } from '../../model/events'
-import type { FiredEvent, YearState } from '../../model/types'
-import type { Headline } from '../../game/headlines'
+import type { EventDef, FiredEvent, YearState } from '../../model/types'
+import { briefs, cartoon, type Headline } from '../../game/headlines'
 import { onTrack, type evaluate, type Scenario } from '../../game/scenarios'
 import { num, sbn } from '../format'
+import { Illustration } from './illustrations'
 
 /** La popularité et la prochaine élection, dans l'en-tête. */
 export function Popularity({ value, nextElection, year }: { value: number; nextElection: number | null; year: number }) {
@@ -83,22 +84,89 @@ export function Advisors({ advice }: { advice: Advice[] }) {
 }
 
 /** La une du journal de l'année. */
-export function Newspaper({ headline, onWhy }: { headline: Headline; onWhy?: () => void }) {
+export function Newspaper({ headline, state: s, prev, start, events = [], onWhy }: { headline: Headline; state: YearState; prev?: YearState; start: YearState; events?: EventDef[]; onWhy?: () => void }) {
+  const date = new Date(headline.year, 11, 31).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  // Le prix du journal suit l'inflation depuis 2025.
+  const price = num(1.8 * (s.priceLevel / start.priceLevel), 2)
+  const items = briefs(s, prev, events)
+  const joke = cartoon(s, start)
   return (
     <article key={headline.year} className={`newspaper news-${headline.tone}`}>
-      <header>
-        <span>Le Quotidien de la République</span>
-        <span>{headline.year}</span>
-      </header>
-      <p className="news-kicker">{headline.kicker}</p>
-      <h2>{headline.title}</h2>
-      <p className="news-sub">{headline.subtitle}</p>
-      {onWhy ? (
-        <button type="button" className="news-why" onClick={onWhy}>
-          🔍 Pourquoi en est-on là ?
-        </button>
-      ) : null}
+      <div className="news-ears">
+        <span>N° {num((headline.year - 1944) * 312, 0)}</span>
+        <span>Édition nationale</span>
+        <span>{price} €</span>
+      </div>
+      <header className="news-masthead">Le Quotidien de la République</header>
+      <div className="news-dateline">
+        <span>{date.charAt(0).toUpperCase() + date.slice(1)}</span>
+        <span>Liberté · Égalité · Fraternité</span>
+      </div>
+      <div className="news-body">
+        <div className="news-main">
+          <p className="news-kicker">{headline.kicker}</p>
+          <h2>{headline.title}</h2>
+          <figure className="news-figure">
+            <Illustration art={headline.art} label={headline.title} />
+          </figure>
+          <p className="news-sub">{headline.subtitle}</p>
+          {onWhy ? (
+            <button type="button" className="news-why" onClick={onWhy}>
+              🔍 Pourquoi en est-on là ?
+            </button>
+          ) : null}
+        </div>
+        <aside className="news-side">
+          <h3>En bref</h3>
+          <ul>
+            {items.map((b) => (
+              <li key={b.label} className={b.good === null ? '' : b.good ? 'good' : 'bad'}>
+                <span>{b.label}</span>
+                {b.value ? (
+                  <strong>
+                    {b.trend === 'up' ? '▲ ' : b.trend === 'down' ? '▼ ' : ''}
+                    {b.value}
+                  </strong>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          <figure className="news-cartoon">
+            <Cartoon />
+            <figcaption>
+              <span>— {joke.them}</span>
+              <span>— {joke.you}</span>
+              <small>Dessin de Plantoux</small>
+            </figcaption>
+          </figure>
+        </aside>
+      </div>
     </article>
+  )
+}
+
+/** Le dessin du jour : un conseiller affolé, un président imperturbable. */
+function Cartoon() {
+  return (
+    <svg viewBox="0 0 160 70" aria-hidden="true" fill="none" stroke="#1c1a17" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 66 H156" />
+      <g transform="translate(46 0)">
+        <circle cx="0" cy="22" r="9" fill="#f4efe3" />
+        <path d="M-4 18 v2 M4 18 v2 M-4 27 q4 -3 8 0" />
+        <path d="M-9 14 q2 -8 9 -8 q8 0 9 8" />
+        <path d="M0 31 V50 M0 36 L-14 24 M0 36 L14 26 M0 50 L-7 66 M0 50 L7 66" />
+        <path d="M14 26 l6 -8 h8 v10 h-8 Z" fill="#f4efe3" />
+        <path d="M-18 20 l-4 -4 M-18 26 h-6" />
+      </g>
+      <g transform="translate(112 0)">
+        <circle cx="0" cy="22" r="10" fill="#f4efe3" />
+        <path d="M-4 20 h2 M3 20 h2 M-3 27 q3 2 6 0" />
+        <path d="M-10 18 q0 -12 10 -12 q10 0 10 12 q-4 -6 -10 -6 q-6 0 -10 6 Z" fill="#1c1a17" />
+        <path d="M-12 34 h24 l2 32 h-28 Z" fill="#1c1a17" />
+        <path d="M0 34 l-2 6 l2 14 l2 -14 Z" fill="#f4efe3" />
+        <path d="M-12 38 L-20 52 M12 38 L18 50 l-4 4" />
+      </g>
+    </svg>
   )
 }
 

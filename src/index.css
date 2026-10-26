@@ -2363,20 +2363,47 @@ button.brand {
   }
 }
 
-.newspaper header {
+.news-ears,
+.news-dateline {
   display: flex;
   justify-content: space-between;
-  padding-bottom: 4px;
-  border-bottom: 3px double #1c1a17;
-  font-family: 'Playfair Display', Georgia, serif;
-  font-weight: 900;
-  font-size: 0.85rem;
+  gap: 8px;
+  font-family: Georgia, serif;
+  font-size: 0.68rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  color: #3d3a33;
+}
+
+.news-masthead {
+  margin: 2px 0 0;
+  text-align: center;
+  font-family: 'UnifrakturMaguntia', 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.5rem, 3.4vw, 2.3rem);
+  line-height: 1.1;
+  color: #1c1a17;
+}
+
+.news-dateline {
+  margin-bottom: 8px;
+  padding: 3px 0;
+  border-top: 1px solid #1c1a17;
+  border-bottom: 3px double #1c1a17;
+}
+
+.news-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 34%);
+  gap: 14px;
+}
+
+.news-side {
+  padding-left: 12px;
+  border-left: 1px solid #b9b09c;
 }
 
 .news-kicker {
-  margin: 8px 0 2px;
+  margin: 0 0 2px;
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -2391,15 +2418,134 @@ button.brand {
 .newspaper h2 {
   margin: 0;
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.45rem;
-  line-height: 1.15;
+  font-size: 1.55rem;
+  line-height: 1.12;
+}
+
+.news-figure {
+  margin: 8px 0 6px;
+  padding: 6px;
+  border: 1px solid #b9b09c;
+  background: #ece5d3;
+}
+
+.news-art {
+  display: block;
+  width: 100%;
+  max-height: 170px;
 }
 
 .news-sub {
   margin: 4px 0 0;
   font-family: Georgia, serif;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
+  line-height: 1.4;
   color: #3d3a33;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.news-sub::first-letter {
+  float: left;
+  margin: 3px 6px 0 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.6rem;
+  font-weight: 900;
+  line-height: 0.8;
+  color: #1c1a17;
+}
+
+.news-side h3 {
+  margin: 0 0 4px;
+  padding-bottom: 2px;
+  border-bottom: 2px solid #1c1a17;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.news-side ul {
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+  font-family: Georgia, serif;
+  font-size: 0.8rem;
+}
+
+.news-side li {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 3px 0;
+  border-bottom: 1px dotted #b9b09c;
+}
+
+.news-side li strong {
+  white-space: nowrap;
+}
+
+.news-side li.good strong {
+  color: #1d6b3f;
+}
+
+.news-side li.bad strong {
+  color: #8a1c1c;
+}
+
+.news-cartoon {
+  margin: 0;
+  padding: 6px;
+  border: 1px solid #1c1a17;
+  background: #fbf8f0;
+}
+
+.news-cartoon svg {
+  display: block;
+  width: 100%;
+}
+
+.news-cartoon figcaption {
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+  font-family: 'Permanent Marker', 'Comic Sans MS', cursive;
+  font-size: 0.74rem;
+  line-height: 1.25;
+}
+
+.news-cartoon small {
+  justify-self: end;
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 0.66rem;
+  color: #6b6455;
+}
+
+@media (max-width: 640px) {
+  .news-body {
+    grid-template-columns: 1fr;
+  }
+
+  .news-side {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid #b9b09c;
+    padding-top: 6px;
+  }
+
+  .news-ears span:nth-child(2),
+  .news-dateline span:last-child {
+    display: none;
+  }
+
+  .news-art {
+    max-height: 110px;
+  }
+
+  .news-cartoon svg {
+    max-height: 76px;
+  }
 }
 
 /* — Objectifs du scénario */

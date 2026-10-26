@@ -242,6 +242,7 @@ function App() {
           title: `${candidate.name} élu·e avec ${num(electionAt(s).vote, 1)} % des voix`,
           subtitle: 'Un nouveau mandat commence : les Français attendent les promesses de campagne.',
           tone: 'good' as const,
+          art: 'urne' as const,
         }
       : headline(s, states.at(-2), elections, eventsThisYear)
 
@@ -663,7 +664,7 @@ function App() {
           <section className="center">
             {shows('pays') && candidate ? <PledgesPanel candidate={candidate} decisions={decisions} draft={draft} year={year} capital={capital} onApply={applyPledge} onRemove={removePledge} onShow={(p) => showLevers(pledgeKeys(p))} /> : null}
             {shows('pays') && scenario && evaluation ? <Objectives scenario={scenario} year={year} start={START} evaluation={evaluation} onAbandon={() => setHome(true)} /> : null}
-            {shows('pays') ? <Newspaper headline={news} onWhy={year > START ? () => setWhy(true) : undefined} /> : null}
+            {shows('pays') ? <Newspaper headline={news} state={s} prev={states.at(-2)} start={states[0]} events={eventsThisYear} onWhy={year > START ? () => setWhy(true) : undefined} /> : null}
             {shows('pays') ? <Kpis states={states} base={base} changed={changed} onPick={(node) => openBrain({ focus: node })} /> : null}
             {shows('flux') ? (
               <>
