@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 447 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 449 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (447)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (449)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -1578,6 +1578,20 @@
   <td>3<br /><small>points</small></td>
   <td><span class="badge estime">estimé</span></td>
   <td><small>BCE, écarts de taux souverains 2010-2012</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="deficitjumppremium panique des prêteurs quand le déficit dérape soudain crise de la dette les marchés sanctionnent un dérapage budgétaire décidé en temps normal, pas seulement un déficit élevé : au royaume-uni, le « mini-budget » de septembre 2022 (≈ 45 md£ de baisses d’impôts non financées, ≈ 1,8 % du pib) a fait bondir le taux à 10 ans d’environ 1,3 point en quelques jours et emporté la première ministre. en italie, en 2018, un budget au-delà des engagements (déficit visé de 2,4 % au lieu de 0,8 %) a porté l’écart avec l’allemagne d’environ 1,3 à plus de 3 points. effet appliqué l’année suivant le dérapage, puis qui s’estompe comme toute panique. banque d’angleterre (rapport sur la stabilité financière, octobre 2022), banca d’italia, écarts btp-bund 2018.">
+  <td><code>deficitJumpPremium</code><br /><small>Crise de la dette</small></td>
+  <td><strong>Panique des prêteurs quand le déficit dérape soudain</strong><br /><small>Les marchés sanctionnent un dérapage budgétaire décidé en temps normal, pas seulement un déficit élevé : au Royaume-Uni, le « mini-budget » de septembre 2022 (≈ 45 Md£ de baisses d’impôts non financées, ≈ 1,8 % du PIB) a fait bondir le taux à 10 ans d’environ 1,3 point en quelques jours et emporté la Première ministre. En Italie, en 2018, un budget au-delà des engagements (déficit visé de 2,4 % au lieu de 0,8 %) a porté l’écart avec l’Allemagne d’environ 1,3 à plus de 3 points. Effet appliqué l’année suivant le dérapage, puis qui s’estompe comme toute panique.</small></td>
+  <td>0,6<br /><small>points par point de PIB</small><br /><small>plage 0,3 à 1</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Banque d’Angleterre (rapport sur la stabilité financière, octobre 2022), Banca d’Italia, écarts BTP-Bund 2018.</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="hypothese" data-text="deficitjumpthreshold dérapage du déficit toléré par les prêteurs en un an crise de la dette un déficit qui bouge d’un demi-point d’une année sur l’autre ne surprend personne : au-delà, les prêteurs y voient un changement de cap. ">
+  <td><code>deficitJumpThreshold</code><br /><small>Crise de la dette</small></td>
+  <td><strong>Dérapage du déficit toléré par les prêteurs en un an</strong><br /><small>Un déficit qui bouge d’un demi-point d’une année sur l’autre ne surprend personne : au-delà, les prêteurs y voient un changement de cap.</small></td>
+  <td>1<br /><small>points de PIB</small><br /><small>plage 0,3 à 1</small></td>
+  <td><span class="badge hypothese">hypothèse</span></td>
+  <td><small></small></td>
 </tr>
 <tr data-file="comportements" data-reliability="estimation" data-text="retirementreformanger colère causée par un recul de l’âge de départ à la retraite mécontentement social la colère éclate au vote de la réforme, pas quand l’âge effectif bouge des années plus tard. chaque recul de deux ans a mis le pays dans la rue pendant des mois : 1,23 million de manifestants le 12 octobre 2010 (60 à 62 ans), 1,27 million le 31 janvier et 1,28 million le 7 mars 2023 (62 à 64 ans), selon le ministère de l’intérieur. deux ans de recul pèsent autant qu’une crise de la dette (0,3) : la popularité perd environ 8 points l’année du vote, puis la colère s’estompe. ministère de l’intérieur (chiffres des manifestations du 12 octobre 2010, des 31 janvier et 7 mars 2023), loi de 2023 (réforme des retraites).">
   <td><code>retirementReformAnger</code><br /><small>Mécontentement social</small></td>

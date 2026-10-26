@@ -117,6 +117,10 @@ type Carry = {
   retirementAge: number
   debtRatio: number
   deficitRatio: number
+  /** Le déficit de l'année d'avant (part du PIB) : un dérapage soudain inquiète plus qu'un déficit installé. */
+  deficitRatioBefore: number
+  /** L'an dernier était une année de crise mondiale (récession ou choc de demande) : un déficit qui s'y creuse n'inquiète pas. */
+  worldCrisis: boolean
   holders: Record<Holder, number>
   effectiveRate: number
   panic: number
@@ -222,6 +226,8 @@ function initialCarry(): Carry {
     retirementAge: BASE.retirementAgeEffective,
     debtRatio: BASE.debt / BASE.gdp,
     deficitRatio: BASE.deficitRatio,
+    deficitRatioBefore: BASE.deficitRatio,
+    worldCrisis: false,
     holders: Object.fromEntries(HOLDERS.map((h) => [h, BASE.debt * BASE.holders[h]])) as Record<Holder, number>,
     effectiveRate: BASE.effectiveRate,
     panic: 0,
@@ -284,6 +290,11 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const holders = { ...prev.holders }
   // Une crise politique (censure, dissolution) inquiète aussi les prêteurs : la prime de risque monte, puis l'inquiétude s'estompe.
   let panic = prev.panic * P.panicMemory + world.panic + P.instabilityPremium * world.instability
+  // Un déficit qui dérape soudain, en temps normal, fait paniquer les prêteurs (Royaume-Uni 2022, Italie 2018) ;
+  // en pleine crise mondiale (2009, 2020), tous les déficits se creusent ensemble et les prêteurs le comprennent.
+  if (!init && !prev.worldCrisis) {
+    panic += P.deficitJumpPremium * Math.max(0, (prev.deficitRatio - prev.deficitRatioBefore) * 100 - P.deficitJumpThreshold)
+  }
   let shun = prev.shun * P.shunMemory
   // Mémoire d'un défaut : les prêteurs se souviennent plusieurs années (écarts de taux élevés 3 à 5 ans).
   let stigma = prev.stigma * P.stigmaMemory
@@ -1245,6 +1256,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     retirementAge,
     debtRatio: debt / gdp,
     deficitRatio: deficit / gdp,
+    deficitRatioBefore: prev.deficitRatio,
+    worldCrisis: world.demandShock > 0 || world.growth < 0,
     holders,
     effectiveRate,
     panic,

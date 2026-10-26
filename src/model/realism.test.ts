@@ -143,3 +143,18 @@ describe('audit de cohérence : les probabilités des événements', () => {
     expect(firstTwo / crowded).toBeLessThan(0.7)
   })
 })
+
+describe('les prêteurs et le budget', () => {
+  it('des baisses d’impôts non financées, en temps normal, font bondir les taux (Royaume-Uni 2022, Italie 2018)', () => {
+    const base = simulate({ decisions: [], events: [], until: 2028 })
+    // ≈ 2 % du PIB de CSG en moins, sans économies en face.
+    const truss = simulate({ decisions: [{ year: 2026, patch: { csg: BASE_POLICY.csg - 0.035 } }], events: [], until: 2028 })
+    expect(truss[2].rate - base[2].rate).toBeGreaterThan(0.004)
+  })
+
+  it('en pleine crise mondiale, un déficit qui se creuse n’affole pas les prêteurs (2009, 2020)', () => {
+    const base = simulate({ decisions: [], events: [{ year: 2026, id: 'pandemic' }], until: 2028 })
+    const stimulus = simulate({ decisions: [{ year: 2026, patch: { investment: BASE_POLICY.investment + 20 } }], events: [{ year: 2026, id: 'pandemic' }], until: 2028 })
+    expect(stimulus[2].rate - base[2].rate).toBeLessThan(0.002)
+  })
+})

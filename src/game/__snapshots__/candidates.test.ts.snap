@@ -62,10 +62,10 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Gabr
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Jean-Luc Méluchon : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 6.7,
+  "chômage": 6.8,
   "croissance": 0.3,
-  "dette": 122,
-  "déficit": 9.1,
+  "dette": 123,
+  "déficit": 9.3,
   "fin": "réélu·e",
   "inflation": 3,
   "pauvreté": 13.7,
