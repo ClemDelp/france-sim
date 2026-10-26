@@ -2,58 +2,58 @@
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Bruno Retaillot : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 6.9,
+  "chômage": 6.8,
   "croissance": 1.1,
-  "dette": 126,
-  "déficit": 4.5,
+  "dette": 125,
+  "déficit": 4.3,
   "fin": "réélu·e",
-  "inflation": 1.9,
+  "inflation": 2,
   "pauvreté": 15.7,
   "popularité": 42,
   "promessesAppliquées": "8 / 8",
-  "émissions": 363,
+  "émissions": 364,
 }
 `;
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Fabien Rousselet : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 5.7,
-  "croissance": 0.2,
-  "dette": 140,
-  "déficit": 7.8,
+  "chômage": 5.5,
+  "croissance": 0.4,
+  "dette": 137,
+  "déficit": 7.4,
   "fin": "réélu·e",
-  "inflation": 3,
-  "pauvreté": 14.7,
-  "popularité": 64,
+  "inflation": 3.2,
+  "pauvreté": 14.8,
+  "popularité": 63,
   "promessesAppliquées": "8 / 8",
-  "émissions": 352,
+  "émissions": 353,
 }
 `;
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > François Ruffino : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 6.7,
+  "chômage": 6.5,
   "croissance": 0.6,
-  "dette": 129,
-  "déficit": 6,
+  "dette": 127,
+  "déficit": 5.7,
   "fin": "réélu·e",
-  "inflation": 2.3,
+  "inflation": 2.5,
   "pauvreté": 14.9,
   "popularité": 59,
   "promessesAppliquées": "3 / 3",
-  "émissions": 358,
+  "émissions": 359,
 }
 `;
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Gabriel Atoll : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 7.1,
+  "chômage": 7,
   "croissance": 1.1,
   "dette": 123,
   "déficit": 4.2,
   "fin": "réélu·e",
   "inflation": 2,
-  "pauvreté": 16,
+  "pauvreté": 15.9,
   "popularité": 46,
   "promessesAppliquées": "4 / 4",
   "émissions": 362,
@@ -63,13 +63,13 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Gabr
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Jean-Luc Méluchon : le modèle reste sain, photo de fin de mandat 1`] = `
 {
   "chômage": 6.7,
-  "croissance": -0.1,
-  "dette": 123,
-  "déficit": 9.3,
+  "croissance": 0.3,
+  "dette": 122,
+  "déficit": 9.1,
   "fin": "réélu·e",
-  "inflation": 3.1,
+  "inflation": 3,
   "pauvreté": 13.7,
-  "popularité": 68,
+  "popularité": 67,
   "promessesAppliquées": "12 / 12",
   "émissions": 360,
 }
@@ -79,14 +79,14 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Mari
 {
   "chômage": 6.2,
   "croissance": 0.5,
-  "dette": 131,
-  "déficit": 5.8,
+  "dette": 128,
+  "déficit": 5.3,
   "fin": "réélu·e",
-  "inflation": 2.4,
+  "inflation": 2.5,
   "pauvreté": 15.3,
-  "popularité": 51,
+  "popularité": 50,
   "promessesAppliquées": "8 / 8",
-  "émissions": 359,
+  "émissions": 360,
 }
 `;
 
@@ -95,24 +95,24 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Mari
   "chômage": 6.6,
   "croissance": 0.4,
   "dette": 131,
-  "déficit": 6.9,
+  "déficit": 6.7,
   "fin": "réélu·e",
   "inflation": 2.6,
-  "pauvreté": 14.9,
-  "popularité": 60,
+  "pauvreté": 15,
+  "popularité": 59,
   "promessesAppliquées": "6 / 6",
-  "émissions": 362,
+  "émissions": 361,
 }
 `;
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Raphaël Glucosmann : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 7,
-  "croissance": 1,
-  "dette": 126,
-  "déficit": 5.1,
+  "chômage": 6.9,
+  "croissance": 0.9,
+  "dette": 124,
+  "déficit": 5,
   "fin": "réélu·e",
-  "inflation": 2.1,
+  "inflation": 2.2,
   "pauvreté": 15,
   "popularité": 59,
   "promessesAppliquées": "5 / 5",
@@ -122,16 +122,16 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Raph
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Édouard Philippus : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 7.5,
-  "croissance": 1.1,
-  "dette": 129,
-  "déficit": 5.7,
+  "chômage": 7.4,
+  "croissance": 1,
+  "dette": 128,
+  "déficit": 5.5,
   "fin": "réélu·e",
-  "inflation": 2,
+  "inflation": 2.1,
   "pauvreté": 14.7,
-  "popularité": 64,
+  "popularité": 63,
   "promessesAppliquées": "6 / 6",
-  "émissions": 359,
+  "émissions": 360,
 }
 `;
 
@@ -139,12 +139,12 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Éri
 {
   "chômage": 6.4,
   "croissance": 0.8,
-  "dette": 129,
-  "déficit": 5.5,
+  "dette": 128,
+  "déficit": 5.4,
   "fin": "réélu·e",
-  "inflation": 2.1,
+  "inflation": 2.2,
   "pauvreté": 15.3,
-  "popularité": 59,
+  "popularité": 58,
   "promessesAppliquées": "4 / 4",
   "émissions": 357,
 }

@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 446 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 447 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (446)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (447)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -1725,6 +1725,13 @@
   <td>0,3<br /><small>sensibilité</small></td>
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small>Kleven, Landais, Saez (2013)</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="toptaxbase part des revenus des plus aisés touchée par une surtaxe d’impôt sur le revenu finances publiques une surtaxe d’impôt sur le revenu ne touche ni les dividendes (prélèvement forfaitaire unique depuis 2018) ni la part non imposable des revenus : un point rapporte environ 4 à 5 md€, pas 9 (les 10 % les plus aisés déclarent environ 375 md€ de revenus imposables). insee (revenus des ménages par décile), dgfip (impôt sur le revenu), audit de cohérence du modèle.">
+  <td><code>topTaxBase</code><br /><small>Finances publiques</small></td>
+  <td><strong>Part des revenus des plus aisés touchée par une surtaxe d’impôt sur le revenu</strong><br /><small>Une surtaxe d’impôt sur le revenu ne touche ni les dividendes (prélèvement forfaitaire unique depuis 2018) ni la part non imposable des revenus : un point rapporte environ 4 à 5 Md€, pas 9 (les 10 % les plus aisés déclarent environ 375 Md€ de revenus imposables).</small></td>
+  <td>0,5<br /><small>part</small><br /><small>plage 0,35 à 0,7</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>INSEE (revenus des ménages par décile), DGFiP (impôt sur le revenu), audit de cohérence du modèle.</small></td>
 </tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="unrestmemory mémoire du mécontentement mécontentement social part de la colère d’une année qui reste l’année suivante. ">
   <td><code>unrestMemory</code><br /><small>Mécontentement social</small></td>
