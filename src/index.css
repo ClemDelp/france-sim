@@ -3372,8 +3372,13 @@ input[type='range']:disabled {
   font-weight: 900;
   font-size: 0.8rem;
   letter-spacing: 0.06em;
-  padding: 4px 0;
-  opacity: 0.92;
+  height: 26px;
+  line-height: 26px;
+}
+
+/* Le bandeau prend sa place sous l'en-tête : il pousse le contenu au lieu de le recouvrir. */
+.top:has(.amb-panic) {
+  margin-bottom: 26px;
 }
 
 .amb-panic span {
@@ -3399,9 +3404,6 @@ input[type='range']:disabled {
   }
   .sign span {
     font-size: 0.7rem;
-  }
-  .amb-panic {
-    top: 0;
   }
 }
 
