@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 443 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 445 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (443)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (445)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -1501,6 +1501,20 @@
   <td>0,54<br /><small>sensibilité</small></td>
   <td><span class="badge estime">estimé</span></td>
   <td><small></small></td>
+</tr>
+<tr data-file="comportements" data-reliability="mesure" data-text="noneuimportshare part des importations venant de hors de l’union européenne commerce un droit de douane national ne touche que les importations hors ue (le marché unique reste ouvert) : un peu moins de la moitié de nos achats à l’étranger. douanes (le chiffre du commerce extérieur), insee.">
+  <td><code>nonEuImportShare</code><br /><small>Commerce</small></td>
+  <td><strong>Part des importations venant de hors de l’Union européenne</strong><br /><small>Un droit de douane national ne touche que les importations hors UE (le marché unique reste ouvert) : un peu moins de la moitié de nos achats à l’étranger.</small></td>
+  <td>0,45<br /><small>part</small><br /><small>plage 0,4 à 0,5</small></td>
+  <td><span class="badge mesure">mesuré</span></td>
+  <td><small>Douanes (le chiffre du commerce extérieur), INSEE.</small></td>
+</tr>
+<tr data-file="comportements" data-reliability="estimation" data-text="tariffsupplycost perte de production due aux droits de douane commerce les droits de douane renchérissent les biens intermédiaires importés et protègent les entreprises les moins efficaces : les grands modèles trouvent une perte pour le pays qui les impose (−0,4 % de pib pour un droit de 10 % aux états-unis, sans représailles). avec les représailles, un droit de 10 % coûte ici environ 0,7 % de pib la première année et 0,2 % à cinq ans : un peu plus qu’aux états-unis, l’économie française étant plus ouverte. tax foundation (droit de douane universel, 2025), cepr voxeu (2025).">
+  <td><code>tariffSupplyCost</code><br /><small>Commerce</small></td>
+  <td><strong>Perte de production due aux droits de douane</strong><br /><small>Les droits de douane renchérissent les biens intermédiaires importés et protègent les entreprises les moins efficaces : les grands modèles trouvent une perte pour le pays qui les impose (−0,4 % de PIB pour un droit de 10 % aux États-Unis, sans représailles). Avec les représailles, un droit de 10 % coûte ici environ 0,7 % de PIB la première année et 0,2 % à cinq ans : un peu plus qu’aux États-Unis, l’économie française étant plus ouverte.</small></td>
+  <td>0,015<br /><small>part de productivité par point de droit de douane</small><br /><small>plage 0,01 à 0,06</small></td>
+  <td><span class="badge estime">estimation</span></td>
+  <td><small>Tax Foundation (droit de douane universel, 2025), CEPR VoxEU (2025).</small></td>
 </tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="overheatingimports importations en plus quand la demande dépasse les capacités commerce  ">
   <td><code>overheatingImports</code><br /><small>Commerce</small></td>

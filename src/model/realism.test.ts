@@ -10,3 +10,13 @@ describe('les délais du monde réel', () => {
     expect(at(2045)).toBeGreaterThan(0.75)
   })
 })
+
+describe('les ordres de grandeur économiques', () => {
+  it('un droit de douane de 10 % coûte de l’activité au pays qui l’impose (il ne la stimule pas)', () => {
+    const base = simulate({ decisions: [], events: [], until: 2030 })
+    const taxed = simulate({ decisions: [{ year: 2026, patch: { tariffs: 0.1 } }], events: [], until: 2030 })
+    for (const i of [1, 2, 5]) {
+      expect(taxed[i].gdpReal).toBeLessThan(base[i].gdpReal)
+    }
+  })
+})

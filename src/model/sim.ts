@@ -501,7 +501,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       P.investmentProductivity * (policy.investment - REF.investment) -
       P.flightProductivity * prev.capitalFlight +
       P.regulationProductivity * deregulation -
-      P.ownershipEfficiency * ownershipStep +
+      P.ownershipEfficiency * ownershipStep -
+      // Les droits de douane renchérissent les biens intermédiaires importés et abritent les moins efficaces : la production en pâtit.
+      P.tariffSupplyCost * (policy.tariffs - prev.tariffs) +
       world.productivity -
       // Les dégâts climatiques détruisent une part de la capacité de production.
       damageStep
@@ -786,7 +788,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const overheating = 1 + P.overheatingImports * Math.max(0, real / potential - P.overheatingThreshold)
     // Pompes à chaleur, batteries, véhicules : l'électrification est plus importée que l'investissement moyen.
     const electrifyImports = electrifyInvestment * Math.max(0, P.electrificationImportShare - importRatio)
-    const imports = importRatio * absorption * Math.pow(priceLevel / vatPrice / worldPrice, P.importPriceElasticity) * (1 - P.tariffImportCut * policy.tariffs) * overheating + electrifyImports
+    const imports = importRatio * absorption * Math.pow(priceLevel / vatPrice / worldPrice, P.importPriceElasticity) * (1 - P.nonEuImportShare * P.tariffImportCut * policy.tariffs) * overheating + electrifyImports
     // On consomme un peu moins de pétrole quand il est cher (élasticité-prix ≈ −0,2).
     // Une taxe carbone plus forte fait consommer moins de pétrole et de gaz.
     const energyImports = (1 - carbonCut) * BASE.energyImports * Math.pow(world.oil / BASE.oil, P.oilElasticity) * (fossilShare / BASE.fossilShare) * Math.pow(real / BASE.gdp, P.energyGdpElasticity) * worldPrice
