@@ -1,5 +1,6 @@
 import type { Decision, FiredEvent, Policy } from '../model/types'
 import { EVENTS } from '../model/events'
+import { CANDIDATES } from './candidates'
 import { SCENARIOS } from './scenarios'
 import { load, save } from './storage'
 
@@ -10,7 +11,7 @@ import { load, save } from './storage'
  */
 export type SavedGame = {
   v: 1
-  /** 'free', ou l'identifiant du scénario (les idées reçues, courtes, ne sont pas sauvegardées). */
+  /** 'free', l'identifiant du scénario, ou « candidat:<id> » (les idées reçues, courtes, ne sont pas sauvegardées). */
   mode: string
   decisions: Decision[]
   events: FiredEvent[]
@@ -31,7 +32,7 @@ export function parseSave(raw: unknown, start: number, end: number): SavedGame |
     return null
   }
   const g = raw as Partial<SavedGame>
-  const knownMode = g.mode === 'free' || SCENARIOS.some((s) => s.id === g.mode)
+  const knownMode = g.mode === 'free' || SCENARIOS.some((s) => s.id === g.mode) || CANDIDATES.some((c) => `candidat:${c.id}` === g.mode)
   const validDecisions = Array.isArray(g.decisions) && g.decisions.every((d) => d && typeof d.year === 'number' && d.patch && typeof d.patch === 'object')
   const validEvents = Array.isArray(g.events) && g.events.every((e) => e && typeof e.year === 'number' && EVENTS.some((x) => x.id === e.id))
   if (

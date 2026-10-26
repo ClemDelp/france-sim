@@ -1,0 +1,47 @@
+﻿mesure;levier;operation;base;facteur;annees;note
+ecb-debt;cancelShare;fixe;valeur;1;;Le moteur annule toute la dette détenue par la Banque de France (part 100 %).
+ecb-debt;cancelHolder;fixe;valeur;bce;;
+default;cancelShare;fixe;valeur;0,5;;Décote de la moitié de la dette détenue par les prêteurs étrangers.
+default;cancelHolder;fixe;valeur;monde;;
+savings;otherServices;ajout;montant;-1;;Économies sur les autres services publics.
+isf;wealthTax;fixe;valeur;0,005;;Un ISF à 0,5 % sur les gros patrimoines financiers.
+zucman;wealthTax;fixe;valeur;0,01;;Approximation : le moteur taxe le patrimoine financier des 10 % les plus riches, pas seulement les 1 800 foyers visés.
+inheritance-tax;inheritanceTax;ajout;montant;0,00333;;≈ 300 Md€ transmis par an : 10 Md€ de recettes = +3,3 points de taux moyen.
+capital-tax;incomeTaxTop;ajout;montant;0,002;;≈ 5 Md€ par point d’impôt ajouté aux plus aisés.
+income-tax-cut;csg;ajout;montant;-0,000667;;Approximation par la CSG : 1 point ≈ 15 Md€.
+production-taxes;productionTaxes;ajout;montant;-1;;
+business-subsidies-cut;firmAid;ajout;montant;-1;;
+corporate-tax-up;corporateTax;ajout;valeur;0,03;;Surtaxe des grands groupes approchée par 3 points d’impôt sur les sociétés.
+digital-tax;corporateTax;ajout;valeur;0,004;;La riposte américaine passe par l’événement « Les États-Unis répliquent ».
+social-cuts;minima;ajout;montant;-1;;Économies approchées par les minima sociaux et aides.
+national-preference;minima;ajout;valeur;-8;;Prestations retirées aux étrangers, approchées par une baisse des minima.
+national-preference;integration;ajout;valeur;-1;;
+eu-contribution-cap;;;;;;Pas encore dans le moteur : la contribution à l’UE est fixe. La réaction de Bruxelles passe par l’événement « Bruxelles s’oppose ».
+retirement-age;retirementAge;fixe;montant;1;;
+32h;;;;;;Pas encore dans le moteur : la durée du travail n’est pas un levier.
+smic-up;smicBoost;fixe;montant;0,01;;
+minima;minima;ajout;montant;1;;
+immigration;netMigration;fixe;montant;0,7;;Le moteur distingue l’immigration légale (≈ 70 % du solde) des arrivées hors voies légales.
+price-freeze;;;;;;Pas encore dans le moteur : un blocage des prix n’est pas représenté.
+public-pay;otherServices;ajout;montant;2,2;;+1 % de point d’indice ≈ 2,2 Md€ par an.
+public-housing;investment;ajout;montant;1;;
+family-boost;minima;ajout;montant;1;;Prestations familiales approchées par les transferts aux ménages modestes.
+pension-wage-index;pensionIndexation;fixe;valeur;1,2;;
+pension-freeze;pensionIndexation;fixe;valeur;0;1;Une seule année blanche, puis retour à l’indexation.
+public-jobs;otherServices;ajout;montant;0,045;;≈ 45 000 € par poste et par an.
+anti-fraud;;;;;;Pas encore dans le moteur : le contrôle fiscal n’est pas un levier (ses recettes sont très incertaines).
+civic-service;otherServices;ajout;valeur;9;;
+school;education;ajout;montant;1;;
+hospital;health;ajout;montant;1;;
+public-invest;investment;ajout;montant;1;;
+climate;investment;ajout;montant;0,5;;
+climate;adaptation;ajout;montant;0,25;;
+climate;electrification;ajout;montant;0,0005;;
+energy-vat;vat;ajout;valeur;-0,014;;Approximation par la TVA générale (≈ 13 Md€).
+renewables-stop;electrification;ajout;valeur;-0,005;;
+nuclear-exit;nuclearShare;ajout;valeur;-0,3;;
+nuclear-boost;nuclearShare;ajout;valeur;0,1;;
+protectionism;tariffs;ajout;montant;0,01;;
+nationalise;publicOwnership;ajout;montant;0,0004;;Les grandes entreprises valent ≈ 2 500 Md€.
+defence-35;defence;ajout;valeur;44;;
+nato-exit;;;;;;Pas encore dans le moteur : la position militaire n’est pas un levier (la réaction américaine passe par un événement).

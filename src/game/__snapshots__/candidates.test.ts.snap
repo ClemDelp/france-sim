@@ -1,0 +1,151 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Bruno Retaillot : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 6.5,
+  "croissance": 0.8,
+  "dette": 128,
+  "déficit": 5.2,
+  "fin": "réélu·e",
+  "inflation": 2.1,
+  "pauvreté": 15.7,
+  "popularité": 44,
+  "promessesAppliquées": "8 / 8",
+  "émissions": 362,
+}
+`;
+
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Fabien Rousselet : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 5.8,
+  "croissance": 0.2,
+  "dette": 138,
+  "déficit": 7.5,
+  "fin": "réélu·e",
+  "inflation": 3,
+  "pauvreté": 14.7,
+  "popularité": 60,
+  "promessesAppliquées": "8 / 8",
+  "émissions": 352,
+}
+`;
+
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > François Ruffino : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 6.7,
+  "croissance": 0.6,
+  "dette": 129,
+  "déficit": 6,
+  "fin": "réélu·e",
+  "inflation": 2.3,
+  "pauvreté": 14.9,
+  "popularité": 59,
+  "promessesAppliquées": "3 / 3",
+  "émissions": 358,
+}
+`;
+
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Gabriel Atoll : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 7.1,
+  "croissance": 1.1,
+  "dette": 123,
+  "déficit": 4.3,
+  "fin": "réélu·e",
+  "inflation": 2,
+  "pauvreté": 16,
+  "popularité": 46,
+  "promessesAppliquées": "4 / 4",
+  "émissions": 362,
+}
+`;
+
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Jean-Luc Méluchon : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 6.4,
+  "croissance": 0,
+  "dette": 120,
+  "déficit": 8.7,
+  "fin": "réélu·e",
+  "inflation": 3.2,
+  "pauvreté": 13.7,
+  "popularité": 66,
+  "promessesAppliquées": "12 / 12",
+  "émissions": 358,
+}
+`;
+
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Marine Le Stylo : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 6.2,
+  "croissance": 0.5,
+  "dette": 131,
+  "déficit": 5.9,
+  "fin": "réélu·e",
+  "inflation": 2.4,
+  "pauvreté": 15.3,
+  "popularité": 51,
+  "promessesAppliquées": "8 / 8",
+  "émissions": 359,
+}
+`;
+
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Marine Tondeuse : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 6.6,
+  "croissance": 0.4,
+  "dette": 131,
+  "déficit": 6.7,
+  "fin": "réélu·e",
+  "inflation": 2.6,
+  "pauvreté": 14.9,
+  "popularité": 59,
+  "promessesAppliquées": "6 / 6",
+  "émissions": 363,
+}
+`;
+
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Raphaël Glucosmann : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 7,
+  "croissance": 1,
+  "dette": 126,
+  "déficit": 5.2,
+  "fin": "réélu·e",
+  "inflation": 2.1,
+  "pauvreté": 15,
+  "popularité": 58,
+  "promessesAppliquées": "5 / 5",
+  "émissions": 362,
+}
+`;
+
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Édouard Philippus : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 7.5,
+  "croissance": 1.1,
+  "dette": 129,
+  "déficit": 5.7,
+  "fin": "réélu·e",
+  "inflation": 2,
+  "pauvreté": 14.7,
+  "popularité": 64,
+  "promessesAppliquées": "6 / 6",
+  "émissions": 359,
+}
+`;
+
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Éric Zémourre : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 6.4,
+  "croissance": 0.8,
+  "dette": 129,
+  "déficit": 5.5,
+  "fin": "réélu·e",
+  "inflation": 2.1,
+  "pauvreté": 15.3,
+  "popularité": 58,
+  "promessesAppliquées": "4 / 4",
+  "émissions": 357,
+}
+`;

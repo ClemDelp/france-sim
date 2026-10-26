@@ -258,6 +258,8 @@ export type YearState = {
   peaceEffect: number
   // Influence
   /** Influence de la France dans le monde (1 = 2025), et ce qui la compose. */
+  /** Droits de douane en vigueur sur les importations hors UE (pour les réactions de nos partenaires). */
+  tariffs: number
   influence: number
   influenceParts: { military: number; economy: number; culture: number; aid: number; climate: number; stability: number }
   // Climat

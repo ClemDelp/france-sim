@@ -1102,6 +1102,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     evasion,
     discontent,
     ending,
+    tariffs: policy.tariffs,
     influence,
     influenceParts,
     migrationLegal,

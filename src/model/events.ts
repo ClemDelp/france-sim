@@ -171,6 +171,42 @@ export const EVENTS: EventDef[] = [
     chance: (s) => odds(0.04, influence(s, -P.influenceTrade)),
     cooldown: 6,
   },
+  // — Les partenaires réagissent au programme : la probabilité suit ce que fait la France.
+  {
+    id: 'eu-procedure',
+    label: 'Bruxelles sanctionne le déficit français',
+    icon: '🇪🇺',
+    category: 'monde',
+    summary: 'Procédure pour déficit excessif durcie : amende, fonds européens gelés, et la BCE prévient qu’elle ne protégera pas la dette française.',
+    effects: [{ panic: 0.4, demandShock: 0.002, unrest: 0.03 }],
+    chance: (s) => odds(0.01, add(`le déficit atteint ${pct(s.deficit / s.gdp)} du PIB (la règle européenne fixe 3 %)`, 1.5 * Math.max(0, s.deficit / s.gdp - 0.04))),
+    cooldown: 4,
+  },
+  {
+    id: 'us-retaliation',
+    label: 'Les États-Unis répliquent',
+    icon: '🇺🇸',
+    category: 'monde',
+    summary: 'Washington relève ses droits de douane sur les produits français (vins, luxe, aéronautique) en représailles.',
+    effects: [{ growth: -0.01, demandShock: 0.004 }, { growth: -0.005 }],
+    chance: (s) => odds(0.01, add(`la France taxe les importations hors UE à ${pct(s.tariffs)}`, 0.8 * Math.max(0, s.tariffs - 0.05)), influence(s, -P.influenceTrade)),
+    cooldown: 5,
+  },
+  {
+    id: 'eu-support',
+    label: 'L’Europe accompagne la France',
+    icon: '🤝',
+    category: 'monde',
+    summary: 'Nouvel emprunt européen commun pour la transition et la défense : de l’investissement en France sans creuser le déficit.',
+    effects: repeat(3, { growth: 0.004, productivity: 0.002 }),
+    chance: (s, start) =>
+      odds(
+        0.01,
+        add(`le déficit est sous 3 % du PIB (${pct(s.deficit / s.gdp)})`, s.deficit / s.gdp < 0.03 ? 0.03 : 0),
+        add(`la France a réduit ses émissions de ${pct(Math.max(0, 1 - s.frenchEmissions / start.frenchEmissions))}`, 0.1 * Math.max(0, 1 - s.frenchEmissions / start.frenchEmissions)),
+      ),
+    cooldown: 10,
+  },
   {
     id: 'cyberattack',
     label: 'Cyberattaque géante',

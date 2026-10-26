@@ -16,14 +16,19 @@ export type Plan = Record<number, Partial<Policy>>
 
 export type SessionInput = {
   scenario?: Scenario
-  /** Les réformes, par année où elles s'appliquent. */
-  plan: Plan
+  /**
+   * Les réformes, par année où elles s'appliquent ; ou une fonction qui les choisit chaque année,
+   * en voyant la situation, la politique en vigueur et le capital politique disponible (un joueur qui s'adapte).
+   */
+  plan: Plan | ((turn: { year: number; state: YearState; current: Policy; capital: number }) => Partial<Policy> | null)
   /** Dernière année jouée (par défaut, la fin du scénario). */
   until?: number
   /** Une graine pour les événements tirés au sort ; sans graine, seuls les événements du scénario arrivent. */
   seed?: number
   /** Élections tous les cinq ans (vrai par défaut, comme en partie libre et en scénario). */
   elections?: boolean
+  /** L'année où le joueur prend les commandes (par défaut 2025) : avant, la France suit sa politique ; l'élection de cette année-là est celle qu'il vient de gagner. */
+  from?: number
 }
 
 export type Session = {
@@ -52,17 +57,17 @@ export function planCost(patch: Partial<Policy>, current: Policy): number {
 }
 
 /** La partie s'arrête-t-elle cette année (élection perdue, fin de partie) ? */
-function stopAt(s: YearState, elections: boolean): Session['lost'] {
+function stopAt(s: YearState, elections: boolean, from: number): Session['lost'] {
   if (s.ending) {
     return { year: s.year, reason: s.ending }
   }
-  if (elections && isElectionYear(s.year) && s.year > START && !electionAt(s).won) {
+  if (elections && isElectionYear(s.year) && s.year > from && !electionAt(s).won) {
     return { year: s.year, reason: 'election' }
   }
   return null
 }
 
-export function playSession({ scenario, plan, until, seed, elections = true }: SessionInput): Session {
+export function playSession({ scenario, plan, until, seed, elections = true, from = START }: SessionInput): Session {
   const end = until ?? scenario?.end ?? 2075
   const events: FiredEvent[] = [...(scenario?.events ?? [])]
   const decisions: Decision[] = []
@@ -71,14 +76,15 @@ export function playSession({ scenario, plan, until, seed, elections = true }: S
   let lost: Session['lost'] = null
   for (let year = START; year < end; year += 1) {
     const s = states.at(-1)!
-    lost = stopAt(s, elections)
+    lost = stopAt(s, elections, from)
     if (lost) {
       break
     }
-    const patch = plan[year + 1]
+    const capital = politicalCapital(popularity(s), year === from || (elections && isElectionYear(year)))
+    const current = policyAt(decisions, year + 1)
+    const patch = year < from ? null : typeof plan === 'function' ? plan({ year: year + 1, state: s, current, capital }) : plan[year + 1]
     if (patch && Object.keys(patch).length) {
-      const capital = politicalCapital(popularity(s), year === START || (elections && isElectionYear(year)))
-      const cost = planCost(patch, policyAt(decisions, year + 1))
+      const cost = planCost(patch, current)
       if (cost > capital) {
         overBudget.push({ year: year + 1, cost, capital })
       }
@@ -89,6 +95,6 @@ export function playSession({ scenario, plan, until, seed, elections = true }: S
     }
     states = simulate({ decisions, events, until: year + 1 })
   }
-  lost ??= stopAt(states.at(-1)!, elections)
+  lost ??= stopAt(states.at(-1)!, elections, from)
   return { states, events, decisions, overBudget, lost, evaluation: scenario ? evaluate(scenario, states) : null }
 }
