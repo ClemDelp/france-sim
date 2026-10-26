@@ -98,7 +98,7 @@ describe('crises, colère et fin de partie', () => {
 
   it('des impôts massifs rapportent moins que prévu : la fraude progresse', () => {
     const s = run({ vat: 0.3, csg: 0.14 }, 2030).at(-1)!
-    expect(s.evasion).toBeGreaterThan(0.04)
+    expect(s.evasion).toBeGreaterThan(0.035)
   })
 
   it('refuser toute aide européenne en creusant les déficits mène à la faillite', () => {

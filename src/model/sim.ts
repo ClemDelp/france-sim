@@ -108,6 +108,8 @@ type Carry = {
   nuclearOrder: number
   /** La baisse de consommation d'énergies fossiles déjà obtenue par la taxe carbone (elle rejoint peu à peu son niveau de long terme). */
   carbonCut: number
+  /** La part de l'écart de revenu déjà passée dans la consommation, par tranche (elle rejoint peu à peu la propension à consommer). */
+  consumptionResponse: ByGroup
   workingAge: number
   retirees: number
   young: number
@@ -212,6 +214,7 @@ function initialCarry(): Carry {
     nuclearShare: REF.nuclearShare,
     nuclearOrder: 0,
     carbonCut: 0,
+    consumptionResponse: byGroup(() => 0),
     workingAge: BASE.workingAge,
     retirees: BASE.retirees,
     young: BASE.population - BASE.workingAge - BASE.retirees,
@@ -729,6 +732,11 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const anchorsNow = anchors ?? { yd: disposable }
     const normal = (k: keyof ByGroup) => anchorsNow.yd[k] * trend * scale
     const baseC = anchors ? anchors.c : byGroup(() => 0)
+    // Les ménages lissent : la première année, ils ne dépensent qu'une partie de l'écart de revenu ; s'il dure, ils s'y ajustent peu à peu.
+    const consumptionResponse = byGroup((k) => {
+      const target = GP.mpc[k] * (disposable[k] - normal(k) - foodTransfer * GP.population[k])
+      return init ? 0 : prev.consumptionResponse[k] + P.consumptionSmoothing * (target - prev.consumptionResponse[k])
+    })
     const consumption = byGroup((k) => {
       if (!anchors) {
         // Répartition de la consommation de 2025 selon la propension à consommer de chaque tranche.
@@ -737,10 +745,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
         return (BASE.consumption * weight * disposable[k]) / weights
       }
       const food = foodTransfer * GP.population[k]
-      const deviation = disposable[k] - normal(k) - food
       const wealthEffect = P.wealthEffect * (wealth[k] - BASE.householdFinancialWealth * GP.wealth[k] * trend)
       // Les ménages lissent : seule une partie de l'écart de revenu passe tout de suite en consommation.
-      return Math.max(0, (baseC[k] * trend * scale + P.consumptionSmoothing * GP.mpc[k] * deviation + food + wealthEffect) * (1 - demandShock))
+      return Math.max(0, (baseC[k] * trend * scale + consumptionResponse[k] + food + wealthEffect) * (1 - demandShock))
     })
     const totalConsumption = sum(consumption)
 
@@ -826,6 +833,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       real,
       potential,
       topIncomeTax,
+      consumptionResponse,
       proportional,
       employmentGap,
       employment,
@@ -1224,6 +1232,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     nuclearShare,
     nuclearOrder,
     carbonCut,
+    consumptionResponse: d.consumptionResponse,
     workingAge,
     retirees,
     young,
