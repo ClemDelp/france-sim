@@ -27,7 +27,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     icon: '💶',
     levers: [
       { key: 'vat', weight: 3, unpopular: 1, label: 'TVA (taux normal)', min: 0.1, max: 0.3, step: 0.005, unit: 'pct', hint: '1 point de TVA rapporte ≈ 9 Md€. Elle pèse plus lourd sur ceux qui dépensent tout leur revenu.' },
-      { key: 'incomeTaxTop', weight: 1.5, unpopular: -1, label: 'Impôt sur le revenu des plus aisés', min: -0.05, max: 0.15, step: 0.005, unit: 'pct', hint: 'Points d’imposition ajoutés aux 10 % les plus riches (un quart pour les aisés).' },
+      { key: 'incomeTaxTop', weight: 1.5, label: 'Impôt sur le revenu des plus aisés', min: -0.05, max: 0.15, step: 0.005, unit: 'pct', hint: 'Points d’imposition ajoutés aux 10 % les plus riches (un quart pour les aisés).' },
       { key: 'csg', weight: 2, unpopular: 1, label: 'CSG', min: 0.06, max: 0.14, step: 0.002, unit: 'pct', hint: 'Prélevée sur presque tous les revenus, elle finance la Sécu.' },
       { key: 'corporateTax', weight: 1.2, label: 'Impôt sur les sociétés', min: 0, max: 0.4, step: 0.01, unit: 'pct', hint: 'Taux sur les bénéfices des entreprises (25 % aujourd’hui).' },
       { key: 'wealthTax', weight: 2, label: 'Impôt sur la fortune', min: 0, max: 0.05, step: 0.0025, unit: 'pct', hint: 'Taux annuel sur les gros patrimoines financiers. Plus il est haut, plus les fortunes partent ou se cachent.' },

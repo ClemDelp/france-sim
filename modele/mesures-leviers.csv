@@ -7,7 +7,7 @@ savings;otherServices;ajout;montant;-1;;Économies sur les autres services publi
 isf;wealthTax;fixe;valeur;0,0022;;Un ISF qui remplace l’IFI : le moteur garde l’IFI, donc on ne compte que le gain net (≈ 2,7 Md€, soit un taux de 0,22 % sur les gros patrimoines financiers).
 zucman;wealthTax;fixe;valeur;0,01;;Approximation : le moteur taxe le patrimoine financier des 10 % les plus riches, pas seulement les 1 800 foyers visés.
 inheritance-tax;inheritanceTax;ajout;montant;0,00333;;≈ 300 Md€ transmis par an : 10 Md€ de recettes = +3,3 points de taux moyen.
-capital-tax;incomeTaxTop;ajout;montant;0,00109;;Dans le moteur, un point d’impôt en plus sur les plus aisés rapporte ≈ 9,2 Md€ : 15 Md€ ≈ 1,6 point.
+capital-tax;incomeTaxTop;ajout;montant;0,00218;;Dans le moteur, un point d’impôt en plus sur les plus aisés rapporte ≈ 4,6 Md€ : 15 Md€ ≈ 3,3 points.
 income-tax-cut;csg;ajout;montant;-0,000543;;Approximation par la CSG : dans le moteur, 1 point ≈ 18,4 Md€.
 production-taxes;productionTaxes;ajout;montant;-1;;
 business-subsidies-cut;firmAid;ajout;montant;-1;;

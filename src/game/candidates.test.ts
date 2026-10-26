@@ -91,7 +91,7 @@ describe('tenir ses promesses : difficile, mais possible', () => {
   it('une promesse trop chère pour une année peut être commencée, puis finie plus tard', () => {
     const p = CANDIDATES.find((x) => x.id === 'melenchon')!.promises.find((x) => x.measure?.id === 'retirement-age')!
     const { patch } = promisePatch(p, BASE_POLICY)
-    expect(planCost(patch, BASE_POLICY)).toBeGreaterThan(6)
+    expect(planCost(patch, BASE_POLICY)).toBeGreaterThan(2)
     const step = partialPatch(patch, BASE_POLICY, 2)!
     expect(planCost(step, BASE_POLICY)).toBeLessThanOrEqual(2)
     expect(promiseStatus(p, BASE_POLICY, { ...BASE_POLICY, ...step })).toBe('partielle')

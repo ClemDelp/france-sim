@@ -706,9 +706,10 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const taxable = byGroup((k) => wagesOf(k) + mixed * GP.mixed[k] + pensions * GP.pensions[k] + (dividendsHome + bankDividends) * GP.dividends[k])
     // Le taux moyen d'impôt sur le revenu de chaque tranche est calé pour retrouver la recette et sa répartition de l'année de départ.
     const irRate = anchors ? anchors.irRate : byGroup((k) => (BASE.incomeTaxRevenue * GP.incomeTax[k]) / Math.max(1, taxable[k]))
-    const incomeTax = byGroup((k) => taxable[k] * (irRate[k] + policy.incomeTaxTop * GP.topRate[k]) * declared)
+    // La surtaxe des plus aisés ne touche qu'une partie de leurs revenus : les dividendes paient le prélèvement forfaitaire unique (depuis 2018).
+    const incomeTax = byGroup((k) => taxable[k] * (irRate[k] + policy.incomeTaxTop * GP.topRate[k] * P.topTaxBase) * declared)
     // La part qui vient de la surtaxe sur les plus aisés (pour la colère : un impôt sur les riches ne fâche pas la majorité).
-    const topIncomeTax = sum(byGroup((k) => taxable[k] * policy.incomeTaxTop * GP.topRate[k] * declared))
+    const topIncomeTax = sum(byGroup((k) => taxable[k] * policy.incomeTaxTop * GP.topRate[k] * P.topTaxBase * declared))
     const wealthTax = policy.wealthTax * wealthTaxBase(wealth.g5) + (BASE.ifiRevenue * trend)
     const inheritance = BASE.inheritanceFlows * trend
     // Au-delà d'un certain taux, l'assiette fond de plus en plus vite (donations anticipées, assurance-vie, départs) : les recettes plafonnent.
