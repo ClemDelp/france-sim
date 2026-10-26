@@ -11,6 +11,8 @@ export type LeverDef = {
   hint: string
   /** Poids politique d'une réforme sur ce levier (1 = normal ; 2 = très contestée). */
   weight?: number
+  /** Le sens impopulaire (+1 : monter fâche, −1 : baisser fâche) : dans l'autre sens, la réforme coûte moitié moins. */
+  unpopular?: 1 | -1
   /** Un levier dont l'effet est lent : ce que le Conseil des ministres rappelle quand on le bouge. */
   delay?: string
 }
@@ -24,12 +26,12 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Impôts',
     icon: '💶',
     levers: [
-      { key: 'vat', weight: 1.5, label: 'TVA (taux normal)', min: 0.1, max: 0.3, step: 0.005, unit: 'pct', hint: '1 point de TVA rapporte ≈ 9 Md€. Elle pèse plus lourd sur ceux qui dépensent tout leur revenu.' },
-      { key: 'incomeTaxTop', label: 'Impôt sur le revenu des plus aisés', min: -0.05, max: 0.15, step: 0.005, unit: 'pct', hint: 'Points d’imposition ajoutés aux 10 % les plus riches (un quart pour les aisés).' },
-      { key: 'csg', weight: 1.5, label: 'CSG', min: 0.06, max: 0.14, step: 0.002, unit: 'pct', hint: 'Prélevée sur presque tous les revenus, elle finance la Sécu.' },
-      { key: 'corporateTax', label: 'Impôt sur les sociétés', min: 0, max: 0.4, step: 0.01, unit: 'pct', hint: 'Taux sur les bénéfices des entreprises (25 % aujourd’hui).' },
-      { key: 'wealthTax', weight: 1.5, label: 'Impôt sur la fortune', min: 0, max: 0.05, step: 0.0025, unit: 'pct', hint: 'Taux annuel sur les gros patrimoines financiers. Plus il est haut, plus les fortunes partent ou se cachent.' },
-      { key: 'inheritanceTax', label: 'Droits de succession', min: 0, max: 1, step: 0.01, unit: 'pct', hint: '≈ 300 Md€ transmis chaque année. Taux moyen ≈ 7 % aujourd’hui ; 100 % = suppression de l’héritage.' },
+      { key: 'vat', weight: 3, unpopular: 1, label: 'TVA (taux normal)', min: 0.1, max: 0.3, step: 0.005, unit: 'pct', hint: '1 point de TVA rapporte ≈ 9 Md€. Elle pèse plus lourd sur ceux qui dépensent tout leur revenu.' },
+      { key: 'incomeTaxTop', weight: 1.5, unpopular: -1, label: 'Impôt sur le revenu des plus aisés', min: -0.05, max: 0.15, step: 0.005, unit: 'pct', hint: 'Points d’imposition ajoutés aux 10 % les plus riches (un quart pour les aisés).' },
+      { key: 'csg', weight: 2, unpopular: 1, label: 'CSG', min: 0.06, max: 0.14, step: 0.002, unit: 'pct', hint: 'Prélevée sur presque tous les revenus, elle finance la Sécu.' },
+      { key: 'corporateTax', weight: 1.2, label: 'Impôt sur les sociétés', min: 0, max: 0.4, step: 0.01, unit: 'pct', hint: 'Taux sur les bénéfices des entreprises (25 % aujourd’hui).' },
+      { key: 'wealthTax', weight: 2, label: 'Impôt sur la fortune', min: 0, max: 0.05, step: 0.0025, unit: 'pct', hint: 'Taux annuel sur les gros patrimoines financiers. Plus il est haut, plus les fortunes partent ou se cachent.' },
+      { key: 'inheritanceTax', weight: 3, unpopular: 1, label: 'Droits de succession', min: 0, max: 1, step: 0.01, unit: 'pct', hint: '≈ 300 Md€ transmis chaque année. Taux moyen ≈ 7 % aujourd’hui ; 100 % = suppression de l’héritage.' },
       { key: 'productionTaxes', label: 'Impôts de production', min: 100, max: 260, step: 5, unit: 'bn', hint: 'Payés par les entreprises quel que soit leur bénéfice (Md€ de 2025).' },
     ],
   },
@@ -53,8 +55,8 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Sécurité sociale',
     icon: '🤝',
     levers: [
-      { key: 'retirementAge', weight: 2, label: 'Âge de départ à la retraite', min: 60, max: 67, step: 0.25, unit: 'years', hint: 'La loi actuelle mène à 64 ans en 2032. Monter se fait de 3 mois par an au plus.', delay: 'L’âge effectif rejoint 64 ans vers 2032, puis bouge de 3 mois par an au plus : relever la cible ne change l’économie qu’à partir de 2033 environ. Mais la colère, elle, éclate dès le vote (2010, 2023).' },
-      { key: 'pensionIndexation', label: 'Indexation des retraites sur les prix', min: 0, max: 1.2, step: 0.05, unit: 'share', hint: '100 % = les pensions suivent l’inflation. Moins = gel partiel.' },
+      { key: 'retirementAge', weight: 2.5, unpopular: 1, label: 'Âge de départ à la retraite', min: 60, max: 67, step: 0.25, unit: 'years', hint: 'La loi actuelle mène à 64 ans en 2032. Monter se fait de 3 mois par an au plus.', delay: 'L’âge effectif rejoint 64 ans vers 2032, puis bouge de 3 mois par an au plus : relever la cible ne change l’économie qu’à partir de 2033 environ. Mais la colère, elle, éclate dès le vote (2010, 2023).' },
+      { key: 'pensionIndexation', weight: 0.6, unpopular: -1, label: 'Indexation des retraites sur les prix', min: 0, max: 1.2, step: 0.05, unit: 'share', hint: '100 % = les pensions suivent l’inflation. Moins = gel partiel.' },
       { key: 'unemploymentReplacement', label: 'Allocation chômage (taux de remplacement)', min: 0.3, max: 0.8, step: 0.01, unit: 'pct', hint: 'Part de l’ancien salaire versée aux chômeurs indemnisés.' },
       { key: 'minima', label: 'Minima sociaux en plus', min: -20, max: 80, step: 5, unit: 'bn', hint: 'RSA, prime d’activité, aides au logement : surtout aux 20 % les plus modestes.' },
       { key: 'foodSecurity', label: 'Sécurité sociale de l’alimentation', min: 0, max: 250, step: 10, unit: 'euros', hint: 'Une somme par personne et par mois pour se nourrir, financée par une cotisation sur les revenus. 150 € ≈ 125 Md€ par an.' },
@@ -82,7 +84,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Immigration',
     icon: '🧳',
     levers: [
-      { key: 'netMigration', label: 'Immigration légale', min: -50, max: 400, step: 10, unit: 'thousands', weight: 1.5, hint: '≈ 120 000 par an en 2025 (travail, études, famille). S’y ajoutent ≈ 56 000 arrivées hors voies légales, qui dépendent des guerres et du climat dans le monde, pas de ce levier.' },
+      { key: 'netMigration', weight: 2.5, label: 'Immigration légale', min: -50, max: 400, step: 10, unit: 'thousands', hint: '≈ 120 000 par an en 2025 (travail, études, famille). S’y ajoutent ≈ 56 000 arrivées hors voies légales, qui dépendent des guerres et du climat dans le monde, pas de ce levier.' },
       { key: 'borderControl', label: 'Contrôle et reconduites', min: 0, max: 20, step: 0.5, unit: 'bn', weight: 1.5, hint: '≈ 2 Md€ par an. Réduit les arrivées irrégulières, mais avec des rendements décroissants : au mieux la moitié, quoi qu’on dépense.' },
       { key: 'integration', label: 'Intégration des arrivants', min: 0, max: 15, step: 0.5, unit: 'bn', hint: '≈ 1,5 Md€ par an. Langue, formation, logement : les arrivants trouvent plus vite un emploi, et l’accueil crée moins de tensions.' },
       { key: 'softPower', label: 'Rayonnement culturel et diplomatie', min: 0, max: 30, step: 0.5, unit: 'bn', hint: '≈ 6 Md€ par an (culture, audiovisuel extérieur, réseau diplomatique). Renforce l’influence de la France : accords plus faciles, moins de représailles, exportations, confiance des prêteurs.' },
@@ -94,8 +96,8 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Modèle économique',
     icon: '🏛️',
     levers: [
-      { key: 'publicOwnership', label: 'Entreprises contrôlées par l’État', min: 0, max: 0.6, step: 0.05, unit: 'pct', weight: 2, hint: '≈ 10 % en 2025 (EDF, SNCF, La Poste…). Nationaliser : l’État rachète en obligations (la dette monte), touche les dividendes, oriente l’investissement, mais fait fuir des capitaux. Privatiser : l’inverse.' },
-      { key: 'regulation', label: 'Intensité des règles', min: 0, max: 1, step: 0.05, unit: 'share', weight: 2, hint: '60 % en 2025. Moins de règles (licenciement, normes, concurrence) : plus de productivité et d’embauches, mais plus de précarité, d’inégalités et d’émissions. Plus de règles : l’inverse.' },
+      { key: 'publicOwnership', weight: 4, label: 'Entreprises contrôlées par l’État', min: 0, max: 0.6, step: 0.05, unit: 'pct', hint: '≈ 10 % en 2025 (EDF, SNCF, La Poste…). Nationaliser : l’État rachète en obligations (la dette monte), touche les dividendes, oriente l’investissement, mais fait fuir des capitaux. Privatiser : l’inverse.' },
+      { key: 'regulation', weight: 4, unpopular: -1, label: 'Intensité des règles', min: 0, max: 1, step: 0.05, unit: 'share', hint: '60 % en 2025. Moins de règles (licenciement, normes, concurrence) : plus de productivité et d’embauches, mais plus de précarité, d’inégalités et d’émissions. Plus de règles : l’inverse.' },
     ],
   },
   {
@@ -103,7 +105,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Climat',
     icon: '🌍',
     levers: [
-      { key: 'carbonTax', label: 'Taxe carbone', min: 0, max: 400, step: 5, unit: 'perTon', weight: 1.5, hint: '44,6 € la tonne en 2025 (gelée depuis la crise des gilets jaunes). Réduit les émissions et rapporte, mais renchérit le carburant et le chauffage : les modestes trinquent si on ne redistribue pas.' },
+      { key: 'carbonTax', weight: 4, unpopular: 1, label: 'Taxe carbone', min: 0, max: 400, step: 5, unit: 'perTon', hint: '44,6 € la tonne en 2025 (gelée depuis la crise des gilets jaunes). Réduit les émissions et rapporte, mais renchérit le carburant et le chauffage : les modestes trinquent si on ne redistribue pas.' },
       { key: 'adaptation', label: 'Adaptation au réchauffement', min: 0, max: 40, step: 1, unit: 'bn', hint: '≈ 3 Md€ par an aujourd’hui. Digues, eau, bâtiments, cultures : réduit les dégâts et la colère quand le climat se dérègle, mais jamais à 100 %.', delay: 'Digues, réseaux, villes plus fraîches : la protection se construit sur plusieurs années.' },
       { key: 'climateAid', label: 'Aide climat aux pays du Sud', min: 0, max: 50, step: 1, unit: 'bn', hint: '≈ 6 Md€ par an. Une tonne évitée ailleurs coûte souvent moins cher qu’en France, et c’est le monde entier qui fait la température.' },
     ],
@@ -113,7 +115,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Commerce',
     icon: '🚢',
     levers: [
-      { key: 'tariffs', label: 'Droits de douane (hors UE)', min: 0, max: 0.4, step: 0.01, unit: 'pct', hint: 'Protège la production, renchérit les prix, provoque des représailles sur nos exportations. Les droits de douane reviennent au budget européen : ils ne rapportent rien à l’État.' },
+      { key: 'tariffs', weight: 3, label: 'Droits de douane (hors UE)', min: 0, max: 0.4, step: 0.01, unit: 'pct', hint: 'Protège la production, renchérit les prix, provoque des représailles sur nos exportations. Les droits de douane reviennent au budget européen : ils ne rapportent rien à l’État.' },
       { key: 'tariffChinaEV', label: 'Droits sur les voitures électriques chinoises', min: 0, max: 1, step: 0.05, unit: 'pct', hint: '≈ 27 à 45 % aujourd’hui (10 % + droits compensateurs). Protège l’industrie automobile, ralentit l’électrification.' },
     ],
   },
@@ -122,7 +124,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     label: 'Dette et monnaie',
     icon: '🏦',
     levers: [
-      { key: 'monetization', label: 'Planche à billets', min: 0, max: 1, step: 0.05, unit: 'pct', hint: 'Part du déficit financée par la banque centrale. Interdit par les traités européens.' },
+      { key: 'monetization', weight: 8, label: 'Planche à billets', min: 0, max: 1, step: 0.05, unit: 'pct', hint: 'Part du déficit financée par la banque centrale. Interdit par les traités européens.' },
       { key: 'savingsToFirms', label: 'Orienter l’épargne vers les entreprises françaises', min: 0, max: 0.4, step: 0.01, unit: 'pct', hint: 'Part du Livret A et de l’assurance-vie redirigée vers le capital des entreprises.' },
     ],
   },
