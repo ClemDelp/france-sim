@@ -2,29 +2,29 @@
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Bruno Retaillot : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 6.5,
-  "croissance": 0.8,
-  "dette": 128,
-  "déficit": 5.2,
+  "chômage": 6.9,
+  "croissance": 1.1,
+  "dette": 126,
+  "déficit": 4.5,
   "fin": "réélu·e",
-  "inflation": 2.1,
+  "inflation": 1.9,
   "pauvreté": 15.7,
-  "popularité": 44,
+  "popularité": 42,
   "promessesAppliquées": "8 / 8",
-  "émissions": 362,
+  "émissions": 363,
 }
 `;
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Fabien Rousselet : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 5.8,
+  "chômage": 5.7,
   "croissance": 0.2,
-  "dette": 138,
-  "déficit": 7.5,
+  "dette": 140,
+  "déficit": 7.8,
   "fin": "réélu·e",
   "inflation": 3,
   "pauvreté": 14.7,
-  "popularité": 60,
+  "popularité": 64,
   "promessesAppliquées": "8 / 8",
   "émissions": 352,
 }
@@ -50,7 +50,7 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Gabr
   "chômage": 7.1,
   "croissance": 1.1,
   "dette": 123,
-  "déficit": 4.3,
+  "déficit": 4.2,
   "fin": "réélu·e",
   "inflation": 2,
   "pauvreté": 16,
@@ -64,12 +64,12 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Jean
 {
   "chômage": 6.7,
   "croissance": -0.1,
-  "dette": 122,
-  "déficit": 8.9,
+  "dette": 123,
+  "déficit": 9.3,
   "fin": "réélu·e",
   "inflation": 3.1,
   "pauvreté": 13.7,
-  "popularité": 64,
+  "popularité": 68,
   "promessesAppliquées": "12 / 12",
   "émissions": 360,
 }
@@ -80,7 +80,7 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Mari
   "chômage": 6.2,
   "croissance": 0.5,
   "dette": 131,
-  "déficit": 5.9,
+  "déficit": 5.8,
   "fin": "réélu·e",
   "inflation": 2.4,
   "pauvreté": 15.3,
@@ -92,14 +92,14 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Mari
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Marine Tondeuse : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 6.7,
-  "croissance": 0.5,
+  "chômage": 6.6,
+  "croissance": 0.4,
   "dette": 131,
-  "déficit": 6.7,
+  "déficit": 6.9,
   "fin": "réélu·e",
-  "inflation": 2.5,
+  "inflation": 2.6,
   "pauvreté": 14.9,
-  "popularité": 59,
+  "popularité": 60,
   "promessesAppliquées": "6 / 6",
   "émissions": 362,
 }
@@ -110,11 +110,11 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Raph
   "chômage": 7,
   "croissance": 1,
   "dette": 126,
-  "déficit": 5.2,
+  "déficit": 5.1,
   "fin": "réélu·e",
   "inflation": 2.1,
   "pauvreté": 15,
-  "popularité": 58,
+  "popularité": 59,
   "promessesAppliquées": "5 / 5",
   "émissions": 362,
 }
@@ -144,7 +144,7 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Éri
   "fin": "réélu·e",
   "inflation": 2.1,
   "pauvreté": 15.3,
-  "popularité": 58,
+  "popularité": 59,
   "promessesAppliquées": "4 / 4",
   "émissions": 357,
 }

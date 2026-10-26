@@ -4,11 +4,11 @@ ecb-debt;cancelHolder;fixe;valeur;bce;;
 default;cancelShare;fixe;valeur;0,5;;Décote de la moitié de la dette détenue par les prêteurs étrangers.
 default;cancelHolder;fixe;valeur;monde;;
 savings;otherServices;ajout;montant;-1;;Économies sur les autres services publics.
-isf;wealthTax;fixe;valeur;0,005;;Un ISF à 0,5 % sur les gros patrimoines financiers.
+isf;wealthTax;fixe;valeur;0,0022;;Un ISF qui remplace l’IFI : le moteur garde l’IFI, donc on ne compte que le gain net (≈ 2,7 Md€, soit un taux de 0,22 % sur les gros patrimoines financiers).
 zucman;wealthTax;fixe;valeur;0,01;;Approximation : le moteur taxe le patrimoine financier des 10 % les plus riches, pas seulement les 1 800 foyers visés.
 inheritance-tax;inheritanceTax;ajout;montant;0,00333;;≈ 300 Md€ transmis par an : 10 Md€ de recettes = +3,3 points de taux moyen.
-capital-tax;incomeTaxTop;ajout;montant;0,002;;≈ 5 Md€ par point d’impôt ajouté aux plus aisés.
-income-tax-cut;csg;ajout;montant;-0,000667;;Approximation par la CSG : 1 point ≈ 15 Md€.
+capital-tax;incomeTaxTop;ajout;montant;0,00109;;Dans le moteur, un point d’impôt en plus sur les plus aisés rapporte ≈ 9,2 Md€ : 15 Md€ ≈ 1,6 point.
+income-tax-cut;csg;ajout;montant;-0,000543;;Approximation par la CSG : dans le moteur, 1 point ≈ 18,4 Md€.
 production-taxes;productionTaxes;ajout;montant;-1;;
 business-subsidies-cut;firmAid;ajout;montant;-1;;
 corporate-tax-up;corporateTax;ajout;valeur;0,03;;Surtaxe des grands groupes approchée par 3 points d’impôt sur les sociétés.
@@ -16,7 +16,7 @@ digital-tax;corporateTax;ajout;valeur;0,004;;La riposte américaine passe par l�
 social-cuts;minima;ajout;montant;-1;;Économies approchées par les minima sociaux et aides.
 national-preference;minima;ajout;valeur;-8;;Prestations retirées aux étrangers, approchées par une baisse des minima.
 national-preference;integration;ajout;valeur;-1;;
-eu-contribution-cap;;;;;;Pas encore dans le moteur : la contribution à l’UE est fixe. La réaction de Bruxelles passe par l’événement « Bruxelles s’oppose ».
+eu-contribution-cap;;;;;;Pas encore dans le moteur : la contribution à l’UE est fixe. Bruxelles réagit surtout au déficit (événement « Bruxelles sanctionne le déficit français »).
 retirement-age;retirementAge;fixe;montant;1;;
 32h;;;;;;Pas encore dans le moteur : la durée du travail n’est pas un levier.
 smic-up;smicBoost;fixe;montant;0,01;;
@@ -26,7 +26,7 @@ price-freeze;;;;;;Pas encore dans le moteur : un blocage des prix n’est pas re
 public-pay;otherServices;ajout;montant;2,2;;+1 % de point d’indice ≈ 2,2 Md€ par an.
 public-housing;investment;ajout;montant;1;;
 family-boost;minima;ajout;montant;1;;Prestations familiales approchées par les transferts aux ménages modestes.
-pension-wage-index;pensionIndexation;fixe;valeur;1,2;;
+pension-wage-index;pensionIndexation;fixe;valeur;1,45;;Les salaires progressent plus vite que les prix : suivre les salaires revient à indexer les pensions à environ 145 % de l’inflation.
 pension-freeze;pensionIndexation;fixe;valeur;0;1;Une seule année blanche, puis retour à l’indexation.
 public-jobs;otherServices;ajout;montant;0,045;;≈ 45 000 € par poste et par an.
 anti-fraud;;;;;;Pas encore dans le moteur : le contrôle fiscal n’est pas un levier (ses recettes sont très incertaines).
@@ -34,7 +34,7 @@ civic-service;otherServices;ajout;valeur;9;;
 school;education;ajout;montant;1;;
 hospital;health;ajout;montant;1;;
 public-invest;investment;ajout;montant;1;;
-climate;investment;ajout;montant;0,5;;
+climate;investment;ajout;montant;0,75;;Le plan est public : les trois quarts en investissement, le reste en adaptation (l’électrification ajoutée est privée).
 climate;adaptation;ajout;montant;0,25;;
 climate;electrification;ajout;montant;0,0005;;
 energy-vat;vat;ajout;valeur;-0,014;;Approximation par la TVA générale (≈ 13 Md€).
