@@ -371,7 +371,7 @@
 .dlg-hand {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 230px;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: end;
 }
@@ -447,33 +447,23 @@
   --frame: var(--action);
   background: linear-gradient(180deg, #ddf3e6, var(--paper) 45%);
 }
-.dl-card.hand {
-  width: 132px;
-  height: 178px;
-}
-.dl-card.hand.is-selected {
-  transform: translateY(-12px);
-  box-shadow:
-    0 0 0 3px var(--gold),
-    0 14px 26px rgba(0, 0, 0, 0.5);
-}
-.dl-card.hand.is-dim {
-  filter: grayscale(0.4);
-  opacity: 0.75;
-}
-.dl-card-body {
-  width: 100%;
-  height: 100%;
+.dl-card.hand,
+.dl-card.big {
   display: flex;
   flex-direction: column;
   gap: 3px;
   padding: 20px 7px 7px;
-  border: 0;
-  background: none;
-  color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+.dl-card.hand {
+  width: 132px;
+  height: 178px;
+}
+.dl-card.hand.is-dim {
+  filter: grayscale(0.4);
+  opacity: 0.75;
 }
 .dl-card.mini {
   width: 86px;
@@ -485,9 +475,6 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
-}
-.dl-card.mini.is-selected {
-  box-shadow: 0 0 0 3px var(--gold);
 }
 .dl-card:not(.is-dim):hover {
   transform: translateY(-6px);
@@ -601,22 +588,6 @@
   color: white;
   background: var(--crise);
 }
-.dl-why-btn {
-  position: absolute;
-  top: 18px;
-  right: 4px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid var(--frame);
-  background: white;
-  color: var(--paper-ink);
-  font-weight: 900;
-  cursor: pointer;
-}
-.dl-why-btn:hover {
-  background: var(--gold);
-}
 .is-flip {
   animation: dl-flip 0.6s ease-out both;
 }
@@ -631,41 +602,108 @@
   }
 }
 
-/* — La fenêtre « Pourquoi ? » */
+/* — Une carte en grand : la carte à gauche, ses explications à droite, ses actions en dessous */
 
-.modal.dl-why {
-  background: var(--panel);
-  color: var(--ink);
-  max-width: 680px;
-  max-height: 92vh;
-  overflow-y: auto;
-  border-top: 6px solid var(--frame);
-}
-.dl-why-head {
+.modal.dl-cardmodal {
+  position: relative;
+  width: min(960px, calc(100vw - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
   display: flex;
+  flex-direction: column;
+  padding: 16px;
   gap: 12px;
-  align-items: flex-start;
 }
-.dl-why-head .dl-art {
-  flex: 0 0 72px;
-  height: 72px;
-  font-size: 2.6rem;
-  background: var(--paper);
+.dl-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 2;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 1.2rem;
+  cursor: pointer;
 }
-.dl-why-head > div {
-  flex: 1;
-  min-width: 0;
-  text-align: left;
+.dl-cardmodal-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 18px;
+  overflow: hidden;
 }
-.dl-why-head .eyebrow {
-  margin: 0;
+.dl-card.big {
+  width: 250px;
+  height: 350px;
+  padding: 30px 12px 12px;
+  gap: 8px;
+  cursor: default;
+  animation: dl-zoom 0.25s ease-out both;
 }
-.dl-why-head h2 {
-  margin: 0 0 4px;
+@keyframes dl-zoom {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
 }
-.dl-why h3 {
-  margin: 14px 0 6px;
+.dl-card.big .dl-cost {
+  min-width: 44px;
+  height: 44px;
+  font-size: 1rem;
+}
+.dl-card.big .dl-kind {
+  padding: 5px 10px 5px 40px;
+  font-size: 0.75rem;
+}
+.dl-card.big .dl-art {
+  height: 96px;
+  font-size: 3.6rem;
+}
+.dl-card.big .dl-name {
+  font-size: 1.2rem;
+  -webkit-line-clamp: 3;
+}
+.dl-desc {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: var(--paper-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dl-card.big .dl-preview {
+  font-size: 0.72rem;
+  gap: 3px;
+}
+.dl-explain {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.dl-explain section + section {
+  margin-top: 4px;
+}
+.dl-explain h3 {
+  margin: 0 0 6px;
   font-size: 0.98rem;
+}
+.dl-explain section {
+  margin-bottom: 12px;
+}
+.dl-cardmodal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+}
+.dl-cardmodal-actions > .ghost:last-child {
+  margin-left: auto;
+}
+.dl-locked {
+  color: var(--muted);
 }
 .dl-levers {
   margin: 0;
@@ -917,5 +955,28 @@
   }
   .dl-versus {
     grid-template-columns: 1fr;
+  }
+  .modal.dl-cardmodal {
+    padding: 10px;
+  }
+  .dl-cardmodal-body {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .dl-card.big {
+    width: 200px;
+    height: 280px;
+    margin: 0 auto;
+  }
+  .dl-card.big .dl-art {
+    height: 64px;
+    font-size: 2.8rem;
+  }
+  .dl-explain {
+    overflow: visible;
+  }
+  .dl-cardmodal-actions .primary,
+  .dl-cardmodal-actions .ghost {
+    flex: 1 1 auto;
   }
 }

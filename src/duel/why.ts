@@ -55,7 +55,8 @@ function compare(target: Side, withIt: YearState, without: YearState, start: Yea
   }).filter((i) => Math.abs(i.delta) >= (i.node === 'deficit' ? 0.5 : 0.05))
   return {
     target,
-    health: Math.round(a.reduce((x, p) => x + p.points, 0)) - Math.round(b.reduce((x, p) => x + p.points, 0)),
+    // La somme des critères, arrondie une fois : la carte annonce ce que détaille la fenêtre.
+    health: Math.round(a.reduce((x, p) => x + p.points, 0) - b.reduce((x, p) => x + p.points, 0)),
     parts: parts.sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta)),
     indicators,
     popularity: popularity(withIt) - popularity(without),

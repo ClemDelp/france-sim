@@ -41,8 +41,8 @@ import './duel.css'
 const REVEAL_DELAY = 1100
 
 type Stage = 'play' | 'reveal' | 'report'
-/** La carte choisie : dans la main, au marché, ou sur la table. */
-type Pick = { card: Card; where: 'main' | 'marche' | 'table' }
+/** La carte ouverte en grand : dans votre main, au marché, parmi vos cartes de l'année, ou parmi celles de l'adversaire. */
+type Pick = { card: Card; where: 'main' | 'marche' | 'table' | 'adverse' }
 
 /** Le duel de cartes : choisir les présidents, puis jouer année après année, en plein écran. */
 export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus: string | null) => void }) {
@@ -50,7 +50,6 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
   const [stage, setStage] = useState<Stage>('play')
   const [rules, setRules] = useState(true)
   const [pick, setPick] = useState<Pick | null>(null)
-  const [why, setWhy] = useState<{ card: Card; side: Side } | null>(null)
   /** La dernière chose faite par l'adversaire, annoncée au centre de la table. */
   const [news, setNews] = useState<Move | null>(null)
 
@@ -140,16 +139,16 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
               {stage === 'play' ? (
                 <div className="dl-back" aria-label="Cartes cachées" />
               ) : (
-                game.seats.ai.played.map(({ card, cost }) => <Mini key={card.uid} g={game} card={card} side="ai" badge={`⚡${cost}`} flip onClick={() => setWhy({ card, side: 'ai' })} />)
+                game.seats.ai.played.map(({ card, cost }) => <Mini key={card.uid} g={game} card={card} side="ai" badge={`⚡${cost}`} flip onClick={() => setPick({ card, where: 'adverse' })} />)
               )}
             </div>
           </div>
           {news && stage === 'reveal' ? <div className="dlg-news">{newsText(game, news)}</div> : null}
           <div className="dlg-zone mine">
-            <p>Vos cartes de l’année {game.seats.player.played.length && canAct ? <small>· touchez pour reprendre</small> : null}</p>
+            <p>Vos cartes de l’année {game.seats.player.played.length && canAct ? <small>· touchez pour revoir ou reprendre</small> : null}</p>
             <div className="dlg-row">
               {game.seats.player.played.map(({ card, cost }) => (
-                <Mini key={card.uid} g={game} card={card} side="player" badge={`⚡${cost}`} onClick={() => (canAct ? act(takeBack(game, 'player', card.uid)) : setWhy({ card, side: 'player' }))} />
+                <Mini key={card.uid} g={game} card={card} side="player" badge={`⚡${cost}`} onClick={() => setPick({ card, where: 'table' })} />
               ))}
               {!game.seats.player.played.length ? <p className="dlg-hint">Choisissez une carte dans votre main.</p> : null}
             </div>
@@ -162,7 +161,7 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
           </p>
           <div className="dlg-market-row">
             {game.market.map((l) => (
-              <Mini key={l.card.uid} g={game} card={l.card} side="player" badge={`${l.price} ⚡`} seller={game.seats[l.seller].emblem} selected={pick?.card.uid === l.card.uid} onClick={() => setPick({ card: l.card, where: 'marche' })} />
+              <Mini key={l.card.uid} g={game} card={l.card} side="player" badge={`${l.price} ⚡`} seller={game.seats[l.seller].emblem} onClick={() => setPick({ card: l.card, where: 'marche' })} />
             ))}
             {!game.market.length ? <p className="dlg-hint">Vendez ici les cartes dont vous ne voulez pas : l’adversaire peut les acheter.</p> : null}
           </div>
@@ -174,24 +173,13 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
       <footer className="dlg-hand">
         <div className="dlg-cards">
           {game.seats.player.hand.map((c) => (
-            <HandCard key={c.uid} g={game} card={c} selected={pick?.card.uid === c.uid} dim={!canAct} onClick={() => setPick(pick?.card.uid === c.uid ? null : { card: c, where: 'main' })} onWhy={() => setWhy({ card: c, side: 'player' })} />
+            <HandCard key={c.uid} g={game} card={c} dim={!canAct} onClick={() => setPick({ card: c, where: 'main' })} />
           ))}
         </div>
         <div className="dlg-side">
           <span className="dl-energy" title="Votre énergie : le capital politique de l’année (selon votre popularité), plus les promesses tenues et les ventes">
             ⚡ {game.seats.player.energy}
           </span>
-          {pick && canAct ? (
-            <Actions
-              g={game}
-              pick={pick}
-              onPlay={() => act(play(game, 'player', pick.card))}
-              onDiscard={() => act(discard(game, 'player', pick.card.uid))}
-              onSell={() => act(sell(game, 'player', pick.card.uid))}
-              onBuy={() => act(buy(game, 'player', pick.card.uid))}
-              onWhy={() => setWhy({ card: pick.card, side: 'player' })}
-            />
-          ) : null}
           {game.outcome ? (
             <button type="button" className="primary" onClick={() => setStage('report')}>
               Résultat
@@ -219,7 +207,20 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
           <YearReport g={game} report={report} onClose={() => setStage('play')} />
         )
       ) : null}
-      {why ? <Why g={game} card={why.card} side={why.side} onClose={() => setWhy(null)} onModel={onModel} /> : null}
+      {pick ? (
+        <CardModal
+          g={game}
+          pick={pick}
+          canAct={canAct}
+          onClose={() => setPick(null)}
+          onModel={onModel}
+          onPlay={() => act(play(game, 'player', pick.card))}
+          onDiscard={() => act(discard(game, 'player', pick.card.uid))}
+          onSell={() => act(sell(game, 'player', pick.card.uid))}
+          onBuy={() => act(buy(game, 'player', pick.card.uid))}
+          onTakeBack={() => act(takeBack(game, 'player', pick.card.uid))}
+        />
+      ) : null}
       {rules ? <Rules onClose={() => setRules(false)} /> : null}
     </div>
   )
@@ -238,48 +239,6 @@ function newsText(g: Game, m: Move): string {
     case 'jeu':
       return m.card.kind === 'crise' ? `${who} vous envoie : ${name} !` : `${who} joue « ${name} »`
   }
-}
-
-// — Les actions sur la carte choisie
-
-function Actions({ g, pick, onPlay, onDiscard, onSell, onBuy, onWhy }: { g: Game; pick: Pick; onPlay: () => void; onDiscard: () => void; onSell: () => void; onBuy: () => void; onWhy: () => void }) {
-  const { card } = pick
-  if (pick.where === 'marche') {
-    const why = canBuy(g, 'player', card.uid)
-    const listing = g.market.find((l) => l.card.uid === card.uid)
-    return (
-      <div className="dlg-actions">
-        <strong>{cardName(card)}</strong>
-        <button type="button" className="primary small" disabled={!!why} title={why ?? undefined} onClick={onBuy}>
-          🛒 Acheter ({listing?.price} ⚡)
-        </button>
-        <button type="button" className="ghost small" onClick={onWhy}>
-          ❓ Pourquoi
-        </button>
-        {why ? <small>🔒 {why}</small> : null}
-      </div>
-    )
-  }
-  const playWhy = canPlay(g, 'player', card)
-  const sellWhy = canSell(g, 'player', card.uid)
-  return (
-    <div className="dlg-actions">
-      <strong>{cardName(card)}</strong>
-      <button type="button" className="primary small" disabled={!!playWhy} title={playWhy ?? undefined} onClick={onPlay}>
-        ▶ Jouer (⚡{cardCost(g, 'player', card)})
-      </button>
-      <button type="button" className="ghost small" onClick={onDiscard}>
-        🗑️ Jeter (+{DISCARD_GAIN} ⚡)
-      </button>
-      <button type="button" className="ghost small" disabled={!!sellWhy} title={sellWhy ?? undefined} onClick={onSell}>
-        🏷️ Vendre ({marketPrice(g, card)} ⚡)
-      </button>
-      <button type="button" className="ghost small" onClick={onWhy}>
-        ❓ Pourquoi
-      </button>
-      {playWhy ? <small>🔒 {playWhy}</small> : null}
-    </div>
-  )
 }
 
 // — Choisir les présidents
@@ -442,42 +401,37 @@ function kindOf(g: Game, card: Card, side: Side): { cls: string; label: string }
 
 const signed = (v: number, digits = 0) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${num(Math.abs(v), digits)}`
 
-function HandCard({ g, card, selected, dim, onClick, onWhy }: { g: Game; card: Card; selected: boolean; dim: boolean; onClick: () => void; onWhy: () => void }) {
+function HandCard({ g, card, dim, onClick }: { g: Game; card: Card; dim: boolean; onClick: () => void }) {
   const kind = kindOf(g, card, 'player')
   // L'effet prévu par le modèle (une mesure sur votre France, une crise sur la sienne), calculé une fois par état de la partie.
   const impact = useMemo(() => cardImpact(g, 'player', card), [g, card])
   const top = impact?.indicators[0]
   return (
-    <div className={`dl-card hand ${kind.cls} ${selected ? 'is-selected' : ''} ${dim ? 'is-dim' : ''}`}>
-      <button type="button" className="dl-card-body" onClick={onClick} aria-pressed={selected}>
-        <span className="dl-cost">⚡{cardCost(g, 'player', card)}</span>
-        <span className="dl-kind">{kind.label}</span>
-        <span className="dl-art" aria-hidden="true">
-          {cardArt(card)}
+    <button type="button" className={`dl-card hand ${kind.cls} ${dim ? 'is-dim' : ''}`} onClick={onClick} aria-label={`${cardName(card)} : voir la carte`}>
+      <span className="dl-cost">⚡{cardCost(g, 'player', card)}</span>
+      <span className="dl-kind">{kind.label}</span>
+      <span className="dl-art" aria-hidden="true">
+        {cardArt(card)}
+      </span>
+      <strong className="dl-name">{cardName(card)}</strong>
+      {impact ? (
+        <span className="dl-preview">
+          <b className={impact.health >= 0 ? 'up' : 'down'}>
+            {impact.target === 'player' ? 'Votre note' : 'Sa note'} {signed(impact.health)}
+          </b>
+          {top ? <b className={top.good ? 'up' : 'down'}>{`${top.label} ${top.text}`}</b> : null}
         </span>
-        <strong className="dl-name">{cardName(card)}</strong>
-        {impact ? (
-          <span className="dl-preview">
-            <b className={impact.health >= 0 ? 'up' : 'down'}>
-              {impact.target === 'player' ? 'Votre note' : 'Sa note'} {signed(impact.health)}
-            </b>
-            {top ? <b className={top.good === (impact.target === 'player') ? 'up' : 'down'}>{`${top.label} ${top.text}`}</b> : null}
-          </span>
-        ) : (
-          <span className="dl-text">{card.kind === 'action' ? ACTIONS[card.action].text : ''}</span>
-        )}
-      </button>
-      <button type="button" className="dl-why-btn" onClick={onWhy} aria-label={`Pourquoi : ${cardName(card)}`} title="Pourquoi cet effet ?">
-        ?
-      </button>
-    </div>
+      ) : (
+        <span className="dl-text">{card.kind === 'action' ? ACTIONS[card.action].text : ''}</span>
+      )}
+    </button>
   )
 }
 
-function Mini({ g, card, side, badge, seller, flip, selected, onClick }: { g: Game; card: Card; side: Side; badge: string; seller?: string; flip?: boolean; selected?: boolean; onClick: () => void }) {
+function Mini({ g, card, side, badge, seller, flip, onClick }: { g: Game; card: Card; side: Side; badge: string; seller?: string; flip?: boolean; onClick: () => void }) {
   const kind = kindOf(g, card, side)
   return (
-    <button type="button" className={`dl-card mini ${kind.cls} ${flip ? 'is-flip' : ''} ${selected ? 'is-selected' : ''}`} onClick={onClick} title={kind.label}>
+    <button type="button" className={`dl-card mini ${kind.cls} ${flip ? 'is-flip' : ''}`} onClick={onClick} title={kind.label}>
       <span className="dl-cost">{badge}</span>
       {seller ? <span className="dl-seller">{seller}</span> : null}
       <span className="dl-art" aria-hidden="true">
@@ -489,115 +443,190 @@ function Mini({ g, card, side, badge, seller, flip, selected, onClick }: { g: Ga
   )
 }
 
-// — Pourquoi cette carte fait ce qu'elle fait
+// — Une carte en grand : la carte, ce qu'elle fait et pourquoi, et ce qu'on peut en faire
 
-function Why({ g, card, side, onClose, onModel }: { g: Game; card: Card; side: Side; onClose: () => void; onModel: (focus: string | null) => void }) {
+type CardActions = { onPlay: () => void; onDiscard: () => void; onSell: () => void; onBuy: () => void; onTakeBack: () => void }
+
+function CardModal({ g, pick, canAct, onClose, onModel, ...actions }: { g: Game; pick: Pick; canAct: boolean; onClose: () => void; onModel: (focus: string | null) => void } & CardActions) {
+  const { card } = pick
+  // Une carte de l'adversaire s'explique de son point de vue : sa mesure sur sa France, sa crise sur la vôtre.
+  const side: Side = pick.where === 'adverse' ? 'ai' : 'player'
   const impact = useMemo(() => cardImpact(g, side, card), [g, side, card])
   const levers = card.kind === 'mesure' ? leverChanges(g, side, card) : []
   const starts = startNodes(g, side, card)
   const kind = kindOf(g, card, side)
   const whose = impact ? (impact.target === 'player' ? 'votre France' : `la France de ${g.seats[impact.target].name}`) : ''
-  const description = card.kind === 'crise' ? CRISES[card.crisis].text : card.kind === 'action' ? ACTIONS[card.action].text : (card.pledge.quote || card.pledge.measure!.summary)
+  const description = card.kind === 'crise' ? CRISES[card.crisis].text : card.kind === 'action' ? ACTIONS[card.action].text : card.pledge.quote || card.pledge.measure!.summary
+  const listing = g.market.find((l) => l.card.uid === card.uid)
+  const cost = pick.where === 'table' ? g.seats.player.played.find((p) => p.card.uid === card.uid)?.cost : pick.where === 'adverse' ? g.seats.ai.played.find((p) => p.card.uid === card.uid)?.cost : cardCost(g, 'player', card)
   return (
     <div className="modal-backdrop on-top" role="presentation" onClick={onClose}>
-      <div className={`modal dl-why ${kind.cls}`} role="dialog" aria-modal="true" aria-label={`Pourquoi : ${cardName(card)}`} onClick={(e) => e.stopPropagation()}>
-        <header className="dl-why-head">
-          <span className="dl-art" aria-hidden="true">
-            {cardArt(card)}
-          </span>
-          <div>
-            <p className="eyebrow">{kind.label}</p>
-            <h2>{cardName(card)}</h2>
-            <p className="note">{description}</p>
-          </div>
-        </header>
-
-        {levers.length ? (
-          <section>
-            <h3>🎚️ Ce que la carte change</h3>
-            <ul className="dl-levers">
-              {levers.map((l) => (
-                <li key={l.key}>
-                  {l.label} : {l.from} → <b>{l.to}</b>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-        {card.kind === 'crise' ? (
-          <section>
-            <h3>🌍 Ce que la crise déclenche</h3>
-            <p>
-              {crisisEffects(card.crisis).text.join(', ')}
-              {crisisEffects(card.crisis).years > 1 ? `, pendant ${crisisEffects(card.crisis).years} ans` : ''}.
-            </p>
-          </section>
-        ) : null}
-
-        {impact ? (
-          <>
-            <section>
-              <h3>
-                📊 Effet prévu sur {whose} l’an prochain : note {signed(impact.health)}
-              </h3>
-              <div className="dl-parts">
-                {impact.parts.map((p) => (
-                  <div key={p.id} className="dl-part">
-                    <span>{p.label}</span>
-                    <i className={p.delta >= 0 ? 'up' : 'down'} style={{ width: `${Math.min(100, Math.abs(p.delta) * 25)}%` }} />
-                    <b>{signed(p.delta, 1)}</b>
-                  </div>
+      <div className="modal dl-cardmodal" role="dialog" aria-modal="true" aria-label={cardName(card)} onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="dl-close" onClick={onClose} aria-label="Fermer">
+          ✕
+        </button>
+        <div className="dl-cardmodal-body">
+          <div className={`dl-card big ${kind.cls}`}>
+            <span className="dl-cost">{listing ? `${listing.price} ⚡` : `⚡${cost ?? '?'}`}</span>
+            <span className="dl-kind">{kind.label}</span>
+            {/* L'emplacement de l'illustration : un emoji pour l'instant, une image plus tard. */}
+            <span className="dl-art" aria-hidden="true">
+              {cardArt(card)}
+            </span>
+            <strong className="dl-name">{cardName(card)}</strong>
+            <span className="dl-desc">{description}</span>
+            {impact ? (
+              <span className="dl-preview">
+                <b className={impact.health >= 0 ? 'up' : 'down'}>
+                  Note {impact.target === 'player' ? 'de votre France' : `de ${g.seats[impact.target].name}`} {signed(impact.health)}
+                </b>
+                {impact.indicators.slice(0, 3).map((ind) => (
+                  <b key={ind.node} className={ind.good ? 'up' : 'down'}>{`${ind.label} ${ind.text}`}</b>
                 ))}
-                {!impact.parts.length ? <p className="note">Presque rien la première année : l’effet est lent, ou trop petit pour bouger la note.</p> : null}
-              </div>
-            </section>
-            <section>
-              <h3>🔗 Pourquoi ? Le chemin dans le modèle</h3>
-              <ul className="dl-chains">
-                {impact.indicators.slice(0, 5).map((ind) => {
-                  const chain = explainChain(starts, ind.node)
-                  return (
-                    <li key={ind.node}>
-                      <p className={ind.good === (impact.target === 'player') ? 'good' : 'bad'}>
-                        <b>
-                          {ind.label} {ind.text}
-                        </b>
-                      </p>
-                      {chain ? (
-                        <ol>
-                          {chain.map((step) => (
-                            <li key={`${step.from}-${step.to}`}>
-                              <span className="dl-step">
-                                {step.fromName} {step.fromUp ? '↑' : '↓'} → {step.toName} {step.toUp === null ? '↕' : step.toUp ? '↑' : '↓'}
-                              </span>
-                              {step.explanation ? <small> {step.explanation}</small> : null}
-                            </li>
-                          ))}
-                        </ol>
-                      ) : (
-                        <small>Un effet indirect : plusieurs mécanismes se combinent (voir le modèle).</small>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
-          </>
-        ) : null}
+              </span>
+            ) : null}
+          </div>
 
-        <p className="note">Calculé par le modèle : l’année qui vient, jouée avec et sans la carte (à côté des cartes déjà posées). Tous les liens viennent de modele/liens.csv.</p>
-        <div className="verdict-actions">
+          <div className="dl-explain">
+            {levers.length ? (
+              <section>
+                <h3>🎚️ Ce que la carte change</h3>
+                <ul className="dl-levers">
+                  {levers.map((l) => (
+                    <li key={l.key}>
+                      {l.label} : {l.from} → <b>{l.to}</b>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+            {card.kind === 'crise' ? (
+              <section>
+                <h3>🌍 Ce que la crise déclenche</h3>
+                <p>
+                  {crisisEffects(card.crisis).text.join(', ')}
+                  {crisisEffects(card.crisis).years > 1 ? `, pendant ${crisisEffects(card.crisis).years} ans` : ''}.
+                </p>
+              </section>
+            ) : null}
+            {card.kind === 'action' ? (
+              <section>
+                <h3>🎴 Une carte d’action</h3>
+                <p>{ACTIONS[card.action].text} Elle ne change pas l’économie : elle change la partie.</p>
+              </section>
+            ) : null}
+            {impact ? (
+              <>
+                <section>
+                  <h3>
+                    📊 Effet prévu sur {whose} l’an prochain : note {signed(impact.health)}
+                  </h3>
+                  <div className="dl-parts">
+                    {impact.parts.map((p) => (
+                      <div key={p.id} className="dl-part">
+                        <span>{p.label}</span>
+                        <i className={p.delta >= 0 ? 'up' : 'down'} style={{ width: `${Math.min(100, Math.abs(p.delta) * 25)}%` }} />
+                        <b>{signed(p.delta, 1)}</b>
+                      </div>
+                    ))}
+                    {!impact.parts.length ? <p className="note">Presque rien la première année : l’effet est lent, ou trop petit pour bouger la note.</p> : null}
+                  </div>
+                </section>
+                <section>
+                  <h3>🔗 Pourquoi ? Le chemin dans le modèle</h3>
+                  <ul className="dl-chains">
+                    {impact.indicators.slice(0, 5).map((ind) => {
+                      const chain = explainChain(starts, ind.node)
+                      return (
+                        <li key={ind.node}>
+                          <p className={ind.good ? 'good' : 'bad'}>
+                            <b>
+                              {ind.label} {ind.text}
+                            </b>
+                          </p>
+                          {chain ? (
+                            <ol>
+                              {chain.map((step) => (
+                                <li key={`${step.from}-${step.to}`}>
+                                  <span className="dl-step">
+                                    {step.fromName} {step.fromUp ? '↑' : '↓'} → {step.toName} {step.toUp === null ? '↕' : step.toUp ? '↑' : '↓'}
+                                  </span>
+                                  {step.explanation ? <small> {step.explanation}</small> : null}
+                                </li>
+                              ))}
+                            </ol>
+                          ) : (
+                            <small>Un effet indirect : plusieurs mécanismes se combinent (voir le modèle).</small>
+                          )}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  {!impact.indicators.length ? <p className="note">Aucun indicateur ne bouge assez dès la première année pour qu’on remonte le chemin : l’effet est lent ou très petit.</p> : null}
+                  <p className="note">Calculé par le modèle : l’année qui vient, jouée avec et sans la carte (à côté des cartes déjà posées). Les liens viennent de modele/liens.csv.</p>
+                </section>
+              </>
+            ) : null}
+          </div>
+        </div>
+
+        <footer className="dl-cardmodal-actions">
+          <Actions g={g} pick={pick} canAct={canAct} {...actions} />
           {starts.length ? (
             <button type="button" className="ghost" onClick={() => onModel(starts[0].node)}>
-              🧠 Voir ce mécanisme dans le modèle
+              🧠 Voir dans le modèle
             </button>
           ) : null}
-          <button type="button" className="primary" onClick={onClose}>
-            Compris
-          </button>
-        </div>
+        </footer>
       </div>
     </div>
+  )
+}
+
+/** Ce qu'on peut faire de la carte, selon où elle est. */
+function Actions({ g, pick, canAct, onPlay, onDiscard, onSell, onBuy, onTakeBack }: { g: Game; pick: Pick; canAct: boolean } & CardActions) {
+  const { card } = pick
+  if (!canAct) {
+    return <small className="dl-locked">{g.outcome ? 'La partie est finie.' : 'L’année est en train de se jouer : attendez le bilan.'}</small>
+  }
+  if (pick.where === 'adverse') {
+    return <small className="dl-locked">Une carte de {g.seats.ai.name} : vous ne pouvez que la regarder.</small>
+  }
+  if (pick.where === 'table') {
+    const sondage = card.kind === 'action' && card.action === 'sondage'
+    return (
+      <button type="button" className="primary" disabled={sondage} title={sondage ? 'Les cartes sont déjà piochées' : undefined} onClick={onTakeBack}>
+        ↩︎ Reprendre en main
+      </button>
+    )
+  }
+  if (pick.where === 'marche') {
+    const why = canBuy(g, 'player', card.uid)
+    const listing = g.market.find((l) => l.card.uid === card.uid)
+    return (
+      <>
+        <button type="button" className="primary" disabled={!!why} onClick={onBuy}>
+          🛒 Acheter ({listing?.price} ⚡)
+        </button>
+        {why ? <small className="dl-locked">🔒 {why}</small> : null}
+      </>
+    )
+  }
+  const playWhy = canPlay(g, 'player', card)
+  const sellWhy = canSell(g, 'player', card.uid)
+  return (
+    <>
+      <button type="button" className="primary" disabled={!!playWhy} onClick={onPlay}>
+        ▶ Jouer (⚡{cardCost(g, 'player', card)})
+      </button>
+      <button type="button" className="ghost" onClick={onDiscard}>
+        🗑️ Jeter (+{DISCARD_GAIN} ⚡)
+      </button>
+      <button type="button" className="ghost" disabled={!!sellWhy} onClick={onSell}>
+        🏷️ Vendre au marché ({marketPrice(g, card)} ⚡)
+      </button>
+      {playWhy || sellWhy ? <small className="dl-locked">🔒 {playWhy ?? sellWhy}</small> : null}
+    </>
   )
 }
 
@@ -721,7 +750,7 @@ function Rules({ onClose }: { onClose: () => void }) {
             <strong>Une pioche commune.</strong> 5 cartes au départ, puis 2 par an. Vos promesses et les siennes sont mêlées dedans : vous pouvez tomber sur les siennes.
           </li>
           <li>
-            <strong>Touchez une carte</strong> pour la jouer, la jeter (+{DISCARD_GAIN} ⚡ tout de suite) ou la vendre au marché (l’acheteur paie, vous touchez l’énergie l’an prochain). Le <b>?</b> explique son effet.
+            <strong>Touchez une carte :</strong> elle s’ouvre en grand, avec son effet expliqué par le modèle, et ce que vous pouvez en faire : la jouer, la jeter (+{DISCARD_GAIN} ⚡ tout de suite) ou la vendre au marché (l’acheteur paie, vous touchez l’énergie l’an prochain). L’adversaire peut vendre et acheter lui aussi.
           </li>
           <li>
             <strong>L’énergie ⚡</strong> est votre capital politique : plus vous êtes populaire, plus vous en avez. Chaque promesse tenue rapporte +2 ⚡.
