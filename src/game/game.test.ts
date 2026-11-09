@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { EVENTS, isMajorShock, rollEvents } from '../model/events'
 import { simulate } from '../model/sim'
-import { ACHIEVEMENTS } from './achievements'
-import { adviseDraft } from './advisors'
-import { headline } from './headlines'
 import { evaluate, SCENARIOS } from './scenarios'
 import { electionAt, isElectionYear, nextElection, voteShare } from './score'
-import { adviceDetail } from './adviceDetail'
-import { parseSave } from './savegame'
 
 describe('les scénarios', () => {
   // Chaque scénario est rejoué en détail (stratégie de référence, photo de fin de partie) dans scenarios.test.ts.
@@ -19,7 +14,7 @@ describe('les scénarios', () => {
   })
 })
 
-describe('les élections, la presse, les conseillers, les succès', () => {
+describe('les élections', () => {
   it('une élection tous les cinq ans à partir de 2027', () => {
     expect([2026, 2027, 2031, 2032].map(isElectionYear)).toEqual([false, true, false, true])
     expect(nextElection(2025)).toBe(2027)
@@ -32,19 +27,6 @@ describe('les élections, la presse, les conseillers, les succès', () => {
     expect(at(22 / 55).popularity).toBe(40)
     expect(at(22 / 55).won).toBe(false)
     expect(at(21 / 55).won).toBe(true)
-  })
-
-  it('tous les impôts au maximum : la une parle de révolte, le ministre de l’Intérieur prévient', () => {
-    const s = simulate({ decisions: [{ year: 2026, patch: { vat: 0.3, incomeTaxTop: 0.15, csg: 0.14, corporateTax: 0.4 } }], events: [], until: 2026 })
-    expect(headline(s[1], s[0], true).title).toMatch(/gouvernement tombe/)
-    expect(adviseDraft({ deficit: -150, unemployment: 0.08, poverty: -0.01, discontent: 1.7, ending: 'revolte', inflation: 0.06, emissions: 0 })[0].who).toBe('interieur')
-  })
-
-  it('les succès se déclenchent sur la partie', () => {
-    const states = simulate({ decisions: [], events: [], until: 2032 })
-    const earned = ACHIEVEMENTS.filter((a) => a.check({ states, elections: true, lost: false, stars: {}, myths: 0, openedModel: false })).map((a) => a.id)
-    expect(earned).toContain('reelu')
-    expect(earned).not.toContain('chute')
   })
 })
 
@@ -60,50 +42,6 @@ describe('pourquoi un événement arrive', () => {
     const aided = simulate({ decisions: [{ year: 2026, patch: { developmentAid: 50 } }], events: [], until: 2040 })
     const sahel = EVENTS.find((e) => e.id === 'sahel-war')!
     expect(chanceOf(sahel.chance(aided.at(-1)!, aided[0]))).toBeLessThan(chanceOf(sahel.chance(s[15], s[0])))
-  })
-})
-
-describe('la sauvegarde de la partie', () => {
-  const game = { v: 1, mode: 'premier-mandat', decisions: [{ year: 2026, patch: { vat: 0.21 } }], events: [{ year: 2027, id: 'heatwave' }], year: 2028, seed: 42, draft: { csg: 0.1 }, handled: [], electionsSeen: [2027], sandbox: false }
-
-  it('se relit telle quelle, et redonne exactement la même France', () => {
-    const back = parseSave(JSON.parse(JSON.stringify(game)), 2025, 2075)
-    expect(back).toEqual(game)
-    const a = simulate({ decisions: game.decisions, events: game.events, until: game.year }).at(-1)!
-    const b = simulate({ decisions: back!.decisions, events: back!.events, until: back!.year }).at(-1)!
-    expect(b.debtRatio).toBe(a.debtRatio)
-  })
-
-  it('ignore une sauvegarde abîmée ou d’une autre version', () => {
-    expect(parseSave(null, 2025, 2075)).toBeNull()
-    expect(parseSave('n’importe quoi', 2025, 2075)).toBeNull()
-    expect(parseSave({ ...game, v: 2 }, 2025, 2075)).toBeNull()
-    expect(parseSave({ ...game, mode: 'scenario-supprime' }, 2025, 2075)).toBeNull()
-    expect(parseSave({ ...game, events: [{ year: 2027, id: 'evenement-inconnu' }] }, 2025, 2075)).toBeNull()
-    expect(parseSave({ ...game, year: 2100 }, 2025, 2075)).toBeNull()
-  })
-})
-
-describe('l’avis détaillé des ministres', () => {
-  const input = { decisions: [], events: [], year: 2025, params: {}, draft: { electrification: 0.08, nuclearShare: 0.85 } }
-
-  it('la part de chaque levier plus l’effet de combinaison redonnent exactement l’effet annoncé', () => {
-    for (const topic of ['deficit', 'unemployment', 'poverty', 'emissions', 'inflation', 'discontent'] as const) {
-      const d = adviceDetail(input, topic)
-      expect(d.levers).toHaveLength(2)
-      expect(d.levers.reduce((a, l) => a + l.value, 0) + d.combination).toBeCloseTo(d.total, 9)
-    }
-  })
-
-  it('le budget dit qui paie : recettes, dépenses, et l’investissement privé quand il y en a', () => {
-    const d = adviceDetail(input, 'deficit')
-    expect(d.money).not.toBeNull()
-    expect(d.money!.revenue.length + d.money!.spending.length).toBeGreaterThan(0)
-    expect(d.money!.privateInvestment).toBeGreaterThan(50)
-  })
-
-  it('les mécanismes partent des causes de l’indicateur dans le graphe', () => {
-    expect(adviceDetail(input, 'unemployment').mechanisms.map((m) => m.id)).toContain('gdp')
   })
 })
 

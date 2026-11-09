@@ -14,7 +14,7 @@ const DATA = view([
   'holderBanques', 'effectiveRate', 'termPremium', 'deficitRatio', 'population', 'workingAge', 'participation', 'unemployment', 'retirees',
   'retirementEntrants', 'youthEntrants', 'births', 'retirementAgeEffective', 'lifeExpectancy', 'lifeGap', 'avgPension', 'poverty',
   'incomeRatioTopBottom', 'oil', 'fossilShare', 'inflationAnchor', 'productivityGrowth', 'naturalUnemployment', 'smic', 'worldGrowth',
-  'worldInflation', 'oilLongRun', 'ecbLongRun', 'startYear', 'otherTaxes', 'initialGrowth', 'reformPauseUntil', 'temperature', 'worldCO2', 'fossilEmissions', 'electricityEmissions', 'otherEmissions', 'emissionsTarget2030', 'largeFirmsValue',
+  'worldInflation', 'oilLongRun', 'ecbLongRun', 'startYear', 'otherTaxes', 'initialGrowth', 'reformPauseUntil', 'temperature', 'worldCO2', 'fossilEmissions', 'electricityEmissions', 'otherEmissions', 'largeFirmsValue',
 ] as const)
 
 export const BASE_YEAR = 2025
@@ -101,7 +101,7 @@ export const BASE_POLICY: Policy = {
  * propension à consommer, dispersion à l'intérieur de la tranche (modele/tranches.csv).
  */
 const GROUP_KEYS = [
-  'population', 'wages', 'mixed', 'dividends', 'wealth', 'pensions', 'unemployment', 'family', 'minima', 'incomeTax', 'mpc', 'sigma', 'lifeOffset',
+  'population', 'wages', 'mixed', 'dividends', 'wealth', 'pensions', 'unemployment', 'family', 'minima', 'incomeTax', 'mpc', 'sigma',
   'smicGain', 'energyExposure', 'inheritanceTax', 'topRate',
 ] as const
 

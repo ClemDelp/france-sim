@@ -75,5 +75,4 @@ worldCO2;41,6;Gt CO2/an;Climat;Émissions mondiales de CO2 (fossiles et défores
 fossilEmissions;265;Mt CO2e/an;Climat;Émissions françaises liées au pétrole et au gaz (transports, bâtiments, industrie);Citepa, Secten 2025
 electricityEmissions;15;Mt CO2e/an;Climat;Émissions de la production d’électricité française;RTE, Bilan électrique 2024
 otherEmissions;90;Mt CO2e/an;Climat;Autres émissions (agriculture, déchets, procédés industriels);Citepa, Secten 2025
-emissionsTarget2030;270;Mt CO2e/an;Climat;Objectif français pour 2030 (Stratégie nationale bas-carbone);SNBC, objectif européen −55 % en 2030
 largeFirmsValue;2500;Md€;Entreprises;Valeur des grandes entreprises françaises (ce qu’il faudrait payer pour les racheter);Euronext, capitalisation des sociétés françaises cotées (ordre de grandeur)

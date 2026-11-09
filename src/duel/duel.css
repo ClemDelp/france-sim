@@ -1,0 +1,506 @@
+/* Le duel des présidents : une table de jeu, des cartes en papier crème, un cadre de couleur par famille. */
+
+.dl {
+  --paper: #fbf6ea;
+  --paper-ink: #1d2233;
+  --paper-muted: #5d6478;
+  --card-w: 158px;
+  --promesse: #d9a404;
+  --mesure: #3f6fd1;
+  --crise: #c8323a;
+  --action: #2a9a5c;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 12px 16px 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--ink);
+}
+
+.dl-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dl-year {
+  font-size: 1.15rem;
+  color: var(--gold);
+}
+.dl-year small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* — Le choix des présidents */
+
+.dl-intro h1 {
+  margin: 6px 0 4px;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+.dl-intro p {
+  margin: 0;
+  color: var(--muted);
+  max-width: 70ch;
+}
+.dl-setup h2 {
+  margin: 8px 0 0;
+  font-size: 1.05rem;
+}
+.dl-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.dl-chip,
+.dl-years button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 2px solid var(--rule);
+  border-left: 6px solid var(--c, var(--accent));
+  background: var(--panel);
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.dl-chip > span {
+  font-size: 1.5rem;
+}
+.dl-chip small,
+.dl-years small {
+  color: var(--muted);
+}
+.dl-chip.is-selected,
+.dl-years .is-selected {
+  border-color: var(--c, var(--accent));
+  background: color-mix(in srgb, var(--c, var(--accent)) 22%, var(--panel));
+}
+.dl-years {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.dl-start {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+/* — Les présidents */
+
+.dl-seat {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: linear-gradient(100deg, color-mix(in srgb, var(--c) 26%, var(--panel)), var(--panel) 55%);
+}
+.dl-who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dl-who > div:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dl-who small {
+  color: var(--muted);
+}
+.dl-emblem {
+  font-size: 2rem;
+}
+.dl-score {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+}
+.dl-score strong {
+  font-size: 1.8rem;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.dl-kpis {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 6px;
+}
+.dl-kpis li {
+  display: flex;
+  flex-direction: column;
+  padding: 5px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+}
+.dl-kpis small {
+  color: var(--muted);
+}
+.dl-kpis .danger {
+  box-shadow: inset 3px 0 0 var(--bad);
+}
+.dl-programme small {
+  color: var(--muted);
+}
+.dl-programme ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 0.85rem;
+}
+.dl-programme .is-kept {
+  color: var(--good);
+  font-weight: 700;
+}
+
+/* — La table */
+
+.dl-table {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: radial-gradient(ellipse at center, #1c4a35 0%, #12301f 100%);
+  border: 1px solid #2c5a43;
+}
+.dl-zone {
+  min-width: 0;
+}
+.dl-zone > p,
+.dl-hand > p {
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+.dl-zone small,
+.dl-hand > p small {
+  color: #b9d6c4;
+  font-weight: 500;
+}
+.dl-zone .note {
+  color: #b9d6c4;
+}
+.dl-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 12px 4px 10px 10px;
+  min-height: 120px;
+  align-items: flex-start;
+}
+.dl-back {
+  flex: 0 0 90px;
+  height: 120px;
+  border-radius: 10px;
+  border: 2px solid #5b6ea8;
+  background: repeating-linear-gradient(45deg, #2c3a63, #2c3a63 6px, #3c4d80 6px, #3c4d80 12px);
+  animation: dl-breathe 1.6s ease-in-out infinite;
+}
+@keyframes dl-breathe {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* — La main */
+
+.dl-hand {
+  min-width: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.dl-hand.is-active {
+  opacity: 1;
+}
+.dl-hand > p small {
+  color: var(--muted);
+}
+
+/* — Une carte */
+
+.dl-card {
+  position: relative;
+  flex: 0 0 var(--card-w);
+  min-height: 236px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 26px 10px 10px;
+  border-radius: 12px;
+  border: 3px solid var(--frame);
+  background: var(--paper);
+  color: var(--paper-ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.kind-promesse {
+  --frame: var(--promesse);
+  background: linear-gradient(180deg, #fff3c9, var(--paper) 45%);
+}
+.kind-mesure {
+  --frame: var(--mesure);
+}
+.kind-crise {
+  --frame: var(--crise);
+  background: linear-gradient(180deg, #fde0dd, var(--paper) 45%);
+}
+.kind-action {
+  --frame: var(--action);
+  background: linear-gradient(180deg, #ddf3e6, var(--paper) 45%);
+}
+.dl-card:not(:disabled):hover,
+.dl-card:not(:disabled):focus-visible {
+  transform: translateY(-8px) rotate(-1deg);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.45);
+}
+.dl-card:disabled {
+  cursor: default;
+}
+.dl-hand .dl-card:disabled {
+  filter: grayscale(0.55);
+  opacity: 0.6;
+}
+.dl-cost {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  z-index: 1;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #241b00;
+  font-weight: 900;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.dl-kind {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 3px 8px 3px 32px;
+  background: var(--frame);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 8px 8px 0 0;
+}
+.kind-promesse .dl-kind {
+  color: #2b2100;
+}
+.dl-art {
+  display: grid;
+  place-items: center;
+  height: 56px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  font-size: 2.2rem;
+}
+.dl-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.95rem;
+  line-height: 1.15;
+}
+.dl-text {
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: var(--paper-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dl-preview {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  font-size: 0.66rem;
+}
+.dl-preview b {
+  padding: 1px 5px;
+  border-radius: 99px;
+}
+.dl-preview .up,
+.dl-report .up,
+.dl-breakdown .up {
+  background: #cdeedb;
+  color: #11552f;
+}
+.dl-preview .down,
+.dl-report .down {
+  background: #f8d3d3;
+  color: #8a1c1c;
+}
+.dl-target {
+  margin-top: auto;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: white;
+  background: var(--crise);
+}
+.dl-why {
+  margin-top: auto;
+  font-size: 0.68rem;
+  color: #8a1c1c;
+}
+.is-flip {
+  animation: dl-flip 0.6s ease-out both;
+}
+@keyframes dl-flip {
+  from {
+    transform: perspective(600px) rotateY(90deg) translateY(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* — La barre d'action */
+
+.dl-bar {
+  position: sticky;
+  bottom: 10px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.dl-energy {
+  padding: 8px 14px;
+  border-radius: 99px;
+  background: var(--panel);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-weight: 900;
+  font-size: 1.2rem;
+}
+.dl-energy small {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* — Les fenêtres */
+
+.dl-world {
+  margin: 0 0 8px;
+}
+.dl-versus {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.dl-side {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--panel);
+  border-top: 4px solid var(--c);
+}
+.dl-side ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  font-size: 0.88rem;
+}
+.dl-side li {
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+.dl-big {
+  margin: 4px 0 8px;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--gold);
+}
+.dl-big small {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.dl-big span {
+  font-size: 1rem;
+  padding: 1px 8px;
+  border-radius: 99px;
+}
+.dl-final.is-won {
+  border-top: 6px solid var(--good);
+}
+.dl-final.is-lost {
+  border-top: 6px solid var(--bad);
+}
+.dl-breakdown {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.dl-breakdown th,
+.dl-breakdown td {
+  padding: 4px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--rule);
+}
+.dl-breakdown th:first-child,
+.dl-breakdown td:first-child {
+  text-align: left;
+}
+.dl-breakdown small {
+  color: var(--muted);
+}
+.dl-total td {
+  font-weight: 900;
+  color: var(--gold);
+}
+.dl-rules ol {
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .dl {
+    --card-w: 140px;
+  }
+  .dl-table,
+  .dl-versus {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* L'entrée du duel sur l'accueil. */
+.menu-duel {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 18%, var(--panel)), var(--panel) 70%);
+}
