@@ -602,9 +602,13 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // Adaptation au-delà de l'effort de départ, et reconstruction après les catastrophes : des travaux publics en plus.
   const climateSpending = g(policy.adaptation - REF.adaptation) + P.reconstructionShare * climateDamage * BASE.gdp * trend * scale
   // Contrôle, intégration et accueil des demandeurs d'asile : des dépenses publiques en plus (ou en moins).
-  const migrationSpending = g(policy.borderControl - REF.borderControl) + g(policy.integration - REF.integration) + ((P.receptionCost * (migrationIrregular - irregularStart)) / 1000) * trend
+  // Baisser l'immigration légale sous son niveau de 2025 coûte aussi : refus, contrôles, rétention, reconduites.
+  const restrictionSpending = ((P.restrictionCost * Math.max(0, REF.netMigration - policy.netMigration)) / 1000) * trend
+  const migrationSpending = g(policy.borderControl - REF.borderControl) + g(policy.integration - REF.integration) + ((P.receptionCost * (migrationIrregular - irregularStart)) / 1000) * trend + restrictionSpending
   const publicGoods = Math.max(0, plannedPublicGoods + climateSpending + migrationSpending - (1 - P.rescueTaxShare) * rescueBase)
   const publicFactor = plannedPublicGoods > 0 ? publicGoods / plannedPublicGoods : 1
+  // Pour le détail du budget : les services publics sans les dépenses d'immigration en plus, comptées à part.
+  const serviceFactor = plannedPublicGoods > 0 ? Math.max(0, publicGoods - migrationSpending) / plannedPublicGoods : 1
   const rescueTax = P.rescueTaxShare * rescueBase
   // La taxe carbone en plus (ou en moins) de celle de 2025, sur les émissions fossiles de l'an dernier.
   // Une partie des émissions échappe à la taxe carbone (aérien, transport routier de marchandises, industrie soumise aux quotas européens).
@@ -1144,11 +1148,12 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     riskPremium,
     budget: {
       Retraites: d.transfers.pensions,
-      Santé: g(policy.health + policy.prevention) * publicFactor,
-      Éducation: g(policy.education) * publicFactor,
-      Défense: g(policy.defence) * publicFactor,
-      'Investissement public': g(policy.investment) * publicFactor,
-      'Autres services publics': g(policy.otherServices + policy.softPower - REF.softPower) * publicFactor,
+      Santé: g(policy.health + policy.prevention) * serviceFactor,
+      Éducation: g(policy.education) * serviceFactor,
+      Défense: g(policy.defence) * serviceFactor,
+      'Investissement public': g(policy.investment) * serviceFactor,
+      'Autres services publics': g(policy.otherServices + policy.softPower - REF.softPower) * serviceFactor,
+      'Immigration : contrôle et accueil (en plus)': migrationSpending,
       'Chômage, famille, minima': d.transfers.unemploymentBenefits + d.transfers.family + d.transfers.minima + d.transfers.otherTransfers,
       'Sécurité sociale de l’alimentation': d.transfers.foodTransfer,
       'Aides aux entreprises': d.firmAid,

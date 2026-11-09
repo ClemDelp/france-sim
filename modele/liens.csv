@@ -51,6 +51,7 @@ tariffChinaEV;exports;-;evRetaliation;La Chine riposte (cognac, porc, avions…)
 netMigration;workingAge;+;migrantWorkingShare;La plupart des immigrés arrivent en âge de travailler.
 irregularArrivals;workingAge;+;migrantWorkingShare;
 netMigration;population;+;migrantYoungShare;
+netMigration;spending;-;restrictionCost;Baisser l’immigration coûte : instruire et refuser, contrôler, retenir, reconduire.
 monetization;rate;±;monetizationCredibility monetizationFear;Un acheteur garanti rassure… jusqu’à ce que l’excès fasse craindre l’inflation.
 monetization;inflation;+;monetizationInflation;Créer de la monnaie pour financer l’État pousse les prix.
 savingsToFirms;privateInvestment;+;savingsToFirmsEffect;Plus d’épargne disponible pour les entreprises.

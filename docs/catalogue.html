@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 451 paramètres du modèle et les 280 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 452 paramètres du modèle et les 281 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (451)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (452)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -2209,6 +2209,13 @@
   <td><span class="badge estime">estimé</span></td>
   <td><small>Cour des comptes, mission asile</small></td>
 </tr>
+<tr data-file="comportements" data-reliability="estime" data-text="restrictioncost coût public de chaque arrivée en moins par an, sous l’immigration légale de 2025 immigration moins de titres de séjour ne suffit pas : il faut instruire et refuser, contrôler, retenir et reconduire ceux qui restent (une reconduite forcée coûte ≈ 14 000 €), défendre les recours. compté seulement pour une baisse sous 2025. sénat, rapport sur le coût des éloignements (2019, ≈ 13 800 € par reconduite), cour des comptes, « la politique de lutte contre l’immigration irrégulière » (2024)">
+  <td><code>restrictionCost</code><br /><small>Immigration</small></td>
+  <td><strong>Coût public de chaque arrivée en moins par an, sous l’immigration légale de 2025</strong><br /><small>Moins de titres de séjour ne suffit pas : il faut instruire et refuser, contrôler, retenir et reconduire ceux qui restent (une reconduite forcée coûte ≈ 14 000 €), défendre les recours. Compté seulement pour une baisse sous 2025.</small><br /><small>Utilisé par : Immigration légale → Dépenses publiques</small></td>
+  <td>14<br /><small>k€ par personne</small><br /><small>plage 7 à 30</small></td>
+  <td><span class="badge estime">estimé</span></td>
+  <td><small>Sénat, rapport sur le coût des éloignements (2019, ≈ 13 800 € par reconduite), Cour des comptes, « La politique de lutte contre l’immigration irrégulière » (2024)</small></td>
+</tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="aidmax part maximale des conflits et des départs évitable par l’aide au développement et à la paix immigration santé, écoles, agriculture, médiation : l’aide stabilise sur le long terme, jamais totalement. ocde, évaluations de l’aide">
   <td><code>aidMax</code><br /><small>Immigration</small></td>
   <td><strong>Part maximale des conflits et des départs évitable par l’aide au développement et à la paix</strong><br /><small>Santé, écoles, agriculture, médiation : l’aide stabilise sur le long terme, jamais totalement.</small><br /><small>Utilisé par : Aide au développement et à la paix → Conflits autour de l’Europe · Aide au développement et à la paix → Pression migratoire</small></td>
@@ -3246,6 +3253,7 @@
 <tr data-file="liens" data-text="netmigration workingage immigration légale personnes en âge de travailler migrantworkingshare la plupart des immigrés arrivent en âge de travailler."><td>Immigration légale</td><td>Personnes en âge de travailler</td><td>+</td><td><small><code>migrantWorkingShare</code></small></td><td><small>La plupart des immigrés arrivent en âge de travailler.</small></td></tr>
 <tr data-file="liens" data-text="irregulararrivals workingage arrivées hors voies légales personnes en âge de travailler migrantworkingshare "><td>Arrivées hors voies légales</td><td>Personnes en âge de travailler</td><td>+</td><td><small><code>migrantWorkingShare</code></small></td><td><small></small></td></tr>
 <tr data-file="liens" data-text="netmigration population immigration légale population migrantyoungshare "><td>Immigration légale</td><td>Population</td><td>+</td><td><small><code>migrantYoungShare</code></small></td><td><small></small></td></tr>
+<tr data-file="liens" data-text="netmigration spending immigration légale dépenses publiques restrictioncost baisser l’immigration coûte : instruire et refuser, contrôler, retenir, reconduire."><td>Immigration légale</td><td>Dépenses publiques</td><td>-</td><td><small><code>restrictionCost</code></small></td><td><small>Baisser l’immigration coûte : instruire et refuser, contrôler, retenir, reconduire.</small></td></tr>
 <tr data-file="liens" data-text="monetization rate planche à billets taux à 10 ans monetizationcredibility monetizationfear un acheteur garanti rassure… jusqu’à ce que l’excès fasse craindre l’inflation."><td>Planche à billets</td><td>Taux à 10 ans</td><td>±</td><td><small><code>monetizationCredibility</code> <code>monetizationFear</code></small></td><td><small>Un acheteur garanti rassure… jusqu’à ce que l’excès fasse craindre l’inflation.</small></td></tr>
 <tr data-file="liens" data-text="monetization inflation planche à billets inflation monetizationinflation créer de la monnaie pour financer l’état pousse les prix."><td>Planche à billets</td><td>Inflation</td><td>+</td><td><small><code>monetizationInflation</code></small></td><td><small>Créer de la monnaie pour financer l’État pousse les prix.</small></td></tr>
 <tr data-file="liens" data-text="savingstofirms privateinvestment épargne vers les entreprises investissement des entreprises savingstofirmseffect plus d’épargne disponible pour les entreprises."><td>Épargne vers les entreprises</td><td>Investissement des entreprises</td><td>+</td><td><small><code>savingsToFirmsEffect</code></small></td><td><small>Plus d’épargne disponible pour les entreprises.</small></td></tr>
