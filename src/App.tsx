@@ -7,13 +7,15 @@ import { Home } from './ui/game/Home'
 import { UpdateBanner } from './ui/game/UpdateBanner'
 import { Duel } from './duel/Duel'
 
-/** Les trois écrans : l'accueil, le duel, le modèle (ouvrables par un lien : #duel, #modele). */
-type Screen = 'accueil' | 'duel' | 'modele'
+/** Deux écrans (l'accueil, le duel : lien #duel), et le modèle par-dessus, ouvrable de partout sans perdre la partie. */
+type Screen = 'accueil' | 'duel'
 
-const fromHash = (): Screen => (window.location.hash === '#duel' ? 'duel' : window.location.hash === '#modele' ? 'modele' : 'accueil')
+const fromHash = (): Screen => (window.location.hash === '#duel' ? 'duel' : 'accueil')
 
 function App() {
   const [screen, setScreen] = useState<Screen>(fromHash)
+  /** Le modèle ouvert, et la variable à montrer (ou null : la vue d'ensemble). */
+  const [model, setModel] = useState<{ focus: string | null } | null>(() => (window.location.hash === '#modele' ? { focus: null } : null))
   useEffect(() => {
     const onHash = () => setScreen(fromHash())
     window.addEventListener('hashchange', onHash)
@@ -26,17 +28,17 @@ function App() {
 
   return (
     <>
-      {screen === 'accueil' ? <Home onDuel={() => go('duel')} onModel={() => go('modele')} /> : null}
-      {screen === 'duel' ? <Duel onExit={() => go('accueil')} onModel={() => go('modele')} /> : null}
-      {screen === 'modele' ? <Model onClose={() => go('accueil')} /> : null}
+      {screen === 'accueil' ? <Home onDuel={() => go('duel')} onModel={() => setModel({ focus: null })} /> : null}
+      {screen === 'duel' ? <Duel onExit={() => go('accueil')} onModel={(focus) => setModel({ focus })} /> : null}
+      {model ? <Model focus={model.focus} onClose={() => setModel(null)} /> : null}
       <UpdateBanner />
     </>
   )
 }
 
 /** Le cerveau du modèle, sur la France de 2025 : le graphe des causes, les paramètres (modifiables), les sources, le test face au passé. */
-function Model({ onClose }: { onClose: () => void }) {
-  const [focus, setFocus] = useState<string | null>(null)
+function Model({ focus: initial, onClose }: { focus: string | null; onClose: () => void }) {
+  const [focus, setFocus] = useState<string | null>(initial)
   const [view] = useState<View>('graphe')
   const [overrides, setOverrides] = useState<Overrides>({})
   const state = useMemo(() => simulate({ decisions: [], events: [], until: 2025, params: overrides }).at(-1)!, [overrides])
