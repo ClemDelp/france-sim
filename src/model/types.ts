@@ -207,6 +207,8 @@ export type YearState = {
   // Ménages
   disposable: ByGroup
   disposablePerCapita: ByGroup
+  /** Le revenu disponible de chaque tranche, source par source (Md€ ; impôts et cotisations en négatif). */
+  incomeParts: Record<keyof ByGroup, Record<string, number>>
   wealth: ByGroup
   consumptionByGroup: ByGroup
   poverty: number
@@ -249,6 +251,10 @@ export type YearState = {
   evasion: number
   /** Mécontentement social : à 1, le pays se soulève. */
   discontent: number
+  /** Ce qui nourrit (ou apaise, en négatif) la colère de l'année, cause par cause. */
+  angerParts: Record<string, number>
+  /** Ce qui fait l'inflation de l'année, cause par cause. */
+  inflationParts: Record<string, number>
   /** Ce qui rend la situation intenable cette année (la partie est perdue), ou null. */
   ending: Ending | null
   // Immigration

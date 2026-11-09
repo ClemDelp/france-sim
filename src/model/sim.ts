@@ -546,21 +546,21 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   const vatPass = (change: number) => P.vatStandardShare * (change >= 0 ? P.vatPassThrough : P.vatCutPassThrough)
   const vatInflation = init ? 0 : (vatPass(policy.vat - prev.vat) * (policy.vat - prev.vat)) / (1 + prev.vat)
   const vatPrice = prev.vatPrice * (1 + vatInflation)
-  const inflation = init
-    ? BASE.inflationAnchor
-    : clamp(
-        P.priceWagePass * (wageGrowth - productivityGrowth) +
-          (1 - P.priceWagePass) * BASE.inflationAnchor +
-          P.energyInflationPass * energyInflation +
-          P.tariffInflation * tariffStep +
-          vatInflation +
-          P.gapInflation * prev.gap +
-          P.monetizationInflation * policy.monetization +
-          P.panicInflation * prev.panic +
-          P.climateInflation * Math.max(0, damageStep),
-        -0.03,
-        0.4,
-      )
+  // Ce qui fait monter (ou baisser) les prix, cause par cause (pour l'expliquer).
+  const inflationParts: Record<string, number> = init
+    ? { 'Tendance (cible de la BCE)': BASE.inflationAnchor }
+    : {
+        'Salaires plus rapides que la productivité': P.priceWagePass * (wageGrowth - productivityGrowth),
+        'Tendance (cible de la BCE)': (1 - P.priceWagePass) * BASE.inflationAnchor,
+        Énergie: P.energyInflationPass * energyInflation,
+        'Droits de douane': P.tariffInflation * tariffStep,
+        TVA: vatInflation,
+        'Économie en surchauffe ou au ralenti': P.gapInflation * prev.gap,
+        'Création monétaire': P.monetizationInflation * policy.monetization,
+        'Panique sur les marchés': P.panicInflation * prev.panic,
+        'Dégâts climatiques': P.climateInflation * Math.max(0, damageStep),
+      }
+  const inflation = init ? BASE.inflationAnchor : clamp(sumRecord(inflationParts), -0.03, 0.4)
   const priceLevel = init ? 1 : prev.priceLevel * (1 + inflation)
   const avgWage = init ? prev.avgWage : prev.avgWage * (1 + wageGrowth)
   const smic = init ? prev.smic : prev.smic * (1 + Math.max(0, inflation)) * (1 + smicStep)
@@ -756,6 +756,23 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
         mortgageInterest * GP.wages[k]
       return income[k] - taxes
     })
+    // Le revenu disponible de chaque tranche, source par source (pour expliquer ce qui fait bouger le pouvoir d'achat et la pauvreté).
+    const incomeParts = {} as Record<keyof ByGroup, Record<string, number>>
+    for (const k of GROUPS) {
+      incomeParts[k] = {
+        Salaires: wagesOf(k),
+        'Revenus d’indépendants': mixed * GP.mixed[k],
+        'Revenus du patrimoine': (dividendsHome + bankDividends) * GP.dividends[k] + (interestBy.assureurs + depositInterest) * GP.wealth[k],
+        Retraites: pensions * GP.pensions[k],
+        'Allocations chômage': unemploymentBenefits * GP.unemployment[k],
+        'Allocations familiales': family * GP.family[k],
+        'Minima sociaux': minima * GP.minima[k],
+        'Autres aides': (otherTransfers + foodTransfer) * GP.population[k],
+        'Cotisations et CSG': -(employeeContrib[k] + csg[k]),
+        'Impôt sur le revenu': -incomeTax[k],
+        'Autres impôts et charges': -(income[k] - disposable[k] - employeeContrib[k] - csg[k] - incomeTax[k]),
+      }
+    }
     // Les droits de succession sont prélevés sur le patrimoine transmis, pas sur le revenu.
     const inheritanceTaxBy = byGroup((k) => inheritanceTax * GP.inheritanceTax[k])
 
@@ -887,6 +904,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       bankDividends,
       income,
       disposable,
+      incomeParts,
       consumption,
       totalConsumption,
       investment,
@@ -1035,47 +1053,42 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
   // Les bonnes nouvelles comptent aussi, moins que les mauvaises (on remarque davantage ce qu'on perd) : un niveau de vie
   // qui progresse plus vite que d'habitude, des prélèvements en baisse, un chômage bas, une pauvreté qui recule.
   const medianRise = init ? 0 : Math.max(0, dist.median / prev.medianIncome - 1 - BASE.productivityGrowth)
-  const goodNews =
-    P.goodNewsWeight *
-    (medianRise / P.unrestIncomeDrop +
-      Math.max(0, feltBurden0 - feltBurden) / P.unrestTaxRange +
-      Math.max(0, P.unrestUnemployment - d.unemployment) / P.unrestUnemploymentRange +
-      Math.max(0, poverty0 - dist.poverty) / P.unrestPovertyRange)
-  const angerBeforeForce =
-    -goodNews +
-    medianDrop / P.unrestIncomeDrop +
-    lowIncomeDrop / P.unrestLowIncomeDrop +
-    Math.max(0, feltBurden - feltBurden0) / P.unrestTaxRange +
-    Math.max(0, d.unemployment - P.unrestUnemployment) / P.unrestUnemploymentRange +
-    Math.max(0, inflation - P.unrestInflation) / P.unrestInflationRange +
-    Math.max(0, dist.poverty - poverty0) / P.unrestPovertyRange +
+  // Chaque cause de colère, nommée (pour expliquer ce qui la fait monter ou baisser) ; les bonnes nouvelles l'apaisent, moins que les mauvaises ne la nourrissent.
+  const angerParts: Record<string, number> = {
+    'Revenu médian': medianDrop / P.unrestIncomeDrop - (P.goodNewsWeight * medianRise) / P.unrestIncomeDrop,
+    'Revenus des plus modestes': lowIncomeDrop / P.unrestLowIncomeDrop,
+    'Impôts et cotisations ressentis': Math.max(0, feltBurden - feltBurden0) / P.unrestTaxRange - (P.goodNewsWeight * Math.max(0, feltBurden0 - feltBurden)) / P.unrestTaxRange,
+    Chômage: Math.max(0, d.unemployment - P.unrestUnemployment) / P.unrestUnemploymentRange - (P.goodNewsWeight * Math.max(0, P.unrestUnemployment - d.unemployment)) / P.unrestUnemploymentRange,
+    'Hausse des prix': Math.max(0, inflation - P.unrestInflation) / P.unrestInflationRange,
+    Pauvreté: Math.max(0, dist.poverty - poverty0) / P.unrestPovertyRange - (P.goodNewsWeight * Math.max(0, poverty0 - dist.poverty)) / P.unrestPovertyRange,
     // L'austérité imposée nourrit la colère tant que le plan d'aide dure.
-    (rescueYears > 0 ? rescueStep * (P.rescueYears - rescueYears + 1) : 0) / P.unrestAusterityRange +
+    'Austérité du plan d’aide': (rescueYears > 0 ? rescueStep * (P.rescueYears - rescueYears + 1) : 0) / P.unrestAusterityRange,
     // Une crise de la dette (taux qui s'envolent, banques et épargnants touchés) fâche le pays, avec ou sans plan d'aide.
-    (debtCrisis ? P.crisisAnger : 0) +
-    // Catastrophes à répétition, pénuries d'eau : le réchauffement nourrit la colère, sauf si le pays s'est adapté.
-    (Math.max(0, warming - world.heatShock) * exposure) / P.unrestClimateRange +
-    // Une catastrophe ponctuelle (canicule, inondation) choque, mais moins qu'un réchauffement durable ; l'adaptation en atténue aussi la colère.
-    world.heatShock * exposure * P.disasterAnger +
-    world.unrest +
+    'Crise de la dette': debtCrisis ? P.crisisAnger : 0,
+    // Catastrophes à répétition, pénuries d'eau : le réchauffement nourrit la colère, sauf si le pays s'est adapté ;
+    // une catastrophe ponctuelle (canicule, inondation) choque, mais moins qu'un réchauffement durable.
+    'Climat et catastrophes': (Math.max(0, warming - world.heatShock) * exposure) / P.unrestClimateRange + world.heatShock * exposure * P.disasterAnger,
+    'Événements de l’année': world.unrest,
     // Précarité quand on allège fortement les règles.
-    P.regulationAnger * Math.max(0, deregulation) +
-    // Les réformes qui fâchent dès le vote (âge de départ, taxe carbone, gel des pensions, droit du travail, privatisations),
-    // et les cadeaux fiscaux aux plus aisés.
-    voteAnger +
-    richCutAnger +
+    'Règles du travail allégées': P.regulationAnger * Math.max(0, deregulation),
+    // Les réformes qui fâchent dès le vote (âge de départ, taxe carbone, gel des pensions, droit du travail, privatisations).
+    'Réformes impopulaires votées': voteAnger,
+    'Cadeaux fiscaux aux plus aisés': richCutAnger,
     // Des retraites qui perdent du pouvoir d'achat par rapport à l'année de départ : la colère dure tant que la perte dure.
-    Math.max(0, 1 - pensionPower) / P.unrestPensionRange +
+    'Pensions qui décrochent': Math.max(0, 1 - pensionPower) / P.unrestPensionRange,
     // Des services publics qui reculent (santé, éducation, autres services), en volume, par rapport à l'année de départ.
-    Math.max(0, 1 - servicesIndex) / P.unrestServicesRange +
+    'Services publics en recul': Math.max(0, 1 - servicesIndex) / P.unrestServicesRange,
     // La fierté d'un pays qui compte dans le monde (ou l'humiliation d'un pays qui décline).
-    -P.influencePride * clout +
+    'Place de la France dans le monde': -P.influencePride * clout,
     // Un accueil débordé (bien plus d'arrivées qu'en 2025, sans moyens d'intégration) crée des tensions.
-    (P.migrationAnger * Math.max(0, extraArrivals) * welcomeGap) / 100
+    'Accueil des arrivants débordé': (P.migrationAnger * Math.max(0, extraArrivals) * welcomeGap) / 100,
+  }
+  const angerBeforeForce = sumRecord(angerParts)
   // Un passage en force (49.3) choque peu un pays calme (budget 2022), beaucoup un pays en colère cette année-là,
   // par exemple contre la réforme même qu'on fait passer (retraites 2023).
   const angryBefore = init ? 0 : P.unrestMemory * prev.discontent + (1 - P.unrestMemory) * angerBeforeForce
   const anger = angerBeforeForce + (init ? 0 : world.forced * (P.forceAnger + P.forceContextAnger * Math.max(0, angryBefore)))
+  angerParts['Passage en force (49.3)'] = init ? 0 : anger - angerBeforeForce
   // Le climat social peut devenir serein (négatif), sans descendre sous un plancher : il y a toujours des mécontents.
   const discontent = init ? 0 : Math.max(P.serenityFloor, P.unrestMemory * prev.discontent + (1 - P.unrestMemory) * anger)
   const ending: Ending | null = init
@@ -1185,6 +1198,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     },
     disposable: d.disposable,
     disposablePerCapita: perCapita,
+    incomeParts: d.incomeParts,
     wealth: { ...wealth },
     consumptionByGroup: d.consumption,
     poverty: dist.poverty,
@@ -1214,6 +1228,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     taxBurden,
     evasion,
     discontent,
+    angerParts,
+    inflationParts,
     ending,
     tariffs: policy.tariffs,
     influence,
