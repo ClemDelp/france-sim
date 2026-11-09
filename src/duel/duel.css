@@ -773,33 +773,57 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.dl-chains {
+.dl-explain .good {
+  color: var(--good);
+}
+.dl-explain .bad {
+  color: var(--bad);
+}
+.dl-moves {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+.dl-moves li {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+.dl-budget p,
+.dl-other {
+  margin: 6px 0 4px;
+  font-size: 0.88rem;
+}
+.dl-tree {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 10px;
-}
-.dl-chains > li > p {
-  margin: 0 0 2px;
-}
-.dl-chains .good b {
-  color: var(--good);
-}
-.dl-chains .bad b {
-  color: var(--bad);
-}
-.dl-chains ol {
-  margin: 0;
-  padding-left: 18px;
-  display: grid;
-  gap: 2px;
+  gap: 3px;
   font-size: 0.88rem;
 }
-.dl-step {
+.dl-tree .dl-tree {
+  margin: 3px 0 0 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--rule);
+}
+.dl-node {
   font-weight: 700;
 }
-.dl-chains small {
+.dl-hit {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.dl-tree small {
   color: var(--muted);
 }
 

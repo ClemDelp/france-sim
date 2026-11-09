@@ -35,7 +35,7 @@ import {
   type Side,
 } from './engine'
 import { healthParts } from './health'
-import { cardImpact, crisisEffects, explainChain, leverChanges, startNodes } from './why'
+import { cardImpact, crisisEffects, leverChanges, startNodes, whyTree, type Impact, type Indicator, type WhyNode } from './why'
 import './duel.css'
 
 const REVEAL_DELAY = 1100
@@ -555,52 +555,30 @@ function CardModal({ g, pick, canAct, onClose, onModel, ...actions }: { g: Game;
               <>
                 <section>
                   <h3>
-                    📊 Effet prévu sur {whose} l’an prochain : note {signed(impact.health)}
+                    📊 Note de {whose} l’an prochain : {signed(impact.health)} point{Math.abs(impact.health) > 1 ? 's' : ''}
                   </h3>
+                  <p className="note">En points de note (sur 100), critère par critère.</p>
                   <div className="dl-parts">
                     {impact.parts.map((p) => (
                       <div key={p.id} className="dl-part">
                         <span>{p.label}</span>
                         <i className={p.delta >= 0 ? 'up' : 'down'} style={{ width: `${Math.min(100, Math.abs(p.delta) * 25)}%` }} />
-                        <b>{signed(p.delta, 1)}</b>
+                        <b className={p.delta >= 0 ? 'good' : 'bad'}>{signed(p.delta, 1)}</b>
                       </div>
                     ))}
                     {!impact.parts.length ? <p className="note">Presque rien la première année : l’effet est lent, ou trop petit pour bouger la note.</p> : null}
                   </div>
                 </section>
                 <section>
-                  <h3>🔗 Pourquoi ? Le chemin dans le modèle</h3>
-                  <ul className="dl-chains">
-                    {impact.indicators.slice(0, 5).map((ind) => {
-                      const chain = explainChain(starts, ind.node)
-                      return (
-                        <li key={ind.node}>
-                          <p className={ind.good ? 'good' : 'bad'}>
-                            <b>
-                              {ind.label} {ind.text}
-                            </b>
-                          </p>
-                          {chain ? (
-                            <ol>
-                              {chain.map((step) => (
-                                <li key={`${step.from}-${step.to}`}>
-                                  <span className="dl-step">
-                                    {step.fromName} {step.fromUp ? '↑' : '↓'} → {step.toName} {step.toUp === null ? '↕' : step.toUp ? '↑' : '↓'}
-                                  </span>
-                                  {step.explanation ? <small> {step.explanation}</small> : null}
-                                </li>
-                              ))}
-                            </ol>
-                          ) : (
-                            <small>Un effet indirect : plusieurs mécanismes se combinent (voir le modèle).</small>
-                          )}
-                        </li>
-                      )
-                    })}
+                  <h3>📈 Ce qui bouge dans {whose}</h3>
+                  <ul className="dl-moves">
+                    {impact.indicators.map((ind) => (
+                      <Move key={ind.node} ind={ind} />
+                    ))}
                   </ul>
-                  {!impact.indicators.length ? <p className="note">Aucun indicateur ne bouge assez dès la première année pour qu’on remonte le chemin : l’effet est lent ou très petit.</p> : null}
-                  <p className="note">Calculé par le modèle : l’année qui vient, jouée avec et sans la carte (à côté des cartes déjà posées). Les liens viennent de modele/liens.csv.</p>
+                  {!impact.indicators.length ? <p className="note">Rien ne bouge assez dès la première année : l’effet est lent ou très petit.</p> : null}
                 </section>
+                <Why starts={starts} impact={impact} />
               </>
             ) : null}
           </div>
@@ -616,6 +594,91 @@ function CardModal({ g, pick, canAct, onClose, onModel, ...actions }: { g: Game;
         </footer>
       </div>
     </div>
+  )
+}
+
+const arrow = (up: boolean | null) => (up === null ? '↕' : up ? '↑' : '↓')
+
+/** Un indicateur qui bouge : sa flèche, de combien, en vert si c'est bon pour le pays. */
+function Move({ ind }: { ind: Indicator }) {
+  return (
+    <li className={ind.good ? 'good' : 'bad'}>
+      {ind.label} {arrow(ind.up)} <b>{ind.amount}</b>
+    </li>
+  )
+}
+
+/** Pourquoi : une seule histoire, de la carte jusqu'aux indicateurs, les chemins communs montrés une fois. */
+function Why({ starts, impact }: { starts: { node: string; up: boolean }[]; impact: Impact }) {
+  const { roots, other } = whyTree(starts, impact)
+  const budget = impact.budget.spending - impact.budget.revenue
+  const hasBudget = Math.abs(impact.budget.spending) >= 0.1 || Math.abs(impact.budget.revenue) >= 0.1
+  if (!roots.length && !other.length) {
+    return null
+  }
+  return (
+    <section>
+      <h3>🔗 Pourquoi ? L’histoire dans le modèle</h3>
+      {roots.length ? <WhyList nodes={roots} /> : null}
+      {other.length ? (
+        <p className="dl-other">
+          {other.map((ind, i) => (
+            <span key={ind.node}>
+              {i ? ', ' : ''}
+              <b className={ind.good ? 'good' : 'bad'}>
+                {ind.label} {arrow(ind.up)} {ind.amount}
+              </b>
+            </span>
+          ))}{' '}
+          :{' '}
+          {other.some((ind) => ind.node === 'deficit' || ind.node === 'debt') && hasBudget
+            ? `le budget de l’État ${budget > 0 ? 'se creuse' : 's’améliore'} de ${num(Math.abs(budget), 1)} Md€, poste par poste :`
+            : 'plusieurs mécanismes se combinent, dans des sens opposés (voir le modèle).'}
+        </p>
+      ) : null}
+      {hasBudget ? <Budget impact={impact} /> : null}
+      <p className="note">Calculé par le modèle : l’année qui vient, jouée avec et sans la carte (à côté des cartes déjà posées). Les liens viennent de modele/liens.csv.</p>
+    </section>
+  )
+}
+
+/** Ce que la carte change au budget de l'État : le total, puis les postes qui bougent le plus. */
+function Budget({ impact }: { impact: Impact }) {
+  return (
+    <div className="dl-budget">
+      <p>
+        💶 Recettes <b className={impact.budget.revenue >= 0 ? 'good' : 'bad'}>{signed(impact.budget.revenue, 1)} Md€</b>, dépenses{' '}
+        <b className={impact.budget.spending > 0 ? 'bad' : 'good'}>{signed(impact.budget.spending, 1)} Md€</b>
+      </p>
+      <ul className="dl-moves">
+        {impact.budget.lines.slice(0, 4).map((l) => (
+          <li key={l.label} className={l.delta > 0 === l.spending ? 'bad' : 'good'}>
+            {l.label} <b>{signed(l.delta, 1)} Md€</b>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function WhyList({ nodes }: { nodes: WhyNode[] }) {
+  return (
+    <ul className="dl-tree">
+      {nodes.map((n) => (
+        <li key={`${n.node}-${String(n.up)}`}>
+          <span className="dl-node">
+            {n.name} {arrow(n.up)}
+          </span>
+          {n.hits.map((ind) => (
+            <b key={ind.node} className={`dl-hit ${ind.good ? 'good' : 'bad'}`}>
+              {ind.label} {arrow(ind.up)} {ind.amount}
+            </b>
+          ))}
+          {n.explanation ? <small> {n.explanation}</small> : null}
+          {n.children.length ? <WhyList nodes={n.children} /> : null}
+        </li>
+      ))}
+    </ul>
   )
 }
 
