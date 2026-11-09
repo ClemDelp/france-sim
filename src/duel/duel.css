@@ -569,10 +569,15 @@
   height: 34px;
   font-size: 1.4rem;
 }
+.dl-card > * {
+  flex-shrink: 0;
+}
 .dl-name {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 0.82rem;
-  line-height: 1.12;
+  line-height: 1.2;
+  /* Les jambages (p, g, q) de la dernière ligne ne sont pas rognés. */
+  padding-bottom: 2px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -664,12 +669,15 @@
   min-height: 0;
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
+  align-items: start;
   gap: 18px;
+  /* De la place pour la pastille de coût, qui déborde de la carte en haut à gauche. */
+  padding: 10px 0 0 10px;
   overflow: hidden;
 }
 .dl-card.big {
   width: 250px;
-  height: 350px;
+  min-height: 350px;
   padding: 30px 12px 12px;
   gap: 8px;
   cursor: default;
@@ -695,8 +703,9 @@
   font-size: 3.6rem;
 }
 .dl-card.big .dl-name {
+  /* En grand, le titre s'affiche en entier. */
+  display: block;
   font-size: 1.2rem;
-  -webkit-line-clamp: 3;
 }
 .dl-desc {
   font-size: 0.78rem;
@@ -1027,8 +1036,8 @@
     overflow-y: auto;
   }
   .dl-card.big {
-    width: 200px;
-    height: 280px;
+    width: 220px;
+    min-height: 0;
     margin: 0 auto;
   }
   .dl-card.big .dl-art {
