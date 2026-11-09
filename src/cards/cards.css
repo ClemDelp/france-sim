@@ -1,0 +1,484 @@
+/* « Élysée », le duel de cartes : une table de jeu sombre, des cartes en papier crème. */
+
+.duel {
+  --paper: #fbf6ea;
+  --paper-ink: #1d2233;
+  --paper-muted: #5d6478;
+  --card-w: 150px;
+  min-height: 100vh;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px 16px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--ink);
+}
+
+.duel-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.duel-top strong {
+  font-size: 1.1rem;
+}
+.duel-round {
+  margin-left: auto;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* — Le choix des candidats */
+
+.duel-intro h1 {
+  margin: 8px 0 4px;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+.duel-intro p {
+  color: var(--muted);
+  max-width: 70ch;
+}
+.duel-setup h2 {
+  font-size: 1.05rem;
+  margin: 10px 0 0;
+}
+.duel-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.duel-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 2px solid var(--rule);
+  border-left: 6px solid var(--c);
+  background: var(--panel);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.duel-chip:hover {
+  border-color: var(--c);
+}
+.duel-chip.is-selected {
+  border-color: var(--c);
+  background: color-mix(in srgb, var(--c) 22%, var(--panel));
+}
+.duel-chip-emblem {
+  font-size: 1.5rem;
+}
+.duel-chip small {
+  color: var(--muted);
+}
+
+/* — Les deux sièges */
+
+.seat {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 28%, var(--panel)), var(--panel) 60%);
+  border: 1px solid var(--rule);
+}
+.seat-emblem {
+  font-size: 2rem;
+}
+.seat-id {
+  display: flex;
+  flex-direction: column;
+}
+.seat-role {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--rule);
+}
+.role-president {
+  background: var(--gold);
+  color: #241b00;
+}
+.role-opposition {
+  background: #7a3341;
+}
+.seat-stats {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.seat-mana {
+  color: var(--gold);
+  font-size: 1.15rem;
+}
+.seat-hand {
+  display: flex;
+  gap: 3px;
+}
+.seat-hand i {
+  width: 16px;
+  height: 22px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(45deg, #2c3a63, #2c3a63 3px, #3c4d80 3px, #3c4d80 6px);
+  border: 1px solid #5b6ea8;
+}
+.seat-thinking {
+  position: absolute;
+  right: 14px;
+  bottom: -9px;
+  font-size: 0.75rem;
+  padding: 0 8px;
+  border-radius: 99px;
+  background: var(--accent);
+  color: white;
+}
+.seat-ai .seat-thinking {
+  animation: duel-pulse 1s ease-in-out infinite;
+}
+@keyframes duel-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* — Le centre de la table */
+
+.arena {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: radial-gradient(ellipse at center, #1c4a35 0%, #12301f 100%);
+  border: 1px solid #2c5a43;
+}
+.tug-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.tug-labels small {
+  color: #b9d6c4;
+  font-weight: 600;
+}
+.tug-bar {
+  position: relative;
+  height: 16px;
+  border-radius: 99px;
+  background: var(--them);
+  overflow: hidden;
+}
+.tug-bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--you);
+  transition: width 0.6s ease;
+}
+.tug-bar b {
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: white;
+}
+
+.france-title {
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+.france-title small {
+  color: #b9d6c4;
+  font-weight: 500;
+}
+.france ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 6px;
+}
+.france li {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border-left: 4px solid transparent;
+}
+.france li.good {
+  border-left-color: var(--good);
+}
+.france li.bad {
+  border-left-color: var(--bad);
+}
+.france small {
+  color: #b9d6c4;
+}
+
+.feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+.feed li {
+  display: flex;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+.feed li:first-child {
+  background: rgba(0, 0, 0, 0.4);
+  font-weight: 600;
+}
+.feed-ai {
+  box-shadow: inset 3px 0 0 var(--bad);
+}
+.feed-player {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* — La main */
+
+.hand {
+  display: grid;
+  gap: 10px;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+}
+.hand.is-active {
+  opacity: 1;
+}
+.hand-row {
+  min-width: 0;
+}
+.hand-row h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.hand-row h3 small {
+  color: var(--muted);
+  font-weight: 500;
+}
+.cards {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 2px 12px 10px;
+  scroll-padding-left: 10px;
+  scroll-snap-type: x mandatory;
+}
+
+.card {
+  position: relative;
+  flex: 0 0 var(--card-w);
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 26px 10px 10px;
+  border-radius: 12px;
+  border: 1px solid #d8ccb0;
+  background: var(--paper);
+  color: var(--paper-ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  scroll-snap-align: start;
+  box-shadow: 0 3px 0 #c9bb98, 0 6px 14px rgba(0, 0, 0, 0.35);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.card:not(:disabled):hover,
+.card:not(:disabled):focus-visible {
+  transform: translateY(-8px) rotate(-1deg);
+  box-shadow: 0 3px 0 #c9bb98, 0 14px 24px rgba(0, 0, 0, 0.45);
+}
+.card:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.6);
+  opacity: 0.55;
+}
+.card-cost {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #241b00;
+  font-weight: 900;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  z-index: 1;
+}
+.card-kind {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 3px 10px 3px 36px;
+  border-radius: 12px 12px 0 0;
+  background: var(--c);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.98rem;
+  line-height: 1.15;
+}
+.card-text {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--paper-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-model {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.72rem;
+}
+.card-model b {
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: #e9e1cc;
+}
+.card-model .up {
+  background: #cdeedb;
+  color: #11552f;
+}
+.card-model .down {
+  background: #f8d3d3;
+  color: #8a1c1c;
+}
+.card-tactic {
+  background: linear-gradient(180deg, #eef1fb, var(--paper) 40%);
+}
+.card-art {
+  font-size: 2.2rem;
+  text-align: center;
+  line-height: 1;
+}
+.card-why {
+  margin-top: auto;
+  font-size: 0.7rem;
+  color: #8a1c1c;
+}
+.tactic-greve,
+.tactic-censure,
+.tactic-revelations,
+.tactic-fuite,
+.tactic-chiffrage {
+  background: linear-gradient(180deg, #fbe4e1, var(--paper) 40%);
+}
+.tactic-493,
+.tactic-remaniement {
+  background: linear-gradient(180deg, #efe3f7, var(--paper) 40%);
+}
+
+.duel-actions {
+  position: sticky;
+  bottom: 12px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  z-index: 5;
+}
+.duel-setup .duel-actions {
+  position: static;
+}
+
+/* — Les fenêtres */
+
+.duel-journal {
+  max-width: 760px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.duel-election h2 {
+  margin: 4px 0 10px;
+}
+.duel-election.is-won {
+  border-top: 6px solid var(--good);
+}
+.duel-election.is-lost {
+  border-top: 6px solid var(--bad);
+}
+.duel-score {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.15rem;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--panel);
+}
+.duel-reasons {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+@media (max-width: 640px) {
+  .duel {
+    --card-w: 136px;
+    padding: 8px 16px 110px;
+  }
+  .seat {
+    flex-wrap: wrap;
+  }
+  .seat-stats {
+    margin-left: 0;
+    width: 100%;
+  }
+  .duel-round {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* L'entrée du duel sur l'accueil (un lien, habillé comme les autres cartes du menu). */
+a.menu-duel {
+  color: var(--ink);
+  text-decoration: none;
+  border-color: var(--gold);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 18%, var(--panel)), var(--panel) 70%);
+}

@@ -138,6 +138,11 @@ export function Home({ name, onName, stars, earned, canResume, onResume, onTutor
                 <small>Là où vous l’aviez laissée.</small>
               </button>
             ) : null}
+            <a className="menu-card menu-duel" href="#duel">
+              <span>🃏</span>
+              <strong>Élysée, le duel (nouveau)</strong>
+              <small>Un jeu de cartes contre l’IA : la campagne, puis cinq ans au pouvoir ou dans l’opposition.</small>
+            </a>
             <button type="button" className="menu-card menu-tutorial" onClick={onTutorial}>
               <span>🎓</span>
               <strong>Apprendre à jouer</strong>
