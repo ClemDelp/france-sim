@@ -37,10 +37,15 @@ export type Impact = {
   /** Ce que chaque critère de la note gagne ou perd (points de note, sur 100). */
   parts: { id: string; label: string; delta: number }[]
   indicators: Indicator[]
+  /** Pourquoi chaque indicateur bouge, décomposé à partir de ce que le modèle a calculé (par nœud du graphe). */
+  details: Record<string, Detail>
   /** Ce que la carte change au budget de l'État cette année (Md€) : dépenses, recettes, et les postes qui bougent le plus. */
   budget: { spending: number; revenue: number; lines: { label: string; delta: number; spending: boolean }[] }
   popularity: number
 }
+
+/** Ce qui fait bouger un indicateur : une phrase, puis les contributions qui comptent (en vert ce qui aide le pays). */
+export type Detail = { text: string; lines: { label: string; value: string; good: boolean }[] }
 
 const LEVERS: Record<string, LeverDef> = Object.fromEntries(LEVER_GROUPS.flatMap((g) => g.levers.map((l) => [l.key, l])))
 
@@ -54,7 +59,21 @@ const INDICATORS: { node: string; label: string; value: (s: YearState) => number
   { node: 'disposableIncome', label: 'Pouvoir d’achat', value: (s) => s.medianIncome, unit: '%', digits: 1, goodUp: true },
   { node: 'poverty', label: 'Pauvreté', value: (s) => s.poverty * 100, unit: 'pt', digits: 1, goodUp: false },
   { node: 'discontent', label: 'Colère', value: (s) => s.discontent * 100, unit: 'pt', digits: 1, goodUp: false },
+  { node: 'frenchEmissions', label: 'Émissions', value: (s) => s.frenchEmissions, unit: 'Mt CO₂', digits: 1, goodUp: false },
 ]
+
+/** L'indicateur derrière chaque critère de la note (modele/note-pays.csv). */
+export const CRITERION_NODE: Record<string, string> = {
+  chomage: 'unemployment',
+  'pouvoir-achat': 'disposableIncome',
+  croissance: 'gdp',
+  inflation: 'inflation',
+  dette: 'debt',
+  deficit: 'deficit',
+  pauvrete: 'poverty',
+  colere: 'discontent',
+  climat: 'frenchEmissions',
+}
 
 const signed = (v: number, digits: number) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${Math.abs(v).toLocaleString('fr-FR', { maximumFractionDigits: digits, minimumFractionDigits: digits })}`
 
@@ -87,8 +106,152 @@ function compare(target: Side, withIt: YearState, without: YearState, start: Yea
         .filter((l) => Math.abs(l.delta) >= 0.2)
         .sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta)),
     },
+    details: details(withIt, without),
     popularity: popularity(withIt) - popularity(without),
   }
+}
+
+type Line = { label: string; delta: number; good: boolean }
+
+/** Les contributions qui comptent : assez grandes (au moins 5 % de la plus grande), de la plus forte à la plus faible. */
+function keep(lines: Line[], unit: string, digits: number): Detail['lines'] {
+  const biggest = Math.max(0, ...lines.map((l) => Math.abs(l.delta)))
+  const floor = Math.max(biggest * 0.05, 0.5 * 10 ** -(digits + 1))
+  return lines
+    .filter((l) => Math.abs(l.delta) >= floor)
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+    .slice(0, 6)
+    .map((l) => ({ label: l.label, value: `${signed(l.delta, digits)}${unit}`, good: l.good }))
+}
+
+/** Ce qui change entre deux décompositions (mêmes clés), poste par poste. */
+const diff = (a: Record<string, number>, b: Record<string, number>) => Object.keys({ ...a, ...b }).map((k) => ({ label: k, delta: (a[k] ?? 0) - (b[k] ?? 0) }))
+
+/**
+ * Le revenu par personne de quelques tranches (corrigé des prix), source par source, en % de ce qu'il serait sans la carte.
+ * Le revenu réel par personne est la somme des sources, divisée par le nombre d'habitants et par les prix :
+ * ce que les sources gagnent ou perdent, plus ce que changent les prix et la population.
+ */
+function incomeLines(w: YearState, o: YearState, groups: ('g1' | 'g2' | 'g3' | 'g4')[]): Line[] {
+  const lines = new Map<string, number>()
+  const add = (label: string, v: number) => lines.set(label, (lines.get(label) ?? 0) + v)
+  const base = groups.reduce((a, k) => a + o.disposablePerCapita[k], 0) / 100
+  for (const k of groups) {
+    const fw = w.disposablePerCapita[k] / w.disposable[k]
+    const fo = o.disposablePerCapita[k] / o.disposable[k]
+    for (const l of diff(w.incomeParts[k], o.incomeParts[k])) {
+      add(l.label, (l.delta * fw) / base)
+    }
+    const rescale = (o.disposable[k] * (fw - fo)) / base
+    const total = Math.log(fw / fo)
+    const people = Math.abs(total) > 1e-9 ? Math.log(o.population / w.population) / total : 0
+    add('Population (le revenu partagé entre plus ou moins de monde)', rescale * people)
+    add('Prix', rescale * (1 - people))
+  }
+  return [...lines].map(([label, delta]) => ({ label, delta, good: delta > 0 }))
+}
+
+/** Un nombre de personnes à partir de millions, arrondi au millier (« −20 000 »). */
+const persons = (millions: number) => {
+  const v = Math.round(millions * 1000) * 1000
+  return v === 0 ? 'presque inchangé' : `${v > 0 ? '+' : '−'}${Math.abs(v).toLocaleString('fr-FR')}`
+}
+
+/** Pour chaque indicateur, d'où vient le changement, d'après ce que le modèle a calculé avec et sans la carte. */
+function details(w: YearState, o: YearState): Record<string, Detail> {
+  const out: Record<string, Detail> = {}
+  // Le chômage, ce sont les actifs sans emploi : il baisse quand les emplois montent plus vite que le nombre d'actifs.
+  const jobs = (-(w.employment - o.employment) / w.laborForce) * 100
+  const workers = o.employment * (1 / o.laborForce - 1 / w.laborForce) * 100
+  out.unemployment = {
+    text: `Le chômage, ce sont les actifs sans emploi. Emplois : ${persons(w.employment - o.employment)} ; actifs (qui travaillent ou cherchent) : ${persons(w.laborForce - o.laborForce)}. Ce que chacun fait au taux (en points) :`,
+    lines: keep(
+      [
+        { label: 'Emplois', delta: jobs, good: jobs < 0 },
+        { label: 'Actifs (qui travaillent ou cherchent)', delta: workers, good: workers < 0 },
+      ],
+      ' pt',
+      2,
+    ),
+  }
+  // La croissance, c'est ce qui se produit et s'achète en France : la demande, poste par poste.
+  const demand: Line[] = [
+    { label: 'Consommation des ménages', delta: w.consumption - o.consumption, good: false },
+    { label: 'Investissement des entreprises', delta: w.investment - o.investment, good: false },
+    { label: 'Logement', delta: w.housing - o.housing, good: false },
+    { label: 'Achats publics (services, investissement)', delta: w.publicSpendingGoods - o.publicSpendingGoods, good: false },
+    { label: 'Exportations', delta: w.exports - o.exports, good: false },
+    { label: 'Importations', delta: -(w.imports - o.imports), good: false },
+    { label: 'Pétrole et gaz importés', delta: -(w.energyImports - o.energyImports), good: false },
+  ].map((l) => ({ ...l, good: l.delta > 0 }))
+  out.gdp = { text: 'La croissance, c’est ce qui se produit en France : ce que les ménages, les entreprises, l’État et l’étranger y achètent. Ce que chaque poste ajoute à la production (Md€) ; ce qu’on achète à l’étranger compte en moins :', lines: keep(demand, ' Md€', 1) }
+  // Les prix : chaque cause de l'inflation, en points.
+  const above = w.inflation > 0.02
+  out.inflation = {
+    text: `L’inflation est la somme de plusieurs poussées sur les prix (en points). La note compte l’écart à 2 % : ${above ? 'ce qui la fait monter coûte' : 'ce qui la fait baisser coûte'}.`,
+    lines: keep(
+      diff(w.inflationParts, o.inflationParts).map((l) => ({ label: l.label, delta: l.delta * 100, good: above ? l.delta < 0 : l.delta > 0 })),
+      ' pt',
+      2,
+    ),
+  }
+  // Le déficit : les postes du budget de l'État.
+  const budget: Line[] = [
+    ...diff(w.budget, o.budget).map((l) => ({ label: l.label, delta: l.delta, good: l.delta < 0 })),
+    ...diff(w.taxes, o.taxes).map((l) => ({ label: l.label, delta: -l.delta, good: l.delta > 0 })),
+  ]
+  out.deficit = {
+    text: `Le déficit, ce sont les dépenses moins les recettes de l’État : dépenses ${signed(w.spending - o.spending, 1)} Md€, recettes ${signed(w.revenue - o.revenue, 1)} Md€. Ce que chaque poste ajoute au déficit (Md€) :`,
+    lines: keep(budget, ' Md€', 1),
+  }
+  // La dette en part du PIB : la dette grossit du déficit, et pèse plus lourd si le PIB recule.
+  const owed = ((w.debt - o.debt) / w.gdp) * 100
+  const size = o.debt * (1 / w.gdp - 1 / o.gdp) * 100
+  out.debt = {
+    text: `La dette se compte en part du PIB : elle grossit du déficit (${signed(w.debt - o.debt, 1)} Md€), et pèse plus ou moins lourd selon le PIB (${signed(w.gdp - o.gdp, 1)} Md€). En points de PIB :`,
+    lines: keep(
+      [
+        { label: 'Dette en plus ou en moins (le déficit)', delta: owed, good: owed < 0 },
+        { label: 'Taille de l’économie (PIB)', delta: size, good: size < 0 },
+      ],
+      ' pt',
+      2,
+    ),
+  }
+  // Le pouvoir d'achat : le revenu médian. On le décompose avec les revenus des ménages du milieu, source par source,
+  // ramenés à ce que fait vraiment le revenu médian.
+  const median = (w.medianIncome / o.medianIncome - 1) * 100
+  const middle = incomeLines(w, o, ['g2', 'g3', 'g4'])
+  const moved = middle.reduce((a, l) => a + l.delta, 0)
+  const ratio = moved !== 0 ? median / moved : 0
+  out.disposableIncome = {
+    text: `Le pouvoir d’achat suit le revenu médian, après impôts et corrigé des prix : il ${median >= 0 ? 'monte' : 'baisse'} de ${plain(median, 2)} %. D’où ${median >= 0 ? 'vient la hausse' : 'vient la baisse'}, source par source (revenus des ménages du milieu, en %) :`,
+    lines: keep(ratio > 0.2 && ratio < 5 ? middle.map((l) => ({ ...l, delta: l.delta * ratio })) : middle, ' %', 2),
+  }
+  // La pauvreté : sous 60 % du revenu médian ; elle monte quand les plus modestes perdent plus que le milieu.
+  const low = (w.disposablePerCapita.g1 / o.disposablePerCapita.g1 - 1) * 100
+  out.poverty = {
+    text: `Est pauvre qui vit sous 60 % du revenu médian. Le revenu des 20 % les plus modestes ${low >= 0 ? 'monte' : 'baisse'} de ${plain(low, 2)} %, le revenu médian (donc le seuil) ${median >= 0 ? 'monte' : 'baisse'} de ${plain(median, 2)} % : la pauvreté ${low > median ? 'recule' : 'progresse'}. D’où vient le revenu des plus modestes (en %) :`,
+    lines: keep(incomeLines(w, o, ['g1']), ' %', 2),
+  }
+  // La colère : chaque cause, ramenée au changement réel (la colère garde la mémoire des années passées).
+  const anger = diff(w.angerParts, o.angerParts)
+  const raw = anger.reduce((a, l) => a + l.delta, 0)
+  const scale = Math.abs(raw) > 1e-9 ? ((w.discontent - o.discontent) * 100) / raw : 0
+  out.discontent = {
+    text: 'La colère du pays monte avec ce qui fâche (revenus en baisse, réformes impopulaires, chômage…) et baisse avec les bonnes nouvelles. Ce que chaque cause y ajoute (en points) :',
+    lines: keep(
+      anger.map((l) => ({ label: l.label, delta: l.delta * scale, good: l.delta * scale < 0 })),
+      ' pt',
+      2,
+    ),
+  }
+  // Les émissions : l'activité et la part des énergies fossiles.
+  out.frenchEmissions = {
+    text: `Les émissions suivent l’activité et la part du pétrole et du gaz : PIB ${signed(((w.gdpReal - o.gdpReal) / o.gdpReal) * 100, 2)} %, part des fossiles ${signed((w.fossilShare - o.fossilShare) * 100, 2)} pt.`,
+    lines: [],
+  }
+  return out
 }
 
 /** L'effet d'une carte l'an prochain : une mesure sur sa France, une crise sur la France d'en face. Null pour les actions. */

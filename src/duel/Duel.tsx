@@ -35,7 +35,7 @@ import {
   type Side,
 } from './engine'
 import { healthParts } from './health'
-import { cardImpact, crisisEffects, leverChanges, startNodes, whyTree, type Impact, type Indicator, type WhyNode } from './why'
+import { cardImpact, CRITERION_NODE, crisisEffects, leverChanges, startNodes, whyTree, type Detail, type Impact, type Indicator, type WhyNode } from './why'
 import './duel.css'
 
 const REVEAL_DELAY = 1100
@@ -439,9 +439,7 @@ const signed = (v: number, digits = 0) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}
 
 function HandCard({ g, card, dim, onClick }: { g: Game; card: Card; dim: boolean; onClick: () => void }) {
   const kind = kindOf(g, card, 'player')
-  // L'effet prévu par le modèle (une mesure sur votre France, une crise sur la sienne), calculé une fois par état de la partie.
-  const impact = useMemo(() => cardImpact(g, 'player', card), [g, card])
-  const top = impact?.indicators[0]
+  // Les chiffres (effet sur la note, sur les indicateurs) sont dans la fenêtre de la carte : la carte reste lisible.
   return (
     <button type="button" className={`dl-card hand ${kind.cls} ${dim ? 'is-dim' : ''}`} onClick={onClick} aria-label={`${cardName(card)} : voir la carte`}>
       <span className="dl-cost">⚡{cardCost(g, 'player', card)}</span>
@@ -450,16 +448,8 @@ function HandCard({ g, card, dim, onClick }: { g: Game; card: Card; dim: boolean
         {cardArt(card)}
       </span>
       <strong className="dl-name">{cardName(card)}</strong>
-      {impact ? (
-        <span className="dl-preview">
-          <b className={impact.health >= 0 ? 'up' : 'down'}>
-            {impact.target === 'player' ? 'Votre note' : 'Sa note'} {signed(impact.health)}
-          </b>
-          {top ? <b className={top.good ? 'up' : 'down'}>{`${top.label} ${top.text}`}</b> : null}
-        </span>
-      ) : (
-        <span className="dl-text">{card.kind === 'action' ? ACTIONS[card.action].text : ''}</span>
-      )}
+      {card.kind === 'action' ? <span className="dl-text">{ACTIONS[card.action].text}</span> : null}
+      {card.kind === 'crise' ? <span className="dl-target">→ chez l’adversaire</span> : null}
     </button>
   )
 }
@@ -511,16 +501,6 @@ function CardModal({ g, pick, canAct, onClose, onModel, ...actions }: { g: Game;
             </span>
             <strong className="dl-name">{cardName(card)}</strong>
             <span className="dl-desc">{description}</span>
-            {impact ? (
-              <span className="dl-preview">
-                <b className={impact.health >= 0 ? 'up' : 'down'}>
-                  Note {impact.target === 'player' ? 'de votre France' : `de ${g.seats[impact.target].name}`} {signed(impact.health)}
-                </b>
-                {impact.indicators.slice(0, 3).map((ind) => (
-                  <b key={ind.node} className={ind.good ? 'up' : 'down'}>{`${ind.label} ${ind.text}`}</b>
-                ))}
-              </span>
-            ) : null}
           </div>
 
           <div className="dl-explain">
@@ -557,14 +537,17 @@ function CardModal({ g, pick, canAct, onClose, onModel, ...actions }: { g: Game;
                   <h3>
                     📊 Note de {whose} l’an prochain : {signed(impact.health)} point{Math.abs(impact.health) > 1 ? 's' : ''}
                   </h3>
-                  <p className="note">En points de note (sur 100), critère par critère.</p>
+                  <p className="note">En points de note (sur 100), critère par critère. Sous chaque critère, ce qui le fait bouger.</p>
                   <div className="dl-parts">
                     {impact.parts.map((p) => (
-                      <div key={p.id} className="dl-part">
-                        <span>{p.label}</span>
-                        <i className={p.delta >= 0 ? 'up' : 'down'} style={{ width: `${Math.min(100, Math.abs(p.delta) * 25)}%` }} />
-                        <b className={p.delta >= 0 ? 'good' : 'bad'}>{signed(p.delta, 1)}</b>
-                      </div>
+                      <details key={p.id} className="dl-part-row" open>
+                        <summary className="dl-part">
+                          <span>{p.label}</span>
+                          <i className={p.delta >= 0 ? 'up' : 'down'} style={{ width: `${Math.min(100, Math.abs(p.delta) * 25)}%` }} />
+                          <b className={p.delta >= 0 ? 'good' : 'bad'}>{signed(p.delta, 1)}</b>
+                        </summary>
+                        <DetailView detail={impact.details[CRITERION_NODE[p.id]]} />
+                      </details>
                     ))}
                     {!impact.parts.length ? <p className="note">Presque rien la première année : l’effet est lent, ou trop petit pour bouger la note.</p> : null}
                   </div>
@@ -611,52 +594,47 @@ function Move({ ind }: { ind: Indicator }) {
 /** Pourquoi : une seule histoire, de la carte jusqu'aux indicateurs, les chemins communs montrés une fois. */
 function Why({ starts, impact }: { starts: { node: string; up: boolean }[]; impact: Impact }) {
   const { roots, other } = whyTree(starts, impact)
-  const budget = impact.budget.spending - impact.budget.revenue
-  const hasBudget = Math.abs(impact.budget.spending) >= 0.1 || Math.abs(impact.budget.revenue) >= 0.1
-  if (!roots.length && !other.length) {
+  // Les indicateurs de la note sont déjà décomposés plus haut, critère par critère : ici, seulement les autres.
+  const rest = other.filter((ind) => !impact.parts.some((p) => CRITERION_NODE[p.id] === ind.node))
+  if (!roots.length && !rest.length) {
     return null
   }
   return (
     <section>
       <h3>🔗 Pourquoi ? L’histoire dans le modèle</h3>
       {roots.length ? <WhyList nodes={roots} /> : null}
-      {other.length ? (
-        <p className="dl-other">
-          {other.map((ind, i) => (
-            <span key={ind.node}>
-              {i ? ', ' : ''}
-              <b className={ind.good ? 'good' : 'bad'}>
-                {ind.label} {arrow(ind.up)} {ind.amount}
-              </b>
-            </span>
-          ))}{' '}
-          :{' '}
-          {other.some((ind) => ind.node === 'deficit' || ind.node === 'debt') && hasBudget
-            ? `le budget de l’État ${budget > 0 ? 'se creuse' : 's’améliore'} de ${num(Math.abs(budget), 1)} Md€, poste par poste :`
-            : 'plusieurs mécanismes se combinent, dans des sens opposés (voir le modèle).'}
-        </p>
-      ) : null}
-      {hasBudget ? <Budget impact={impact} /> : null}
+      {rest.map((ind) => (
+        <div key={ind.node} className="dl-other">
+          <b className={ind.good ? 'good' : 'bad'}>
+            {ind.label} {arrow(ind.up)} {ind.amount}
+          </b>{' '}
+          : plusieurs effets s’additionnent.
+          <DetailView detail={impact.details[ind.node]} />
+        </div>
+      ))}
       <p className="note">Calculé par le modèle : l’année qui vient, jouée avec et sans la carte (à côté des cartes déjà posées). Les liens viennent de modele/liens.csv.</p>
     </section>
   )
 }
 
-/** Ce que la carte change au budget de l'État : le total, puis les postes qui bougent le plus. */
-function Budget({ impact }: { impact: Impact }) {
+/** Pourquoi un indicateur bouge : une phrase, puis chaque contribution (en vert ce qui aide le pays). */
+function DetailView({ detail }: { detail: Detail | undefined }) {
+  if (!detail) {
+    return null
+  }
   return (
-    <div className="dl-budget">
-      <p>
-        💶 Recettes <b className={impact.budget.revenue >= 0 ? 'good' : 'bad'}>{signed(impact.budget.revenue, 1)} Md€</b>, dépenses{' '}
-        <b className={impact.budget.spending > 0 ? 'bad' : 'good'}>{signed(impact.budget.spending, 1)} Md€</b>
-      </p>
-      <ul className="dl-moves">
-        {impact.budget.lines.slice(0, 4).map((l) => (
-          <li key={l.label} className={l.delta > 0 === l.spending ? 'bad' : 'good'}>
-            {l.label} <b>{signed(l.delta, 1)} Md€</b>
-          </li>
-        ))}
-      </ul>
+    <div className="dl-detail">
+      <p>{detail.text}</p>
+      {detail.lines.length ? (
+        <ul>
+          {detail.lines.map((l) => (
+            <li key={l.label} className={l.good ? 'good' : 'bad'}>
+              <span>{l.label}</span>
+              <b>{l.value}</b>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   )
 }
