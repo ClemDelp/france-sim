@@ -1,0 +1,10 @@
+﻿id;libelle;poids;mauvais;bon;explication
+chomage;Chômage;15;0.12;0.04;Taux de chômage (BIT). 4 % est proche du plein emploi, 12 % le pire niveau des années 1990 en France.
+pouvoir-achat;Pouvoir d’achat;15;-0.01;0.02;Revenu médian réel (corrigé des prix), progression moyenne par an depuis le début du mandat : −1 % par an ou +2 % par an.
+croissance;Croissance;10;-0.02;0.03;Croissance du PIB en volume de l’année.
+inflation;Prix stables;5;0.08;0;Écart de l’inflation à la cible de 2 % de la BCE (en points).
+dette;Dette publique;15;1.6;0.6;Dette publique en part du PIB : 60 % est la règle européenne, 160 % le niveau de l’Italie au pire de 2020.
+deficit;Déficit public;10;0.08;0;Déficit public en part du PIB : 0 % est l’équilibre, 8 % le niveau de 2020.
+pauvrete;Pauvreté;10;0.2;0.1;Taux de pauvreté monétaire (60 % du revenu médian) : 10 % est le niveau des pays nordiques, 20 % un niveau jamais atteint en France depuis 1970.
+colere;Paix sociale;10;0.6;0;Mécontentement social du modèle : à 0,6 le pays est au bord de la révolte.
+climat;Climat;10;0.1;-0.3;Émissions françaises comparées au début du mandat : +10 % ou −30 %.
