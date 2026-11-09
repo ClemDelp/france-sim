@@ -6,11 +6,12 @@ import { promisePatch, promiseRemaining, promiseStatus, type Candidate, type Ple
 import { politicalCapital } from '../game/capital'
 import { popularity } from '../game/score'
 import { planCost } from '../game/session'
-import { ACTIONS, buildDeck, CRISES, programmeOf, type Card, type CrisisId } from './cards'
+import { ACTIONS, buildDeck, CRISES, programmeOf, shuffled, type Card, type CrisisId } from './cards'
 import { health } from './health'
 
 /**
  * Le duel : deux présidents, chacun à la tête de sa propre France (la même au départ, en 2027).
+ * Une pioche commune, une défausse, un marché où l'on vend les cartes dont on ne veut pas.
  * Chaque année, on joue des cartes en même temps : des mesures pour sa France, des crises pour celle de l'adversaire,
  * des parades. Puis l'année se joue dans les deux France, avec le modèle.
  * On perd tout de suite si son pays fait faillite ou se révolte. À la fin, celui qui a tenu au moins 3 promesses sur 5
@@ -29,6 +30,9 @@ export const HAND_MAX = 8
 export const PROGRAMME_GOAL = 3
 /** L'énergie gagnée la première fois qu'une promesse est tenue. */
 export const PROMISE_BONUS = 2
+/** Jeter une carte rapporte un peu d'énergie, tout de suite. */
+export const DISCARD_GAIN = 1
+export const MARKET_SIZE = 4
 
 export type Seat = {
   /** Le candidat incarné, ou null : un programme tiré au sort (le joueur) ou le bot. */
@@ -39,12 +43,11 @@ export type Seat = {
   programme: Pledge[]
   /** Les promesses déjà tenues une fois (le bonus n'est donné qu'une fois). */
   rewarded: string[]
-  deck: Card[]
   hand: Card[]
   /** Les cartes jouées cette année (on peut les reprendre tant que l'année n'est pas jouée). */
   played: { card: Card; cost: number }[]
   energy: number
-  /** L'énergie gagnée par les promesses tenues, en réserve. */
+  /** L'énergie qui arrive l'an prochain : promesses tenues, ventes au marché. */
   bonus: number
   /** Une cellule de crise est prête. */
   shield: boolean
@@ -55,9 +58,14 @@ export type Seat = {
   reverts: Partial<Policy>
 }
 
+export type Listing = { card: Card; price: number; seller: Side }
+
+/** Ce qui s'est passé pendant l'année, à raconter : cartes jouées, achats, ventes, cartes jetées. */
+export type Move = { side: Side; kind: 'achat' | 'vente' | 'jet' | 'jeu'; card: Card; price?: number }
+
 export type Report = {
   year: number
-  /** Pour chaque camp : les crises reçues (et parées), les événements du monde, les promesses tenues cette année. */
+  /** Pour chaque camp : les crises reçues (et parées), les promesses tenues, les ventes encaissées, la note avant et après. */
   sides: Record<Side, { received: CrisisId[]; parried: CrisisId[]; kept: string[]; health: number; before: number }>
   world: string[]
 }
@@ -69,6 +77,12 @@ export type Game = {
   years: number
   year: number
   seats: Record<Side, Seat>
+  /** La pioche commune, la défausse, le marché. */
+  deck: Card[]
+  discard: Card[]
+  market: Listing[]
+  /** Les mouvements de l'année en cours (pour les montrer pendant le dévoilement). */
+  moves: Move[]
   /** Les événements du monde (les mêmes pour les deux France, tirés sur une France de référence). */
   world: FiredEvent[]
   reports: Report[]
@@ -84,9 +98,15 @@ export const startState = (s: Seat) => s.states.find((x) => x.year === START_YEA
 export const scoreOf = (s: Seat) => health(lastState(s), startState(s))
 export const endYear = (g: Game) => START_YEAR + g.years
 
-function seatFor(p: Player, seed: number, salt: string, states: YearState[]): Seat {
-  const programme = programmeOf(p.candidate, seed, salt)
-  const deck = buildDeck(programme, seed, salt)
+/** À qui est cette promesse (une mesure d'un programme), ou null. */
+export function promiseOwner(g: Game, card: Card): Side | null {
+  if (card.kind !== 'mesure') {
+    return null
+  }
+  return SIDES.find((side) => g.seats[side].programme.some((p) => p.key === card.pledge.key)) ?? null
+}
+
+function seatFor(p: Player, programme: Pledge[], states: YearState[]): Seat {
   return {
     candidate: p.candidate,
     name: p.name,
@@ -94,8 +114,7 @@ function seatFor(p: Player, seed: number, salt: string, states: YearState[]): Se
     color: p.color,
     programme,
     rewarded: [],
-    deck: deck.slice(HAND_START),
-    hand: deck.slice(0, HAND_START),
+    hand: [],
     played: [],
     energy: 0,
     bonus: 0,
@@ -109,23 +128,33 @@ function seatFor(p: Player, seed: number, salt: string, states: YearState[]): Se
 
 export function newGame(player: Player, ai: Player, options: { seed: number; years: number }): Game {
   const states = simulate({ decisions: [], events: [], until: START_YEAR })
-  const g: Game = {
+  const mine = programmeOf(player.candidate, options.seed, 'joueur')
+  const theirs = programmeOf(ai.candidate, options.seed, 'ia')
+  let g: Game = {
     seed: options.seed,
     years: options.years,
     year: START_YEAR + 1,
-    seats: { player: seatFor(player, options.seed, 'joueur', states), ai: seatFor(ai, options.seed, 'ia', states) },
+    seats: { player: seatFor(player, mine, states), ai: seatFor(ai, theirs, states) },
+    deck: buildDeck([mine, theirs], options.seed),
+    discard: [],
+    market: [],
+    moves: [],
     world: [],
     reports: [],
     outcome: null,
+  }
+  for (const side of SIDES) {
+    g = draw(g, side, HAND_START)
   }
   return withEnergy(g)
 }
 
 // — L'énergie et les coûts
 
-/** L'énergie de l'année : le capital politique (selon la popularité, selon le modèle), plus la réserve des promesses tenues. */
+/** Le capital politique de l'année, selon la popularité (selon le modèle). */
 export const capitalOf = (g: Game, side: Side) => politicalCapital(popularity(lastState(g.seats[side])), g.year === START_YEAR + 1)
 
+/** L'énergie de l'année : le capital politique, plus ce qui arrive des promesses tenues et des ventes. */
 function withEnergy(g: Game): Game {
   let next = g
   for (const side of SIDES) {
@@ -135,7 +164,7 @@ function withEnergy(g: Game): Game {
   return next
 }
 
-/** La politique de l'an prochain, avec les mesures déjà jouées cette année. */
+/** La politique de l'an prochain, avec les mesures déjà jouées cette année (sauf `except`). */
 export function plannedPolicy(s: Seat, year: number, except?: string): Policy {
   let policy: Policy = { ...policyAt(s.decisions, year), ...s.reverts }
   for (const { card } of s.played) {
@@ -146,7 +175,7 @@ export function plannedPolicy(s: Seat, year: number, except?: string): Policy {
   return policy
 }
 
-/** Ce que coûte une carte en énergie (une mesure : le vrai coût politique de la réforme). */
+/** Ce que coûte une carte en énergie (une mesure : le vrai coût politique de la réforme pour ce joueur). */
 export function cardCost(g: Game, side: Side, card: Card): number {
   if (card.kind === 'crise') {
     return CRISES[card.crisis].cost
@@ -155,8 +184,14 @@ export function cardCost(g: Game, side: Side, card: Card): number {
     return ACTIONS[card.action].cost
   }
   const s = g.seats[side]
-  const planned = plannedPolicy(s, g.year)
+  const planned = plannedPolicy(s, g.year, card.uid)
   return Math.max(1, planCost(promiseRemaining(card.pledge, BASE_POLICY, planned), policyAt(s.decisions, g.year)))
+}
+
+/** Le prix d'une carte au marché : son coût de base, plus un si c'est la promesse de quelqu'un (elle vaut cher à son auteur). */
+export function marketPrice(g: Game, card: Card): number {
+  const base = card.kind === 'crise' ? CRISES[card.crisis].cost : card.kind === 'action' ? ACTIONS[card.action].cost : 2
+  return base + (promiseOwner(g, card) ? 1 : 0)
 }
 
 export function canPlay(g: Game, side: Side, card: Card): string | null {
@@ -176,11 +211,13 @@ export function canPlay(g: Game, side: Side, card: Card): string | null {
   return cardCost(g, side, card) > s.energy ? 'Pas assez d’énergie ⚡' : null
 }
 
-// — Jouer, reprendre, finir l'année
+// — Jouer, reprendre, jeter, vendre, acheter
 
 function seat(g: Game, side: Side, patch: Partial<Seat>): Game {
   return { ...g, seats: { ...g.seats, [side]: { ...g.seats[side], ...patch } } }
 }
+
+const fromHand = (g: Game, side: Side, uid: string) => seat(g, side, { hand: g.seats[side].hand.filter((c) => c.uid !== uid) })
 
 export function play(g: Game, side: Side, card: Card): Game {
   if (canPlay(g, side, card)) {
@@ -188,7 +225,8 @@ export function play(g: Game, side: Side, card: Card): Game {
   }
   const s = g.seats[side]
   const cost = cardCost(g, side, card)
-  let next = seat(g, side, { hand: s.hand.filter((c) => c.uid !== card.uid), played: [...s.played, { card, cost }], energy: s.energy - cost })
+  let next = seat(fromHand(g, side, card.uid), side, { played: [...s.played, { card, cost }], energy: s.energy - cost })
+  next = { ...next, moves: [...next.moves, { side, kind: 'jeu', card }] }
   if (card.kind === 'action' && card.action === 'sondage') {
     next = draw(next, side, 2)
   }
@@ -202,20 +240,99 @@ export function takeBack(g: Game, side: Side, uid: string): Game {
   if (!entry || (entry.card.kind === 'action' && entry.card.action === 'sondage')) {
     return g
   }
-  return seat(g, side, { hand: [...s.hand, entry.card], played: s.played.filter((p) => p !== entry), energy: s.energy + entry.cost })
+  const next = seat(g, side, { hand: [...s.hand, entry.card], played: s.played.filter((p) => p !== entry), energy: s.energy + entry.cost })
+  return { ...next, moves: g.moves.filter((m) => !(m.kind === 'jeu' && m.card.uid === uid)) }
 }
 
+/** Jeter une carte : elle part à la défausse, et rapporte un peu d'énergie tout de suite. */
+export function discard(g: Game, side: Side, uid: string): Game {
+  const card = g.seats[side].hand.find((c) => c.uid === uid)
+  if (!card || g.outcome) {
+    return g
+  }
+  const next = seat(fromHand(g, side, uid), side, { energy: g.seats[side].energy + DISCARD_GAIN })
+  return { ...next, discard: [...next.discard, card], moves: [...next.moves, { side, kind: 'jet', card }] }
+}
+
+export function canSell(g: Game, side: Side, uid: string): string | null {
+  if (g.outcome || !g.seats[side].hand.some((c) => c.uid === uid)) {
+    return 'Pas dans votre main'
+  }
+  return g.market.length >= MARKET_SIZE ? 'Le marché est plein' : null
+}
+
+/** Mettre une carte en vente au marché : celui qui l'achète paie son prix, qui revient au vendeur l'an prochain. */
+export function sell(g: Game, side: Side, uid: string): Game {
+  const card = g.seats[side].hand.find((c) => c.uid === uid)
+  if (!card || canSell(g, side, uid)) {
+    return g
+  }
+  const next = fromHand(g, side, uid)
+  return { ...next, market: [...next.market, { card, price: marketPrice(g, card), seller: side }], moves: [...next.moves, { side, kind: 'vente', card }] }
+}
+
+export function canBuy(g: Game, side: Side, uid: string): string | null {
+  const listing = g.market.find((l) => l.card.uid === uid)
+  if (g.outcome || !listing) {
+    return 'Plus au marché'
+  }
+  if (listing.seller === side) {
+    return 'C’est votre propre carte'
+  }
+  if (g.seats[side].hand.length >= HAND_MAX) {
+    return 'Votre main est pleine'
+  }
+  return listing.price > g.seats[side].energy ? 'Pas assez d’énergie ⚡' : null
+}
+
+export function buy(g: Game, side: Side, uid: string): Game {
+  const listing = g.market.find((l) => l.card.uid === uid)
+  if (!listing || canBuy(g, side, uid)) {
+    return g
+  }
+  const buyer = g.seats[side]
+  let next = seat(g, side, { hand: [...buyer.hand, listing.card], energy: buyer.energy - listing.price })
+  next = seat(next, listing.seller, { bonus: next.seats[listing.seller].bonus + listing.price })
+  return { ...next, market: next.market.filter((l) => l !== listing), moves: [...next.moves, { side, kind: 'achat', card: listing.card, price: listing.price }] }
+}
+
+/** Piocher dans la pioche commune ; vide, on remélange la défausse. */
 function draw(g: Game, side: Side, n: number): Game {
-  const s = g.seats[side]
-  const room = Math.max(0, HAND_MAX - s.hand.length)
-  const k = Math.min(n, room, s.deck.length)
-  return seat(g, side, { hand: [...s.hand, ...s.deck.slice(0, k)], deck: s.deck.slice(k) })
+  let next = g
+  if (next.deck.length < n && next.discard.length) {
+    next = { ...next, deck: [...next.deck, ...shuffled(next.discard, next.seed, `defausse-${next.year}-${side}`)], discard: [] }
+  }
+  const s = next.seats[side]
+  const k = Math.min(n, Math.max(0, HAND_MAX - s.hand.length), next.deck.length)
+  return { ...seat(next, side, { hand: [...s.hand, ...next.deck.slice(0, k)] }), deck: next.deck.slice(k) }
 }
 
 /** Les promesses tenues : les leviers de la France ont atteint ce que la promesse demande. */
 export function keptPromises(s: Seat, year: number): Pledge[] {
   const now = policyAt(s.decisions, year)
   return s.programme.filter((p) => promiseStatus(p, BASE_POLICY, now) === 'tenue')
+}
+
+// — L'année se joue
+
+/** Ce que les mesures de l'année changent à une France, et ce qu'il faudra défaire l'an prochain (mesures temporaires). */
+function yearPatch(s: Seat, year: number) {
+  let policy: Policy = { ...policyAt(s.decisions, year), ...s.reverts }
+  let reverts: Partial<Policy> = {}
+  let patch: Partial<Policy> = { ...s.reverts }
+  for (const { card } of s.played) {
+    if (card.kind !== 'mesure') {
+      continue
+    }
+    const change = promiseRemaining(card.pledge, BASE_POLICY, policy)
+    const { revert } = promisePatch(card.pledge, policy)
+    if (revert) {
+      reverts = { ...reverts, ...revert }
+    }
+    patch = { ...patch, ...change }
+    policy = { ...policy, ...change }
+  }
+  return { patch, reverts }
 }
 
 /**
@@ -227,13 +344,12 @@ export function resolveYear(g: Game): Game {
   // Le monde : les mêmes événements pour les deux, tirés sur une France de référence (sans décisions ni crises envoyées).
   const reference = simulate({ decisions: [], events: g.world, until: year - 1 })
   const rolled = rollEvents(g.seed, year, reference.at(-1)!, reference[0], g.world)
-  const world = [...g.world, ...rolled]
-  let next: Game = { ...g, world }
+  let next: Game = { ...g, world: [...g.world, ...rolled] }
   const report: Report = { year, sides: {} as Report['sides'], world: rolled.map((e) => EVENTS.find((d) => d.id === e.id)?.label ?? e.id) }
+  const used: Card[] = []
   for (const side of SIDES) {
     const s = next.seats[side]
-    const foe = g.seats[other(side)]
-    const sent = foe.played.flatMap((p) => (p.card.kind === 'crise' ? [p.card.crisis] : []))
+    const sent = g.seats[other(side)].played.flatMap((p) => (p.card.kind === 'crise' ? [p.card.crisis] : []))
     let shield = s.shield || s.played.some((p) => p.card.kind === 'action' && p.card.action === 'cellule')
     const received: CrisisId[] = []
     const parried: CrisisId[] = []
@@ -245,22 +361,7 @@ export function resolveYear(g: Game): Game {
         received.push(crisis)
       }
     }
-    // Les mesures de l'année, dans l'ordre où elles ont été jouées, et les mesures temporaires de l'an dernier qui s'arrêtent.
-    let policy: Policy = { ...policyAt(s.decisions, year), ...s.reverts }
-    let reverts: Partial<Policy> = {}
-    let patch: Partial<Policy> = { ...s.reverts }
-    for (const { card } of s.played) {
-      if (card.kind !== 'mesure') {
-        continue
-      }
-      const change = promiseRemaining(card.pledge, BASE_POLICY, policy)
-      const { revert } = promisePatch(card.pledge, policy)
-      if (revert) {
-        reverts = { ...reverts, ...revert }
-      }
-      patch = { ...patch, ...change }
-      policy = { ...policy, ...change }
-    }
+    const { patch, reverts } = yearPatch(s, year)
     const decisions = Object.keys(patch).length ? [...s.decisions, { year, patch }] : s.decisions
     const events = [...s.events, ...rolled, ...received.map((id) => ({ year, id }))]
     const states = simulate({ decisions, events, until: year })
@@ -269,9 +370,10 @@ export function resolveYear(g: Game): Game {
     // Les promesses tenues pour la première fois rapportent de l'énergie.
     const kept = keptPromises(updated, year).filter((p) => !s.rewarded.includes(p.key))
     next = seat(next, side, { ...updated, rewarded: [...s.rewarded, ...kept.map((p) => p.key)], bonus: s.bonus + PROMISE_BONUS * kept.length })
+    used.push(...s.played.map((p) => p.card))
     report.sides[side] = { received, parried, kept: kept.map((p) => p.measure!.name), health: scoreOf(next.seats[side]), before }
   }
-  next = { ...next, reports: [...next.reports, report] }
+  next = { ...next, discard: [...next.discard, ...used], reports: [...next.reports, report], moves: [] }
   next = { ...next, outcome: outcomeOf(next) }
   if (next.outcome) {
     return next
@@ -311,4 +413,3 @@ export function outcomeOf(g: Game): Outcome | null {
   }
   return { winner: a > b ? 'player' : 'ai', reason: `${why}${a} / 100 contre ${b} / 100.` }
 }
-

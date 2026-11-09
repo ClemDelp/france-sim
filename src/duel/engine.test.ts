@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { simulate } from '../model/sim'
 import { CANDIDATES, candidateById } from '../game/candidates'
 import { buildDeck, CRISES, programmeOf, PROGRAMME_SIZE } from './cards'
-import { BOT, canPlay, keptPromises, newGame, outcomeOf, play, resolveYear, scoreOf, takeBack, type Game, type Player } from './engine'
+import { BOT, buy, canBuy, canPlay, discard, DISCARD_GAIN, keptPromises, sell, newGame, outcomeOf, play, resolveYear, scoreOf, takeBack, type Game, type Player } from './engine'
 import { playAiYear } from './ai'
 import { CRITERIA, health } from './health'
+import { cardImpact, explainChain, leverChanges, startNodes } from './why'
 
 const as = (id: string): Player => {
   const c = candidateById(id)!
@@ -29,14 +30,33 @@ describe('le duel des présidents', () => {
     expect(a.reports.length).toBeGreaterThan(0)
   })
 
-  it('chaque programme a cinq promesses, et elles sont toutes dans le haut du paquet', () => {
-    for (const c of [...CANDIDATES, null]) {
-      const programme = programmeOf(c, 3, 'x')
-      expect(programme).toHaveLength(PROGRAMME_SIZE)
-      const deck = buildDeck(programme, 3, 'x')
-      const firstPromises = deck.slice(0, 11).filter((d) => d.kind === 'mesure' && d.promise)
-      expect(firstPromises).toHaveLength(PROGRAMME_SIZE)
+  it('chaque programme a cinq promesses, et celles des deux joueurs sont dans le haut de la pioche commune', () => {
+    for (const c of CANDIDATES) {
+      const mine = programmeOf(c, 3, 'joueur')
+      const theirs = programmeOf(null, 3, 'ia')
+      expect(mine).toHaveLength(PROGRAMME_SIZE)
+      const deck = buildDeck([mine, theirs], 3)
+      const keys = new Set([...mine, ...theirs].map((p) => p.key))
+      expect(deck.slice(0, 22).filter((d) => d.kind === 'mesure' && keys.has(d.pledge.key))).toHaveLength(2 * PROGRAMME_SIZE)
     }
+  })
+
+  it('on peut jeter une carte (+1 ⚡), la vendre au marché, et l’adversaire peut l’acheter : le vendeur touche le prix', () => {
+    let g = newGame(as('melenchon'), BOT, { seed: 8, years: 5 })
+    const [a, b] = g.seats.player.hand
+    const energy = g.seats.player.energy
+    g = discard(g, 'player', a.uid)
+    expect(g.seats.player.energy).toBe(energy + DISCARD_GAIN)
+    expect(g.discard.map((c) => c.uid)).toContain(a.uid)
+    g = sell(g, 'player', b.uid)
+    expect(g.market.map((l) => l.card.uid)).toEqual([b.uid])
+    expect(canBuy(g, 'player', b.uid)).not.toBeNull()
+    const price = g.market[0].price
+    g = { ...g, seats: { ...g.seats, ai: { ...g.seats.ai, energy: 20 } } }
+    g = buy(g, 'ai', b.uid)
+    expect(g.seats.ai.hand.map((c) => c.uid)).toContain(b.uid)
+    expect(g.seats.player.bonus).toBe(price)
+    expect(g.market).toHaveLength(0)
   })
 
   it('une crise envoyée frappe la France d’en face, sauf si elle a une cellule de crise', () => {
@@ -51,13 +71,12 @@ describe('le duel des présidents', () => {
     const parried = resolveYear(play(play(rich(base), 'ai', shield), 'player', crisis))
     expect(parried.reports[0].sides.ai.parried).toEqual(['financial-crisis'])
     expect(parried.seats.ai.events.some((e) => e.id === 'financial-crisis')).toBe(false)
-    expect(CRISES['financial-crisis'].cost).toBeGreaterThan(CRISES['general-strike'].cost)
   })
 
   it('une promesse jouée devient une décision, compte comme tenue et rapporte de l’énergie', () => {
     let g = newGame(as('melenchon'), BOT, { seed: 2, years: 5 })
     const smic = g.seats.player.programme.find((p) => p.measure!.id === 'smic-up')!
-    const card = { kind: 'mesure' as const, pledge: smic, promise: true, uid: 'test-smic' }
+    const card = { kind: 'mesure' as const, pledge: smic, uid: 'test-smic' }
     g = { ...g, seats: { ...g.seats, player: { ...g.seats.player, energy: 20, hand: [card, ...g.seats.player.hand] } } }
     g = play(g, 'player', card)
     expect(canPlay(g, 'player', card)).not.toBeNull()
@@ -83,5 +102,47 @@ describe('le duel des présidents', () => {
     expect(outcomeOf(fall('faillite'))).toMatchObject({ winner: 'player' })
     expect(outcomeOf(fall('revolte'))!.reason).toContain('se révolte')
     expect(outcomeOf(g)).toBeNull()
+  })
+})
+
+describe('pourquoi une carte fait ce qu’elle fait', () => {
+  it('la hausse du SMIC : le modèle dit ce qu’elle change, et le graphe dit par où passe le chômage', () => {
+    const g = newGame(as('melenchon'), BOT, { seed: 2, years: 5 })
+    const smic = g.seats.player.programme.find((p) => p.measure!.id === 'smic-up')!
+    const card = { kind: 'mesure' as const, pledge: smic, uid: 'test-smic' }
+    expect(leverChanges(g, 'player', card).map((l) => l.key)).toEqual(['smicBoost'])
+    const impact = cardImpact(g, 'player', card)!
+    const unemployment = impact.indicators.find((i) => i.node === 'unemployment')!
+    expect(unemployment.delta).toBeGreaterThan(0)
+    // La note se décompose critère par critère : la somme redonne (à l'arrondi près) l'effet annoncé.
+    expect(Math.abs(impact.parts.reduce((a, p) => a + p.delta, 0) - impact.health)).toBeLessThan(1.5)
+    const chain = explainChain(startNodes(g, 'player', card), 'unemployment')!
+    expect(chain[0]).toMatchObject({ from: 'smicBoost', fromUp: true })
+    expect(chain.at(-1)).toMatchObject({ to: 'unemployment', toUp: true })
+  })
+
+  it('une crise s’explique sur la France d’en face, depuis les variables du monde qu’elle touche', () => {
+    const g = newGame(as('attal'), BOT, { seed: 2, years: 5 })
+    const card = { kind: 'crise' as const, crisis: 'ormuz' as const, uid: 'test-ormuz' }
+    const impact = cardImpact(g, 'player', card)!
+    expect(impact.target).toBe('ai')
+    expect(impact.health).toBeLessThan(0)
+    expect(startNodes(g, 'player', card).map((n) => n.node)).toContain('oil')
+    expect(explainChain(startNodes(g, 'player', card), 'inflation')).not.toBeNull()
+  })
+})
+
+describe('le prix des crises suit leur gravité dans le modèle', () => {
+  it('plus une crise fait perdre de points de note sur trois ans, plus elle coûte cher', () => {
+    const base = simulate({ decisions: [], events: [], until: 2030 })
+    const start = base.find((s) => s.year === 2027)!
+    const damage = (id: string) => {
+      const s = simulate({ decisions: [], events: [{ year: 2028, id }], until: 2030 })
+      return [2028, 2029, 2030].reduce((a, y) => a + health(base.find((x) => x.year === y)!, start) - health(s.find((x) => x.year === y)!, start), 0)
+    }
+    const order = ['financial-crisis', 'ormuz', 'recession', 'general-strike'] as const
+    const damages = order.map(damage)
+    expect(damages).toEqual([...damages].sort((a, b) => b - a))
+    expect(order.map((id) => CRISES[id].cost)).toEqual([...order.map((id) => CRISES[id].cost)].sort((a, b) => b - a))
   })
 })

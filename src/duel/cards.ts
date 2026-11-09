@@ -12,23 +12,26 @@ import { isPlayable, MEASURES, type Candidate, type Pledge } from '../game/candi
 export type CrisisId = 'financial-crisis' | 'recession' | 'trade-war' | 'ormuz' | 'ecb-hike' | 'cyberattack' | 'heatwave' | 'general-strike' | 'scandal' | 'eu-procedure'
 
 export type CardDef =
-  | { kind: 'mesure'; pledge: Pledge; promise: boolean }
+  | { kind: 'mesure'; pledge: Pledge }
   | { kind: 'crise'; crisis: CrisisId }
   | { kind: 'action'; action: 'cellule' | 'sondage' }
 
 export type Card = CardDef & { uid: string }
 
-/** Les crises qu'on peut envoyer à l'adversaire : leur prix en énergie suit leur gravité dans le modèle. */
+/**
+ * Les crises qu'on peut envoyer à l'adversaire : leur prix en énergie suit leur gravité dans le modèle
+ * (ce qu'elles font perdre à la note sur trois ans : krach ≈ 54 points, choc pétrolier ≈ 28, récession ≈ 12, grève ≈ 1).
+ */
 export const CRISES: Record<CrisisId, { name: string; art: string; cost: number; text: string }> = {
-  'financial-crisis': { name: 'Krach financier', art: '📉', cost: 5, text: 'Les banques vacillent, le crédit se ferme : récession et panique sur la dette pendant deux ans.' },
-  recession: { name: 'Récession', art: '🏚️', cost: 3, text: 'La croissance de ses partenaires s’effondre : son PIB recule.' },
+  'financial-crisis': { name: 'Krach financier', art: '📉', cost: 8, text: 'Les banques vacillent, le crédit se ferme : récession et panique sur la dette pendant deux ans.' },
+  recession: { name: 'Récession', art: '🏚️', cost: 4, text: 'La croissance de ses partenaires s’effondre : son PIB recule.' },
   'trade-war': { name: 'Guerre commerciale', art: '🚢', cost: 3, text: 'Des droits de douane frappent ses exportations pendant trois ans.' },
-  ormuz: { name: 'Choc pétrolier', art: '🛢️', cost: 4, text: 'Le baril bondit de 88 $ : inflation et pouvoir d’achat en berne.' },
+  ormuz: { name: 'Choc pétrolier', art: '🛢️', cost: 6, text: 'Le baril bondit de 88 $ : inflation et pouvoir d’achat en berne.' },
   'ecb-hike': { name: 'Hausse des taux', art: '🏦', cost: 3, text: 'Sa dette coûte de plus en plus cher à refinancer, trois ans de suite.' },
-  cyberattack: { name: 'Cyberattaque', art: '💻', cost: 2, text: 'Hôpitaux et administrations paralysés : l’activité recule, la colère monte.' },
-  heatwave: { name: 'Canicule', art: '🥵', cost: 2, text: 'Six semaines au-delà de 40 °C : dégâts, hôpitaux saturés.' },
-  'general-strike': { name: 'Grève générale', art: '✊', cost: 2, text: 'Le pays est bloqué : la colère monte, l’activité ralentit.' },
-  scandal: { name: 'Scandale d’État', art: '🗞️', cost: 3, text: 'Une affaire éclabousse son gouvernement : sa popularité plonge.' },
+  cyberattack: { name: 'Cyberattaque', art: '💻', cost: 1, text: 'Hôpitaux et administrations paralysés : l’activité recule, la colère monte.' },
+  heatwave: { name: 'Canicule', art: '🥵', cost: 1, text: 'Six semaines au-delà de 40 °C : dégâts, hôpitaux saturés.' },
+  'general-strike': { name: 'Grève générale', art: '✊', cost: 1, text: 'Le pays est bloqué : la colère monte, l’activité ralentit.' },
+  scandal: { name: 'Scandale d’État', art: '🗞️', cost: 2, text: 'Une affaire éclabousse son gouvernement : sa popularité plonge.' },
   'eu-procedure': { name: 'Sanction de Bruxelles', art: '🇪🇺', cost: 2, text: 'Procédure pour déficit excessif : les marchés s’inquiètent.' },
 }
 
@@ -98,33 +101,35 @@ export function programmeOf(candidate: Candidate | null, seed: number, salt: str
 /** Une promesse ajoutée par le jeu pour compléter un programme trop court. */
 export const isAdded = (p: Pledge) => p.source === 'ajout'
 
+const RARE: CrisisId[] = ['financial-crisis', 'ormuz']
 const CRISIS_DECK: CrisisId[] = ['financial-crisis', 'recession', 'trade-war', 'ormuz', 'ecb-hike', 'cyberattack', 'heatwave', 'general-strike', 'scandal', 'eu-procedure']
 
-/** Le haut du paquet, où sont mêlées les promesses : la main de départ et les trois premières pioches. */
-const TOP = 11
+/** Le haut de la pioche, où sont mêlées les promesses des deux joueurs : les deux mains de départ et les trois premières pioches. */
+const TOP = 22
 
 /**
- * Le paquet d'un joueur (un nombre fini de cartes) : son programme, dix mesures générales, les dix crises,
- * trois cellules de crise et deux sondages. Mélangé avec la graine de la partie.
+ * La pioche commune (un nombre fini de cartes) : les promesses des deux programmes, quatorze mesures générales,
+ * chaque crise en double (sauf le krach et le choc pétrolier), quatre cellules de crise et trois sondages. Mélangée avec la graine de la partie.
  */
-export function buildDeck(programme: Pledge[], seed: number, salt: string): Card[] {
-  const taken = new Set(programme.map((p) => p.measure!.id))
+export function buildDeck(programmes: Pledge[][], seed: number): Card[] {
+  const taken = new Set(programmes.flat().map((p) => p.measure!.id))
   const others = shuffled(
     PLAYABLE_MEASURES.filter((m) => !taken.has(m.id)),
     seed,
-    `${salt}:mesures`,
-  ).slice(0, 10)
-  const promises: CardDef[] = programme.map((pledge) => ({ kind: 'mesure' as const, pledge, promise: true }))
+    'mesures',
+  ).slice(0, 14)
+  const promises: CardDef[] = programmes.flat().map((pledge) => ({ kind: 'mesure' as const, pledge }))
   const rest: CardDef[] = shuffled(
     [
-      ...others.map((m) => ({ kind: 'mesure' as const, pledge: generic(m.id), promise: false })),
-      ...CRISIS_DECK.map((crisis) => ({ kind: 'crise' as const, crisis })),
-      ...(['cellule', 'cellule', 'cellule', 'sondage', 'sondage'] as const).map((action) => ({ kind: 'action' as const, action })),
+      ...others.map((m) => ({ kind: 'mesure' as const, pledge: generic(m.id) })),
+      // Chaque crise en double, sauf les deux plus dévastatrices : des cartes rares.
+      ...[...CRISIS_DECK, ...CRISIS_DECK.filter((c) => !RARE.includes(c))].map((crisis) => ({ kind: 'crise' as const, crisis })),
+      ...(['cellule', 'cellule', 'cellule', 'cellule', 'sondage', 'sondage', 'sondage'] as const).map((action) => ({ kind: 'action' as const, action })),
     ],
     seed,
-    `${salt}:reste`,
+    'reste',
   )
-  // Les promesses sont mêlées aux premières cartes : on les a toutes piochées vers la 4e année (le hasard décide de l'ordre).
-  const top = shuffled([...promises, ...rest.slice(0, TOP - promises.length)], seed, `${salt}:haut`)
-  return [...top, ...rest.slice(TOP - promises.length)].map((d, i) => ({ ...d, uid: `${salt}-${i}` }))
+  // Les promesses sont mêlées aux premières cartes : on les a toutes vues vers la 4e année (le hasard décide qui les pioche).
+  const top = shuffled([...promises, ...rest.slice(0, TOP - promises.length)], seed, 'haut')
+  return [...top, ...rest.slice(TOP - promises.length)].map((d, i) => ({ ...d, uid: `carte-${i}` }))
 }
