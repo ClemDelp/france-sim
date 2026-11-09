@@ -247,54 +247,90 @@ const asPlayer = (c: (typeof CANDIDATES)[number]): Player => ({ candidate: c, na
 const SURPRISE: Player = { candidate: null, name: 'Vous', emblem: '🎩', color: '#5b8def' }
 
 function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, years: number) => void; onExit: () => void }) {
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   const [me, setMe] = useState<Player | null>(null)
   const [foe, setFoe] = useState<Player | null>(null)
   const [years, setYears] = useState(5)
   const mine = [...CANDIDATES.map(asPlayer), SURPRISE]
   const rivals = [...CANDIDATES.map(asPlayer).filter((p) => p.name !== me?.name), BOT]
+  const titles = { 1: 'Qui incarnez-vous ?', 2: 'Contre qui ?', 3: 'Combien de temps ?' }
   return (
-    <div className="dl dl-setup">
-      <header className="dl-top">
-        <button type="button" className="ghost small" onClick={onExit}>
-          ← Accueil
+    <div className="dlg dlg-setup">
+      <header className="dlg-top">
+        <button type="button" className="ghost small" onClick={() => (step === 1 ? onExit() : setStep((step - 1) as 1 | 2))}>
+          ← {step === 1 ? 'Accueil' : 'Retour'}
         </button>
-        <strong>🃏 Le duel des présidents</strong>
+        <strong className="dl-year">🃏 Le duel des présidents</strong>
+        <span className="dl-steps" aria-label={`Étape ${step} sur 3`}>
+          {[1, 2, 3].map((n) => (
+            <i key={n} className={n <= step ? 'on' : ''} />
+          ))}
+        </span>
       </header>
-      <section className="dl-intro">
-        <h1>Deux présidents, deux France</h1>
-        <p>Vous et votre adversaire partez de la même France de 2027 et piochez dans la même pioche. Mesures pour votre pays, crises pour le sien, un marché pour vendre ce qui ne vous sert pas. Le modèle fait vivre les deux France : le meilleur bilan gagne.</p>
+      <section className="dlg-setup-head">
+        <h1>{titles[step]}</h1>
+        <p>
+          {step === 1
+            ? 'Deux présidents, deux France : la même au départ, en 2027. Mesures pour votre pays, crises pour le sien, une pioche commune et un marché. Le modèle fait vivre les deux France.'
+            : step === 2
+              ? 'Un candidat (version parodique, avec son programme), ou le Bot, qui se fait son propre programme.'
+              : 'Le meilleur bilan gagne à la fin. Faillite ou révolte : défaite immédiate.'}
+        </p>
       </section>
-      <h2>1. Votre président·e</h2>
-      <div className="dl-pick">
-        {mine.map((p) => (
-          <Chip key={p.name} p={p} sub={p.candidate?.family ?? 'Un programme tiré au sort'} selected={me?.name === p.name} onClick={() => setMe(p)} />
-        ))}
-      </div>
-      {me ? (
-        <>
-          <h2>2. Votre adversaire</h2>
+      <div className="dlg-setup-body">
+        {step === 1 ? (
+          <div className="dl-pick">
+            {mine.map((p) => (
+              <Chip
+                key={p.name}
+                p={p}
+                sub={p.candidate?.family ?? 'Un programme tiré au sort'}
+                selected={me?.name === p.name}
+                onClick={() => {
+                  setMe(p)
+                  setFoe(null)
+                  setStep(2)
+                }}
+              />
+            ))}
+          </div>
+        ) : step === 2 ? (
           <div className="dl-pick">
             {rivals.map((p) => (
-              <Chip key={p.name} p={p} sub={p.candidate?.family ?? 'Pas de parti : il se fait son propre programme'} selected={foe?.name === p.name} onClick={() => setFoe(p)} />
+              <Chip
+                key={p.name}
+                p={p}
+                sub={p.candidate?.family ?? 'Sans parti, son propre programme'}
+                selected={foe?.name === p.name}
+                onClick={() => {
+                  setFoe(p)
+                  setStep(3)
+                }}
+              />
             ))}
           </div>
-          <h2>3. La durée</h2>
-          <div className="dl-years" role="radiogroup" aria-label="Durée de la partie">
-            {[5, 10].map((n) => (
-              <button key={n} type="button" role="radio" aria-checked={years === n} className={years === n ? 'is-selected' : ''} onClick={() => setYears(n)}>
-                <strong>{n} ans</strong>
-                <small>{n === 5 ? 'Un mandat, environ 10 minutes' : 'Deux mandats, environ 20 minutes'}</small>
-              </button>
-            ))}
-          </div>
-          <div className="dl-start">
-            <button type="button" className="primary big" disabled={!foe} onClick={() => foe && onStart(me, foe, years)}>
+        ) : (
+          <div className="dl-final-step">
+            <div className="dl-versus-chips">
+              <Chip p={me!} sub="Vous" selected onClick={() => setStep(1)} />
+              <strong>contre</strong>
+              <Chip p={foe!} sub="L’IA" selected onClick={() => setStep(2)} />
+            </div>
+            <div className="dl-years" role="radiogroup" aria-label="Durée de la partie">
+              {[5, 10].map((n) => (
+                <button key={n} type="button" role="radio" aria-checked={years === n} className={years === n ? 'is-selected' : ''} onClick={() => setYears(n)}>
+                  <strong>{n} ans</strong>
+                  <small>{n === 5 ? 'Un mandat, environ 10 minutes' : 'Deux mandats, environ 20 minutes'}</small>
+                </button>
+              ))}
+            </div>
+            <button type="button" className="primary big" onClick={() => onStart(me!, foe!, years)}>
               ⚔️ Commencer le duel
             </button>
           </div>
-        </>
-      ) : null}
-      <p className="note">{PARODY_NOTE}</p>
+        )}
+      </div>
+      <p className="note dlg-setup-foot">{PARODY_NOTE}</p>
     </div>
   )
 }

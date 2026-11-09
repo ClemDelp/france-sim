@@ -14,38 +14,47 @@
   color: var(--ink);
 }
 
-/* — Le choix des présidents (une page qui défile normalement) */
+/* — Le choix des présidents : trois étapes, chacune tient sur l'écran */
 
-.dl {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 12px 16px 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.dlg-setup {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
-.dl-top {
+.dl-steps {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  gap: 4px;
 }
-.dl-intro h1 {
-  margin: 6px 0 4px;
+.dl-steps i {
+  width: 22px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--rule);
+}
+.dl-steps i.on {
+  background: var(--gold);
+}
+.dlg-setup-head h1 {
+  margin: 4px 0 2px;
   font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.3rem, 3vw, 2rem);
 }
-.dl-intro p {
+.dlg-setup-head p {
   margin: 0;
   color: var(--muted);
-  max-width: 75ch;
+  max-width: 80ch;
 }
-.dl-setup h2 {
-  margin: 8px 0 0;
-  font-size: 1.05rem;
+.dlg-setup-body {
+  min-height: 0;
+  display: grid;
+  align-content: center;
+}
+.dlg-setup-foot {
+  margin: 0;
+  font-size: 0.72rem;
 }
 .dl-pick {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
 }
 .dl-chip,
 .dl-years button {
@@ -53,7 +62,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: var(--radius);
   border: 2px solid var(--rule);
   border-left: 6px solid var(--c, var(--accent));
@@ -62,9 +71,22 @@
   text-align: left;
   font: inherit;
   cursor: pointer;
+  min-width: 0;
+  transition: transform 0.12s ease;
+}
+.dl-chip:hover,
+.dl-years button:hover {
+  transform: translateY(-2px);
+  border-color: var(--c, var(--gold));
 }
 .dl-chip > span {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+}
+.dl-chip strong {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .dl-chip small,
 .dl-years small {
@@ -75,15 +97,28 @@
   border-color: var(--c, var(--accent));
   background: color-mix(in srgb, var(--c, var(--accent)) 22%, var(--panel));
 }
+.dl-final-step {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+.dl-versus-chips {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.dl-versus-chips .dl-chip {
+  width: 220px;
+}
 .dl-years {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-}
-.dl-start {
-  display: flex;
   justify-content: center;
-  padding: 8px 0;
+}
+.dl-years button {
+  border-left-color: var(--gold);
+  width: 220px;
 }
 
 /* — La table de jeu : tout l'écran, sans défiler */
@@ -851,6 +886,34 @@
 /* — Sur téléphone : tout tient encore sur l'écran, en plus serré */
 
 @media (max-width: 760px) {
+  .dl-pick {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .dl-chip {
+    padding: 6px 8px;
+  }
+  .dl-chip > span {
+    font-size: 1.2rem;
+  }
+  .dl-chip small {
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .dlg-setup-head p {
+    font-size: 0.82rem;
+  }
+  .dl-versus-chips {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .dl-versus-chips .dl-chip,
+  .dl-years button {
+    width: min(260px, 80vw);
+  }
   .dlg {
     padding: 4px 6px;
     gap: 4px;
