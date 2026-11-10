@@ -36,8 +36,14 @@ export const CRISES: Record<CrisisId, { name: string; art: string; cost: number;
 }
 
 export const ACTIONS = {
-  cellule: { name: 'Cellule de crise', art: '🛡️', cost: 2, text: 'Pare la prochaine crise que l’adversaire vous envoie. Elle reste en place jusque-là.' },
-  sondage: { name: 'Sondage', art: '📊', cost: 1, text: 'Piochez deux cartes.' },
+  cellule: {
+    name: 'Cellule de crise',
+    art: '🛡️',
+    cost: 2,
+    text: 'Gardez-la en main : quand l’adversaire vous envoie une crise, elle la pare sur-le-champ (si vous avez encore 2 ⚡).',
+    short: 'Pare une crise, quand elle arrive.',
+  },
+  sondage: { name: 'Sondage', art: '📊', cost: 1, text: 'Piochez deux cartes.', short: 'Piochez deux cartes.' },
 } as const
 
 const DOMAIN_ART: Record<string, string> = {

@@ -1,8 +1,33 @@
 import { describe, expect, it } from 'vitest'
 import { simulate } from '../model/sim'
-import { CANDIDATES, candidateById } from '../game/candidates'
+import { CANDIDATES, candidateById, MEASURES } from '../game/candidates'
 import { buildDeck, CRISES, programmeOf, PROGRAMME_SIZE } from './cards'
-import { BOT, buy, canBuy, canPlay, discard, DISCARD_GAIN, keptPromises, sell, newGame, outcomeOf, play, resolveYear, scoreOf, takeBack, type Game, type Player } from './engine'
+import {
+  ALERT_AT,
+  BOT,
+  budgetCost,
+  buy,
+  canBuy,
+  canPlay,
+  cardCost,
+  contextOf,
+  discard,
+  DISCARD_GAIN,
+  keptPromises,
+  LAWS_PER_YEAR,
+  marginLeft,
+  newGame,
+  outcomeOf,
+  pass,
+  play,
+  respond,
+  resolveYear,
+  scoreOf,
+  sell,
+  type Game,
+  type Player,
+} from './engine'
+import { CONTEXTS } from './contexts'
 import { playAiYear } from './ai'
 import { CRITERIA, health } from './health'
 import { cardImpact, explainChain, leverChanges, startNodes } from './why'
@@ -16,10 +41,19 @@ const as = (id: string): Player => {
 function auto(g0: Game): Game {
   let g = g0
   while (!g.outcome) {
-    g = resolveYear(playAiYear(playAiYear(g, 'player'), 'ai'))
+    g = resolveYear(playAiYear(g))
   }
   return g
 }
+
+/** Les deux joueurs passent : l'année est prête à se jouer. */
+const bothPass = (g: Game): Game => (g.turn ? pass(pass(g, g.turn), g.turn === 'player' ? 'ai' : 'player') : g)
+
+/** Une partie où les deux mains et les énergies sont données (pour tester une règle). */
+const rich = (g: Game, player: Game['seats']['player']['hand'], ai: Game['seats']['ai']['hand'] = []): Game => ({
+  ...g,
+  seats: { player: { ...g.seats.player, energy: 20, hand: [...player, ...g.seats.player.hand] }, ai: { ...g.seats.ai, energy: 20, hand: [...ai, ...g.seats.ai.hand] } },
+})
 
 describe('le duel des présidents', () => {
   it('se joue jusqu’au bout, et la même graine donne la même partie', () => {
@@ -43,6 +77,7 @@ describe('le duel des présidents', () => {
 
   it('on peut jeter une carte (+1 ⚡), la vendre au marché, et l’adversaire peut l’acheter : le vendeur touche le prix', () => {
     let g = newGame(as('melenchon'), BOT, { seed: 8, years: 5 })
+    expect(g.turn).toBe('player')
     const [a, b] = g.seats.player.hand
     const energy = g.seats.player.energy
     g = discard(g, 'player', a.uid)
@@ -53,36 +88,107 @@ describe('le duel des présidents', () => {
     expect(canBuy(g, 'player', b.uid)).not.toBeNull()
     const price = g.market[0].price
     g = { ...g, seats: { ...g.seats, ai: { ...g.seats.ai, energy: 20 } } }
-    g = buy(g, 'ai', b.uid)
+    // On n'achète que pendant son tour.
+    expect(canBuy(g, 'ai', b.uid)).not.toBeNull()
+    g = buy(pass(g, 'player'), 'ai', b.uid)
     expect(g.seats.ai.hand.map((c) => c.uid)).toContain(b.uid)
     expect(g.seats.player.bonus).toBe(price)
     expect(g.market).toHaveLength(0)
   })
 
-  it('une crise envoyée frappe la France d’en face, sauf si elle a une cellule de crise', () => {
+  it('une crise posée frappe la France d’en face, sauf si elle la pare sur-le-champ avec une cellule de crise', () => {
     const base = newGame(as('attal'), BOT, { seed: 5, years: 5 })
     const crisis = { kind: 'crise' as const, crisis: 'financial-crisis' as const, uid: 'test-krach' }
     const shield = { kind: 'action' as const, action: 'cellule' as const, uid: 'test-cellule' }
-    const rich = (g: Game): Game => ({ ...g, seats: { ...g.seats, player: { ...g.seats.player, energy: 20, hand: [crisis, ...g.seats.player.hand] }, ai: { ...g.seats.ai, energy: 20, hand: [shield, ...g.seats.ai.hand] } } })
-    const hit = resolveYear(play(rich(base), 'player', crisis))
+    const g = play(rich(base, [crisis], [shield]), 'player', crisis)
+    expect(g.pending?.card.uid).toBe(crisis.uid)
+    // Tant que la cible n'a pas répondu, personne ne joue.
+    expect(canPlay(g, 'ai', g.seats.ai.hand.find((c) => c.kind === 'mesure')!)).toContain('crise')
+    // La cellule de crise ne se pose pas d'avance : elle répond à une crise.
+    expect(canPlay(respond(g, 'ai', false), 'ai', shield)).toContain('réponse')
+    const hit = resolveYear(bothPass(respond(g, 'ai', false)))
     expect(hit.reports[0].sides.ai.received).toEqual(['financial-crisis'])
     expect(hit.seats.ai.events.some((e) => e.id === 'financial-crisis')).toBe(true)
-    expect(scoreOf(hit.seats.ai)).toBeLessThan(scoreOf(resolveYear(rich(base)).seats.ai))
-    const parried = resolveYear(play(play(rich(base), 'ai', shield), 'player', crisis))
+    expect(scoreOf(hit.seats.ai)).toBeLessThan(scoreOf(resolveYear(bothPass(rich(base, [crisis], [shield]))).seats.ai))
+    const parriedNow = respond(g, 'ai', true)
+    expect(parriedNow.seats.ai.hand.some((c) => c.uid === shield.uid)).toBe(false)
+    expect(parriedNow.turn).toBe('ai')
+    const parried = resolveYear(bothPass(parriedNow))
     expect(parried.reports[0].sides.ai.parried).toEqual(['financial-crisis'])
     expect(parried.seats.ai.events.some((e) => e.id === 'financial-crisis')).toBe(false)
+  })
+
+  it('chacun son tour : une carte à la fois, l’année se joue quand les deux passent de suite, et l’ouverture alterne', () => {
+    let g = newGame(as('melenchon'), BOT, { seed: 3, years: 5 })
+    expect(g.turn).toBe('player')
+    const card = g.seats.ai.hand[0]
+    expect(canPlay(g, 'ai', card)).toBe('Ce n’est pas votre tour')
+    g = pass(g, 'player')
+    expect(g.turn).toBe('ai')
+    // L'adversaire joue après votre passe : vous pouvez rejouer.
+    const sondage = { kind: 'action' as const, action: 'sondage' as const, uid: 'test-sondage' }
+    g = play(rich(g, [], [sondage]), 'ai', sondage)
+    expect(g.turn).toBe('player')
+    expect(g.passes).toBe(0)
+    g = pass(pass(g, 'player'), 'ai')
+    expect(g.turn).toBeNull()
+    g = resolveYear(g)
+    expect(g.year).toBe(2029)
+    expect(g.turn).toBe('ai')
+  })
+
+  it('pas plus de deux lois par an, et on pioche trois cartes par an', () => {
+    const g0 = newGame(as('melenchon'), BOT, { seed: 2, years: 5 })
+    const laws = g0.seats.player.programme.slice(0, LAWS_PER_YEAR + 1).map((pledge, i) => ({ kind: 'mesure' as const, pledge, uid: `test-loi-${i}` }))
+    let g = rich(g0, laws)
+    for (const law of laws.slice(0, LAWS_PER_YEAR)) {
+      g = pass(play(g, 'player', law), 'ai')
+    }
+    expect(canPlay(g, 'player', laws[LAWS_PER_YEAR])).toContain('lois')
+    const hand = g.seats.player.hand.length
+    g = resolveYear(bothPass(g))
+    expect(g.seats.player.hand.length).toBe(Math.min(8, hand + 3 + (contextOf(g).draw ?? 0)))
+  })
+
+  it('la conjoncture est la même pour les deux : son événement frappe les deux France, et elle change le prix des cartes', () => {
+    const g = newGame(as('attal'), BOT, { seed: 9, years: 5 })
+    const ctx = contextOf(g)
+    if (ctx.event) {
+      expect(g.seats.player.events).toContainEqual({ year: 2028, id: ctx.event })
+      expect(g.seats.ai.events).toContainEqual({ year: 2028, id: ctx.event })
+    }
+    // Une guerre aux portes de l'Europe : les crises coûtent un point de plus.
+    const war: Game = { ...g, contexts: ['war-europe', ...g.contexts.slice(1)] }
+    const crisis = { kind: 'crise' as const, crisis: 'recession' as const, uid: 'test-recession' }
+    expect(cardCost(war, 'player', crisis)).toBe(CRISES.recession.cost + CONTEXTS['war-europe'].crisis!)
+    // Toutes les conjonctures existent dans le modèle.
+    expect(Object.values(CONTEXTS).every((c) => !c.event || c.event.length > 0)).toBe(true)
+  })
+
+  it('le budget : une mesure coûteuse entame la marge, la dépasser coûte de l’énergie l’an prochain, et alerte les marchés', () => {
+    const g0 = newGame(as('melenchon'), BOT, { seed: 2, years: 5 })
+    const pledge = (id: string) => ({ key: `test-${id}`, measure: MEASURES[id], amount: null, quote: '', source: '' })
+    const defence = { kind: 'mesure' as const, pledge: pledge('defence-35'), uid: 'test-defense' }
+    const savings = { kind: 'mesure' as const, pledge: pledge('savings'), uid: 'test-economies' }
+    expect(budgetCost(g0, 'player', defence)).toBeGreaterThan(ALERT_AT)
+    expect(budgetCost(g0, 'player', savings)).toBeLessThan(0)
+    const g = play(rich(g0, [defence, savings]), 'player', defence)
+    expect(marginLeft(g.seats.player)).toBeLessThan(g.seats.player.margin)
+    const after = resolveYear(bothPass(g))
+    expect(after.reports[0].sides.player.alert).toBe(true)
+    expect(after.reports[0].sides.player.malus).toBeGreaterThan(0)
+    expect(after.seats.player.events).toContainEqual({ year: 2028, id: 'eu-procedure' })
+    // Les économies, elles, redonnent de la marge.
+    expect(marginLeft(play(rich(g0, [savings]), 'player', savings).seats.player)).toBeGreaterThan(g0.seats.player.margin)
   })
 
   it('une promesse jouée devient une décision, compte comme tenue et rapporte de l’énergie', () => {
     let g = newGame(as('melenchon'), BOT, { seed: 2, years: 5 })
     const smic = g.seats.player.programme.find((p) => p.measure!.id === 'smic-up')!
     const card = { kind: 'mesure' as const, pledge: smic, uid: 'test-smic' }
-    g = { ...g, seats: { ...g.seats, player: { ...g.seats.player, energy: 20, hand: [card, ...g.seats.player.hand] } } }
-    g = play(g, 'player', card)
+    g = play(rich(g, [card]), 'player', card)
     expect(canPlay(g, 'player', card)).not.toBeNull()
-    // On peut reprendre une carte avant de jouer l'année : l'énergie revient.
-    expect(takeBack(g, 'player', card.uid).seats.player.energy).toBe(20)
-    g = resolveYear(g)
+    g = resolveYear(bothPass(g))
     expect(g.seats.player.decisions.at(-1)!.patch.smicBoost).toBeGreaterThan(0)
     expect(keptPromises(g.seats.player, 2028).map((p) => p.key)).toContain(smic.key)
     expect(g.reports[0].sides.player.kept).toHaveLength(1)
