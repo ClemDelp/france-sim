@@ -379,7 +379,7 @@ function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, year
         <h1>{titles[step]}</h1>
         <p>
           {step === 1
-            ? 'Deux présidents, deux France : la même au départ, en 2027. Les mêmes cartes pour les deux : mesures pour votre pays, crises pour le sien, et un marché. Le modèle fait vivre les deux France.'
+            ? 'Deux présidents, deux France : la même au départ, en 2027. Mesures pour votre pays, crises pour le sien, une pioche commune et un marché. Le modèle fait vivre les deux France.'
             : step === 2
               ? 'Un candidat (version parodique, avec son programme), ou le Bot, qui se fait son propre programme.'
               : 'Le meilleur bilan gagne à la fin. Faillite ou révolte : défaite immédiate.'}
@@ -1170,7 +1170,7 @@ function Rules({ onClose }: { onClose: () => void }) {
             <strong>Chacun sa France.</strong> Vous et votre adversaire partez de la même France de 2027. Le modèle fait vivre chaque pays selon les cartes jouées.
           </li>
           <li>
-            <strong>Les mêmes cartes pour les deux.</strong> 5 cartes au départ, puis 2 par an, tirées d’une pioche commune : chaque carte tirée est donnée aux deux joueurs, chacun son exemplaire. Vos promesses et les siennes sont dedans. Seul le sondage fait piocher des cartes en plus, pour celui qui le joue.
+            <strong>Une pioche commune.</strong> 5 cartes au départ, puis 2 par an. Ce que vous piochez, l’adversaire ne l’a pas, sauf si vous le mettez en vente au marché. Vos promesses et les siennes sont mêlées dedans : vous pouvez tomber sur les siennes.
           </li>
           <li>
             <strong>Touchez une carte :</strong> elle s’ouvre en grand, avec son effet expliqué par le modèle, et ce que vous pouvez en faire : la jouer, la jeter (+{DISCARD_GAIN} ⚡ tout de suite) ou la vendre au marché (l’acheteur paie, vous touchez l’énergie l’an prochain). L’adversaire peut vendre et acheter lui aussi.

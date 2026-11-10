@@ -12,7 +12,6 @@ import { health } from './health'
 /**
  * Le duel : deux présidents, chacun à la tête de sa propre France (la même au départ, en 2027).
  * Une pioche commune, une défausse, un marché où l'on vend les cartes dont on ne veut pas.
- * Les deux joueurs piochent les mêmes cartes : chaque carte tirée est donnée en double, un exemplaire à chacun.
  * Chaque année, on joue des cartes en même temps : des mesures pour sa France, des crises pour celle de l'adversaire,
  * des parades. Puis l'année se joue dans les deux France, avec le modèle.
  * On perd tout de suite si son pays fait faillite ou se révolte. À la fin, celui qui a tenu au moins 3 promesses sur 5
@@ -93,7 +92,7 @@ export type Game = {
   years: number
   year: number
   seats: Record<Side, Seat>
-  /** La pioche commune (chaque carte tirée est donnée aux deux joueurs), la défausse, le marché. */
+  /** La pioche commune, la défausse, le marché. */
   deck: Card[]
   discard: Card[]
   market: Listing[]
@@ -103,8 +102,6 @@ export type Game = {
   world: FiredEvent[]
   reports: Report[]
   outcome: Outcome | null
-  /** Un compteur, pour que chaque exemplaire distribué ait son propre identifiant. */
-  dealt: number
 }
 
 export type Player = { candidate: Candidate | null; name: string; emblem: string; color: string }
@@ -160,9 +157,10 @@ export function newGame(player: Player, ai: Player, options: { seed: number; yea
     world: [],
     reports: [],
     outcome: null,
-    dealt: 0,
   }
-  g = deal(g, HAND_START)
+  for (const side of SIDES) {
+    g = draw(g, side, HAND_START)
+  }
   return withEnergy(g)
 }
 
@@ -313,48 +311,15 @@ export function buy(g: Game, side: Side, uid: string): Game {
   return { ...next, market: next.market.filter((l) => l !== listing), moves: [...next.moves, { side, kind: 'achat', card: listing.card, price: listing.price }] }
 }
 
-/** La carte d'origine, dans la pioche, d'un exemplaire distribué. */
-export const baseUid = (uid: string) => uid.split('/')[0]
-
-/** Assez de cartes dans la pioche commune ; sinon, on y remélange la défausse (un seul exemplaire de chaque carte). */
-function refill(g: Game, n: number, salt: string): Game {
-  if (g.deck.length >= n || !g.discard.length) {
-    return g
-  }
-  const seen = new Set(g.deck.map((c) => c.uid))
-  const back: Card[] = []
-  for (const c of g.discard) {
-    const uid = baseUid(c.uid)
-    if (!seen.has(uid)) {
-      seen.add(uid)
-      back.push({ ...c, uid })
-    }
-  }
-  return { ...g, deck: [...g.deck, ...shuffled(back, g.seed, `defausse-${g.year}-${salt}`)], discard: [] }
-}
-
-/** Un exemplaire d'une carte de la pioche, pour un joueur. */
-const copy = (c: Card, side: Side, n: number): Card => ({ ...c, uid: `${baseUid(c.uid)}/${side === 'player' ? 'j' : 'a'}${n}` })
-
-/** Les deux joueurs piochent les mêmes cartes : chacune est donnée en double (sauf à qui a la main pleine). */
-function deal(g: Game, n: number): Game {
-  let next = refill(g, n, 'tous')
-  const top = next.deck.slice(0, n)
-  for (const side of SIDES) {
-    const s = next.seats[side]
-    const room = Math.max(0, HAND_MAX - s.hand.length)
-    next = seat(next, side, { hand: [...s.hand, ...top.slice(0, room).map((c, i) => copy(c, side, next.dealt + i))] })
-  }
-  return { ...next, deck: next.deck.slice(top.length), dealt: next.dealt + top.length }
-}
-
-/** Le sondage : des cartes en plus, pour un seul joueur (l'autre ne les reçoit pas). */
+/** Piocher dans la pioche commune ; vide, on remélange la défausse. */
 function draw(g: Game, side: Side, n: number): Game {
-  const next = refill(g, n, side)
+  let next = g
+  if (next.deck.length < n && next.discard.length) {
+    next = { ...next, deck: [...next.deck, ...shuffled(next.discard, next.seed, `defausse-${next.year}-${side}`)], discard: [] }
+  }
   const s = next.seats[side]
   const k = Math.min(n, Math.max(0, HAND_MAX - s.hand.length), next.deck.length)
-  const cards = next.deck.slice(0, k).map((c, i) => copy(c, side, next.dealt + i))
-  return { ...seat(next, side, { hand: [...s.hand, ...cards] }), deck: next.deck.slice(k), dealt: next.dealt + k }
+  return { ...seat(next, side, { hand: [...s.hand, ...next.deck.slice(0, k)] }), deck: next.deck.slice(k) }
 }
 
 /** Les promesses tenues : les leviers de la France ont atteint ce que la promesse demande. */
@@ -436,7 +401,10 @@ export function resolveYear(g: Game): Game {
   if (next.outcome) {
     return next
   }
-  next = deal({ ...next, year: year + 1 }, DRAW_PER_YEAR)
+  next = { ...next, year: year + 1 }
+  for (const side of SIDES) {
+    next = draw(next, side, DRAW_PER_YEAR)
+  }
   return withEnergy(next)
 }
 
