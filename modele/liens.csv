@@ -280,3 +280,11 @@ otherServices;discontent;-;unrestServicesRange;Police, justice, mairies : des se
 electrification;imports;+;electrificationImportShare;Une bonne partie des équipements (pompes à chaleur, batteries, véhicules) est importée.
 lowIncome;discontent;-;unrestLowIncomeDrop;Quand les plus modestes perdent du pouvoir d’achat, la colère monte, même si le revenu médian tient.
 firmAid;unemployment;-;firmAidJobs;Une partie des aides allège le coût du travail : les supprimer coûte des emplois.
+basicIncome;disposableIncome;+;;Chaque ménage reçoit la même somme : le revenu disponible monte partout.
+basicIncome;lowIncome;+;population.g1;La même somme pour tous pèse beaucoup plus dans un petit revenu : les plus modestes y gagnent le plus en proportion.
+basicIncome;socialBenefits;+;;Le revenu universel est une prestation de plus, versée par l’État.
+workWeek;productivity;+;hoursOffset;Moins d’heures par semaine : chacun produit un peu moins, même si la productivité horaire compense l’essentiel.
+workWeek;unemployment;+;hoursOffset;Semaine plus courte : il faut un peu plus de monde pour produire autant, le travail se partage (35 heures : ≈ 350 000 emplois).
+workWeek;profits;+;hoursOffset;Salaires mensuels maintenus pour moins d’heures : le coût du travail par unité produite monte, les marges baissent.
+crisis;discontent;±;unrestMemory;Grèves, scandales, petites phrases ou fêtes nationales : un événement fait monter (ou retomber) la colère, qui s’efface à moitié chaque année.
+crisis;inflation;+;;Une pénurie ou la flambée d’un produit fait monter les prix une année.

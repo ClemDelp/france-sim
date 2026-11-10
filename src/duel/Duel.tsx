@@ -3,7 +3,7 @@ import { CANDIDATES, PARODY_NOTE } from '../game/candidates'
 import { popularity } from '../game/score'
 import { num } from '../ui/format'
 import { aiStep } from './ai'
-import { ACTIONS, cardArt, cardName, CRISES, isAdded, type Card } from './cards'
+import { ACTIONS, cardArt, cardName, CRISES, crisisEvent, inModel, isAdded, rarityOf, type Card } from './cards'
 import { CONTEXTS } from './contexts'
 import {
   BOT,
@@ -20,7 +20,7 @@ import {
   endYear,
   keptPromises,
   lastState,
-  LAWS_PER_YEAR,
+  lawLimit,
   lawsOf,
   marginLeft,
   marketPrice,
@@ -28,7 +28,7 @@ import {
   newGame,
   other,
   overshootMalus,
-  parryCard,
+  answersOf,
   pass,
   play,
   PROGRAMME_GOAL,
@@ -39,6 +39,7 @@ import {
   sell,
   START_YEAR,
   yourTurn,
+  type Answer,
   type Game,
   type Move,
   type Player,
@@ -193,20 +194,31 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
               {game.seats.ai.emblem} Cartes de {game.seats.ai.name} {aiPassed && playing ? <small>· a passé</small> : null}
             </p>
             <div className="dlg-row">
-              {game.seats.ai.played.map(({ card, cost }) => (
-                <Mini key={card.uid} g={game} card={card} side="ai" badge={`⚡${cost}`} flip={landed.has(card.uid)} onClick={() => open({ card, where: 'adverse' })} />
+              {game.seats.ai.played.map((p) => (
+                <Mini key={p.card.uid} g={game} card={p.card} side="ai" badge={`⚡${p.cost}`} stamp={stampOf(p)} flip={landed.has(p.card.uid)} onClick={() => open({ card: p.card, where: 'adverse' })} />
               ))}
               {!game.seats.ai.played.length ? <p className="dlg-hint">Rien de posé cette année.</p> : null}
             </div>
           </div>
+          {me.peek && playing ? (
+            <div className="dlg-zone peek">
+              <p>🕵️ Sa main (sondage truqué)</p>
+              <div className="dlg-row">
+                {game.seats.ai.hand.map((card) => (
+                  <Mini key={card.uid} g={game} card={card} side="ai" badge={`⚡${cardCost(game, 'ai', card)}`} onClick={() => open({ card, where: 'adverse' })} />
+                ))}
+                {!game.seats.ai.hand.length ? <p className="dlg-hint">Sa main est vide.</p> : null}
+              </div>
+            </div>
+          ) : null}
           {news && playing ? <div className="dlg-news">{news}</div> : null}
           <div className="dlg-zone mine">
             <p>
-              Vos cartes de l’année <small>· 📜 {lawsOf(me)}/{LAWS_PER_YEAR} lois</small>
+              Vos cartes de l’année <small>· 📜 {lawsOf(me)}/{lawLimit(me)} lois</small>
             </p>
             <div className="dlg-row">
-              {me.played.map(({ card, cost }) => (
-                <Mini key={card.uid} g={game} card={card} side="player" badge={`⚡${cost}`} landed={landed.has(card.uid)} onClick={() => open({ card, where: 'table' })} />
+              {me.played.map((p) => (
+                <Mini key={p.card.uid} g={game} card={p.card} side="player" badge={`⚡${p.cost}`} stamp={stampOf(p)} landed={landed.has(p.card.uid)} onClick={() => open({ card: p.card, where: 'table' })} />
               ))}
               {!me.played.length ? <p className="dlg-hint">{myTurn ? 'À vous : touchez une carte de votre main, ou passez.' : 'Attendez votre tour.'}</p> : null}
             </div>
@@ -287,10 +299,10 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
       {playing && game.pending?.from === 'ai' ? (
         <Incoming
           g={game}
-          onAnswer={(parry) => {
-            sfx(parry ? 'energy' : 'crisis')
+          onAnswer={(answer) => {
+            sfx(answer ? 'energy' : game.pending?.card.kind === 'crise' ? 'crisis' : 'play')
             setNews(null)
-            setGame(respond(game, 'player', parry))
+            setGame(respond(game, 'player', answer))
           }}
           onModel={onModel}
         />
@@ -309,7 +321,7 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
           canAct={myTurn}
           onClose={() => setPick(null)}
           onModel={onModel}
-          onPlay={() => act(play(game, 'player', pick.card), pick.card.kind === 'crise' ? 'crisis' : 'play')}
+          onPlay={() => act(play(game, 'player', pick.card), pick.card.kind === 'crise' ? 'crisis' : rarityOf(pick.card) === 'legendaire' ? 'promise' : 'play')}
           onDiscard={() => act(discard(game, 'player', pick.card.uid), 'discard', 'energy')}
           onSell={() => act(sell(game, 'player', pick.card.uid), 'coin')}
           onBuy={() => {
@@ -330,9 +342,11 @@ function aiNews(before: Game, after: Game): { text: string; sound: Sfx } | null 
   const who = `${ai.emblem} ${ai.name}`
   if (before.pending && !after.pending) {
     const name = cardName(before.pending.card)
-    return after.seats.ai.parried.length > before.seats.ai.parried.length
-      ? { text: `🛡️ ${who} pare votre crise (${name}) avec une cellule de crise`, sound: 'energy' }
-      : { text: `💥 Votre crise frappe ${ai.name} : ${name} !`, sound: 'crisis' }
+    const parade = after.moves.length > before.moves.length ? after.moves.at(-1) : undefined
+    if (parade?.kind === 'parade' && parade.answer) {
+      return { text: `${ACTIONS[parade.answer].art} ${who} répond à « ${name} » : ${ANSWER_TEXT[parade.answer]}`, sound: parade.answer === 'conseil' ? 'crisis' : 'energy' }
+    }
+    return before.pending.card.kind === 'crise' ? { text: `💥 Votre coup frappe ${ai.name} : ${name} !`, sound: 'crisis' } : null
   }
   const m = after.moves.length > before.moves.length ? after.moves.at(-1)! : null
   if (!m) {
@@ -351,7 +365,9 @@ function aiNews(before: Game, after: Game): { text: string; sound: Sfx } | null 
     case 'parade':
       return null
     case 'jeu':
-      return m.card?.kind === 'crise' ? { text: `${who} vous envoie : ${name} !`, sound: 'crisis' } : { text: `${who} joue « ${name} »`, sound: 'play' }
+      return m.card?.kind === 'crise'
+        ? { text: `${who} vous envoie : ${name} !`, sound: 'crisis' }
+        : { text: `${who} joue « ${name} »${m.card && rarityOf(m.card) === 'legendaire' ? ' : carte légendaire !' : ''}`, sound: m.card && rarityOf(m.card) === 'legendaire' ? 'promise' : 'play' }
   }
 }
 
@@ -387,32 +403,52 @@ function ContextModal({ g, onGo }: { g: Game; onGo: () => void }) {
   )
 }
 
-/** L'adversaire vous envoie une crise : la parer sur-le-champ avec une cellule de crise, ou l'encaisser. */
-function Incoming({ g, onAnswer, onModel }: { g: Game; onAnswer: (parry: boolean) => void; onModel: (focus: string | null) => void }) {
+/** Ce que fait chaque parade, en une phrase (pour les boutons et les nouvelles). */
+const ANSWER_TEXT: Record<Answer, string> = {
+  cellule: 'la cellule de crise le pare',
+  commission: 'la commission d’enquête désamorce le scandale',
+  communication: 'la communication de crise en divise les effets par deux',
+  conseil: 'le Conseil constitutionnel censure la loi',
+}
+
+/**
+ * L'adversaire pose une carte qui vous vise : un coup (crise, scandale, coup politique) à parer, amortir ou encaisser,
+ * ou une loi que vous pouvez faire censurer par le Conseil constitutionnel.
+ */
+function Incoming({ g, onAnswer, onModel }: { g: Game; onAnswer: (answer: Answer | null) => void; onModel: (focus: string | null) => void }) {
   const card = g.pending!.card
   const impact = useMemo(() => cardImpact(g, 'ai', card), [g, card])
-  const shield = parryCard(g, 'player')
-  const hasCell = g.seats.player.hand.some((c) => c.kind === 'action' && c.action === 'cellule')
+  const answers = answersOf(g, 'player')
   const kind = kindOf(g, card, 'ai')
+  const law = card.kind === 'mesure'
+  const rule = card.kind === 'crise' ? CRISES[card.crisis].rule : undefined
+  const family = card.kind === 'crise' ? CRISES[card.crisis].family : null
+  const what = law ? 'fait voter une loi' : family === 'politique' ? 'vous porte un coup politique' : family === 'scandale' ? 'lance un scandale contre vous' : 'vous envoie une crise'
+  // Une loi adverse : ce qui est bon pour lui est mauvais pour vous.
+  const tone = (good: boolean) => (good !== law ? 'good' : 'bad')
   return (
     <div className="modal-backdrop on-top" role="presentation">
-      <div className="modal dl-incoming" role="dialog" aria-modal="true" aria-label="Une crise arrive">
+      <div className="modal dl-incoming" role="dialog" aria-modal="true" aria-label={law ? 'Une loi de l’adversaire' : 'Un coup arrive'}>
         <p className="eyebrow">
-          💥 {g.seats.ai.emblem} {g.seats.ai.name} vous envoie une crise !
+          {law ? '⚖️' : '💥'} {g.seats.ai.emblem} {g.seats.ai.name} {what} !
         </p>
-        <div className={`dl-card big ${kind.cls} is-flip`}>
+        <div className={`dl-card big ${kind.cls} ${rarityClass(card)} is-flip`}>
           <span className="dl-kind">{kind.label}</span>
           <span className="dl-art" aria-hidden="true">
             {cardArt(card)}
           </span>
           <strong className="dl-name">{cardName(card)}</strong>
-          <span className="dl-desc">{card.kind === 'crise' ? CRISES[card.crisis].text : ''}</span>
+          <span className="dl-desc">{card.kind === 'mesure' ? card.pledge.quote || card.pledge.measure!.summary : card.kind === 'crise' ? CRISES[card.crisis].text : ''}</span>
+          {rule ? <span className="dl-rule">{rule}</span> : null}
         </div>
         {impact ? (
           <p className="dl-incoming-hit">
-            Effet prévu sur votre note l’an prochain : <b className={impact.health < 0 ? 'bad' : 'good'}>{signed(impact.health)} point{Math.abs(impact.health) > 1 ? 's' : ''}</b>
+            {law ? `Effet prévu sur la note de ${g.seats.ai.name} l’an prochain` : 'Effet prévu sur votre note l’an prochain'} :{' '}
+            <b className={tone(impact.health >= 0)}>
+              {signed(impact.health)} point{Math.abs(impact.health) > 1 ? 's' : ''}
+            </b>
             {impact.indicators.slice(0, 3).map((i) => (
-              <span key={i.node} className={i.good ? 'good' : 'bad'}>
+              <span key={i.node} className={tone(i.good)}>
                 {' '}
                 · {i.label} {i.text}
               </span>
@@ -420,17 +456,28 @@ function Incoming({ g, onAnswer, onModel }: { g: Game; onAnswer: (parry: boolean
           </p>
         ) : null}
         <div className="verdict-actions">
-          <button type="button" className="primary" disabled={!shield} onClick={() => onAnswer(true)}>
-            🛡️ Parer ({ACTIONS.cellule.cost} ⚡)
-          </button>
-          <button type="button" className="ghost" onClick={() => onAnswer(false)}>
-            Encaisser
+          {answers.map((a) => (
+            <button key={a} type="button" className="primary" onClick={() => onAnswer(a)} title={ANSWER_TEXT[a]}>
+              {ACTIONS[a].art} {ACTIONS[a].name} ({ACTIONS[a].cost} ⚡)
+            </button>
+          ))}
+          <button type="button" className="ghost" onClick={() => onAnswer(null)}>
+            {law ? 'Laisser passer' : 'Encaisser'}
           </button>
           <button type="button" className="ghost" onClick={() => onModel(null)}>
             🧠 Le modèle
           </button>
         </div>
-        {!shield ? <small className="dl-locked">🔒 {hasCell ? 'Pas assez d’énergie pour la cellule de crise.' : 'Il vous faudrait une cellule de crise en main.'}</small> : null}
+        {!answers.length && !law ? (
+          <small className="dl-locked">
+            🔒{' '}
+            {family === 'politique'
+              ? 'Un coup politique ne se pare pas.'
+              : family === 'scandale'
+                ? 'Il vous faudrait une commission d’enquête, une cellule ou une communication de crise en main (et l’énergie pour la jouer).'
+                : 'Il vous faudrait une cellule ou une communication de crise en main (et l’énergie pour la jouer).'}
+          </small>
+        ) : null}
       </div>
     </div>
   )
@@ -621,7 +668,7 @@ function Strip({ g, side, turn }: { g: Game; side: Side; turn: boolean }) {
       <div className="dlg-name">
         <strong>{side === 'player' ? `Vous · ${s.name === 'Vous' ? 'programme surprise' : s.name}` : s.name}</strong>
         <small>
-          {turn ? (side === 'player' ? '▶ À vous · ' : '▶ Son tour · ') : ''}🂠 {s.hand.length} · ⚡{s.energy} · 💶 {num(marginLeft(s), 0)} Md€ · 📜 {lawsOf(s)}/{LAWS_PER_YEAR}
+          {turn ? (side === 'player' ? '▶ À vous · ' : '▶ Son tour · ') : ''}🂠 {s.hand.length} · ⚡{s.energy} · 💶 {num(marginLeft(s), 0)} Md€ · 📜 {lawsOf(s)}/{lawLimit(s)}
         </small>
       </div>
       <button type="button" className="dlg-score" onClick={() => setOpen(open === 'note' ? null : 'note')} title="La note de santé du pays : touchez pour le détail">
@@ -681,10 +728,15 @@ function Strip({ g, side, turn }: { g: Game; side: Side; turn: boolean }) {
 
 function kindOf(g: Game, card: Card, side: Side): { cls: string; label: string } {
   if (card.kind === 'crise') {
-    return { cls: 'kind-crise', label: '💥 Crise' }
+    const { family } = CRISES[card.crisis]
+    return { cls: 'kind-crise', label: family === 'politique' ? '🎯 Coup politique' : family === 'scandale' ? '🗞️ Scandale' : '💥 Crise' }
   }
   if (card.kind === 'action') {
-    return { cls: 'kind-action', label: '🛡️ Action' }
+    const def = ACTIONS[card.action]
+    if (rarityOf(card) === 'legendaire') {
+      return { cls: 'kind-action', label: '🌟 Légendaire' }
+    }
+    return { cls: 'kind-action', label: def.reaction ? '🛡️ Parade' : def.events?.length ? '🎉 Événement' : '🎴 Action' }
   }
   const owner = promiseOwner(g, card)
   if (owner === side) {
@@ -696,6 +748,12 @@ function kindOf(g: Game, card: Card, side: Side): { cls: string; label: string }
   return { cls: 'kind-mesure', label: '📜 Mesure' }
 }
 
+/** Le cadre d'une carte rare (argenté) ou légendaire (holographique). */
+const rarityClass = (card: Card) => (rarityOf(card) === 'commune' ? '' : `rar-${rarityOf(card)}`)
+
+/** Ce qui est arrivé à une carte posée : une loi censurée, une loi doublée par référendum. */
+const stampOf = (p: { cancelled?: boolean; doubled?: boolean }) => (p.cancelled ? '⚖️ Censurée' : p.doubled ? '🗳️ ×2' : undefined)
+
 const signed = (v: number, digits = 0) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${num(Math.abs(v), digits)}`
 
 function HandCard({ g, card, dim, fan, drawn, up, onClick }: { g: Game; card: Card; dim: boolean; fan: React.CSSProperties; drawn: number | null; up: boolean; onClick: () => void }) {
@@ -704,14 +762,14 @@ function HandCard({ g, card, dim, fan, drawn, up, onClick }: { g: Game; card: Ca
   return (
     <button
       type="button"
-      className={`dl-card hand ${kind.cls} ${dim ? 'is-dim' : ''} ${drawn !== null ? 'is-drawn' : ''} ${up ? 'is-up' : ''}`}
+      className={`dl-card hand ${kind.cls} ${rarityClass(card)} ${dim ? 'is-dim' : ''} ${drawn !== null ? 'is-drawn' : ''} ${up ? 'is-up' : ''}`}
       style={drawn !== null ? { ...fan, '--d': `${drawn * 90}ms` } as React.CSSProperties : fan}
       onClick={onClick}
       onPointerEnter={(e) => (e.pointerType === 'mouse' && !dim ? sfx('hover') : undefined)}
       aria-label={`${cardName(card)} : voir la carte`}
     >
       <span className="dl-cost">⚡{cardCost(g, 'player', card)}</span>
-      {card.kind === 'mesure' ? <MdBadge md={budgetCost(g, 'player', card)} /> : null}
+      {card.kind === 'mesure' || (card.kind === 'action' && ACTIONS[card.action].spend) ? <MdBadge md={budgetCost(g, 'player', card)} /> : null}
       <span className="dl-kind">{kind.label}</span>
       <span className="dl-art" aria-hidden="true">
         {cardArt(card)}
@@ -735,12 +793,13 @@ function MdBadge({ md }: { md: number }) {
   )
 }
 
-function Mini({ g, card, side, badge, seller, flip, landed, onClick }: { g: Game; card: Card; side: Side; badge: string; seller?: string; flip?: boolean; landed?: boolean; onClick: () => void }) {
+function Mini({ g, card, side, badge, seller, stamp, flip, landed, onClick }: { g: Game; card: Card; side: Side; badge: string; seller?: string; stamp?: string; flip?: boolean; landed?: boolean; onClick: () => void }) {
   const kind = kindOf(g, card, side)
   return (
-    <button type="button" className={`dl-card mini ${kind.cls} ${flip ? 'is-flip' : ''} ${landed ? 'is-landed' : ''}`} onClick={onClick} title={kind.label}>
+    <button type="button" className={`dl-card mini ${kind.cls} ${rarityClass(card)} ${flip ? 'is-flip' : ''} ${landed ? 'is-landed' : ''} ${stamp ? 'is-stamped' : ''}`} onClick={onClick} title={kind.label}>
       <span className="dl-cost">{badge}</span>
       {seller ? <span className="dl-seller">{seller}</span> : null}
+      {stamp ? <span className="dl-stamp">{stamp}</span> : null}
       <span className="dl-art" aria-hidden="true">
         {cardArt(card)}
       </span>
@@ -764,6 +823,7 @@ function CardModal({ g, pick, canAct, onClose, onModel, ...actions }: { g: Game;
   const kind = kindOf(g, card, side)
   const whose = impact ? (impact.target === 'player' ? 'votre France' : `la France de ${g.seats[impact.target].name}`) : ''
   const description = card.kind === 'crise' ? CRISES[card.crisis].text : card.kind === 'action' ? ACTIONS[card.action].text : card.pledge.quote || card.pledge.measure!.summary
+  const event = card.kind === 'crise' ? crisisEvent(card.crisis) : card.kind === 'action' ? (ACTIONS[card.action].events?.[0] ?? null) : null
   const listing = g.market.find((l) => l.card.uid === card.uid)
   const ctx = contextOf(g)
   const shift = card.kind === 'crise' ? (ctx.crisis ?? 0) : card.kind === 'mesure' && ctx.domains?.names.includes(card.pledge.measure!.domain) ? ctx.domains.delta : 0
@@ -775,7 +835,7 @@ function CardModal({ g, pick, canAct, onClose, onModel, ...actions }: { g: Game;
           ✕
         </button>
         <div className="dl-cardmodal-body">
-          <div className={`dl-card big ${kind.cls}`}>
+          <div className={`dl-card big ${kind.cls} ${rarityClass(card)}`}>
             <span className="dl-cost">{listing ? `${listing.price} ⚡` : `⚡${cost ?? '?'}`}</span>
             <span className="dl-kind">{kind.label}</span>
             {/* L'emplacement de l'illustration : un emoji pour l'instant, une image plus tard. */}
@@ -784,6 +844,7 @@ function CardModal({ g, pick, canAct, onClose, onModel, ...actions }: { g: Game;
             </span>
             <strong className="dl-name">{cardName(card)}</strong>
             <span className="dl-desc">{description}</span>
+            {card.kind === 'crise' && CRISES[card.crisis].rule ? <span className="dl-rule">{CRISES[card.crisis].rule}</span> : null}
           </div>
 
           <div className="dl-explain">
@@ -805,19 +866,29 @@ function CardModal({ g, pick, canAct, onClose, onModel, ...actions }: { g: Game;
                 {contextOf(g).art} {contextOf(g).name} : {shift < 0 ? `${-shift} ⚡ de moins` : `${shift} ⚡ de plus`} cette année.
               </p>
             ) : null}
-            {card.kind === 'crise' ? (
+            {event && crisisEffects(event).text.length ? (
               <section>
-                <h3>🌍 Ce que la crise déclenche</h3>
+                <h3>🌍 Ce que la carte déclenche dans le modèle</h3>
                 <p>
-                  {crisisEffects(card.crisis).text.join(', ')}
-                  {crisisEffects(card.crisis).years > 1 ? `, pendant ${crisisEffects(card.crisis).years} ans` : ''}.
+                  {crisisEffects(event).text.join(', ')}
+                  {crisisEffects(event).years > 1 ? `, pendant ${crisisEffects(event).years} ans` : ''}.
+                  {card.kind === 'action' && card.action === 'tweet' ? ' Pile ou face : ci-dessous, le bon côté ; le mauvais fait l’inverse.' : ''}
                 </p>
               </section>
             ) : null}
-            {card.kind === 'action' ? (
+            {card.kind === 'action' && ACTIONS[card.action].spend ? (
               <section>
-                <h3>🎴 Une carte d’action</h3>
-                <p>{ACTIONS[card.action].text} Elle ne change pas l’économie : elle change la partie.</p>
+                <h3>💶 Le budget de l’État cette année</h3>
+                <p>{ACTIONS[card.action].spend!.amount} Md€ d’argent public en plus cette année (comptés dans la marge budgétaire), puis plus rien.</p>
+              </section>
+            ) : null}
+            {!inModel(card) ? (
+              <section>
+                <h3>{card.kind === 'crise' ? '🎯 Un coup qui change la partie' : '🎴 Une carte qui change la partie'}</h3>
+                <p>
+                  {card.kind === 'crise' ? CRISES[card.crisis].rule : card.kind === 'action' ? ACTIONS[card.action].text : ''} Elle ne passe pas par le modèle : elle ne change ni l’économie
+                  ni la société, seulement les règles du duel.
+                </p>
               </section>
             ) : null}
             {impact ? (
@@ -997,7 +1068,7 @@ function Actions({ g, pick, canAct, onPlay, onDiscard, onSell, onBuy }: { g: Gam
     <>
       <button type="button" className="primary" disabled={!!playWhy} onClick={onPlay}>
         ▶ {card.kind === 'crise' ? 'Envoyer' : 'Jouer'} (⚡{cardCost(g, 'player', card)}
-        {card.kind === 'mesure' ? ` · 💶 ${mdText(budgetCost(g, 'player', card))}` : ''})
+        {card.kind === 'mesure' || (card.kind === 'action' && ACTIONS[card.action].spend) ? ` · 💶 ${mdText(budgetCost(g, 'player', card))}` : ''})
       </button>
       <button type="button" className="ghost" onClick={onDiscard}>
         🗑️ Jeter (+{DISCARD_GAIN} ⚡)
@@ -1046,12 +1117,13 @@ function StatCell({ stat, now, before }: { stat: Stat; now: number; before?: num
 }
 
 /** Une carte en une ligne : son dessin, son nom. */
-function CardLine({ g, card, side, cost }: { g: Game; card: Card; side: Side; cost?: number }) {
+function CardLine({ g, card, side, cost, stamp }: { g: Game; card: Card; side: Side; cost?: number; stamp?: string }) {
   const kind = kindOf(g, card, side)
   return (
     <li className={`dl-cardline ${kind.cls}`}>
       <span aria-hidden="true">{cardArt(card)}</span> {cardName(card)}
       {cost !== undefined ? <small> ⚡{cost}</small> : null}
+      {stamp ? <small> · {stamp}</small> : null}
     </li>
   )
 }
@@ -1102,25 +1174,32 @@ function YearReport({ g, report, onClose, onCompare }: { g: Game; report: Report
                   {s.emblem} {side === 'player' ? 'Ce que vous avez fait' : `Ce qu’a fait ${s.name}`}
                 </strong>
                 <ul className="dl-cardlines">
-                  {r.played.map(({ card, cost }) => (
-                    <CardLine key={card.uid} g={g} card={card} side={side} cost={cost} />
+                  {r.played.map((p) => (
+                    <CardLine key={p.card.uid} g={g} card={p.card} side={side} cost={p.cost} stamp={stampOf(p)} />
                   ))}
                   {!r.played.length ? <li className="dl-none">Aucune carte jouée.</li> : null}
                 </ul>
                 <ul>
                   {moves.map((m, i) => (
                     <li key={i} className="dl-move">
-                      {m.kind === 'achat' ? `🛒 Achète « ${cardName(m.card!)} » (${m.price} ⚡)` : m.kind === 'vente' ? `🏷️ Met en vente « ${cardName(m.card!)} »` : `🗑️ Jette « ${cardName(m.card!)} »`}
+                      {m.kind === 'achat'
+                        ? `🛒 Achète « ${cardName(m.card!)} » (${m.price} ⚡)`
+                        : m.kind === 'vente'
+                          ? `🏷️ Met en vente « ${cardName(m.card!)} »`
+                          : m.note === 'fuite'
+                            ? `🦆 Perd « ${cardName(m.card!)} » (fuite dans la presse)`
+                            : `🗑️ Jette « ${cardName(m.card!)} »`}
                     </li>
                   ))}
-                  {r.received.map((c) => (
-                    <li key={c} className="down">
-                      {CRISES[c].art} Crise reçue : {CRISES[c].name}
+                  {r.received.map((c, i) => (
+                    <li key={`${c}-${i}`} className="down">
+                      {CRISES[c].art} Reçu : {CRISES[c].name}
+                      {r.softened.includes(c) ? ' (à moitié, grâce à la communication de crise)' : ''}
                     </li>
                   ))}
-                  {r.parried.map((c) => (
-                    <li key={c} className="up">
-                      🛡️ Crise parée : {CRISES[c].name}
+                  {r.parried.map((c, i) => (
+                    <li key={`${c}-${i}`} className="up">
+                      🛡️ Paré : {CRISES[c].name}
                     </li>
                   ))}
                   {r.kept.map((k) => (
@@ -1262,11 +1341,11 @@ function Compare({ g, onClose }: { g: Game; onClose: () => void }) {
                       {g.seats[side].emblem} {name(side)} · note {r.sides[side].before} → {r.sides[side].health}
                     </small>
                     <ul className="dl-cardlines">
-                      {r.sides[side].played.map(({ card, cost }) => (
-                        <CardLine key={card.uid} g={g} card={card} side={side} cost={cost} />
+                      {r.sides[side].played.map((p) => (
+                        <CardLine key={p.card.uid} g={g} card={p.card} side={side} cost={p.cost} stamp={stampOf(p)} />
                       ))}
-                      {r.sides[side].received.map((c) => (
-                        <li key={c} className="down">
+                      {r.sides[side].received.map((c, i) => (
+                        <li key={`${c}-${i}`} className="down">
                           {CRISES[c].art} Reçoit : {CRISES[c].name}
                         </li>
                       ))}
@@ -1365,7 +1444,11 @@ function Rules({ onClose }: { onClose: () => void }) {
             <strong>Deux ressources.</strong> L’énergie ⚡ (votre capital politique : 3 par an, plus si vous êtes populaire, +2 par promesse tenue) paie les cartes ; deux lois au plus par an. La marge budgétaire 💶 (en Md€, plus large si le déficit et la dette sont bas) : chaque mesure coûte ou rapporte des milliards. Dépasser la marge est permis, mais les marchés s’inquiètent : moins d’énergie l’an prochain, et au-delà de {ALERT_AT} Md€, Bruxelles sanctionne.
           </li>
           <li>
-            📜 une <em>mesure</em> change votre France · ⭐ une <em>promesse</em> est une mesure de votre programme · 💥 une <em>crise</em> frappe la France d’en face · 🛡️ la <em>cellule de crise</em> se garde en main : elle pare une crise sur-le-champ, quand elle arrive · 📊 le <em>sondage</em> fait piocher.
+            📜 une <em>mesure</em> change votre France · ⭐ une <em>promesse</em> est une mesure de votre programme · 💥 une <em>crise</em>, 🗞️ un <em>scandale</em> ou 🎯 un{' '}
+            <em>coup politique</em> (fuite, motion de censure, débauchage) frappe l’adversaire · 🛡️ les <em>parades</em> se gardent en main et se jouent quand le coup arrive : cellule de crise,
+            commission d’enquête (scandales), communication de crise (effets divisés par deux), Conseil constitutionnel (censure une loi adverse) · 🎉 les <em>événements</em> (JO, Coupe du
+            monde, selfie avec un panda…) passent par le modèle · 🎴 les <em>actions</em> (sondage, discours, remaniement, 49.3…) changent la partie · 🌟 les cartes <em>légendaires</em>{' '}
+            (référendum, dissolution, plan de relance européen) sont uniques.
           </li>
           <li>
             <strong>Touchez une carte :</strong> elle s’ouvre en grand, avec son effet expliqué par le modèle, et ce que vous pouvez en faire : la jouer, la jeter (+{DISCARD_GAIN} ⚡ tout de suite) ou la vendre au marché (l’acheteur paie, vous touchez l’énergie l’an prochain).

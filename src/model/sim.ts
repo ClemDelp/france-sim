@@ -59,7 +59,7 @@ const aidShares = (smeShare: number): BySize => {
 /** Ce que le monde fait sans nous (modele/monde.csv) : l'histoire jusqu'en 2024, la crise d'Ormuz de 2026, puis la tendance de long terme. */
 export function baseWorld(year: number): World {
   const known = WORLD_PATH[year]
-  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0, climateAmbition: 0, heatShock: 0, unrest: 0, productivity: 0, migrants: 0, conflict: 0, bankLoss: 0, forced: 0, instability: 0, jobRetention: 0 }
+  return known ? { ...known } : { growth: BASE.worldGrowth, oil: BASE.oilLongRun, ecbRate: BASE.ecbLongRun, panic: 0, demandShock: 0, qe: 0, climateAmbition: 0, heatShock: 0, unrest: 0, productivity: 0, migrants: 0, conflict: 0, bankLoss: 0, forced: 0, instability: 0, priceShock: 0, jobRetention: 0 }
 }
 
 /**
@@ -559,6 +559,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
         'Création monétaire': P.monetizationInflation * policy.monetization,
         'Panique sur les marchés': P.panicInflation * prev.panic,
         'Dégâts climatiques': P.climateInflation * Math.max(0, damageStep),
+        'Pénuries et flambées': world.priceShock,
       }
   const inflation = init ? BASE.inflationAnchor : clamp(sumRecord(inflationParts), -0.03, 0.4)
   const priceLevel = init ? 1 : prev.priceLevel * (1 + inflation)
@@ -655,9 +656,12 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
 
   function flows(nominal: number) {
     const real = nominal / priceLevel
-    const potential = laborForce * (1 - naturalUnemployment) * productivity
+    // Une semaine plus courte : chacun produit un peu moins par semaine (l'essentiel est compensé par une meilleure productivité horaire
+    // et la réorganisation), il faut donc un peu plus de monde pour la même production : le travail se partage.
+    const hours = Math.pow(policy.workWeek / REF.workWeek, 1 - P.hoursOffset)
+    const potential = laborForce * (1 - naturalUnemployment) * productivity * hours
     // Un SMIC plus cher pousse les entreprises à économiser du travail peu qualifié (élasticité modeste).
-    const proportional = real / (productivity * (1 + P.smicJobLoss * policy.smicBoost))
+    const proportional = real / (productivity * hours * (1 + P.smicJobLoss * policy.smicBoost))
     // Loi d'Okun : les entreprises gardent une partie de leurs salariés quand l'activité baisse et embauchent moins vite
     // qu'elles ne produisent quand elle monte. L'emploi ne suit qu'une partie de l'écart de l'année ; le retard se résorbe ensuite.
     // Avec le chômage partiel (2020), l'État fait garder aux entreprises la plupart des emplois menacés, et paie une grande partie des salaires.
@@ -709,6 +713,8 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     const family = BASE.familyBenefits * trend * popIndex
     const minima = BASE.minima * trend + minimaBoost
     const otherTransfers = BASE.otherTransfers * trend
+    // Le revenu universel : la même somme pour chaque habitant, quelle que soit sa tranche.
+    const basicIncome = g(policy.basicIncome)
 
     // Ménages, tranche par tranche
     // Moins de règles : les salaires du bas décrochent ; plus de règles : ils sont mieux protégés.
@@ -722,7 +728,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       const wages = wagesOf(k)
       const capital = (dividendsHome + bankDividends) * GP.dividends[k] + (interestBy.assureurs + depositInterest) * GP.wealth[k]
       const transfers =
-        pensions * GP.pensions[k] + unemploymentBenefits * GP.unemployment[k] + family * GP.family[k] + minima * GP.minima[k] + otherTransfers * GP.population[k] + foodTransfer * GP.population[k]
+        pensions * GP.pensions[k] + unemploymentBenefits * GP.unemployment[k] + family * GP.family[k] + minima * GP.minima[k] + (otherTransfers + basicIncome) * GP.population[k] + foodTransfer * GP.population[k]
       return wages + mixed * GP.mixed[k] + capital + transfers
     })
     const employeeContrib = byGroup((k) => wagesOf(k) * BASE.employeeContribRate)
@@ -768,6 +774,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
         'Allocations familiales': family * GP.family[k],
         'Minima sociaux': minima * GP.minima[k],
         'Autres aides': (otherTransfers + foodTransfer) * GP.population[k],
+        'Revenu universel': basicIncome * GP.population[k],
         'Cotisations et CSG': -(employeeContrib[k] + csg[k]),
         'Impôt sur le revenu': -incomeTax[k],
         'Autres impôts et charges': -(income[k] - disposable[k] - employeeContrib[k] - csg[k] - incomeTax[k]),
@@ -873,9 +880,9 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       nonTax,
       bceDividend,
     }
-    const transfers = { pensions, unemploymentBenefits, family, minima, otherTransfers, foodTransfer }
+    const transfers = { pensions, unemploymentBenefits, family, minima, otherTransfers, foodTransfer, basicIncome }
     const spending =
-      publicGoods + pensions + unemploymentBenefits + family + minima + otherTransfers + foodTransfer + firmAid + euContribution + interest
+      publicGoods + pensions + unemploymentBenefits + family + minima + otherTransfers + foodTransfer + basicIncome + firmAid + euContribution + interest
     const revenue = sumRecord(taxes)
     return {
       real,
@@ -987,7 +994,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
     { from: 'entreprises', to: 'secu', amount: t.employerContributions, label: 'Cotisations patronales' },
     { from: 'entreprises', to: 'etat', amount: t.tva + t.productionTaxes + t.corporateTax + t.nonTax, label: 'TVA, impôts de production, impôt sur les sociétés' },
     { from: 'secu', to: 'menages', amount: d.transfers.pensions + d.transfers.unemploymentBenefits + d.transfers.family + d.transfers.foodTransfer, label: 'Retraites, chômage, allocations' },
-    { from: 'etat', to: 'menages', amount: d.transfers.minima + d.transfers.otherTransfers, label: 'Minima sociaux, aides' },
+    { from: 'etat', to: 'menages', amount: d.transfers.minima + d.transfers.otherTransfers + d.transfers.basicIncome, label: 'Minima sociaux, aides' },
     { from: 'etat', to: 'entreprises', amount: d.firmAid + (d.spending - d.interest - d.euContribution - d.firmAid - sumRecord(d.transfers)), label: 'Achats publics et aides aux entreprises' },
     { from: 'etat', to: 'banques', amount: d.interestBy.banques, label: 'Intérêts de la dette (banques)' },
     { from: 'etat', to: 'menages', amount: d.interestBy.assureurs, label: 'Intérêts de la dette (assurance-vie)' },
@@ -1169,6 +1176,7 @@ function step(prev: Carry, policy: Policy, world: World, anchors: Anchors | null
       'Immigration : contrôle et accueil (en plus)': migrationSpending,
       'Chômage, famille, minima': d.transfers.unemploymentBenefits + d.transfers.family + d.transfers.minima + d.transfers.otherTransfers,
       'Sécurité sociale de l’alimentation': d.transfers.foodTransfer,
+      'Revenu universel': d.transfers.basicIncome,
       'Aides aux entreprises': d.firmAid,
       'Charge de la dette': d.interest,
       'Contribution à l’UE': d.euContribution - climateAidOut,
@@ -1373,10 +1381,12 @@ export function worldAt(events: FiredEvent[], year: number): World {
   const world = baseWorld(year)
   for (const fired of events) {
     const def = EVENTS.find((e) => e.id === fired.id)
-    const effect = def?.effects[year - fired.year]
-    if (!def || !effect) {
+    const raw = def?.effects[year - fired.year]
+    if (!def || !raw) {
       continue
     }
+    const k = fired.scale ?? 1
+    const effect = Object.fromEntries(Object.entries(raw).map(([key, v]) => [key, (v as number) * k])) as Partial<World>
     world.oil += effect.oil ?? 0
     world.growth += effect.growth ?? 0
     world.ecbRate += effect.ecbRate ?? 0
@@ -1393,6 +1403,7 @@ export function worldAt(events: FiredEvent[], year: number): World {
     world.forced += effect.forced ?? 0
     world.instability += effect.instability ?? 0
     world.jobRetention += effect.jobRetention ?? 0
+    world.priceShock += effect.priceShock ?? 0
   }
   return world
 }

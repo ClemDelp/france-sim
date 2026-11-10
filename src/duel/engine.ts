@@ -2,9 +2,10 @@ import { BASE_POLICY } from '../model/calibration'
 import { policyAt, simulate } from '../model/sim'
 import type { Decision, FiredEvent, Policy, YearState } from '../model/types'
 import { promisePatch, promiseRemaining, promiseStatus, type Candidate, type Pledge } from '../game/candidates'
+import { random } from '../model/events'
 import { popularity } from '../game/score'
 import { planCost } from '../game/session'
-import { ACTIONS, buildDeck, CRISES, programmeOf, shuffled, type Card, type CrisisId } from './cards'
+import { ACTIONS, buildDeck, CRISES, crisisEvent, programmeOf, shuffled, type ActionId, type Card, type CrisisId } from './cards'
 import { contextDeck, CONTEXTS, type ContextDef, type ContextId } from './contexts'
 import { health } from './health'
 
@@ -45,6 +46,18 @@ export const MARGIN_BASE = 25
 /** Au-delà de la marge : un point d'énergie en moins l'an prochain par tranche de 10 Md€ ; à 20 Md€, Bruxelles et les marchés réagissent. */
 export const OVERSHOOT_STEP = 10
 export const ALERT_AT = 20
+/** Le plan de relance européen : de la marge budgétaire en plus, cette année. */
+export const RELANCE_MARGIN = 20
+/** Sous ce niveau de popularité, une motion de censure renverse le gouvernement. */
+export const CENSURE_BELOW = 35
+/** Au-dessus de ce niveau de popularité, le référendum est gagné. */
+export const REFERENDUM_ABOVE = 50
+
+/** Une carte posée : son coût en énergie et en Md€ ; une loi peut être censurée (elle ne s'applique pas) ou doublée (référendum gagné). */
+export type Played = { card: Card; cost: number; md: number; cancelled?: boolean; doubled?: boolean }
+
+/** Les parades : on les joue en réponse, jamais pendant son tour. */
+export type Answer = 'cellule' | 'commission' | 'communication' | 'conseil'
 
 export type Seat = {
   /** Le candidat incarné, ou null : un programme tiré au sort (le joueur) ou le bot. */
@@ -57,7 +70,7 @@ export type Seat = {
   rewarded: string[]
   hand: Card[]
   /** Les cartes posées cette année, leur coût en énergie et en Md€ (une carte posée est définitive : l'adversaire l'a vue). */
-  played: { card: Card; cost: number; md: number }[]
+  played: Played[]
   energy: number
   /** L'énergie qui arrive l'an prochain : promesses tenues, ventes au marché. */
   bonus: number
@@ -65,9 +78,14 @@ export type Seat = {
   malus: number
   /** La marge budgétaire de l'année (Md€) : ce que les mesures peuvent coûter sans inquiéter. */
   margin: number
-  /** Les crises reçues et parées cette année. */
+  /** Les coups reçus, parés et encaissés à moitié (communication de crise) cette année. */
   received: CrisisId[]
   parried: CrisisId[]
+  softened: CrisisId[]
+  /** Les lois en plus (49.3) ou en moins (motion de censure) cette année. */
+  extraLaws: number
+  /** Voit la main de l'adversaire jusqu'à la fin de l'année (sondage truqué). */
+  peek: boolean
   decisions: Decision[]
   events: FiredEvent[]
   states: YearState[]
@@ -78,7 +96,7 @@ export type Seat = {
 export type Listing = { card: Card; price: number; seller: Side }
 
 /** Ce qui s'est passé pendant l'année, à raconter : cartes posées, parades, passes, achats, ventes, cartes jetées. */
-export type Move = { side: Side; kind: 'achat' | 'vente' | 'jet' | 'jeu' | 'parade' | 'passe'; card?: Card; price?: number }
+export type Move = { side: Side; kind: 'achat' | 'vente' | 'jet' | 'jeu' | 'parade' | 'passe'; card?: Card; price?: number; answer?: Answer; note?: string }
 
 export type Report = {
   year: number
@@ -88,11 +106,12 @@ export type Report = {
     {
       received: CrisisId[]
       parried: CrisisId[]
+      softened: CrisisId[]
       kept: string[]
       health: number
       before: number
       /** Les cartes jouées cette année, et leur coût. */
-      played: { card: Card; cost: number; md: number }[]
+      played: Played[]
       /** L'énergie gagnée l'an prochain : promesses tenues, ventes au marché. */
       earned: number
       /** Le budget : ce que les mesures ont engagé, la marge, l'énergie perdue, l'alerte des marchés. */
@@ -126,7 +145,7 @@ export type Game = {
   turn: Side | null
   /** Les passes de suite : à deux, l'année se joue. */
   passes: number
-  /** Une crise vient d'être posée : sa cible peut la parer avant de jouer. */
+  /** Un coup (ou une loi, si l'adversaire tient le Conseil constitutionnel) vient d'être posé : sa cible peut répondre avant de jouer. */
   pending: { card: Card; from: Side } | null
   /** Les mouvements de l'année en cours. */
   moves: Move[]
@@ -169,6 +188,9 @@ function seatFor(p: Player, programme: Pledge[], states: YearState[]): Seat {
     margin: 0,
     received: [],
     parried: [],
+    softened: [],
+    extraLaws: 0,
+    peek: false,
     decisions: [],
     events: [],
     states,
@@ -251,6 +273,9 @@ const BUDGET = new WeakMap<Seat, Map<string, number>>()
 
 /** Ce qu'une mesure coûte au budget de l'État cette année (Md€ de déficit en plus, selon le modèle ; négatif : elle rapporte). */
 export function budgetCost(g: Game, side: Side, card: Card): number {
+  if (card.kind === 'action') {
+    return ACTIONS[card.action].spend?.amount ?? 0
+  }
   if (card.kind !== 'mesure') {
     return 0
   }
@@ -275,8 +300,8 @@ export function budgetCost(g: Game, side: Side, card: Card): number {
 /** La politique de l'an prochain, avec les mesures déjà jouées cette année (sauf `except`). */
 export function plannedPolicy(s: Seat, year: number, except?: string): Policy {
   let policy: Policy = { ...policyAt(s.decisions, year), ...s.reverts }
-  for (const { card } of s.played) {
-    if (card.kind === 'mesure' && card.uid !== except) {
+  for (const { card, cancelled } of s.played) {
+    if (card.kind === 'mesure' && card.uid !== except && !cancelled) {
       policy = { ...policy, ...promiseRemaining(card.pledge, BASE_POLICY, policy) }
     }
   }
@@ -304,10 +329,16 @@ export function cardCost(g: Game, side: Side, card: Card): number {
 /** Le prix d'une carte au marché : son coût de base, plus un si c'est la promesse de quelqu'un (elle vaut cher à son auteur). */
 export function marketPrice(g: Game, card: Card): number {
   const base = card.kind === 'crise' ? CRISES[card.crisis].cost : card.kind === 'action' ? ACTIONS[card.action].cost : 2
-  return base + (promiseOwner(g, card) ? 1 : 0)
+  return Math.max(1, base) + (promiseOwner(g, card) ? 1 : 0)
 }
 
 export const lawsOf = (s: Seat) => s.played.filter((p) => p.card.kind === 'mesure').length
+
+/** Combien de lois ce président peut faire voter cette année : deux, plus le 49.3, moins la motion de censure. */
+export const lawLimit = (s: Seat) => Math.max(0, LAWS_PER_YEAR + s.extraLaws)
+
+/** La dernière loi votée cette année qu'un référendum peut encore soumettre au peuple. */
+export const lastLaw = (s: Seat) => [...s.played].reverse().find((p) => p.card.kind === 'mesure' && !p.cancelled && !p.doubled) ?? null
 
 /** Est-ce à ce joueur d'agir (son tour, et pas de crise en attente de réponse) ? */
 export function yourTurn(g: Game, side: Side): string | null {
@@ -315,7 +346,7 @@ export function yourTurn(g: Game, side: Side): string | null {
     return 'La partie est finie'
   }
   if (g.pending) {
-    return g.pending.from === side ? 'L’adversaire répond à votre crise' : 'Répondez d’abord à la crise'
+    return g.pending.from === side ? 'L’adversaire répond à votre carte' : 'Répondez d’abord à la carte de l’adversaire'
   }
   return g.turn === side ? null : g.turn === null ? 'L’année se joue' : 'Ce n’est pas votre tour'
 }
@@ -329,11 +360,14 @@ export function canPlay(g: Game, side: Side, card: Card): string | null {
   if (!s.hand.some((c) => c.uid === card.uid)) {
     return 'Pas dans votre main'
   }
-  if (card.kind === 'action' && card.action === 'cellule') {
-    return 'Elle se joue en réponse à une crise'
+  if (card.kind === 'action' && ACTIONS[card.action].reaction) {
+    return ACTIONS[card.action].reaction === 'loi' ? 'Elle se joue en réponse à une loi de l’adversaire' : 'Elle se joue en réponse à un coup de l’adversaire'
   }
-  if (card.kind === 'mesure' && lawsOf(s) >= LAWS_PER_YEAR) {
-    return `Déjà ${LAWS_PER_YEAR} lois cette année`
+  if (card.kind === 'action' && card.action === 'referendum' && !lastLaw(s)) {
+    return 'Votez d’abord une loi cette année : le référendum la soumet au peuple'
+  }
+  if (card.kind === 'mesure' && lawsOf(s) >= lawLimit(s)) {
+    return lawLimit(s) < LAWS_PER_YEAR ? `Motion de censure : ${lawLimit(s)} loi${lawLimit(s) > 1 ? 's' : ''} cette année` : `Déjà ${lawLimit(s)} lois cette année`
   }
   if (card.kind === 'crise' && s.played.some((p) => p.card.kind === 'crise' && p.card.crisis === card.crisis)) {
     return 'Déjà envoyée cette année'
@@ -359,40 +393,161 @@ export function play(g: Game, side: Side, card: Card): Game {
   const md = budgetCost(g, side, card)
   let next = seat(fromHand(g, side, card.uid), side, { played: [...s.played, { card, cost, md }], energy: s.energy - cost })
   next = { ...next, moves: [...next.moves, { side, kind: 'jeu', card }], turn: other(side), passes: 0 }
-  if (card.kind === 'crise') {
+  if (card.kind === 'crise' || (card.kind === 'mesure' && answersOf({ ...next, pending: { card, from: side } }, other(side)).length)) {
     return { ...next, pending: { card, from: side } }
   }
-  if (card.kind === 'action' && card.action === 'sondage') {
-    next = draw(next, side, 2)
+  return card.kind === 'action' ? actionEffect(next, side, card, card.action) : next
+}
+
+/** Un tirage au sort reproductible pour une carte (la même partie donne le même résultat). */
+const chance = (g: Game, card: Card, salt: string) => random(g.seed, g.year, `${salt}:${card.uid}`)
+
+/** Ce qu'une carte d'action fait, une fois posée : à la partie, et à sa France (par le modèle). */
+function actionEffect(g: Game, side: Side, card: Card, action: ActionId): Game {
+  const def = ACTIONS[action]
+  let next = g
+  const s = () => next.seats[side]
+  let events = def.events ?? []
+  switch (action) {
+    case 'sondage':
+      next = draw(next, side, 2)
+      break
+    case 'remaniement': {
+      const old = s().hand
+      next = { ...seat(next, side, { hand: [] }), discard: [...next.discard, ...old] }
+      next = draw(next, side, old.length)
+      break
+    }
+    case 'discours':
+      next = seat(next, side, { energy: s().energy + 1 })
+      break
+    case 'sondage-truque':
+      next = seat(next, side, { peek: true })
+      break
+    case '49-3':
+      next = seat(next, side, { extraLaws: s().extraLaws + 1 })
+      break
+    case 'tweet':
+      events = [chance(next, card, 'tweet') < 0.5 ? 'tweet-up' : 'tweet-down']
+      break
+    case 'relance-ue':
+      next = seat(next, side, { margin: s().margin + RELANCE_MARGIN })
+      break
+    case 'referendum': {
+      const law = lastLaw(s())
+      if (law && popularity(lastState(s())) > REFERENDUM_ABOVE) {
+        next = seat(next, side, { played: s().played.map((p) => (p === law ? { ...p, doubled: true, md: p.md * 2 } : p)) })
+      } else {
+        events = ['referendum-lost']
+      }
+      break
+    }
+    case 'dissolution': {
+      // Les deux mains retournent dans la pioche ; chacun repioche autant de cartes. Plus on est populaire, plus on a de chances de gagner.
+      const counts = Object.fromEntries(SIDES.map((x) => [x, next.seats[x].hand.length])) as Record<Side, number>
+      const pile = shuffled([...next.deck, ...next.seats.player.hand, ...next.seats.ai.hand], next.seed, `dissolution-${next.year}-${card.uid}`)
+      next = { ...seat(seat(next, 'player', { hand: [] }), 'ai', { hand: [] }), deck: pile }
+      for (const x of SIDES) {
+        next = draw(next, x, counts[x])
+      }
+      const odds = Math.min(0.8, Math.max(0.2, popularity(lastState(s())) / 100))
+      events = [...events, chance(next, card, 'dissolution') < odds ? 'dissolution-won' : 'dissolution-lost']
+      break
+    }
+  }
+  if (events.length) {
+    next = seat(next, side, { events: [...s().events, ...events.map((id) => ({ year: next.year, id }))] })
   }
   return next
 }
 
-/** La cellule de crise que ce joueur peut opposer à la crise en attente, ou null. */
-export function parryCard(g: Game, side: Side): Card | null {
+/** Les parades que ce joueur peut opposer à la carte en attente (il les a en main, et l'énergie qu'il faut). */
+export function answersOf(g: Game, side: Side): Answer[] {
   if (!g.pending || g.pending.from === side) {
-    return null
-  }
-  const s = g.seats[side]
-  return s.hand.find((c) => c.kind === 'action' && c.action === 'cellule' && ACTIONS.cellule.cost <= s.energy) ?? null
-}
-
-/** Répondre à une crise : la parer avec une cellule de crise (elle part à la défausse), ou l'encaisser (elle frappe cette année). */
-export function respond(g: Game, side: Side, parry: boolean): Game {
-  if (!g.pending || g.pending.from === side) {
-    return g
+    return []
   }
   const { card } = g.pending
+  const s = g.seats[side]
+  const can = (a: Answer) => ACTIONS[a].cost <= s.energy && s.hand.some((c) => c.kind === 'action' && c.action === a)
+  if (card.kind === 'mesure') {
+    return can('conseil') ? ['conseil'] : []
+  }
+  if (card.kind !== 'crise') {
+    return []
+  }
+  const { family } = CRISES[card.crisis]
+  const fits: Answer[] = family === 'politique' ? [] : family === 'scandale' ? ['commission', 'cellule', 'communication'] : ['cellule', 'communication']
+  return fits.filter((a) => can(a) && (a !== 'communication' || crisisEvent(card.crisis) !== null))
+}
+
+/**
+ * Répondre à la carte en attente. Une loi : la laisser passer, ou la faire censurer par le Conseil constitutionnel.
+ * Un coup : le parer (cellule de crise, commission d'enquête pour un scandale), l'encaisser à moitié (communication de crise),
+ * ou l'encaisser (il frappe cette année).
+ */
+export function respond(g: Game, side: Side, answer: Answer | null): Game {
+  if (!g.pending || g.pending.from === side || (answer && !answersOf(g, side).includes(answer))) {
+    return g
+  }
+  const { card, from } = g.pending
+  let next: Game = { ...g, pending: null }
+  if (answer) {
+    const used = next.seats[side].hand.find((c) => c.kind === 'action' && c.action === answer)!
+    next = seat(fromHand(next, side, used.uid), side, { energy: next.seats[side].energy - ACTIONS[answer].cost })
+    next = { ...next, discard: [...next.discard, used], moves: [...next.moves, { side, kind: 'parade', card, answer }] }
+  }
+  if (card.kind === 'mesure') {
+    return answer === 'conseil' ? seat(next, from, { played: next.seats[from].played.map((p) => (p.card.uid === card.uid ? { ...p, cancelled: true, md: 0 } : p)) }) : next
+  }
+  if (card.kind !== 'crise') {
+    return next
+  }
+  const t = next.seats[side]
+  if (answer === 'cellule' || answer === 'commission') {
+    return seat(next, side, { parried: [...t.parried, card.crisis] })
+  }
+  const event = crisisEvent(card.crisis)
+  const half = answer === 'communication'
+  next = seat(next, side, {
+    received: [...t.received, card.crisis],
+    softened: half ? [...t.softened, card.crisis] : t.softened,
+    events: event ? [...t.events, half ? { year: g.year, id: event, scale: 0.5 } : { year: g.year, id: event }] : t.events,
+  })
+  return hit(next, side, from, card)
+}
+
+/** Ce qu'un coup politique fait à la partie : une carte perdue, une carte volée, une loi de moins (et parfois le gouvernement). */
+function hit(g: Game, side: Side, from: Side, card: Card): Game {
   if (card.kind !== 'crise') {
     return g
   }
-  const s = g.seats[side]
-  const shield = parry ? parryCard(g, side) : null
-  if (shield) {
-    const next = seat(fromHand(g, side, shield.uid), side, { energy: s.energy - ACTIONS.cellule.cost, parried: [...s.parried, card.crisis] })
-    return { ...next, pending: null, discard: [...next.discard, shield], moves: [...next.moves, { side, kind: 'parade', card }] }
+  const t = g.seats[side]
+  const pickOne = () => t.hand[Math.floor(chance(g, card, card.crisis) * t.hand.length)]
+  switch (card.crisis) {
+    case 'fuite': {
+      const lost = pickOne()
+      return lost ? { ...fromHand(g, side, lost.uid), discard: [...g.discard, lost], moves: [...g.moves, { side, kind: 'jet', card: lost, note: 'fuite' }] } : g
+    }
+    case 'debauchage': {
+      const taken = pickOne()
+      if (!taken) {
+        return g
+      }
+      const next = fromHand(g, side, taken.uid)
+      const thief = next.seats[from]
+      return thief.hand.length < HAND_MAX ? seat(next, from, { hand: [...thief.hand, taken] }) : { ...next, discard: [...next.discard, taken] }
+    }
+    case 'motion': {
+      const falls = popularity(lastState(t)) < CENSURE_BELOW
+      return seat(g, side, {
+        extraLaws: t.extraLaws - 1,
+        energy: falls ? Math.max(0, t.energy - 1) : t.energy,
+        events: falls ? [...t.events, { year: g.year, id: 'censure' }] : t.events,
+      })
+    }
+    default:
+      return g
   }
-  return { ...seat(g, side, { received: [...s.received, card.crisis], events: [...s.events, { year: g.year, id: card.crisis }] }), pending: null }
 }
 
 /** Passer : à deux passes de suite, l'année se joue. On peut rejouer ensuite si l'adversaire, lui, rejoue. */
@@ -490,7 +645,7 @@ function startYear(g: Game, cards: number): Game {
   let next: Game = { ...g, world: [...g.world, ...fired], turn: firstOf(g), passes: 0, pending: null, moves: [] }
   for (const side of SIDES) {
     const s = next.seats[side]
-    next = seat(next, side, { events: [...s.events, ...fired], received: [], parried: [], played: [] })
+    next = seat(next, side, { events: [...s.events, ...fired], received: [], parried: [], softened: [], played: [], extraLaws: 0, peek: false })
     if (cards + (ctx.draw ?? 0) > 0) {
       next = draw(next, side, cards + (ctx.draw ?? 0))
     }
@@ -502,16 +657,39 @@ function startYear(g: Game, cards: number): Game {
   return next
 }
 
+/** Le même changement, deux fois plus fort (un référendum gagné). */
+function doubleStep(change: Partial<Policy>, policy: Policy): Partial<Policy> {
+  const out: Record<string, unknown> = { ...change }
+  for (const [k, v] of Object.entries(change)) {
+    const from = policy[k as keyof Policy]
+    if (typeof v === 'number' && typeof from === 'number') {
+      out[k] = from + 2 * (v - from)
+    }
+  }
+  return out as Partial<Policy>
+}
+
 /** Ce que les mesures de l'année changent à une France, et ce qu'il faudra défaire l'an prochain (mesures temporaires). */
 function yearPatch(s: Seat, year: number) {
   let policy: Policy = { ...policyAt(s.decisions, year), ...s.reverts }
   let reverts: Partial<Policy> = {}
   let patch: Partial<Policy> = { ...s.reverts }
-  for (const { card } of s.played) {
-    if (card.kind !== 'mesure') {
+  for (const { card, cancelled, doubled } of s.played) {
+    const spend = card.kind === 'action' ? ACTIONS[card.action].spend : undefined
+    if (spend) {
+      // Une dépense d'un an (les JO) : on la défait l'an prochain.
+      const before = policy[spend.lever]
+      reverts = { [spend.lever]: before, ...reverts }
+      patch = { ...patch, [spend.lever]: before + spend.amount }
+      policy = { ...policy, [spend.lever]: before + spend.amount }
       continue
     }
-    const change = promiseRemaining(card.pledge, BASE_POLICY, policy)
+    if (card.kind !== 'mesure' || cancelled) {
+      continue
+    }
+    const once = promiseRemaining(card.pledge, BASE_POLICY, policy)
+    // Un référendum gagné double le pas de la réforme.
+    const change = doubled ? doubleStep(once, policy) : once
     const { revert } = promisePatch(card.pledge, policy)
     if (revert) {
       reverts = { ...reverts, ...revert }
@@ -557,6 +735,7 @@ export function resolveYear(g: Game): Game {
     report.sides[side] = {
       received: s.received,
       parried: s.parried,
+      softened: s.softened,
       kept: kept.map((p) => p.measure!.name),
       health: scoreOf(next.seats[side]),
       before,

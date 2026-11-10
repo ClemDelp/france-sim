@@ -26,6 +26,7 @@ export const WORLD_PATH: Readonly<Record<number, World>> = Object.fromEntries(
       bankLoss: 0,
       forced: 0,
       instability: 0,
+      priceShock: 0,
       jobRetention: r.chomagePartiel ? parseNumber(r.chomagePartiel) : 0,
     },
   ]),

@@ -375,6 +375,14 @@
 .dlg-zone.mine {
   background: rgba(255, 255, 255, 0.05);
 }
+/* Le sondage truqué : la main de l'adversaire, à découvert jusqu'à la fin de l'année. */
+.dlg-table:has(.peek) {
+  grid-template-rows: auto repeat(3, minmax(0, 1fr));
+}
+.dlg-zone.peek {
+  border: 1px dashed color-mix(in srgb, var(--sienne) 80%, white);
+  background: color-mix(in srgb, var(--sienne) 18%, rgba(0, 0, 0, 0.3));
+}
 .dlg-zone > p,
 .dlg-market > p {
   margin: 0;
@@ -725,6 +733,96 @@
 .mini .dl-name {
   font-size: 0.66rem;
 }
+/* Un mot trop long pour la carte (« Cyberattaque ») se coupe à la française plutôt que de disparaître. */
+.dl-name {
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+
+/* — Les cartes rares (cadre argenté) et légendaires (cadre holographique qui tourne) */
+
+@property --holo {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.dl-card.rar-rare {
+  border-color: #c3cde0;
+  box-shadow:
+    0 0 0 2px #8296bc,
+    0 0 14px rgba(150, 185, 255, 0.55),
+    0 5px 12px rgba(0, 0, 0, 0.35);
+}
+.dl-card.rar-rare .dl-kind {
+  background: linear-gradient(90deg, var(--frame), #7d8fb4);
+}
+.dl-card.rar-legendaire {
+  border-color: transparent;
+  box-shadow:
+    0 0 18px rgba(255, 205, 110, 0.65),
+    0 5px 12px rgba(0, 0, 0, 0.35);
+}
+.dl-card.rar-legendaire::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 12px;
+  padding: 3px;
+  background: conic-gradient(from var(--holo), #ff6ec7, #ffd36e, #6effa0, #6ed3ff, #b06eff, #ff6ec7);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: dl-holo 3s linear infinite;
+  pointer-events: none;
+}
+.dl-card.rar-legendaire::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.55) 45%, rgba(255, 200, 255, 0.35) 52%, transparent 65%);
+  background-size: 250% 100%;
+  mix-blend-mode: soft-light;
+  animation: dl-sheen 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+.dl-card.rar-legendaire .dl-kind {
+  background: linear-gradient(90deg, #b06eff, #ff6ec7, #ffb44f);
+}
+@keyframes dl-holo {
+  to {
+    --holo: 360deg;
+  }
+}
+@keyframes dl-sheen {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+/* Une loi censurée (ou doublée par référendum) : un tampon sur la carte. */
+.dl-stamp {
+  position: absolute;
+  inset: auto 4px 22px;
+  z-index: 2;
+  padding: 1px 3px;
+  border: 2px solid #b3261e;
+  border-radius: 4px;
+  color: #b3261e;
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 0.6rem;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(-12deg);
+}
+.dl-card.is-stamped {
+  filter: saturate(0.75);
+}
 .dl-text {
   font-size: 0.66rem;
   line-height: 1.25;
@@ -832,6 +930,10 @@
   /* En grand, le titre s'affiche en entier. */
   display: block;
   font-size: 1.2rem;
+}
+.dl-card.big .dl-desc {
+  /* En grand, le texte aussi. */
+  display: block;
 }
 .dl-desc {
   font-size: 0.78rem;
@@ -1513,6 +1615,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .dl-card.rar-legendaire::before,
+  .dl-card.rar-legendaire::after,
   .dl-card.hand,
   .dl-card.hand.is-drawn,
   .dl-card.mini.is-landed,

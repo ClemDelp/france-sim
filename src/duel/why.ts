@@ -6,7 +6,7 @@ import type { Policy, PolicyKey, World, YearState } from '../model/types'
 import { promiseRemaining } from '../game/candidates'
 import { popularity } from '../game/score'
 import { formatLever, LEVER_GROUPS, type LeverDef } from '../ui/levers'
-import type { Card } from './cards'
+import { ACTIONS, crisisEvent, type Card } from './cards'
 import { other, plannedPolicy, startState, type Game, type Side } from './engine'
 import { healthParts } from './health'
 
@@ -254,7 +254,10 @@ function details(w: YearState, o: YearState): Record<string, Detail> {
   return out
 }
 
-/** L'effet d'une carte l'an prochain : une mesure sur sa France, une crise sur la France d'en face. Null pour les actions. */
+/**
+ * L'effet d'une carte l'an prochain : une mesure ou une action qui passe par le modèle sur sa France, une crise sur la France d'en face.
+ * Null pour les cartes qui ne changent que la partie.
+ */
 export function cardImpact(g: Game, side: Side, card: Card): Impact | null {
   if (card.kind === 'mesure') {
     const s = g.seats[side]
@@ -263,12 +266,26 @@ export function cardImpact(g: Game, side: Side, card: Card): Impact | null {
     return compare(side, run({ ...base, ...promiseRemaining(card.pledge, BASE_POLICY, base) }), run(base), startState(s))
   }
   if (card.kind === 'crise') {
+    const event = crisisEvent(card.crisis)
+    if (!event) {
+      return null
+    }
     const foe = g.seats[other(side)]
     const policy = plannedPolicy(foe, g.year)
-    const run = (extra: boolean) => simulate({ decisions: [...foe.decisions, { year: g.year, patch: policy }], events: extra ? [...foe.events, { year: g.year, id: card.crisis }] : foe.events, until: g.year }).at(-1)!
+    const run = (extra: boolean) => simulate({ decisions: [...foe.decisions, { year: g.year, patch: policy }], events: extra ? [...foe.events, { year: g.year, id: event }] : foe.events, until: g.year }).at(-1)!
     return compare(other(side), run(true), run(false), startState(foe))
   }
-  return null
+  const def = ACTIONS[card.action]
+  if (!def.events?.length && !def.spend) {
+    return null
+  }
+  // Le tweet tombe d'un côté ou de l'autre : on montre le bon côté, la carte dit que c'est pile ou face.
+  const events = (def.events ?? []).slice(0, 1).map((id) => ({ year: g.year, id }))
+  const s = g.seats[side]
+  const policy = plannedPolicy(s, g.year)
+  const spent = def.spend ? { ...policy, [def.spend.lever]: policy[def.spend.lever] + def.spend.amount } : policy
+  const run = (withIt: boolean) => simulate({ decisions: [...s.decisions, { year: g.year, patch: withIt ? spent : policy }], events: withIt ? [...s.events, ...events] : s.events, until: g.year }).at(-1)!
+  return compare(side, run(true), run(false), startState(s))
 }
 
 /** Les leviers qu'une mesure bouge, de combien. */
@@ -294,12 +311,29 @@ const WORLD_TEXT: Partial<Record<keyof World, (v: number) => string>> = {
   bankLoss: (v) => `banques : ${Math.round(v * 100)} % de leurs fonds propres perdus`,
   heatShock: () => 'dégâts et vies perdues',
   unrest: (v) => `colère ${signed(v * 100, 0)}`,
+  priceShock: (v) => `prix ${signed(v * 100, 2)} pt`,
+  productivity: (v) => `productivité ${signed(v * 100, 1)} %`,
+  forced: () => 'une réforme passée sans vote',
+  instability: () => 'crise politique',
 }
 
 /** Les nœuds du graphe où une crise entre dans le modèle. */
-const WORLD_NODE: Partial<Record<keyof World, string>> = { growth: 'worldGrowth', oil: 'oil', ecbRate: 'ecbRate', panic: 'crisis', demandShock: 'crisis', bankLoss: 'crisis', heatShock: 'crisis', unrest: 'discontent' }
+const WORLD_NODE: Partial<Record<keyof World, string>> = {
+  growth: 'worldGrowth',
+  oil: 'oil',
+  ecbRate: 'ecbRate',
+  panic: 'crisis',
+  demandShock: 'crisis',
+  bankLoss: 'crisis',
+  heatShock: 'crisis',
+  unrest: 'discontent',
+  priceShock: 'inflation',
+  productivity: 'productivity',
+  forced: 'forced',
+  instability: 'instability',
+}
 
-export function crisisEffects(id: string): { text: string[]; years: number; nodes: { node: string; up: boolean }[] } {
+export function crisisEffects(id: string | null): { text: string[]; years: number; nodes: { node: string; up: boolean }[] } {
   const def = EVENTS.find((e) => e.id === id)
   const first = def?.effects[0] ?? {}
   const keys = Object.keys(first) as (keyof World)[]
@@ -341,7 +375,12 @@ export function startNodes(g: Game, side: Side, card: Card): { node: string; up:
   if (card.kind === 'mesure') {
     return leverChanges(g, side, card).map((l) => ({ node: l.key, up: l.up }))
   }
-  return card.kind === 'crise' ? crisisEffects(card.crisis).nodes : []
+  if (card.kind === 'crise') {
+    return crisisEffects(crisisEvent(card.crisis)).nodes
+  }
+  const def = ACTIONS[card.action]
+  const nodes = (def.events ?? []).slice(0, 1).flatMap((id) => crisisEffects(id).nodes)
+  return def.spend ? [{ node: def.spend.lever, up: def.spend.amount > 0 }, ...nodes] : nodes
 }
 
 /** Le chemin d'une carte jusqu'à un indicateur, avec le sens de chaque variable (↑ ou ↓) le long du chemin. */

@@ -18,7 +18,7 @@ national-preference;minima;ajout;valeur;-8;;Prestations retirées aux étrangers
 national-preference;integration;ajout;valeur;-1;;
 eu-contribution-cap;;;;;;Pas encore dans le moteur : la contribution à l’UE est fixe. Bruxelles réagit surtout au déficit (événement « Bruxelles sanctionne le déficit français »).
 retirement-age;retirementAge;fixe;montant;1;;
-32h;;;;;;Pas encore dans le moteur : la durée du travail n’est pas un levier.
+32h;workWeek;fixe;valeur;32;;Durée légale ramenée à 32 heures par semaine (souvent sur 4 jours), salaires mensuels maintenus.
 smic-up;smicBoost;fixe;montant;0,01;;
 minima;minima;ajout;montant;1;;
 immigration;netMigration;fixe;montant;0,7;;Le moteur distingue l’immigration légale (≈ 70 % du solde) des arrivées hors voies légales.
@@ -45,3 +45,16 @@ protectionism;tariffs;ajout;montant;0,01;;
 nationalise;publicOwnership;ajout;montant;0,0004;;Les grandes entreprises valent ≈ 2 500 Md€.
 defence-35;defence;ajout;valeur;44;;
 nato-exit;;;;;;Pas encore dans le moteur : la position militaire n’est pas un levier (la réaction américaine passe par un événement).
+basic-income;basicIncome;ajout;montant;1;;La même somme pour chaque habitant, quelle que soit sa tranche.
+social-vat;vat;ajout;montant;0,0018;;Dans le moteur, 1 point de taux normal ≈ 5,5 Md€ (il ne s’applique qu’à une partie de la consommation).
+social-vat;firmAid;ajout;montant;1;;Les cotisations patronales baissent d’autant : un allègement de charges, comme le CICE (compté avec les aides aux entreprises).
+windfall-tax;corporateTax;ajout;valeur;0,02;1;Surtaxe d’un an, approchée par 2 points d’impôt sur les sociétés.
+tax-loopholes;firmAid;ajout;montant;-0,5;;La moitié vient des niches des entreprises, approchées par les aides aux entreprises.
+tax-loopholes;incomeTaxTop;ajout;montant;0,00109;;L’autre moitié vient des ménages aisés : 1 point d’impôt sur les plus aisés ≈ 4,6 Md€.
+rail-bike;investment;ajout;montant;1;;Des travaux publics.
+rail-bike;electrification;ajout;montant;0,0004;;Moins de déplacements en voiture : le pétrole recule un peu plus vite.
+motorways;publicOwnership;ajout;valeur;0,018;;≈ 45 Md€ de rachat sur ≈ 2 500 Md€ de grandes entreprises.
+privatise;publicOwnership;ajout;valeur;-0,02;;≈ 50 Md€ de participations vendues.
+simplification;regulation;ajout;valeur;-0,05;;Un cran de moins sur l’intensité des règles (60 % en 2025).
+civil-service-cut;otherServices;ajout;montant;-0,045;;≈ 45 000 € par poste et par an.
+energy-cheque;minima;ajout;montant;1;;Approché par les aides aux ménages modestes (le chèque va surtout aux 20 % les plus modestes).

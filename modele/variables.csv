@@ -19,7 +19,9 @@ pensionIndexation;Indexation des retraites;Leviers;0;Part de l’inflation compe
 unemploymentReplacement;Indemnisation du chômage;Leviers;0;Part du salaire versée aux chômeurs.
 minima;Minima sociaux;Leviers;0;Milliards en plus pour le RSA, le minimum vieillesse et les aides au logement.
 foodSecurity;Sécurité sociale de l’alimentation;Leviers;0;Montant mensuel versé à chaque personne pour se nourrir, financé par une cotisation.
+basicIncome;Revenu universel;Leviers;0;La même somme versée chaque année à chaque habitant, sans condition (Md€ par an).
 smicBoost;Hausse du SMIC;Leviers;0;Hausse du salaire minimum au-delà de l’inflation.
+workWeek;Durée légale du travail;Leviers;0;Heures de travail par semaine à temps plein (35 en 2025).
 electrification;Rythme d’électrification;Leviers;0;Vitesse à laquelle on remplace pétrole et gaz par l’électricité.
 nuclearShare;Part du nucléaire;Leviers;0;Part du nucléaire dans la production d’électricité.
 tariffs;Droits de douane;Leviers;0;Taxe sur toutes les importations.

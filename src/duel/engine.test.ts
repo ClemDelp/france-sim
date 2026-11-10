@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { simulate } from '../model/sim'
 import { CANDIDATES, candidateById, MEASURES } from '../game/candidates'
-import { buildDeck, CRISES, programmeOf, PROGRAMME_SIZE } from './cards'
+import { ACTIONS, buildDeck, CRISES, inModel, programmeOf, PROGRAMME_SIZE, rarityOf, type ActionId, type Card, type CrisisId } from './cards'
 import {
   ALERT_AT,
   BOT,
@@ -14,6 +14,8 @@ import {
   discard,
   DISCARD_GAIN,
   keptPromises,
+  answersOf,
+  lawLimit,
   LAWS_PER_YEAR,
   marginLeft,
   newGame,
@@ -103,14 +105,14 @@ describe('le duel des présidents', () => {
     const g = play(rich(base, [crisis], [shield]), 'player', crisis)
     expect(g.pending?.card.uid).toBe(crisis.uid)
     // Tant que la cible n'a pas répondu, personne ne joue.
-    expect(canPlay(g, 'ai', g.seats.ai.hand.find((c) => c.kind === 'mesure')!)).toContain('crise')
+    expect(canPlay(g, 'ai', g.seats.ai.hand.find((c) => c.kind === 'mesure')!)).toContain('Répondez')
     // La cellule de crise ne se pose pas d'avance : elle répond à une crise.
-    expect(canPlay(respond(g, 'ai', false), 'ai', shield)).toContain('réponse')
-    const hit = resolveYear(bothPass(respond(g, 'ai', false)))
+    expect(canPlay(respond(g, 'ai', null), 'ai', shield)).toContain('réponse')
+    const hit = resolveYear(bothPass(respond(g, 'ai', null)))
     expect(hit.reports[0].sides.ai.received).toEqual(['financial-crisis'])
     expect(hit.seats.ai.events.some((e) => e.id === 'financial-crisis')).toBe(true)
     expect(scoreOf(hit.seats.ai)).toBeLessThan(scoreOf(resolveYear(bothPass(rich(base, [crisis], [shield]))).seats.ai))
-    const parriedNow = respond(g, 'ai', true)
+    const parriedNow = respond(g, 'ai', 'cellule')
     expect(parriedNow.seats.ai.hand.some((c) => c.uid === shield.uid)).toBe(false)
     expect(parriedNow.turn).toBe('ai')
     const parried = resolveYear(bothPass(parriedNow))
@@ -208,6 +210,128 @@ describe('le duel des présidents', () => {
     expect(outcomeOf(fall('faillite'))).toMatchObject({ winner: 'player' })
     expect(outcomeOf(fall('revolte'))!.reason).toContain('se révolte')
     expect(outcomeOf(g)).toBeNull()
+  })
+})
+
+const action = (a: ActionId, uid = `test-${a}`): Card => ({ kind: 'action', action: a, uid })
+const coup = (c: CrisisId, uid = `test-${c}`): Card => ({ kind: 'crise', crisis: c, uid })
+
+describe('les nouvelles cartes', () => {
+  it('la pioche mêle mesures, coups, parades et événements, avec une seule carte de chaque rare et légendaire', () => {
+    const g = newGame(as('melenchon'), BOT, { seed: 4, years: 5 })
+    const all = [...g.deck, ...g.seats.player.hand, ...g.seats.ai.hand]
+    const named = (c: Card) => (c.kind === 'crise' ? c.crisis : c.kind === 'action' ? c.action : c.pledge.key)
+    for (const id of ['referendum', 'dissolution', 'relance-ue', 'conseil', 'debauchage', 'financial-crisis']) {
+      expect(all.filter((c) => named(c) === id), id).toHaveLength(1)
+    }
+    expect(all.filter((c) => rarityOf(c) === 'legendaire')).toHaveLength(3)
+    expect(all.some((c) => c.kind === 'mesure' && c.pledge.measure!.id === 'basic-income') || all.length > 70).toBe(true)
+  })
+
+  it('chaque carte qui touche l’économie ou la société passe par un événement ou un levier du modèle', () => {
+    for (const id of Object.keys(CRISES) as CrisisId[]) {
+      expect(inModel({ kind: 'crise', crisis: id }), id).toBe(!CRISES[id].rule)
+    }
+    for (const id of ['jo', 'coupe-du-monde', 'panda', 'tweet', 'fromage', '49-3', 'dissolution', 'relance-ue'] as ActionId[]) {
+      expect(inModel({ kind: 'action', action: id }), id).toBe(true)
+    }
+    for (const id of ['sondage', 'remaniement', 'discours', 'sondage-truque', 'referendum', 'cellule', 'conseil'] as ActionId[]) {
+      expect(ACTIONS[id].events?.length ?? 0, id).toBe(0)
+    }
+  })
+
+  it('le 49.3 donne une loi de plus (et fâche dans le modèle), la motion de censure en retire une', () => {
+    const g0 = newGame(as('melenchon'), BOT, { seed: 2, years: 5 })
+    let g = play(rich(g0, [action('49-3'), action('cellule')], [coup('motion')]), 'player', action('49-3'))
+    expect(lawLimit(g.seats.player)).toBe(LAWS_PER_YEAR + 1)
+    expect(g.seats.player.events.some((e) => e.id === 'force-493')).toBe(true)
+    g = play(g, 'ai', coup('motion'))
+    // Un coup politique ne se pare pas, même avec une cellule de crise en main.
+    expect(answersOf(g, 'player')).toEqual([])
+    g = respond(g, 'player', null)
+    expect(lawLimit(g.seats.player)).toBe(LAWS_PER_YEAR)
+  })
+
+  it('la commission d’enquête pare un scandale, la communication de crise en divise l’effet par deux', () => {
+    const g0 = newGame(as('attal'), BOT, { seed: 5, years: 5 })
+    const g = play(rich(g0, [coup('gaffe')], [action('commission'), action('communication')]), 'player', coup('gaffe'))
+    expect(answersOf(g, 'ai')).toEqual(['commission', 'communication'])
+    expect(respond(g, 'ai', 'commission').seats.ai.parried).toEqual(['gaffe'])
+    const half = respond(g, 'ai', 'communication')
+    expect(half.seats.ai.events.find((e) => e.id === 'gaffe')?.scale).toBe(0.5)
+    const full = respond(g, 'ai', null)
+    const anger = (x: Game) => resolveYear(bothPass(x)).seats.ai.states.at(-1)!.discontent
+    expect(anger(half)).toBeLessThan(anger(full))
+    // La communication de crise n'amortit pas un coup qui ne passe pas par le modèle.
+    const leak = play(rich(g0, [coup('fuite')], [action('communication')]), 'player', coup('fuite'))
+    expect(answersOf(leak, 'ai')).toEqual([])
+  })
+
+  it('le Conseil constitutionnel censure une loi : elle ne s’applique pas et ne coûte rien au budget', () => {
+    const g0 = newGame(as('melenchon'), BOT, { seed: 2, years: 5 })
+    const law = { kind: 'mesure' as const, pledge: g0.seats.player.programme[0], uid: 'test-loi' }
+    const g = play(rich(g0, [law], [action('conseil')]), 'player', law)
+    expect(g.pending?.card.uid).toBe('test-loi')
+    const censored = respond(g, 'ai', 'conseil')
+    expect(censored.seats.player.played[0].cancelled).toBe(true)
+    expect(marginLeft(censored.seats.player)).toBe(censored.seats.player.margin)
+    const after = resolveYear(bothPass(censored))
+    expect(after.seats.player.decisions.length).toBe(g0.seats.player.decisions.length)
+    // Sans Conseil constitutionnel en main, une loi passe sans attendre.
+    expect(play(rich(g0, [law]), 'player', law).pending).toBeNull()
+  })
+
+  it('fuite, débauchage, sondage truqué, discours et remaniement changent la partie', () => {
+    const base = newGame(as('attal'), BOT, { seed: 9, years: 5 })
+    const g0 = rich({ ...base, seats: { ...base.seats, player: { ...base.seats.player, hand: [] } } }, [coup('fuite'), coup('debauchage'), action('sondage-truque'), action('discours'), action('remaniement'), ...base.seats.player.hand.slice(0, 2)])
+    const theirs = g0.seats.ai.hand.length
+    let g = respond(play(g0, 'player', coup('fuite')), 'ai', null)
+    expect(g.seats.ai.hand).toHaveLength(theirs - 1)
+    g = pass(g, 'ai')
+    const mine = g.seats.player.hand.length
+    g = respond(play(g, 'player', coup('debauchage')), 'ai', null)
+    expect(g.seats.ai.hand).toHaveLength(theirs - 2)
+    expect(g.seats.player.hand).toHaveLength(mine)
+    g = play(pass(g, 'ai'), 'player', action('sondage-truque'))
+    expect(g.seats.player.peek).toBe(true)
+    const energy = g.seats.player.energy
+    g = play(pass(g, 'ai'), 'player', action('discours'))
+    expect(g.seats.player.energy).toBe(energy + 1)
+    const before = g.seats.player.hand.filter((c) => c.uid !== 'test-remaniement')
+    g = play(pass(g, 'ai'), 'player', action('remaniement'))
+    expect(g.seats.player.hand).toHaveLength(before.length)
+    expect(g.seats.player.hand.some((c) => before.some((b) => b.uid === c.uid))).toBe(false)
+    expect(resolveYear(bothPass(g)).seats.player.peek).toBe(false)
+  })
+
+  it('le référendum double une loi quand on est populaire, sinon c’est un désaveu', () => {
+    const g0 = newGame(as('melenchon'), BOT, { seed: 2, years: 5 })
+    const law = { kind: 'mesure' as const, pledge: g0.seats.player.programme[0], uid: 'test-loi' }
+    const voted = pass(play(rich(g0, [law, action('referendum')]), 'player', law), 'ai')
+    expect(canPlay(rich(g0, [action('referendum')]), 'player', action('referendum'))).toContain('loi')
+    const won = play(voted, 'player', action('referendum'))
+    // La France de 2027 est à 62 % de popularité : c'est oui.
+    expect(won.seats.player.played[0].doubled).toBe(true)
+    const unpopular = { ...voted, seats: { ...voted.seats, player: { ...voted.seats.player, states: [...voted.seats.player.states.slice(0, -1), { ...voted.seats.player.states.at(-1)!, discontent: 0.6 }] } } }
+    const lost = play(unpopular, 'player', action('referendum'))
+    expect(lost.seats.player.played[0].doubled).toBeUndefined()
+    expect(lost.seats.player.events.some((e) => e.id === 'referendum-lost')).toBe(true)
+  })
+
+  it('la dissolution remet les deux mains dans la pioche, le plan de relance donne 20 Md€ de marge, les JO coûtent un an', () => {
+    const g0 = newGame(as('attal'), BOT, { seed: 6, years: 5 })
+    const g1 = rich(g0, [action('dissolution'), action('relance-ue'), action('jo')])
+    const margin = g1.seats.player.margin
+    let g = play(g1, 'player', action('relance-ue'))
+    expect(g.seats.player.margin).toBe(margin + 20)
+    g = play(pass(g, 'ai'), 'player', action('jo'))
+    expect(marginLeft(g.seats.player)).toBe(g.seats.player.margin - 3)
+    const sizes = [g.seats.player.hand.length - 1, g.seats.ai.hand.length]
+    g = play(pass(g, 'ai'), 'player', action('dissolution'))
+    expect([g.seats.player.hand.length, g.seats.ai.hand.length]).toEqual(sizes)
+    expect(g.seats.player.events.filter((e) => e.id.startsWith('dissolution'))).toHaveLength(2)
+    const next = resolveYear(bothPass(g))
+    expect(next.seats.player.reverts.otherServices).toBeDefined()
   })
 })
 

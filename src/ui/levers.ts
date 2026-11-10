@@ -7,7 +7,7 @@ export type LeverDef = {
   max: number
   step: number
   /** Comment afficher la valeur. */
-  unit: 'pct' | 'bn' | 'years' | 'thousands' | 'euros' | 'share' | 'perTon'
+  unit: 'pct' | 'bn' | 'years' | 'thousands' | 'euros' | 'share' | 'perTon' | 'hours'
   hint: string
   /** Poids politique d'une réforme sur ce levier (1 = normal ; 2 = très contestée). */
   weight?: number
@@ -59,6 +59,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
       { key: 'pensionIndexation', weight: 0.6, unpopular: -1, label: 'Indexation des retraites sur les prix', min: 0, max: 1.2, step: 0.05, unit: 'share', hint: '100 % = les pensions suivent l’inflation. Moins = gel partiel.' },
       { key: 'unemploymentReplacement', label: 'Allocation chômage (taux de remplacement)', min: 0.3, max: 0.8, step: 0.01, unit: 'pct', hint: 'Part de l’ancien salaire versée aux chômeurs indemnisés.' },
       { key: 'minima', label: 'Minima sociaux en plus', min: -20, max: 80, step: 5, unit: 'bn', hint: 'RSA, prime d’activité, aides au logement : surtout aux 20 % les plus modestes.' },
+      { key: 'basicIncome', weight: 2, label: 'Revenu universel', min: 0, max: 400, step: 10, unit: 'bn', hint: 'La même somme pour chaque habitant, sans condition. 40 Md€ ≈ 50 € par mois et par personne ; 600 € par adulte coûteraient plus de 300 Md€.' },
       { key: 'foodSecurity', label: 'Sécurité sociale de l’alimentation', min: 0, max: 250, step: 10, unit: 'euros', hint: 'Une somme par personne et par mois pour se nourrir, financée par une cotisation sur les revenus. 150 € ≈ 125 Md€ par an.' },
     ],
   },
@@ -68,6 +69,7 @@ export const LEVER_GROUPS: LeverGroup[] = [
     icon: '👷',
     levers: [
       { key: 'smicBoost', label: 'Coup de pouce au SMIC', min: -0.1, max: 0.4, step: 0.01, unit: 'pct', hint: 'En plus de l’indexation. Augmente les bas salaires, mais renchérit le travail peu qualifié.' },
+      { key: 'workWeek', weight: 2.5, unpopular: 1, label: 'Durée légale du travail', min: 30, max: 40, step: 0.5, unit: 'hours', hint: '35 heures en 2025. Moins d’heures : le travail se partage un peu (les 35 heures ont créé ≈ 350 000 emplois), mais chacun produit moins et le coût du travail monte.' },
     ],
   },
   {
@@ -149,5 +151,7 @@ export function formatLever(def: LeverDef, v: number): string {
       return `${n(v * 100, 0)} %`
     case 'perTon':
       return `${n(v, 0)} € / t`
+    case 'hours':
+      return `${n(v, 1)} h / semaine`
   }
 }

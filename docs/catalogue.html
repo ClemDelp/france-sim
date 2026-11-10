@@ -11,11 +11,11 @@
     <div class="layout">
       <main>
         <h1>📚 Catalogue des paramètres</h1>
-        <p class="lead">Les 452 paramètres du modèle et les 281 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
+        <p class="lead">Les 453 paramètres du modèle et les 289 liens du graphe des causes, lus directement dans <code>modele/</code>.</p>
 
         <input class="search" type="search" placeholder="Chercher (ex. : TVA, dette, réchauffement, PME, immigration…)" aria-label="Chercher un paramètre" />
         <div class="filters" role="group" aria-label="Filtrer">
-          <button type="button" data-filter="all" class="is-on">Tout (452)</button>
+          <button type="button" data-filter="all" class="is-on">Tout (453)</button>
           <button type="button" data-filter="donnees-2025">donnees-2025.csv</button><button type="button" data-filter="comportements">comportements.csv</button><button type="button" data-filter="tranches">tranches.csv</button><button type="button" data-filter="entreprises">entreprises.csv</button><button type="button" data-filter="donnees-2000">donnees-2000.csv</button>
           <button type="button" data-filter="hypothese">Hypothèses seulement</button>
         </div>
@@ -325,7 +325,7 @@
 </tr>
 <tr data-file="donnees-2025" data-reliability="mesure" data-text="population population population  insee, bilan démographique">
   <td><code>population</code><br /><small>Population</small></td>
-  <td><strong>Population</strong></td>
+  <td><strong>Population</strong><br /><small>Utilisé par : Revenu universel → Revenu des 20 % les plus modestes</small></td>
   <td>69,1<br /><small>millions</small></td>
   <td><span class="badge mesure">mesuré</span></td>
   <td><small>INSEE, bilan démographique</small></td>
@@ -1313,6 +1313,13 @@
   <td><span class="badge estime">estimé</span></td>
   <td><small>Conseil d’analyse économique (2013), Cahuc</small></td>
 </tr>
+<tr data-file="comportements" data-reliability="estime" data-text="hoursoffset part d’une baisse de la durée du travail compensée sans embaucher (productivité horaire, réorganisation) emploi les 35 heures (−10 % d’heures, 1998-2002) ont créé environ 350 000 emplois, soit ≈ 1,5 % de l’emploi : l’essentiel de la baisse a été absorbé par des gains de productivité horaire, l’intensification et l’annualisation. le reste se partage : il faut plus de monde pour produire autant. dares (gubian, jugnot, lerais, passeron, 2004), insee (crépon, leclair, roux, 2004)">
+  <td><code>hoursOffset</code><br /><small>Emploi</small></td>
+  <td><strong>Part d’une baisse de la durée du travail compensée sans embaucher (productivité horaire, réorganisation)</strong><br /><small>Les 35 heures (−10 % d’heures, 1998-2002) ont créé environ 350 000 emplois, soit ≈ 1,5 % de l’emploi : l’essentiel de la baisse a été absorbé par des gains de productivité horaire, l’intensification et l’annualisation. Le reste se partage : il faut plus de monde pour produire autant.</small><br /><small>Utilisé par : Durée légale du travail → Productivité · Durée légale du travail → Chômage · Durée légale du travail → Profits des entreprises</small></td>
+  <td>0,85<br /><small>part</small><br /><small>plage 0,7 à 0,95</small></td>
+  <td><span class="badge estime">estimé</span></td>
+  <td><small>DARES (Gubian, Jugnot, Lerais, Passeron, 2004), Insee (Crépon, Leclair, Roux, 2004)</small></td>
+</tr>
 <tr data-file="comportements" data-reliability="estime" data-text="firmaidjobs emplois liés aux aides aux entreprises (part de l’emploi si on les supprime toutes) emploi une partie des aides allège le coût du travail (cice devenu baisse de cotisations, aides à l’embauche) : les évaluations du cice trouvent 100 000 à 160 000 emplois pour ≈ 20 md€. ces emplois passent par un chômage d’équilibre plus bas (le travail coûte moins cher), pas par une production répartie sur plus de salariés : la productivité n’en pâtit pas. évaluations du cice (france stratégie, 2020), ordre de grandeur">
   <td><code>firmAidJobs</code><br /><small>Emploi</small></td>
   <td><strong>Emplois liés aux aides aux entreprises (part de l’emploi si on les supprime toutes)</strong><br /><small>Une partie des aides allège le coût du travail (CICE devenu baisse de cotisations, aides à l’embauche) : les évaluations du CICE trouvent 100 000 à 160 000 emplois pour ≈ 20 Md€. Ces emplois passent par un chômage d’équilibre plus bas (le travail coûte moins cher), pas par une production répartie sur plus de salariés : la productivité n’en pâtit pas.</small><br /><small>Utilisé par : Aides aux entreprises → Chômage</small></td>
@@ -1749,7 +1756,7 @@
 </tr>
 <tr data-file="comportements" data-reliability="hypothese" data-text="unrestmemory mémoire du mécontentement mécontentement social part de la colère d’une année qui reste l’année suivante. ">
   <td><code>unrestMemory</code><br /><small>Mécontentement social</small></td>
-  <td><strong>Mémoire du mécontentement</strong><br /><small>Part de la colère d’une année qui reste l’année suivante.</small><br /><small>Utilisé par : Mécontentement social → Fin de partie · Âge de départ à la retraite → Mécontentement social</small></td>
+  <td><strong>Mémoire du mécontentement</strong><br /><small>Part de la colère d’une année qui reste l’année suivante.</small><br /><small>Utilisé par : Mécontentement social → Fin de partie · Âge de départ à la retraite → Mécontentement social · Crises et événements → Mécontentement social</small></td>
   <td>0,5<br /><small>part</small><br /><small>plage 0,3 à 0,7</small></td>
   <td><span class="badge hypothese">hypothèse</span></td>
   <td><small></small></td>
@@ -2389,7 +2396,7 @@
         <div class="table-wrap"><table class="catalog"><thead><tr><th>id</th><th>Paramètre</th><th>Valeur</th><th>Fiabilité</th><th>Source</th></tr></thead><tbody>
 <tr data-file="tranches" data-reliability="mesure" data-text="population part de la population  les tranches : 20 % les plus modestes (d1-d2), d3-d4, d5-d6, d7-d9, 10 % les plus aisés (d10). définition">
   <td><code>population</code><br /><small></small></td>
-  <td><strong>Part de la population</strong><br /><small>Les tranches : 20 % les plus modestes (D1-D2), D3-D4, D5-D6, D7-D9, 10 % les plus aisés (D10).</small></td>
+  <td><strong>Part de la population</strong><br /><small>Les tranches : 20 % les plus modestes (D1-D2), D3-D4, D5-D6, D7-D9, 10 % les plus aisés (D10).</small><br /><small>Utilisé par : Revenu universel → Revenu des 20 % les plus modestes</small></td>
   <td>g1 0,2<br />g2 0,2<br />g3 0,2<br />g4 0,3<br />g5 0,1</td>
   <td><span class="badge mesure">mesuré</span></td>
   <td><small>Définition</small></td>
@@ -2913,7 +2920,7 @@
 </tr>
 <tr data-file="donnees-2000" data-reliability="mesure" data-text="population population population  insee">
   <td><code>population</code><br /><small>Population</small></td>
-  <td><strong>Population</strong></td>
+  <td><strong>Population</strong><br /><small>Utilisé par : Revenu universel → Revenu des 20 % les plus modestes</small></td>
   <td>60,9<br /><small>millions</small></td>
   <td><span class="badge mesure">mesuré</span></td>
   <td><small>INSEE</small></td>
@@ -3482,6 +3489,14 @@
 <tr data-file="liens" data-text="electrification imports rythme d’électrification importations electrificationimportshare une bonne partie des équipements (pompes à chaleur, batteries, véhicules) est importée."><td>Rythme d’électrification</td><td>Importations</td><td>+</td><td><small><code>electrificationImportShare</code></small></td><td><small>Une bonne partie des équipements (pompes à chaleur, batteries, véhicules) est importée.</small></td></tr>
 <tr data-file="liens" data-text="lowincome discontent revenu des 20 % les plus modestes mécontentement social unrestlowincomedrop quand les plus modestes perdent du pouvoir d’achat, la colère monte, même si le revenu médian tient."><td>Revenu des 20 % les plus modestes</td><td>Mécontentement social</td><td>-</td><td><small><code>unrestLowIncomeDrop</code></small></td><td><small>Quand les plus modestes perdent du pouvoir d’achat, la colère monte, même si le revenu médian tient.</small></td></tr>
 <tr data-file="liens" data-text="firmaid unemployment aides aux entreprises chômage firmaidjobs une partie des aides allège le coût du travail : les supprimer coûte des emplois."><td>Aides aux entreprises</td><td>Chômage</td><td>-</td><td><small><code>firmAidJobs</code></small></td><td><small>Une partie des aides allège le coût du travail : les supprimer coûte des emplois.</small></td></tr>
+<tr data-file="liens" data-text="basicincome disposableincome revenu universel revenu disponible des ménages  chaque ménage reçoit la même somme : le revenu disponible monte partout."><td>Revenu universel</td><td>Revenu disponible des ménages</td><td>+</td><td><small></small></td><td><small>Chaque ménage reçoit la même somme : le revenu disponible monte partout.</small></td></tr>
+<tr data-file="liens" data-text="basicincome lowincome revenu universel revenu des 20 % les plus modestes population.g1 la même somme pour tous pèse beaucoup plus dans un petit revenu : les plus modestes y gagnent le plus en proportion."><td>Revenu universel</td><td>Revenu des 20 % les plus modestes</td><td>+</td><td><small><code>population.g1</code></small></td><td><small>La même somme pour tous pèse beaucoup plus dans un petit revenu : les plus modestes y gagnent le plus en proportion.</small></td></tr>
+<tr data-file="liens" data-text="basicincome socialbenefits revenu universel prestations sociales  le revenu universel est une prestation de plus, versée par l’état."><td>Revenu universel</td><td>Prestations sociales</td><td>+</td><td><small></small></td><td><small>Le revenu universel est une prestation de plus, versée par l’État.</small></td></tr>
+<tr data-file="liens" data-text="workweek productivity durée légale du travail productivité hoursoffset moins d’heures par semaine : chacun produit un peu moins, même si la productivité horaire compense l’essentiel."><td>Durée légale du travail</td><td>Productivité</td><td>+</td><td><small><code>hoursOffset</code></small></td><td><small>Moins d’heures par semaine : chacun produit un peu moins, même si la productivité horaire compense l’essentiel.</small></td></tr>
+<tr data-file="liens" data-text="workweek unemployment durée légale du travail chômage hoursoffset semaine plus courte : il faut un peu plus de monde pour produire autant, le travail se partage (35 heures : ≈ 350 000 emplois)."><td>Durée légale du travail</td><td>Chômage</td><td>+</td><td><small><code>hoursOffset</code></small></td><td><small>Semaine plus courte : il faut un peu plus de monde pour produire autant, le travail se partage (35 heures : ≈ 350 000 emplois).</small></td></tr>
+<tr data-file="liens" data-text="workweek profits durée légale du travail profits des entreprises hoursoffset salaires mensuels maintenus pour moins d’heures : le coût du travail par unité produite monte, les marges baissent."><td>Durée légale du travail</td><td>Profits des entreprises</td><td>+</td><td><small><code>hoursOffset</code></small></td><td><small>Salaires mensuels maintenus pour moins d’heures : le coût du travail par unité produite monte, les marges baissent.</small></td></tr>
+<tr data-file="liens" data-text="crisis discontent crises et événements mécontentement social unrestmemory grèves, scandales, petites phrases ou fêtes nationales : un événement fait monter (ou retomber) la colère, qui s’efface à moitié chaque année."><td>Crises et événements</td><td>Mécontentement social</td><td>±</td><td><small><code>unrestMemory</code></small></td><td><small>Grèves, scandales, petites phrases ou fêtes nationales : un événement fait monter (ou retomber) la colère, qui s’efface à moitié chaque année.</small></td></tr>
+<tr data-file="liens" data-text="crisis inflation crises et événements inflation  une pénurie ou la flambée d’un produit fait monter les prix une année."><td>Crises et événements</td><td>Inflation</td><td>+</td><td><small></small></td><td><small>Une pénurie ou la flambée d’un produit fait monter les prix une année.</small></td></tr>
         </tbody></table></div>
         <script>
           const input = document.querySelector('.search')

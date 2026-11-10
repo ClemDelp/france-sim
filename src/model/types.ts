@@ -57,8 +57,12 @@ export type Policy = {
   unemploymentReplacement: number
   minima: number
   foodSecurity: number
+  /** Revenu universel : une somme égale versée à chaque habitant (Md€ de 2025 par an ; 0 en 2025). */
+  basicIncome: number
   // Travail
   smicBoost: number
+  /** Durée légale du travail (heures par semaine ; 35 en 2025). */
+  workWeek: number
   // Énergie
   electrification: number
   nuclearShare: number
@@ -131,6 +135,8 @@ export type World = {
   jobRetention: number
   /** Une crise politique cette année (1) : gouvernement renversé par une motion de censure, ou Assemblée dissoute. */
   instability: number
+  /** Une hausse de prix ponctuelle (points d'inflation cette année : pénurie, flambée d'un produit). */
+  priceShock: number
 }
 
 /** Une décision prise une année donnée (le joueur bouge des leviers puis avance). */
@@ -155,7 +161,8 @@ export type EventDef = {
   decided?: string
 }
 
-export type FiredEvent = { year: number; id: string }
+/** Un événement déclenché ; `scale` atténue (ou amplifie) ses effets : une crise encaissée à moitié grâce à la communication de crise. */
+export type FiredEvent = { year: number; id: string; scale?: number }
 
 /** Un flux d'argent entre deux acteurs, pour la matrice et la carte des flux. */
 export type Flow = { from: Actor; to: Actor; amount: number; label: string }

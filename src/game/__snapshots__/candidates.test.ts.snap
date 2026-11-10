@@ -17,16 +17,16 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Brun
 
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Fabien Rousselet : le modèle reste sain, photo de fin de mandat 1`] = `
 {
-  "chômage": 5.6,
-  "croissance": 0.5,
+  "chômage": 5.1,
+  "croissance": 0.2,
   "dette": 138,
-  "déficit": 7.4,
+  "déficit": 7.6,
   "fin": "réélu·e",
-  "inflation": 3.2,
-  "pauvreté": 14.8,
-  "popularité": 63,
-  "promessesAppliquées": "8 / 8",
-  "émissions": 353,
+  "inflation": 3.5,
+  "pauvreté": 14.7,
+  "popularité": 62,
+  "promessesAppliquées": "9 / 9",
+  "émissions": 351,
 }
 `;
 
