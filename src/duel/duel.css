@@ -10,6 +10,7 @@
   --mesure: #3f6fd1;
   --crise: #c8323a;
   --action: #2a9a5c;
+  --contexte: #0f8a8a;
   --felt: radial-gradient(ellipse at center, #1c4a35 0%, #12301f 100%);
   color: var(--ink);
 }
@@ -170,7 +171,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  max-width: 220px;
+  max-width: 320px;
 }
 .dlg-name strong {
   white-space: nowrap;
@@ -325,8 +326,43 @@
   position: relative;
   min-height: 0;
   display: grid;
-  grid-template-rows: 1fr 1fr;
+  grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
   gap: 6px;
+}
+/* La conjoncture de l'année, toujours visible en haut de la table */
+.dlg-context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--contexte) 70%, white);
+  background: color-mix(in srgb, var(--contexte) 30%, rgba(0, 0, 0, 0.3));
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dlg-context > span {
+  font-size: 1.3rem;
+}
+.dlg-context strong {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+}
+.dlg-context small {
+  min-width: 0;
+  color: #cfeeee;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* À qui de jouer : la bande du joueur dont c'est le tour s'allume */
+.dlg-strip.is-turn {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 60%, transparent), 0 0 18px color-mix(in srgb, var(--gold) 35%, transparent);
 }
 .dlg-zone {
   min-height: 0;
@@ -386,9 +422,11 @@
   top: 50%;
   z-index: 5;
   transform: translate(-50%, -50%);
+  width: max-content;
   max-width: 90%;
-  padding: 10px 18px;
-  border-radius: 99px;
+  padding: 8px 16px;
+  border-radius: 14px;
+  font-size: 0.9rem;
   background: rgba(10, 14, 28, 0.92);
   border: 1px solid var(--gold);
   font-weight: 800;
@@ -424,6 +462,41 @@
   flex-direction: column;
   gap: 6px;
   align-items: stretch;
+}
+.dl-budget {
+  position: relative;
+  overflow: hidden;
+  align-self: flex-start;
+  padding: 3px 12px 6px;
+  border-radius: 99px;
+  background: var(--panel);
+  border: 1px solid #4fb98a;
+  color: #bdf0d6;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dl-budget small {
+  font-weight: 600;
+  color: var(--muted);
+}
+.dl-budget i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: #4fb98a;
+  transition: width 0.4s ease;
+}
+.dl-budget.is-over {
+  border-color: var(--bad);
+  color: #ffc4c4;
+  animation: dl-pulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes dl-pulse {
+  to {
+    box-shadow: 0 0 12px color-mix(in srgb, var(--bad) 60%, transparent);
+  }
 }
 .dl-energy {
   align-self: flex-start;
@@ -483,6 +556,10 @@
 .kind-action {
   --frame: var(--action);
   background: linear-gradient(180deg, #ddf3e6, var(--paper) 45%);
+}
+.kind-contexte {
+  --frame: var(--contexte);
+  background: linear-gradient(180deg, #d6f1ef, var(--paper) 45%);
 }
 .dl-card.hand,
 .dl-card.big {
@@ -570,6 +647,28 @@
   font-weight: 900;
   font-size: 0.75rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.dl-md {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  z-index: 1;
+  padding: 1px 5px;
+  border-radius: 99px;
+  background: #e9ecf3;
+  color: #2b3245;
+  font-size: 0.62rem;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+.dl-md.is-cost {
+  background: #ffd9d6;
+  color: #8a1c1c;
+}
+.dl-md.is-gain {
+  background: #cdeedb;
+  color: #11552f;
 }
 .dl-seller {
   position: absolute;
@@ -742,6 +841,59 @@
   -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.dl-rule {
+  margin-top: auto;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--contexte) 16%, white);
+  color: #0b4d4d;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.dl-ctxnote {
+  margin: 0 0 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--contexte) 25%, transparent);
+  font-size: 0.85rem;
+}
+/* La conjoncture qui se retourne, et la crise qui arrive : une grande carte au centre, puis le choix */
+.modal.dl-ctxmodal,
+.modal.dl-incoming {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 420px;
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  text-align: center;
+  background: var(--panel);
+}
+.dl-ctxmodal .dl-card.big,
+.dl-incoming .dl-card.big {
+  min-height: 0;
+  text-align: left;
+}
+.dl-ctxmodal .dl-desc,
+.dl-incoming .dl-desc {
+  -webkit-line-clamp: 6;
+}
+.dl-ctx-turn,
+.dl-incoming-hit {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.dl-incoming-hit .bad {
+  color: #ff9b9b;
+}
+.dl-incoming-hit .good {
+  color: #9be3b8;
+}
+.dl-incoming .eyebrow {
+  color: #ff9b9b;
 }
 .dl-explain {
   min-height: 0;
