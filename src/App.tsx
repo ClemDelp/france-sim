@@ -3,14 +3,18 @@ import { BASE_POLICY } from './model/calibration'
 import type { Overrides } from './model/params'
 import { simulate } from './model/sim'
 import { Brain, type View } from './ui/Brain'
+import { About } from './ui/game/About'
 import { Home } from './ui/game/Home'
 import { UpdateBanner } from './ui/game/UpdateBanner'
 import { Duel } from './duel/Duel'
 
-/** Deux écrans (l'accueil, le duel : lien #duel), et le modèle par-dessus, ouvrable de partout sans perdre la partie. */
-type Screen = 'accueil' | 'duel'
+/**
+ * Trois écrans : l'accueil, le duel (lien #duel) et « À propos du jeu » (#apropos). Le modèle s'ouvre par-dessus,
+ * depuis « À propos » (ou le lien #modele) : le jeu, lui, reste un jeu.
+ */
+type Screen = 'accueil' | 'duel' | 'apropos'
 
-const fromHash = (): Screen => (window.location.hash === '#duel' ? 'duel' : 'accueil')
+const fromHash = (): Screen => (window.location.hash === '#duel' ? 'duel' : window.location.hash === '#apropos' ? 'apropos' : 'accueil')
 
 function App() {
   const [screen, setScreen] = useState<Screen>(fromHash)
@@ -28,8 +32,9 @@ function App() {
 
   return (
     <>
-      {screen === 'accueil' ? <Home onDuel={() => go('duel')} onModel={() => setModel({ focus: null })} /> : null}
-      {screen === 'duel' ? <Duel onExit={() => go('accueil')} onModel={(focus) => setModel({ focus })} /> : null}
+      {screen === 'accueil' ? <Home onDuel={() => go('duel')} onAbout={() => go('apropos')} /> : null}
+      {screen === 'duel' ? <Duel onExit={() => go('accueil')} /> : null}
+      {screen === 'apropos' ? <About onBack={() => go('accueil')} onModel={() => setModel({ focus: null })} /> : null}
       {model ? <Model focus={model.focus} onClose={() => setModel(null)} /> : null}
       <UpdateBanner />
     </>

@@ -1140,7 +1140,6 @@
   overflow: hidden;
 }
 .dl-report .up,
-.dl-breakdown .up,
 .dl-part i.up {
   background: #cdeedb;
   color: #11552f;
@@ -1457,7 +1456,6 @@
 /* — Les fenêtres de fin d'année et de fin de partie */
 
 .dl-report,
-.dl-final,
 .dl-rules {
   max-height: 92vh;
   overflow-y: auto;
@@ -1503,12 +1501,6 @@
   padding: 1px 8px;
   border-radius: 99px;
 }
-.dl-final.is-won {
-  border-top: 6px solid var(--good);
-}
-.dl-final.is-lost {
-  border-top: 6px solid var(--bad);
-}
 .dl-breakdown {
   width: 100%;
   border-collapse: collapse;
@@ -1530,6 +1522,12 @@
 .dl-total td {
   font-weight: 900;
   color: var(--gold);
+}
+/* Le meilleur des deux sur un critère : un liseré et un chiffre en or, lisibles sur le fond sombre. */
+.dl-breakdown td.up {
+  color: var(--gold);
+  font-weight: 900;
+  box-shadow: inset -3px 0 0 var(--gold);
 }
 .dl-rules ol {
   padding-left: 20px;
@@ -1981,5 +1979,228 @@
   .dlg-news {
     animation: none;
     transition: none;
+  }
+}
+
+/* — La fin du duel : une bannière de jeu de combat, les deux notes face à face, chaque critère en bras de fer */
+
+.dlf {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 12px max(16px, calc((100vw - 900px) / 2));
+  overflow: hidden;
+  color: var(--ink);
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 196, 64, 0.16), transparent 55%), #0b1020;
+}
+.dlf-banner {
+  text-align: center;
+}
+.dlf-title {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.6rem, 10vw, 4.4rem);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-shadow:
+    0 0 24px rgba(255, 170, 0, 0.7),
+    0 5px 0 #8a3c00;
+  animation: dlv-slam 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.dlf.is-lost .dlf-title {
+  color: #ff5a4d;
+  text-shadow:
+    0 0 24px rgba(255, 60, 40, 0.6),
+    0 5px 0 #5c0f08;
+}
+.dlf.is-draw .dlf-title {
+  color: #cfd8ee;
+  text-shadow: 0 5px 0 #2a3350;
+}
+.dlf-verdict {
+  margin: 4px 0 0;
+  font-weight: 800;
+  color: #dfe5f3;
+}
+.dlf-faceoff {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.dlf-fighter {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+  border-radius: 14px;
+  border: 2px solid color-mix(in srgb, var(--c) 55%, #2a3350);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 40%, #10172b), #10172b 75%);
+  text-align: center;
+}
+.dlf-fighter.is-winner {
+  border-color: var(--gold);
+  box-shadow: 0 0 22px rgba(255, 190, 60, 0.45);
+}
+.dlf-fighter > strong {
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.dlf-fighter > small {
+  color: #c9d2e8;
+  font-size: 0.75rem;
+}
+.dlf-emblem {
+  font-size: 2.2rem;
+  line-height: 1.1;
+}
+.dlf-score {
+  font-size: 2.4rem;
+  line-height: 1;
+  color: white;
+}
+.dlf-score small {
+  font-size: 0.9rem;
+  color: #c9d2e8;
+}
+.dlf-crown {
+  position: absolute;
+  top: -12px;
+  right: 10px;
+  font-size: 1.6rem;
+  animation: dlv-pop 0.5s 0.3s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.dlf-vs {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-style: italic;
+  color: var(--gold);
+  text-shadow: 0 3px 0 #8a3c00;
+}
+.dlf-reason {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #c9d2e8;
+}
+.dlf-rows {
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 2px 2px 4px;
+}
+.dlf-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 4px;
+  row-gap: 2px;
+}
+.dlf-label {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.dlf-label small {
+  color: var(--muted);
+  font-weight: 500;
+}
+/* Une barre part du centre : vers la gauche pour vous, vers la droite pour l'adversaire. */
+.dlf-bar {
+  position: relative;
+  height: 18px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+.dlf-bar i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--w);
+  background: #4a5573;
+  transition: width 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.dlf-bar.left i {
+  right: 0;
+  border-radius: 99px 0 0 99px;
+}
+.dlf-bar.right i {
+  left: 0;
+  border-radius: 0 99px 99px 0;
+}
+.dlf-bar.is-lead i {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 70%, white), var(--c));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c) 70%, transparent);
+}
+.dlf-bar b {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 5px;
+  border-radius: 99px;
+  background: rgba(8, 12, 24, 0.7);
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.35;
+  color: white;
+}
+.dlf-bar.left b {
+  left: 3px;
+}
+.dlf-bar.right b {
+  right: 3px;
+}
+.dlf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+@media (max-width: 760px) {
+  .dlf {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .dlf-faceoff {
+    gap: 10px;
+  }
+  .dlf-score {
+    font-size: 2rem;
+  }
+  .dlf-emblem {
+    font-size: 1.8rem;
+  }
+  .dlf-reason {
+    font-size: 0.76rem;
+  }
+  .dlf-bar {
+    height: 15px;
+  }
+  .dlf-actions .big {
+    flex: 1 1 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dlf-title,
+  .dlf-crown {
+    animation: none;
   }
 }

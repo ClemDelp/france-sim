@@ -34,8 +34,8 @@ function InstallCard() {
   )
 }
 
-/** L'écran d'accueil : jouer un duel, ou ouvrir le modèle. */
-export function Home({ onDuel, onModel }: { onDuel: () => void; onModel: () => void }) {
+/** L'écran d'accueil : jouer un duel, ou lire « À propos du jeu » (d'où l'on ouvre le modèle). */
+export function Home({ onDuel, onAbout }: { onDuel: () => void; onAbout: () => void }) {
   return (
     <div className="home" role="dialog" aria-modal="true" aria-label="Accueil">
       <div className="home-inner">
@@ -54,10 +54,10 @@ export function Home({ onDuel, onModel }: { onDuel: () => void; onModel: () => v
             <strong>Jouer un duel</strong>
             <small>Contre un candidat (version parodique) ou contre le Bot. Mesures pour votre France, crises pour la sienne : le meilleur bilan gagne.</small>
           </button>
-          <button type="button" className="menu-card" onClick={onModel}>
-            <span>🧠</span>
-            <strong>Comprendre le modèle</strong>
-            <small>Le graphe des causes, les 350 paramètres et leurs sources, le test face au passé. Tout est ouvert : venez l’améliorer.</small>
+          <button type="button" className="menu-card" onClick={onAbout}>
+            <span>ℹ️</span>
+            <strong>À propos du jeu</strong>
+            <small>D’où vient le jeu, le modèle derrière les cartes, et comment aider à l’améliorer.</small>
           </button>
           <InstallCard />
         </section>

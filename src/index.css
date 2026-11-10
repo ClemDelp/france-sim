@@ -1105,7 +1105,8 @@ button.kpi:focus-visible {
 .brain {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  /* Au-dessus de l'accueil et de « À propos », d'où on l'ouvre. */
+  z-index: 45;
   overflow-y: auto;
   padding: 0 0 30px;
   background: var(--bg);
@@ -5372,4 +5373,43 @@ label {
 button.primary.danger {
   background: linear-gradient(135deg, #8b45c9, #b3121b);
   color: #fff;
+}
+
+/* — À propos du jeu : le projet, le modèle, comment contribuer */
+
+.about .home-hero h1 {
+  font-size: clamp(2.2rem, 8vw, 3.4rem);
+}
+.about-block {
+  margin: 0 0 18px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+}
+.about-block h2 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+.about-block p {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+.about-block a {
+  color: var(--gold);
+}
+.about-block .primary {
+  max-width: 100%;
+  white-space: normal;
+}
+.about-files,
+.about-steps {
+  margin: 0 0 10px;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+  line-height: 1.4;
+}
+.about-files code {
+  font-size: 0.85rem;
 }

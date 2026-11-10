@@ -26,7 +26,6 @@ import {
   marketPrice,
   MARKET_SIZE,
   newGame,
-  other,
   overshootMalus,
   answersOf,
   pass,
@@ -60,7 +59,7 @@ type Stage = 'context' | 'play' | 'report'
 type Pick = { card: Card; where: 'main' | 'marche' | 'table' | 'adverse' }
 
 /** Le duel de cartes : choisir les présidents, puis jouer année après année, chacun son tour, en plein écran. */
-export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus: string | null) => void }) {
+export function Duel({ onExit }: { onExit: () => void }) {
   const [game, setGame] = useState<Game | null>(null)
   const [stage, setStage] = useState<Stage>('context')
   const [rules, setRules] = useState(true)
@@ -156,9 +155,6 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
         <span className="dlg-top-right">
           <button type="button" className="ghost small" onClick={() => setCompare(true)} title="Comparer les deux France">
             📊<span className="dlg-lbl"> Comparer</span>
-          </button>
-          <button type="button" className="ghost small" onClick={() => onModel(null)} title="Le modèle">
-            🧠<span className="dlg-lbl"> Modèle</span>
           </button>
           <button type="button" className="ghost small" onClick={() => setRules(true)} title="Les règles">
             📖<span className="dlg-lbl"> Règles</span>
@@ -305,12 +301,11 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
             setNews(null)
             setGame(respond(game, 'player', answer))
           }}
-          onModel={onModel}
         />
       ) : null}
       {stage === 'report' && report ? (
         game.outcome ? (
-          <Final g={game} onReplay={() => setGame(null)} onModel={() => onModel(null)} onCompare={() => setCompare(true)} onClose={() => setStage('play')} />
+          <Final g={game} onReplay={() => setGame(null)} onCompare={() => setCompare(true)} onClose={() => setStage('play')} />
         ) : (
           <YearReport g={game} report={report} onCompare={() => setCompare(true)} onClose={() => setStage('context')} />
         )
@@ -321,7 +316,6 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
           pick={pick}
           canAct={myTurn}
           onClose={() => setPick(null)}
-          onModel={onModel}
           onPlay={() => act(play(game, 'player', pick.card), pick.card.kind === 'crise' ? 'crisis' : rarityOf(pick.card) === 'legendaire' ? 'promise' : 'play')}
           onDiscard={() => act(discard(game, 'player', pick.card.uid), 'discard', 'energy')}
           onSell={() => act(sell(game, 'player', pick.card.uid), 'coin')}
@@ -416,7 +410,7 @@ const ANSWER_TEXT: Record<Answer, string> = {
  * L'adversaire pose une carte qui vous vise : un coup (crise, scandale, coup politique) à parer, amortir ou encaisser,
  * ou une loi que vous pouvez faire censurer par le Conseil constitutionnel.
  */
-function Incoming({ g, onAnswer, onModel }: { g: Game; onAnswer: (answer: Answer | null) => void; onModel: (focus: string | null) => void }) {
+function Incoming({ g, onAnswer }: { g: Game; onAnswer: (answer: Answer | null) => void }) {
   const card = g.pending!.card
   const impact = useMemo(() => cardImpact(g, 'ai', card), [g, card])
   const answers = answersOf(g, 'player')
@@ -464,9 +458,6 @@ function Incoming({ g, onAnswer, onModel }: { g: Game; onAnswer: (answer: Answer
           ))}
           <button type="button" className="ghost" onClick={() => onAnswer(null)}>
             {law ? 'Laisser passer' : 'Encaisser'}
-          </button>
-          <button type="button" className="ghost" onClick={() => onModel(null)}>
-            🧠 Le modèle
           </button>
         </div>
         {!answers.length && !law ? (
@@ -937,7 +928,7 @@ function Mini({ g, card, side, badge, seller, stamp, flip, landed, onClick }: { 
 
 type CardActions = { onPlay: () => void; onDiscard: () => void; onSell: () => void; onBuy: () => void }
 
-function CardModal({ g, pick, canAct, onClose, onModel, ...actions }: { g: Game; pick: Pick; canAct: boolean; onClose: () => void; onModel: (focus: string | null) => void } & CardActions) {
+function CardModal({ g, pick, canAct, onClose, ...actions }: { g: Game; pick: Pick; canAct: boolean; onClose: () => void } & CardActions) {
   const { card } = pick
   // Une carte de l'adversaire s'explique de son point de vue : sa mesure sur sa France, sa crise sur la vôtre.
   const side: Side = pick.where === 'adverse' ? 'ai' : 'player'
@@ -1053,11 +1044,6 @@ function CardModal({ g, pick, canAct, onClose, onModel, ...actions }: { g: Game;
 
         <footer className="dl-cardmodal-actions">
           <Actions g={g} pick={pick} canAct={canAct} {...actions} />
-          {starts.length ? (
-            <button type="button" className="ghost" onClick={() => onModel(starts[0].node)}>
-              🧠 Voir dans le modèle
-            </button>
-          ) : null}
         </footer>
       </div>
     </div>
@@ -1486,61 +1472,87 @@ function Compare({ g, onClose }: { g: Game; onClose: () => void }) {
   )
 }
 
-function Final({ g, onReplay, onModel, onCompare, onClose }: { g: Game; onReplay: () => void; onModel: () => void; onCompare: () => void; onClose: () => void }) {
+/**
+ * La fin du duel, façon jeu de combat : la bannière (VICTOIRE, DÉFAITE, K.O. quand un pays s'effondre, MATCH NUL),
+ * les deux présidents face à face avec leur note, puis chaque critère en bras de fer : la barre du meilleur s'allume à sa couleur.
+ */
+function Final({ g, onReplay, onCompare, onClose }: { g: Game; onReplay: () => void; onCompare: () => void; onClose: () => void }) {
   const o = g.outcome!
   useEffect(() => {
     sfx(o.winner === 'player' ? 'victory' : o.winner === 'ai' ? 'defeat' : 'flip')
   }, [o.winner])
-  const title = o.winner === 'nul' ? '🤝 Match nul' : o.winner === 'player' ? '🏆 Vous gagnez !' : `${g.seats.ai.emblem} ${g.seats.ai.name} gagne`
-  const parts = (side: Side) => healthParts(lastState(g.seats[side]), g.seats[side].states.find((x) => x.year === START_YEAR)!)
-  const mine = parts('player')
-  const theirs = parts('ai')
+  const ko = SIDES_ORDER.some((side) => lastState(g.seats[side]).ending)
+  const banner = o.winner === 'nul' ? 'Match nul' : ko ? 'K.O.' : o.winner === 'player' ? 'Victoire' : 'Défaite'
+  const verdict = o.winner === 'nul' ? 'Personne ne l’emporte' : o.winner === 'player' ? 'Vous gagnez le duel' : `${g.seats.ai.name} gagne le duel`
+  const parts = SIDES_ORDER.map((side) => healthParts(lastState(g.seats[side]), startOf(g, side)))
+  const name = (side: Side) => (side === 'player' ? 'Vous' : g.seats[side].name)
   return (
-    <div className="modal-backdrop on-top" role="presentation">
-      <div className={`modal dl-final ${o.winner === 'player' ? 'is-won' : o.winner === 'ai' ? 'is-lost' : ''}`} role="dialog" aria-modal="true" aria-label="Fin de la partie">
-        <p className="eyebrow">🏁 Fin du duel</p>
-        <h2>{title}</h2>
-        <p>{o.reason}</p>
-        <table className="dl-breakdown">
-          <thead>
-            <tr>
-              <th>Note de santé</th>
-              <th>Vous</th>
-              <th>{g.seats[other('player')].name}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mine.map((p, i) => (
-              <tr key={p.id} title={p.explanation}>
-                <td>
-                  {p.label} <small>({p.weight} pts)</small>
-                </td>
-                <td className={p.points >= theirs[i].points ? 'up' : ''}>{num(p.points, 1)}</td>
-                <td className={theirs[i].points >= p.points ? 'up' : ''}>{num(theirs[i].points, 1)}</td>
-              </tr>
-            ))}
-            <tr className="dl-total">
-              <td>Total</td>
-              <td>{scoreOf(g.seats.player)}</td>
-              <td>{scoreOf(g.seats.ai)}</td>
-            </tr>
-          </tbody>
-        </table>
-        <div className="verdict-actions">
-          <button type="button" className="primary big" onClick={onReplay}>
-            🔁 Nouveau duel
-          </button>
-          <button type="button" className="ghost" onClick={onCompare}>
-            📊 Comparer les deux France
-          </button>
-          <button type="button" className="ghost" onClick={onModel}>
-            🧠 Comprendre le modèle
-          </button>
-          <button type="button" className="ghost" onClick={onClose}>
-            Revoir la table
-          </button>
-        </div>
-      </div>
+    <div className={`dlf ${o.winner === 'player' ? 'is-won' : o.winner === 'ai' ? 'is-lost' : 'is-draw'}`} role="dialog" aria-modal="true" aria-label="Fin du duel">
+      <header className="dlf-banner">
+        <p className="dlf-title">{banner}</p>
+        <p className="dlf-verdict">{verdict}</p>
+      </header>
+      <section className="dlf-faceoff" aria-label="Les notes finales">
+        {SIDES_ORDER.map((side, k) => {
+          const s = g.seats[side]
+          const won = o.winner === side
+          return (
+            <div key={side} className={`dlf-fighter ${k === 0 ? 'left' : 'right'} ${won ? 'is-winner' : ''}`} style={{ '--c': s.color } as React.CSSProperties}>
+              <span className="dlf-emblem" aria-hidden="true">
+                {s.emblem}
+              </span>
+              <strong>{name(side)}</strong>
+              <b className="dlf-score">
+                {scoreOf(s)}
+                <small>/100</small>
+              </b>
+              <small>
+                ⭐ {keptPromises(s, g.year).length}/5 promesses{lastState(s).ending ? ' · pays effondré' : ''}
+              </small>
+              {won ? <span className="dlf-crown">👑</span> : null}
+            </div>
+          )
+        })}
+        <span className="dlf-vs" aria-hidden="true">
+          VS
+        </span>
+      </section>
+      <p className="dlf-reason">{o.reason}</p>
+      <section className="dlf-rows" aria-label="La note, critère par critère">
+        {parts[0].map((p, i) => {
+          const a = p.points
+          const b = parts[1][i].points
+          const lead = Math.abs(a - b) < 0.05 ? null : a > b ? 0 : 1
+          return (
+            <div key={p.id} className="dlf-row" title={p.explanation}>
+              <span className="dlf-label">
+                {p.label} <small>/ {p.weight}</small>
+              </span>
+              {[a, b].map((v, k) => (
+                <span
+                  key={k}
+                  className={`dlf-bar ${k === 0 ? 'left' : 'right'} ${lead === k ? 'is-lead' : ''}`}
+                  style={{ '--c': g.seats[SIDES_ORDER[k]].color, '--w': `${Math.round((v / p.weight) * 100)}%` } as React.CSSProperties}
+                >
+                  <i />
+                  <b>{num(v, 1)}</b>
+                </span>
+              ))}
+            </div>
+          )
+        })}
+      </section>
+      <footer className="dlf-actions">
+        <button type="button" className="primary big" onClick={onReplay}>
+          🔁 Revanche
+        </button>
+        <button type="button" className="ghost" onClick={onCompare}>
+          📊 Comparer les deux France
+        </button>
+        <button type="button" className="ghost" onClick={onClose}>
+          Revoir la table
+        </button>
+      </footer>
     </div>
   )
 }
