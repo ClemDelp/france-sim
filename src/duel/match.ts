@@ -61,10 +61,10 @@ export class HostMatch {
       case 'hello':
         if (m.v !== PROTOCOL) {
           this.send({ t: 'refuse', reason: 'Vous n’avez pas la même version du jeu. Rechargez la page tous les deux, puis réessayez.' })
-        } else if (this.game) {
-          this.sendView()
         } else {
+          // Qui il affronte (son pseudo), puis la partie si elle a commencé : l'invité qui revient la reprend où elle en est.
           this.send({ t: 'lobby', host: this.me, years: this.years })
+          this.sendView()
         }
         break
       case 'pick':

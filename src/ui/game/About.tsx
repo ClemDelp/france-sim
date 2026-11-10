@@ -34,6 +34,10 @@ export function About({ onBack, onModel }: { onBack: () => void; onModel: () => 
             monter le chômage ou baisser la dette, c’est le modèle qui le calcule, et la carte vous explique pourquoi. Les candidats sont des parodies, mais leurs promesses viennent de
             leurs programmes publiés, chacune avec sa source.
           </p>
+          <p>
+            On joue contre l’IA, ou avec un ami : en ligne, le téléphone de celui qui crée la partie fait l’arbitre, et les deux navigateurs se parlent en direct (WebRTC). Le service
+            public de PeerJS ne sert qu’à les mettre en relation : pas de compte, pas de serveur à nous, aucune partie gardée ailleurs que sur le téléphone de l’hôte.
+          </p>
         </section>
         <section className="about-block">
           <h2>🧠 Le modèle</h2>

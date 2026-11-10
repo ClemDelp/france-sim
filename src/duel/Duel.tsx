@@ -7,7 +7,6 @@ import { ACTIONS, cardArt, cardName, CRISES, crisisEvent, inModel, isAdded, rari
 import { CONTEXTS } from './contexts'
 import {
   BOT,
-  buy,
   canBuy,
   canPlay,
   canSell,
@@ -15,7 +14,6 @@ import {
   budgetCost,
   cardCost,
   contextOf,
-  discard,
   DISCARD_GAIN,
   endYear,
   keptPromises,
@@ -28,14 +26,10 @@ import {
   newGame,
   overshootMalus,
   answersOf,
-  pass,
-  play,
   PROGRAMME_GOAL,
   promiseOwner,
-  respond,
   resolveYear,
   scoreOf,
-  sell,
   START_YEAR,
   yourTurn,
   type Answer,
@@ -48,38 +42,22 @@ import {
 import type { YearState } from '../model/types'
 import { health, healthParts } from './health'
 import { fighterStats, STAT_AXES } from './fighters'
+import { applyIntent, type Intent } from './online'
 import { setSoundOn, sfx, soundOn, type Sfx } from './sound'
 import { cardImpact, CRITERION_NODE, crisisEffects, leverChanges, startNodes, whyTree, type Detail, type Impact, type Indicator, type WhyNode } from './why'
 import './duel.css'
 
 const AI_DELAY = 1100
 
-type Stage = 'context' | 'play' | 'report'
+export type Stage = 'context' | 'play' | 'report'
 /** La carte ouverte en grand : dans votre main, au marché, parmi vos cartes de l'année, ou parmi celles de l'adversaire. */
 type Pick = { card: Card; where: 'main' | 'marche' | 'table' | 'adverse' }
 
-/** Le duel de cartes : choisir les présidents, puis jouer année après année, chacun son tour, en plein écran. */
+/** Le duel contre l'IA : choisir les présidents, puis jouer année après année, chacun son tour, en plein écran. */
 export function Duel({ onExit }: { onExit: () => void }) {
   const [game, setGame] = useState<Game | null>(null)
+  /** Ce que regarde le joueur : l'IA attend qu'il soit à la table (pas devant la conjoncture ou le bilan). */
   const [stage, setStage] = useState<Stage>('context')
-  const [rules, setRules] = useState(true)
-  const [pick, setPick] = useState<Pick | null>(null)
-  /** La dernière chose faite par l'adversaire, annoncée au centre de la table. */
-  const [news, setNews] = useState<string | null>(null)
-  const [compare, setCompare] = useState(false)
-  const [settings, setSettings] = useState(false)
-  /** Revoir la conjoncture de l'année (sans relancer l'année). */
-  const [context, setContext] = useState(false)
-  /** Une carte achetée arrive en main : pas de bruit de pioche par-dessus celui des pièces. */
-  const bought = useRef(false)
-  const hand = useFresh(game?.seats.player.hand.map((c) => c.uid) ?? [])
-  const landed = useFresh([...(game?.seats.player.played.map((p) => p.card.uid) ?? []), ...(game?.seats.ai.played.map((p) => p.card.uid) ?? [])])
-  useEffect(() => {
-    if (hand.size && !bought.current) {
-      sfx('draw')
-    }
-    bought.current = false
-  }, [hand])
 
   // L'adversaire joue son tour (ou répond à votre crise) après un temps de réflexion ; quand les deux ont passé, l'année se joue.
   useEffect(() => {
@@ -91,46 +69,104 @@ export function Duel({ onExit }: { onExit: () => void }) {
     if (!resolve && !aiActs) {
       return
     }
-    const id = window.setTimeout(
-      () => {
-        if (resolve) {
-          setNews(null)
-          sfx('flip')
-          setGame(resolveYear(game))
-          setStage('report')
-          return
-        }
-        const next = aiStep(game) ?? game
-        const said = aiNews(game, next)
-        setNews(said?.text ?? null)
-        if (said) {
-          sfx(said.sound)
-        }
-        setGame(next)
-      },
-      resolve ? AI_DELAY * 0.8 : AI_DELAY,
-    )
+    const id = window.setTimeout(() => setGame(resolve ? resolveYear(game) : (aiStep(game) ?? game)), resolve ? AI_DELAY * 0.8 : AI_DELAY)
     return () => window.clearTimeout(id)
   }, [game, stage])
 
   if (!game) {
     return (
       <Setup
+        mode="ia"
         onExit={onExit}
         onStart={(player, ai, years) => {
-          setGame(newGame(player, ai, { seed: Math.floor(Math.random() * 1e9), years }))
+          setGame(newGame(player, ai!, { seed: Math.floor(Math.random() * 1e9), years }))
           setStage('context')
         }}
       />
     )
   }
+  return <Table game={game} onIntent={(i) => setGame(applyIntent(game, 'player', i))} onExit={onExit} onReplay={() => setGame(null)} onStage={setStage} />
+}
 
-  const act = (next: Game, ...sounds: Sfx[]) => {
-    if (next !== game) {
-      sounds.forEach((name, i) => window.setTimeout(() => sfx(name), i * 140))
+/**
+ * La table de jeu, vue de la place de « player » : contre l'IA, contre un ami en ligne (la partie reçue de l'hôte,
+ * retournée), ou à deux sur le même téléphone. Elle ne change jamais la partie elle-même : elle dit ce que le joueur veut faire.
+ */
+export function Table({
+  game,
+  onIntent,
+  onExit,
+  onReplay,
+  onStage,
+  initialStage = 'context',
+  badge,
+  status,
+}: {
+  game: Game
+  onIntent: (intent: Intent) => void
+  onExit: () => void
+  onReplay: () => void
+  onStage?: (stage: Stage) => void
+  initialStage?: Stage
+  /** Une pastille dans la barre du haut (l'état de la connexion avec l'ami, qui tient le téléphone). */
+  badge?: React.ReactNode
+  /** Ce qu'on ajoute par-dessus la table (l'ami déconnecté). */
+  status?: React.ReactNode
+}) {
+  const [stage, setStage] = useState<Stage>(initialStage)
+  const [rules, setRules] = useState(initialStage === 'context' && !game.reports.length)
+  const [pick, setPick] = useState<Pick | null>(null)
+  /** La dernière chose faite par l'adversaire, annoncée au centre de la table. */
+  const [news, setNews] = useState<string | null>(null)
+  const [compare, setCompare] = useState(false)
+  const [settings, setSettings] = useState(false)
+  /** Revoir la conjoncture de l'année (sans relancer l'année). */
+  const [context, setContext] = useState(false)
+  /** Une carte achetée arrive en main : pas de bruit de pioche par-dessus celui des pièces. */
+  const bought = useRef(false)
+  const hand = useFresh(game.seats.player.hand.map((c) => c.uid))
+  const landed = useFresh([...game.seats.player.played.map((p) => p.card.uid), ...game.seats.ai.played.map((p) => p.card.uid)])
+  useEffect(() => {
+    if (hand.size && !bought.current) {
+      sfx('draw')
     }
-    setGame(next)
+    bought.current = false
+  }, [hand])
+  useEffect(() => {
+    onStage?.(stage)
+  }, [stage, onStage])
+
+  // Ce qui vient de changer sur la table : une année jouée (le bilan), une revanche, ou un geste de l'adversaire (annoncé, avec son bruit).
+  const before = useRef(game)
+  useEffect(() => {
+    const prev = before.current
+    before.current = game
+    if (prev === game) {
+      return
+    }
+    if (game.reports.length !== prev.reports.length) {
+      setNews(null)
+      setPick(null)
+      if (game.reports.length > prev.reports.length) {
+        sfx('flip')
+        setStage('report')
+      } else {
+        setStage('context')
+      }
+      return
+    }
+    const said = foeNews(prev, game)
+    if (said) {
+      setNews(said.text)
+      sfx(said.sound)
+    }
+  }, [game])
+
+  const act = (intent: Intent, ...sounds: Sfx[]) => {
+    sounds.forEach((name, i) => window.setTimeout(() => sfx(name), i * 140))
+    setNews(null)
     setPick(null)
+    onIntent(intent)
   }
   const open = (p: Pick) => {
     sfx('pick')
@@ -153,6 +189,7 @@ export function Duel({ onExit }: { onExit: () => void }) {
           {game.outcome ? 'Partie terminée' : `Année ${game.year}`} <small>· {Math.min(game.year, endYear(game)) - START_YEAR}/{game.years}</small>
         </strong>
         <span className="dlg-top-right">
+          {badge}
           <button type="button" className="ghost small" onClick={() => setCompare(true)} title="Comparer les deux France">
             📊<span className="dlg-lbl"> Comparer</span>
           </button>
@@ -270,10 +307,7 @@ export function Duel({ onExit }: { onExit: () => void }) {
               className="primary"
               disabled={!myTurn}
               onClick={() => {
-                sfx('click')
-                setPick(null)
-                setNews(null)
-                setGame(pass(game, 'player'))
+                act({ kind: 'pass' }, 'click')
               }}
               title={aiPassed ? `${game.seats.ai.name} a passé : si vous passez aussi, l’année ${game.year} se joue.` : 'Passer votre tour'}
             >
@@ -297,15 +331,13 @@ export function Duel({ onExit }: { onExit: () => void }) {
         <Incoming
           g={game}
           onAnswer={(answer) => {
-            sfx(answer ? 'energy' : game.pending?.card.kind === 'crise' ? 'crisis' : 'play')
-            setNews(null)
-            setGame(respond(game, 'player', answer))
+            act({ kind: 'respond', answer }, answer ? 'energy' : game.pending?.card.kind === 'crise' ? 'crisis' : 'play')
           }}
         />
       ) : null}
       {stage === 'report' && report ? (
         game.outcome ? (
-          <Final g={game} onReplay={() => setGame(null)} onCompare={() => setCompare(true)} onClose={() => setStage('play')} />
+          <Final g={game} onReplay={onReplay} onCompare={() => setCompare(true)} onClose={() => setStage('play')} />
         ) : (
           <YearReport g={game} report={report} onCompare={() => setCompare(true)} onClose={() => setStage('context')} />
         )
@@ -316,26 +348,30 @@ export function Duel({ onExit }: { onExit: () => void }) {
           pick={pick}
           canAct={myTurn}
           onClose={() => setPick(null)}
-          onPlay={() => act(play(game, 'player', pick.card), pick.card.kind === 'crise' ? 'crisis' : rarityOf(pick.card) === 'legendaire' ? 'promise' : 'play')}
-          onDiscard={() => act(discard(game, 'player', pick.card.uid), 'discard', 'energy')}
-          onSell={() => act(sell(game, 'player', pick.card.uid), 'coin')}
+          onPlay={() => act({ kind: 'play', uid: pick.card.uid }, pick.card.kind === 'crise' ? 'crisis' : rarityOf(pick.card) === 'legendaire' ? 'promise' : 'play')}
+          onDiscard={() => act({ kind: 'discard', uid: pick.card.uid }, 'discard', 'energy')}
+          onSell={() => act({ kind: 'sell', uid: pick.card.uid }, 'coin')}
           onBuy={() => {
             bought.current = true
-            act(buy(game, 'player', pick.card.uid), 'coin')
+            act({ kind: 'buy', uid: pick.card.uid }, 'coin')
           }}
         />
       ) : null}
       {compare ? <Compare g={game} onClose={() => setCompare(false)} /> : null}
       {rules ? <Rules onClose={() => setRules(false)} /> : null}
+      {status}
     </div>
   )
 }
 
-/** Ce que l'adversaire vient de faire, à annoncer (et le son qui va avec), ou null. */
-function aiNews(before: Game, after: Game): { text: string; sound: Sfx } | null {
+/** Ce que l'adversaire vient de faire, à annoncer (et le son qui va avec), ou null (rien, ou c'était vous). */
+function foeNews(before: Game, after: Game): { text: string; sound: Sfx } | null {
   const ai = after.seats.ai
   const who = `${ai.emblem} ${ai.name}`
   if (before.pending && !after.pending) {
+    if (before.pending.from !== 'player') {
+      return null
+    }
     const name = cardName(before.pending.card)
     const parade = after.moves.length > before.moves.length ? after.moves.at(-1) : undefined
     if (parade?.kind === 'parade' && parade.answer) {
@@ -344,7 +380,7 @@ function aiNews(before: Game, after: Game): { text: string; sound: Sfx } | null 
     return before.pending.card.kind === 'crise' ? { text: `💥 Votre coup frappe ${ai.name} : ${name} !`, sound: 'crisis' } : null
   }
   const m = after.moves.length > before.moves.length ? after.moves.at(-1)! : null
-  if (!m) {
+  if (!m || m.side !== 'ai') {
     return null
   }
   const name = m.card ? cardName(m.card) : ''
@@ -534,6 +570,9 @@ function Settings({ onClose }: { onClose: () => void }) {
 
 const asPlayer = (c: (typeof CANDIDATES)[number]): Player => ({ candidate: c, name: c.name, emblem: c.emblem, color: c.color })
 const SURPRISE: Player = { candidate: null, name: 'Vous', emblem: '🎩', color: '#5b8def' }
+/** À deux sur le même téléphone, chacun son programme surprise. */
+const SURPRISE_2: Player = { candidate: null, name: 'Joueur 2', emblem: '🎲', color: '#e05a5a' }
+const isSurprise = (p: Player) => !p.candidate && p !== BOT
 
 /** Le nom court d'un combattant, pour la grille (« Méluchon »). */
 const shortName = (p: Player) => (p.candidate ? p.name.split(' ').slice(1).join(' ') : p === BOT ? 'Le Bot' : 'Surprise')
@@ -541,16 +580,59 @@ const shortName = (p: Player) => (p.candidate ? p.name.split(' ').slice(1).join(
 /** Les durées proposées : un round par année de mandat. */
 const ROUNDS = [3, 5, 7]
 
-function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, years: number) => void; onExit: () => void }) {
+/**
+ * Contre l'IA (on choisit les deux), à deux sur ce téléphone (chacun le sien), en ligne : l'hôte choisit le sien et la durée,
+ * l'invité choisit le sien face à celui de l'hôte. En ligne, l'entrée sur le ring se joue quand la partie commence chez les deux.
+ */
+export type SetupMode = 'ia' | 'local' | 'hote' | 'invite'
+
+const SETUP_TEXT: Record<SetupMode, { me: string; foe: string; cursor: string; ask: string; go: string }> = {
+  ia: { me: 'Vous', foe: 'L’IA', cursor: 'IA', ask: 'Contre qui ?', go: '⚔️ Au combat !' },
+  local: { me: 'Joueur 1', foe: 'Joueur 2', cursor: 'J2', ask: 'Et le joueur 2 ?', go: '⚔️ Au combat !' },
+  hote: { me: 'Vous', foe: 'Votre ami', cursor: 'J2', ask: '', go: '📨 Créer la partie' },
+  invite: { me: 'Vous', foe: 'Votre ami', cursor: 'J1', ask: '', go: '✋ Je suis prêt' },
+}
+
+export function Setup({
+  mode,
+  host,
+  hostYears,
+  foeTag,
+  onStart,
+  onExit,
+}: {
+  mode: SetupMode
+  /** L'étiquette de l'adversaire (en ligne, chez l'invité : le pseudo de l'hôte). */
+  foeTag?: string
+  /** En ligne, chez l'invité : le président de l'hôte, et la durée qu'il a choisie. */
+  host?: Player
+  hostYears?: number
+  onStart: (player: Player, foe: Player | null, years: number) => void
+  onExit: () => void
+}) {
+  const online = mode === 'hote' || mode === 'invite'
+  const text = SETUP_TEXT[mode]
   const [me, setMe] = useState<Player | null>(null)
-  const [foe, setFoe] = useState<Player | null>(null)
+  const [foe, setFoe] = useState<Player | null>(host ?? null)
   const [hover, setHover] = useState<Player | null>(null)
-  const [years, setYears] = useState(5)
+  const [years, setYears] = useState(hostYears ?? 5)
   const [intro, setIntro] = useState(false)
   const stats = useMemo(() => fighterStats(CANDIDATES), [])
-  const slot = !me ? 'me' : !foe ? 'foe' : null
-  // La dernière case de la grille : un programme surprise pour vous, le Bot pour l'adversaire.
-  const roster = [...CANDIDATES.map(asPlayer), slot === 'me' ? SURPRISE : BOT]
+  const slot = !me ? 'me' : !foe && !online ? 'foe' : null
+  // La dernière case de la grille : un programme surprise pour vous, le Bot (ou un autre programme surprise) pour l'adversaire.
+  const roster = [...CANDIDATES.map(asPlayer), slot === 'me' ? SURPRISE : mode === 'local' ? SURPRISE_2 : BOT]
+  const go = () => {
+    if (!me) {
+      return
+    }
+    if (online) {
+      sfx('select')
+      onStart(me, foe, years)
+      return
+    }
+    sfx('vs')
+    setIntro(true)
+  }
   const choose = (p: Player) => {
     if (!slot) {
       return
@@ -573,7 +655,7 @@ function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, year
           className="ghost small"
           onClick={() => {
             sfx('click')
-            if (foe) {
+            if (foe && !host) {
               setFoe(null)
             } else if (me) {
               setMe(null)
@@ -589,21 +671,39 @@ function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, year
       </header>
 
       <section className={`dlv-arena ${me && foe ? 'is-ready' : ''}`} aria-label="Les deux combattants">
-        <Fighter p={preview('me')} tag="Vous" side="left" chosen={!!me} active={slot === 'me'} stats={stats} onClear={me ? () => (setFoe(null), setMe(null)) : undefined} />
+        <Fighter
+          p={preview('me')}
+          tag={text.me}
+          side="left"
+          chosen={!!me}
+          active={slot === 'me'}
+          stats={stats}
+          onClear={me ? () => (host ? setMe(null) : (setFoe(null), setMe(null))) : undefined}
+        />
         <div className={`dlv-vs ${foe ? 'is-on' : ''}`} key={foe?.name ?? 'vs'} aria-hidden="true">
           VS
         </div>
-        <Fighter p={preview('foe')} tag="L’IA" side="right" chosen={!!foe} active={slot === 'foe'} stats={stats} onClear={foe ? () => setFoe(null) : undefined} />
+        <Fighter
+          p={preview('foe')}
+          tag={foeTag || text.foe}
+          side="right"
+          chosen={!!foe}
+          active={slot === 'foe'}
+          waiting={mode === 'hote'}
+          stats={stats}
+          onClear={foe && !host ? () => setFoe(null) : undefined}
+        />
       </section>
 
       {slot ? (
         <section className="dlv-select" aria-label={slot === 'me' ? 'Choisissez votre président' : 'Choisissez votre adversaire'}>
           <p className="dlv-prompt">
-            <span className={`dlv-cursor ${slot}`}>{slot === 'me' ? 'J1' : 'IA'}</span> {slot === 'me' ? 'Qui incarnez-vous ?' : 'Contre qui ?'}
+            <span className={`dlv-cursor ${slot}`}>{slot === 'me' ? (mode === 'invite' ? 'J2' : 'J1') : text.cursor}</span> {slot === 'me' ? (mode === 'local' ? 'Joueur 1, qui incarnez-vous ?' : 'Qui incarnez-vous ?') : text.ask}
           </p>
           <div className="dlv-grid">
             {roster.map((p) => {
-              const taken = slot === 'foe' && me?.name === p.name
+              const other = slot === 'foe' ? me : foe
+              const taken = !!other && (other.candidate ? other.candidate.id === p.candidate?.id : isSurprise(other) && other === p)
               return (
                 <button
                   key={p.name}
@@ -632,7 +732,7 @@ function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, year
       ) : (
         <section className="dlv-ready">
           <div className="dlv-rounds" role="radiogroup" aria-label="Durée du duel">
-            {ROUNDS.map((n) => (
+            {(mode === 'invite' ? [years] : ROUNDS).map((n) => (
               <button
                 key={n}
                 type="button"
@@ -649,20 +749,13 @@ function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, year
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className="primary big dlv-go"
-            onClick={() => {
-              sfx('vs')
-              setIntro(true)
-            }}
-          >
-            ⚔️ Au combat !
+          <button type="button" className="primary big dlv-go" onClick={go}>
+            {text.go}
           </button>
         </section>
       )}
       <p className="note dlg-setup-foot">{PARODY_NOTE}</p>
-      {intro && me && foe ? <Intro me={me} foe={foe} onDone={() => onStart(me, foe, years)} /> : null}
+      {intro && me && foe ? <Intro me={me} foe={foe} meTag={mode === 'local' ? 'Joueur 1' : 'Vous'} onDone={() => onStart(me, foe, years)} /> : null}
     </div>
   )
 }
@@ -674,6 +767,7 @@ function Fighter({
   side,
   chosen,
   active,
+  waiting,
   stats,
   onClear,
 }: {
@@ -682,6 +776,8 @@ function Fighter({
   side: 'left' | 'right'
   chosen: boolean
   active: boolean
+  /** En ligne, chez l'hôte : l'ami choisira le sien en arrivant. */
+  waiting?: boolean
   stats: ReturnType<typeof fighterStats>
   onClear?: () => void
 }) {
@@ -701,8 +797,8 @@ function Fighter({
       <span className="dlv-emblem" aria-hidden="true">
         {p?.emblem ?? '?'}
       </span>
-      <strong className="dlv-name">{p ? (p.candidate ? p.name : p === BOT ? 'Le Bot' : 'Programme surprise') : active ? 'À choisir…' : '???'}</strong>
-      <small className="dlv-family">{p ? (p.candidate?.family ?? (p === BOT ? 'Sans parti, son propre programme' : 'Cinq mesures tirées au sort')) : ''}</small>
+      <strong className="dlv-name">{p ? (p.candidate ? p.name : p === BOT ? 'Le Bot' : 'Programme surprise') : active ? 'À choisir…' : waiting ? 'Votre ami' : '???'}</strong>
+      <small className="dlv-family">{p ? (p.candidate?.family ?? (p === BOT ? 'Sans parti, son propre programme' : 'Cinq mesures tirées au sort')) : waiting ? 'Il choisira son président en arrivant' : ''}</small>
       <ul className="dlv-stats">
         {STAT_AXES.map((a) => (
           <li key={a.id} title={a.hint}>
@@ -721,7 +817,7 @@ function Fighter({
 }
 
 /** L'entrée sur le ring : les deux fiches glissent l'une vers l'autre, « ROUND 1 », « FIGHT ! », puis la table. Toucher l'écran passe. */
-function Intro({ me, foe, onDone }: { me: Player; foe: Player; onDone: () => void }) {
+export function Intro({ me, foe, meTag = 'Vous', onDone }: { me: Player; foe: Player; meTag?: string; onDone: () => void }) {
   const [phase, setPhase] = useState<'vs' | 'round' | 'fight'>('vs')
   const done = useRef(false)
   const finish = useRef(onDone)
@@ -756,7 +852,7 @@ function Intro({ me, foe, onDone }: { me: Player; foe: Player; onDone: () => voi
     <div className={`dlv-intro is-${phase}`} role="presentation" onClick={skip}>
       <div className="dlv-intro-side left" style={{ '--c': me.color } as React.CSSProperties}>
         <span>{me.emblem}</span>
-        <strong>{me.candidate ? me.name : 'Vous'}</strong>
+        <strong>{me.candidate ? me.name : meTag}</strong>
       </div>
       <div className="dlv-intro-side right" style={{ '--c': foe.color } as React.CSSProperties}>
         <span>{foe.emblem}</span>
@@ -1588,6 +1684,10 @@ function Rules({ onClose }: { onClose: () => void }) {
           </li>
           <li>
             <strong>Touchez une carte :</strong> elle s’ouvre en grand, avec son effet expliqué par le modèle, et ce que vous pouvez en faire : la jouer, la jeter (+{DISCARD_GAIN} ⚡ tout de suite) ou la vendre au marché (l’acheteur paie, vous touchez l’énergie l’an prochain).
+          </li>
+          <li>
+            <strong>Avec un ami :</strong> en ligne, chacun joue sur son téléphone et ne voit que sa main (sauf sondage truqué) ; à deux sur le même
+            téléphone, on se le passe à chaque tour, et l’écran cache la main de l’autre.
           </li>
           <li>
             <strong>Pour gagner :</strong> si votre pays fait faillite ou se révolte, vous perdez tout de suite. À la fin, celui qui a tenu au moins {PROGRAMME_GOAL} promesses sur 5 bat celui qui ne l’a pas fait. Sinon, la meilleure note de santé (sur 100) l’emporte.
