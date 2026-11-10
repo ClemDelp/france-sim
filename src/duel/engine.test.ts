@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { simulate } from '../model/sim'
 import { CANDIDATES, candidateById } from '../game/candidates'
 import { buildDeck, CRISES, programmeOf, PROGRAMME_SIZE } from './cards'
-import { BOT, buy, canBuy, canPlay, discard, DISCARD_GAIN, keptPromises, sell, newGame, outcomeOf, play, resolveYear, scoreOf, takeBack, type Game, type Player } from './engine'
+import { baseUid, BOT, buy, canBuy, canPlay, discard, DISCARD_GAIN, keptPromises, sell, newGame, outcomeOf, play, resolveYear, scoreOf, takeBack, type Game, type Player } from './engine'
 import { playAiYear } from './ai'
 import { CRITERIA, health } from './health'
 import { cardImpact, explainChain, leverChanges, startNodes } from './why'
@@ -39,6 +39,18 @@ describe('le duel des présidents', () => {
       const keys = new Set([...mine, ...theirs].map((p) => p.key))
       expect(deck.slice(0, 22).filter((d) => d.kind === 'mesure' && keys.has(d.pledge.key))).toHaveLength(2 * PROGRAMME_SIZE)
     }
+  })
+
+  it('les deux joueurs piochent les mêmes cartes, chacun son exemplaire', () => {
+    const bases = (g: Game, side: 'player' | 'ai') => g.seats[side].hand.map((c) => baseUid(c.uid))
+    let g = newGame(as('melenchon'), as('le-pen'), { seed: 9, years: 5 })
+    expect(bases(g, 'player')).toEqual(bases(g, 'ai'))
+    expect(g.seats.player.hand.map((c) => c.uid)).not.toEqual(g.seats.ai.hand.map((c) => c.uid))
+    const deck = g.deck.length
+    g = resolveYear(g)
+    expect(bases(g, 'player')).toEqual(bases(g, 'ai'))
+    expect(g.seats.player.hand).toHaveLength(7)
+    expect(g.deck.length).toBe(deck - 2)
   })
 
   it('on peut jeter une carte (+1 ⚡), la vendre au marché, et l’adversaire peut l’acheter : le vendeur touche le prix', () => {
