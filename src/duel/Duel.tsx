@@ -48,6 +48,7 @@ import {
 } from './engine'
 import type { YearState } from '../model/types'
 import { health, healthParts } from './health'
+import { fighterStats, STAT_AXES } from './fighters'
 import { setSoundOn, sfx, soundOn, type Sfx } from './sound'
 import { cardImpact, CRITERION_NODE, crisisEffects, leverChanges, startNodes, whyTree, type Detail, type Impact, type Indicator, type WhyNode } from './why'
 import './duel.css'
@@ -538,119 +539,242 @@ function Settings({ onClose }: { onClose: () => void }) {
   )
 }
 
-// — Choisir les présidents
+// — Choisir les présidents : un écran de sélection de jeu de combat
 
 const asPlayer = (c: (typeof CANDIDATES)[number]): Player => ({ candidate: c, name: c.name, emblem: c.emblem, color: c.color })
 const SURPRISE: Player = { candidate: null, name: 'Vous', emblem: '🎩', color: '#5b8def' }
 
+/** Le nom court d'un combattant, pour la grille (« Méluchon »). */
+const shortName = (p: Player) => (p.candidate ? p.name.split(' ').slice(1).join(' ') : p === BOT ? 'Le Bot' : 'Surprise')
+
+/** Les durées proposées : un round par année de mandat. */
+const ROUNDS = [3, 5, 7]
+
 function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, years: number) => void; onExit: () => void }) {
-  const [step, setStep] = useState<1 | 2 | 3>(1)
   const [me, setMe] = useState<Player | null>(null)
   const [foe, setFoe] = useState<Player | null>(null)
+  const [hover, setHover] = useState<Player | null>(null)
   const [years, setYears] = useState(5)
-  const mine = [...CANDIDATES.map(asPlayer), SURPRISE]
-  const rivals = [...CANDIDATES.map(asPlayer).filter((p) => p.name !== me?.name), BOT]
-  const titles = { 1: 'Qui incarnez-vous ?', 2: 'Contre qui ?', 3: 'Combien de temps ?' }
+  const [intro, setIntro] = useState(false)
+  const stats = useMemo(() => fighterStats(CANDIDATES), [])
+  const slot = !me ? 'me' : !foe ? 'foe' : null
+  // La dernière case de la grille : un programme surprise pour vous, le Bot pour l'adversaire.
+  const roster = [...CANDIDATES.map(asPlayer), slot === 'me' ? SURPRISE : BOT]
+  const choose = (p: Player) => {
+    if (!slot) {
+      return
+    }
+    sfx('select')
+    if (slot === 'me') {
+      setMe(p)
+    } else {
+      setFoe(p)
+      window.setTimeout(() => sfx('vs'), 120)
+    }
+    setHover(null)
+  }
+  const preview = (s: 'me' | 'foe') => (s === 'me' ? (me ?? (slot === 'me' ? hover : null)) : (foe ?? (slot === 'foe' ? hover : null)))
   return (
     <div className="dlg dlg-setup">
       <header className="dlg-top">
-        <button type="button" className="ghost small" onClick={() => (step === 1 ? onExit() : setStep((step - 1) as 1 | 2))}>
-          ← {step === 1 ? 'Accueil' : 'Retour'}
+        <button
+          type="button"
+          className="ghost small"
+          onClick={() => {
+            sfx('click')
+            if (foe) {
+              setFoe(null)
+            } else if (me) {
+              setMe(null)
+            } else {
+              onExit()
+            }
+          }}
+        >
+          ← {me ? 'Retour' : 'Accueil'}
         </button>
         <strong className="dl-year">🃏 Le duel des présidents</strong>
-        <span className="dl-steps" aria-label={`Étape ${step} sur 3`}>
-          {[1, 2, 3].map((n) => (
-            <i key={n} className={n <= step ? 'on' : ''} />
-          ))}
-        </span>
+        <span />
       </header>
-      <section className="dlg-setup-head">
-        <h1>{titles[step]}</h1>
-        <p>
-          {step === 1
-            ? 'Deux présidents, deux France : la même au départ, en 2027. Chacun son tour : des mesures pour votre pays, des crises pour le sien. Peu d’énergie, un budget serré, une conjoncture qui change chaque année : il faudra choisir.'
-            : step === 2
-              ? 'Un candidat (version parodique, avec son programme), ou le Bot, qui se fait son propre programme.'
-              : 'Le meilleur bilan gagne à la fin. Faillite ou révolte : défaite immédiate.'}
-        </p>
+
+      <section className={`dlv-arena ${me && foe ? 'is-ready' : ''}`} aria-label="Les deux combattants">
+        <Fighter p={preview('me')} tag="Vous" side="left" chosen={!!me} active={slot === 'me'} stats={stats} onClear={me ? () => (setFoe(null), setMe(null)) : undefined} />
+        <div className={`dlv-vs ${foe ? 'is-on' : ''}`} key={foe?.name ?? 'vs'} aria-hidden="true">
+          VS
+        </div>
+        <Fighter p={preview('foe')} tag="L’IA" side="right" chosen={!!foe} active={slot === 'foe'} stats={stats} onClear={foe ? () => setFoe(null) : undefined} />
       </section>
-      <div className="dlg-setup-body">
-        {step === 1 ? (
-          <div className="dl-pick">
-            {mine.map((p) => (
-              <Chip
-                key={p.name}
-                p={p}
-                sub={p.candidate?.family ?? 'Un programme tiré au sort'}
-                selected={me?.name === p.name}
-                onClick={() => {
-                  sfx('click')
-                  setMe(p)
-                  setFoe(null)
-                  setStep(2)
-                }}
-              />
-            ))}
-          </div>
-        ) : step === 2 ? (
-          <div className="dl-pick">
-            {rivals.map((p) => (
-              <Chip
-                key={p.name}
-                p={p}
-                sub={p.candidate?.family ?? 'Sans parti, son propre programme'}
-                selected={foe?.name === p.name}
-                onClick={() => {
-                  sfx('click')
-                  setFoe(p)
-                  setStep(3)
-                }}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="dl-final-step">
-            <div className="dl-versus-chips">
-              <Chip p={me!} sub="Vous" selected onClick={() => setStep(1)} />
-              <strong>contre</strong>
-              <Chip p={foe!} sub="L’IA" selected onClick={() => setStep(2)} />
-            </div>
-            <div className="dl-years" role="radiogroup" aria-label="Durée de la partie">
-              {[5, 10].map((n) => (
-                <button key={n} type="button" role="radio" aria-checked={years === n} className={years === n ? 'is-selected' : ''} onClick={() => {
-                    sfx('click')
-                    setYears(n)
-                  }}>
-                  <strong>{n} ans</strong>
-                  <small>{n === 5 ? 'Un mandat, environ 10 minutes' : 'Deux mandats, environ 20 minutes'}</small>
+
+      {slot ? (
+        <section className="dlv-select" aria-label={slot === 'me' ? 'Choisissez votre président' : 'Choisissez votre adversaire'}>
+          <p className="dlv-prompt">
+            <span className={`dlv-cursor ${slot}`}>{slot === 'me' ? 'J1' : 'IA'}</span> {slot === 'me' ? 'Qui incarnez-vous ?' : 'Contre qui ?'}
+          </p>
+          <div className="dlv-grid">
+            {roster.map((p) => {
+              const taken = slot === 'foe' && me?.name === p.name
+              return (
+                <button
+                  key={p.name}
+                  type="button"
+                  className={`dlv-tile ${taken ? 'is-taken' : ''}`}
+                  style={{ '--c': p.color } as React.CSSProperties}
+                  disabled={taken}
+                  onClick={() => choose(p)}
+                  onPointerEnter={(e) => {
+                    if (e.pointerType === 'mouse' && !taken) {
+                      setHover(p)
+                      sfx('hover')
+                    }
+                  }}
+                  onPointerLeave={() => setHover(null)}
+                  onFocus={() => setHover(p)}
+                  aria-label={`${p.name} : ${p.candidate?.family ?? (p === BOT ? 'sans parti, son propre programme' : 'un programme tiré au sort')}`}
+                >
+                  <span aria-hidden="true">{p.emblem}</span>
+                  <small>{shortName(p)}</small>
                 </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              className="primary big"
-              onClick={() => {
-                sfx('flip')
-                onStart(me!, foe!, years)
-              }}
-            >
-              ⚔️ Commencer le duel
-            </button>
+              )
+            })}
           </div>
-        )}
-      </div>
+        </section>
+      ) : (
+        <section className="dlv-ready">
+          <div className="dlv-rounds" role="radiogroup" aria-label="Durée du duel">
+            {ROUNDS.map((n) => (
+              <button
+                key={n}
+                type="button"
+                role="radio"
+                aria-checked={years === n}
+                className={years === n ? 'is-selected' : ''}
+                onClick={() => {
+                  sfx('click')
+                  setYears(n)
+                }}
+              >
+                <strong>{n}</strong>
+                <small>rounds · {n} ans</small>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="primary big dlv-go"
+            onClick={() => {
+              sfx('vs')
+              setIntro(true)
+            }}
+          >
+            ⚔️ Au combat !
+          </button>
+        </section>
+      )}
       <p className="note dlg-setup-foot">{PARODY_NOTE}</p>
+      {intro && me && foe ? <Intro me={me} foe={foe} onDone={() => onStart(me, foe, years)} /> : null}
     </div>
   )
 }
 
-function Chip({ p, sub, selected, onClick }: { p: Player; sub: string; selected: boolean; onClick: () => void }) {
+/** La fiche d'un combattant : son emblème en grand, son nom, son camp, et ses barres (tirées du modèle). */
+function Fighter({
+  p,
+  tag,
+  side,
+  chosen,
+  active,
+  stats,
+  onClear,
+}: {
+  p: Player | null
+  tag: string
+  side: 'left' | 'right'
+  chosen: boolean
+  active: boolean
+  stats: ReturnType<typeof fighterStats>
+  onClear?: () => void
+}) {
+  const values = p?.candidate ? stats.get(p.candidate.id) : null
   return (
-    <button type="button" className={`dl-chip ${selected ? 'is-selected' : ''}`} style={{ '--c': p.color } as React.CSSProperties} onClick={onClick} aria-pressed={selected}>
-      <span>{p.emblem}</span>
-      <strong>{p.name}</strong>
-      <small>{sub}</small>
-    </button>
+    <div
+      className={`dlv-fighter ${side} ${chosen ? 'is-chosen' : ''} ${active ? 'is-active' : ''} ${p ? '' : 'is-empty'}`}
+      style={{ '--c': p?.color ?? '#3a4560' } as React.CSSProperties}
+      key={p?.name ?? 'vide'}
+    >
+      <span className="dlv-tag">{tag}</span>
+      {onClear ? (
+        <button type="button" className="dlv-change" onClick={onClear}>
+          Changer
+        </button>
+      ) : null}
+      <span className="dlv-emblem" aria-hidden="true">
+        {p?.emblem ?? '?'}
+      </span>
+      <strong className="dlv-name">{p ? (p.candidate ? p.name : p === BOT ? 'Le Bot' : 'Programme surprise') : active ? 'À choisir…' : '???'}</strong>
+      <small className="dlv-family">{p ? (p.candidate?.family ?? (p === BOT ? 'Sans parti, son propre programme' : 'Cinq mesures tirées au sort')) : ''}</small>
+      <ul className="dlv-stats">
+        {STAT_AXES.map((a) => (
+          <li key={a.id} title={a.hint}>
+            <span>
+              {a.icon} {a.label}
+            </span>
+            <i>
+              <b style={{ width: values ? `${Math.round(values[a.id] * 100)}%` : p ? '50%' : '0%' }} className={values ? '' : 'is-unknown'} />
+            </i>
+          </li>
+        ))}
+      </ul>
+      {p && !values ? <small className="dlv-mystery">Programme tiré au sort : ses forces se découvrent en jouant.</small> : null}
+    </div>
+  )
+}
+
+/** L'entrée sur le ring : les deux fiches glissent l'une vers l'autre, « ROUND 1 », « FIGHT ! », puis la table. Toucher l'écran passe. */
+function Intro({ me, foe, onDone }: { me: Player; foe: Player; onDone: () => void }) {
+  const [phase, setPhase] = useState<'vs' | 'round' | 'fight'>('vs')
+  const done = useRef(false)
+  const finish = useRef(onDone)
+  useEffect(() => {
+    finish.current = onDone
+  })
+  useEffect(() => {
+    const quick = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const end = () => {
+      if (!done.current) {
+        done.current = true
+        finish.current()
+      }
+    }
+    const ids = [
+      window.setTimeout(() => setPhase('round'), quick ? 300 : 1100),
+      window.setTimeout(() => {
+        setPhase('fight')
+        sfx('fight')
+      }, quick ? 700 : 2100),
+      window.setTimeout(end, quick ? 1300 : 3200),
+    ]
+    return () => ids.forEach((id) => window.clearTimeout(id))
+  }, [])
+  const skip = () => {
+    if (!done.current) {
+      done.current = true
+      onDone()
+    }
+  }
+  return (
+    <div className={`dlv-intro is-${phase}`} role="presentation" onClick={skip}>
+      <div className="dlv-intro-side left" style={{ '--c': me.color } as React.CSSProperties}>
+        <span>{me.emblem}</span>
+        <strong>{me.candidate ? me.name : 'Vous'}</strong>
+      </div>
+      <div className="dlv-intro-side right" style={{ '--c': foe.color } as React.CSSProperties}>
+        <span>{foe.emblem}</span>
+        <strong>{foe.name}</strong>
+      </div>
+      <div className="dlv-intro-vs">VS</div>
+      {phase !== 'vs' ? <div className="dlv-intro-round">ROUND 1 · {START_YEAR + 1}</div> : null}
+      {phase === 'fight' ? <div className="dlv-intro-fight">FIGHT !</div> : null}
+    </div>
   )
 }
 

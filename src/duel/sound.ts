@@ -4,7 +4,7 @@
  * Rien ne joue avant le premier geste du joueur : les navigateurs l'interdisent, et c'est plus poli.
  */
 
-export type Sfx = 'click' | 'hover' | 'pick' | 'draw' | 'play' | 'discard' | 'coin' | 'energy' | 'crisis' | 'promise' | 'flip' | 'victory' | 'defeat'
+export type Sfx = 'click' | 'hover' | 'pick' | 'draw' | 'play' | 'discard' | 'coin' | 'energy' | 'crisis' | 'promise' | 'flip' | 'victory' | 'defeat' | 'select' | 'vs' | 'fight'
 
 const KEY = 'duel-son'
 const VOLUME = 0.22
@@ -144,6 +144,23 @@ const SOUNDS: Record<Sfx, (t: number) => void> = {
     notes(t, [523, 659, 784, 1047], 0.12, 0.2)
     notes(t + 0.5, [784, 1047], 0, 0.7, 'triangle', 0.4)
     tone(t + 0.5, 1319, 0.7, { type: 'sine', gain: 0.3 })
+  },
+  // L'écran de sélection, façon jeu de combat : un candidat choisi, le « VS » qui claque, le gong du combat.
+  select: (t) => {
+    tone(t, 330, 0.08, { type: 'square', gain: 0.16 })
+    tone(t + 0.06, 660, 0.16, { type: 'square', to: 990, gain: 0.16 })
+  },
+  vs: (t) => {
+    noise(t, 0.35, { freq: 400, to: 80, type: 'lowpass', gain: 1 })
+    tone(t, 110, 0.4, { type: 'sawtooth', to: 55, gain: 0.45 })
+    tone(t + 0.02, 880, 0.25, { type: 'square', to: 440, gain: 0.1 })
+  },
+  fight: (t) => {
+    tone(t, 196, 1.2, { type: 'sine', gain: 0.6 })
+    tone(t, 293, 1.1, { type: 'sine', gain: 0.35 })
+    tone(t, 466, 0.9, { type: 'triangle', gain: 0.2 })
+    noise(t, 0.12, { freq: 1800, gain: 0.5 })
+    notes(t + 0.15, [392, 523, 659], 0.07, 0.2, 'square', 0.14)
   },
   defeat: (t) => {
     notes(t, [392, 370, 349], 0.22, 0.24, 'sawtooth', 0.18)
