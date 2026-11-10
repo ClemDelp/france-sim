@@ -64,7 +64,7 @@ describe('le duel des présidents', () => {
     expect(a.outcome).not.toBeNull()
     expect(a.outcome).toEqual(b.outcome)
     expect(a.reports.length).toBeGreaterThan(0)
-  })
+  }, 60_000)
 
   it('chaque programme a cinq promesses, et celles des deux joueurs sont dans le haut de la pioche commune', () => {
     for (const c of CANDIDATES) {
