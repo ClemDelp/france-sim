@@ -411,11 +411,13 @@
   align-items: end;
 }
 .dlg-cards {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 16px 4px 4px 12px;
+  /* La main en éventail : les cartes se chevauchent, tournent autour d'un point sous la main, et se lèvent quand on les vise. */
+  --cw: 124px;
+  --ch: 158px;
+  position: relative;
+  min-width: 0;
+  height: calc(var(--ch) + 36px);
+  container-type: inline-size;
 }
 .dlg-side {
   display: flex;
@@ -493,8 +495,46 @@
   cursor: pointer;
 }
 .dl-card.hand {
-  width: 124px;
-  height: 158px;
+  --step: min(calc(var(--cw) * 0.92), calc((100cqw - var(--cw) - 44px) / max(1, var(--n) - 1)));
+  position: absolute;
+  bottom: 16px;
+  left: calc(50% - var(--cw) / 2 + (var(--i) - (var(--n) - 1) / 2) * var(--step));
+  z-index: var(--i);
+  width: var(--cw);
+  height: var(--ch);
+  transform: translateY(var(--drop)) rotate(var(--rot));
+  transform-origin: 50% 115%;
+  transition:
+    transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.2),
+    box-shadow 0.2s ease,
+    left 0.25s ease;
+}
+.dl-card.hand:not(.is-dim):hover,
+.dl-card.hand:focus-visible,
+.dl-card.hand.is-up {
+  z-index: 20;
+  transform: translateY(-26px) rotate(0deg) scale(1.06);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.5);
+}
+/* Une carte piochée arrive de la pioche, en haut à gauche. */
+.dl-card.hand.is-drawn {
+  animation: dl-draw 0.55s cubic-bezier(0.2, 0.8, 0.3, 1) var(--d, 0ms) backwards;
+}
+@keyframes dl-draw {
+  from {
+    opacity: 0;
+    transform: translate(-42vw, -52vh) rotate(-25deg) scale(0.5);
+  }
+}
+/* Une carte jouée tombe sur la table depuis la main. */
+.dl-card.mini.is-landed {
+  animation: dl-land 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.15) backwards;
+}
+@keyframes dl-land {
+  from {
+    opacity: 0.4;
+    transform: translateY(45vh) rotate(8deg) scale(1.4);
+  }
 }
 .dl-card.hand.is-dim {
   filter: grayscale(0.4);
@@ -511,7 +551,7 @@
   text-align: left;
   cursor: pointer;
 }
-.dl-card:not(.is-dim):hover {
+.dl-card.mini:hover {
   transform: translateY(-6px);
 }
 .dl-cost {
@@ -1064,10 +1104,22 @@
   .dlg-side > .primary {
     margin-left: auto;
   }
+  .dlg-cards {
+    --cw: 96px;
+    --ch: 124px;
+  }
   .dl-card.hand {
-    width: 96px;
-    height: 124px;
     padding: 18px 5px 5px;
+  }
+  .dlg-lbl {
+    display: none;
+  }
+  .dl-yeartable {
+    font-size: 0.8rem;
+  }
+  .dl-yeartable td,
+  .dl-yeartable th {
+    padding: 3px 4px;
   }
   .dl-art {
     height: 30px;
@@ -1106,5 +1158,214 @@
   .dl-cardmodal-actions .primary,
   .dl-cardmodal-actions .ghost {
     flex: 1 1 auto;
+  }
+}
+
+/* — Les réglages */
+
+.dlg-top {
+  position: relative;
+}
+.dlg-settings {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  display: grid;
+  gap: 8px;
+  min-width: 200px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.dl-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dl-switch i {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: 99px;
+  background: var(--rule);
+  transition: background 0.2s;
+}
+.dl-switch i::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+}
+.dl-switch.is-on i {
+  background: var(--good);
+}
+.dl-switch.is-on i::after {
+  transform: translateX(16px);
+}
+
+/* — Le bilan de l'année et la comparaison : les deux France côte à côte */
+
+.dl-yeartable {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6px 0 10px;
+  font-size: 0.9rem;
+}
+.dl-yeartable th,
+.dl-yeartable td {
+  padding: 4px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: middle;
+}
+.dl-yeartable th {
+  border-bottom: 3px solid var(--c, var(--rule));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+.dl-yeartable th:first-child,
+.dl-yeartable td:first-child {
+  text-align: left;
+}
+.dl-yeartable td b small {
+  font-weight: 400;
+  color: var(--muted);
+}
+.dl-delta {
+  display: inline-block;
+  min-width: 42px;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--muted);
+}
+.dl-delta.good {
+  background: color-mix(in srgb, var(--good) 22%, transparent);
+  color: var(--good);
+}
+.dl-delta.bad {
+  background: color-mix(in srgb, var(--bad) 22%, transparent);
+  color: var(--bad);
+}
+.dl-cardlines {
+  margin: 6px 0 !important;
+}
+.dl-cardline {
+  border-left: 4px solid var(--frame);
+  background: color-mix(in srgb, var(--frame) 14%, transparent);
+}
+.dl-cardline small {
+  color: var(--muted);
+}
+.dl-none {
+  color: var(--muted);
+}
+.dl-move {
+  color: var(--muted);
+}
+.dl-compare {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg, #0b1020);
+}
+.dl-compare-body {
+  overflow-y: auto;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.dl-compare h3 {
+  margin: 14px 0 4px;
+}
+.dl-compare td:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dl-compare .dl-breakdown td:first-child {
+  display: table-cell;
+}
+.dl-spark {
+  flex: 0 0 auto;
+}
+.dl-legend {
+  display: inline-block;
+  width: 18px;
+  height: 0;
+  border-top: 3px solid var(--c);
+  vertical-align: middle;
+}
+.dl-legend.dashed {
+  border-top-style: dashed;
+}
+.dl-history {
+  margin-bottom: 10px;
+}
+.dl-history > strong {
+  color: var(--gold);
+}
+.dl-history .dl-side small {
+  color: var(--muted);
+}
+
+@media (max-width: 760px) {
+  .dl-compare td:first-child {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .dl-spark {
+    width: 72px;
+    height: 20px;
+  }
+  .dl-compare {
+    padding: 4px 6px;
+  }
+  .dl-delta {
+    min-width: 0;
+    margin-left: 3px;
+    padding: 0 4px;
+    font-size: 0.7rem;
+  }
+  .dl-yeartable td:not(:first-child) {
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-card.hand,
+  .dl-card.hand.is-drawn,
+  .dl-card.mini.is-landed,
+  .dlg-news {
+    animation: none;
+    transition: none;
   }
 }

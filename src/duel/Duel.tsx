@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { CANDIDATES, PARODY_NOTE } from '../game/candidates'
 import { popularity } from '../game/score'
 import { num } from '../ui/format'
@@ -34,7 +34,9 @@ import {
   type Report,
   type Side,
 } from './engine'
-import { healthParts } from './health'
+import type { YearState } from '../model/types'
+import { health, healthParts } from './health'
+import { setSoundOn, sfx, soundOn, type Sfx } from './sound'
 import { cardImpact, CRITERION_NODE, crisisEffects, leverChanges, startNodes, whyTree, type Detail, type Impact, type Indicator, type WhyNode } from './why'
 import './duel.css'
 
@@ -52,6 +54,18 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
   const [pick, setPick] = useState<Pick | null>(null)
   /** La dernière chose faite par l'adversaire, annoncée au centre de la table. */
   const [news, setNews] = useState<Move | null>(null)
+  const [compare, setCompare] = useState(false)
+  const [settings, setSettings] = useState(false)
+  /** Une carte achetée arrive en main : pas de bruit de pioche par-dessus celui des pièces. */
+  const bought = useRef(false)
+  const hand = useFresh(game?.seats.player.hand.map((c) => c.uid) ?? [])
+  const landed = useFresh(game?.seats.player.played.map((p) => p.card.uid) ?? [])
+  useEffect(() => {
+    if (hand.size && !bought.current) {
+      sfx('draw')
+    }
+    bought.current = false
+  }, [hand])
 
   // Le dévoilement : l'adversaire agit une fois par instant (achats, cartes posées, ventes), puis l'année se joue.
   useEffect(() => {
@@ -63,7 +77,11 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
       () => {
         if (action) {
           const next = applyAi(game, action)
-          setNews(next.moves.at(-1) ?? null)
+          const move = next === game ? null : (next.moves.at(-1) ?? null)
+          setNews(move)
+          if (move) {
+            sfx(MOVE_SFX[move.kind](move))
+          }
           setGame(next === game ? resolveYear(game) : next)
           if (next === game) {
             setStage('report')
@@ -91,9 +109,16 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
     )
   }
 
-  const act = (next: Game) => {
+  const act = (next: Game, ...sounds: Sfx[]) => {
+    if (next !== game) {
+      sounds.forEach((name, i) => window.setTimeout(() => sfx(name), i * 140))
+    }
     setGame(next)
     setPick(null)
+  }
+  const open = (p: Pick) => {
+    sfx('pick')
+    setPick(p)
   }
   const report = game.reports.at(-1)
   const canAct = stage === 'play' && !game.outcome
@@ -107,20 +132,27 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
           {game.outcome ? 'Partie terminée' : `Année ${game.year}`} <small>· {Math.min(game.year, endYear(game)) - START_YEAR}/{game.years}</small>
         </strong>
         <span className="dlg-top-right">
-          <button type="button" className="ghost small" onClick={() => onModel(null)}>
-            🧠 Modèle
+          <button type="button" className="ghost small" onClick={() => setCompare(true)} title="Comparer les deux France">
+            📊<span className="dlg-lbl"> Comparer</span>
           </button>
-          <button type="button" className="ghost small" onClick={() => setRules(true)}>
-            📖 Règles
+          <button type="button" className="ghost small" onClick={() => onModel(null)} title="Le modèle">
+            🧠<span className="dlg-lbl"> Modèle</span>
+          </button>
+          <button type="button" className="ghost small" onClick={() => setRules(true)} title="Les règles">
+            📖<span className="dlg-lbl"> Règles</span>
+          </button>
+          <button type="button" className="ghost small" onClick={() => setSettings(!settings)} aria-expanded={settings} title="Réglages">
+            ⚙️
           </button>
         </span>
+        {settings ? <Settings onClose={() => setSettings(false)} /> : null}
       </header>
 
       <Strip g={game} side="ai" />
 
       <main className="dlg-board">
         <section className="dlg-pile" aria-label="La pioche commune">
-          <div className="dl-back big" title="La pioche commune aux deux joueurs">
+          <div className="dl-back big" title="La pioche commune : chaque carte tirée est donnée aux deux joueurs">
             <span>{game.deck.length}</span>
           </div>
           <small>Pioche commune</small>
@@ -139,7 +171,7 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
               {stage === 'play' ? (
                 <div className="dl-back" aria-label="Cartes cachées" />
               ) : (
-                game.seats.ai.played.map(({ card, cost }) => <Mini key={card.uid} g={game} card={card} side="ai" badge={`⚡${cost}`} flip onClick={() => setPick({ card, where: 'adverse' })} />)
+                game.seats.ai.played.map(({ card, cost }) => <Mini key={card.uid} g={game} card={card} side="ai" badge={`⚡${cost}`} flip onClick={() => open({ card, where: 'adverse' })} />)
               )}
             </div>
           </div>
@@ -148,7 +180,7 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
             <p>Vos cartes de l’année {game.seats.player.played.length && canAct ? <small>· touchez pour revoir ou reprendre</small> : null}</p>
             <div className="dlg-row">
               {game.seats.player.played.map(({ card, cost }) => (
-                <Mini key={card.uid} g={game} card={card} side="player" badge={`⚡${cost}`} onClick={() => setPick({ card, where: 'table' })} />
+                <Mini key={card.uid} g={game} card={card} side="player" badge={`⚡${cost}`} landed={landed.has(card.uid)} onClick={() => open({ card, where: 'table' })} />
               ))}
               {!game.seats.player.played.length ? <p className="dlg-hint">Choisissez une carte dans votre main.</p> : null}
             </div>
@@ -161,7 +193,7 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
           </p>
           <div className="dlg-market-row">
             {game.market.map((l) => (
-              <Mini key={l.card.uid} g={game} card={l.card} side="player" badge={`${l.price} ⚡`} seller={game.seats[l.seller].emblem} onClick={() => setPick({ card: l.card, where: 'marche' })} />
+              <Mini key={l.card.uid} g={game} card={l.card} side="player" badge={`${l.price} ⚡`} seller={game.seats[l.seller].emblem} onClick={() => open({ card: l.card, where: 'marche' })} />
             ))}
             {!game.market.length ? <p className="dlg-hint">Vendez ici les cartes dont vous ne voulez pas : l’adversaire peut les acheter.</p> : null}
           </div>
@@ -171,9 +203,18 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
       <Strip g={game} side="player" />
 
       <footer className="dlg-hand">
-        <div className="dlg-cards">
-          {game.seats.player.hand.map((c) => (
-            <HandCard key={c.uid} g={game} card={c} dim={!canAct} onClick={() => setPick({ card: c, where: 'main' })} />
+        <div className="dlg-cards" aria-label="Votre main">
+          {game.seats.player.hand.map((c, i, all) => (
+            <HandCard
+              key={c.uid}
+              g={game}
+              card={c}
+              dim={!canAct}
+              fan={fanOf(i, all.length)}
+              drawn={hand.has(c.uid) ? [...hand].indexOf(c.uid) : null}
+              up={pick?.where === 'main' && pick.card.uid === c.uid}
+              onClick={() => open({ card: c, where: 'main' })}
+            />
           ))}
         </div>
         <div className="dlg-side">
@@ -190,6 +231,7 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
               className="primary"
               disabled={!canAct}
               onClick={() => {
+                sfx('flip')
                 setPick(null)
                 setStage('reveal')
               }}
@@ -202,9 +244,9 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
 
       {stage === 'report' && report ? (
         game.outcome ? (
-          <Final g={game} onReplay={() => setGame(null)} onModel={() => onModel(null)} onClose={() => setStage('play')} />
+          <Final g={game} onReplay={() => setGame(null)} onModel={() => onModel(null)} onCompare={() => setCompare(true)} onClose={() => setStage('play')} />
         ) : (
-          <YearReport g={game} report={report} onClose={() => setStage('play')} />
+          <YearReport g={game} report={report} onCompare={() => setCompare(true)} onClose={() => setStage('play')} />
         )
       ) : null}
       {pick ? (
@@ -214,14 +256,80 @@ export function Duel({ onExit, onModel }: { onExit: () => void; onModel: (focus:
           canAct={canAct}
           onClose={() => setPick(null)}
           onModel={onModel}
-          onPlay={() => act(play(game, 'player', pick.card))}
-          onDiscard={() => act(discard(game, 'player', pick.card.uid))}
-          onSell={() => act(sell(game, 'player', pick.card.uid))}
-          onBuy={() => act(buy(game, 'player', pick.card.uid))}
-          onTakeBack={() => act(takeBack(game, 'player', pick.card.uid))}
+          onPlay={() => act(play(game, 'player', pick.card), 'play')}
+          onDiscard={() => act(discard(game, 'player', pick.card.uid), 'discard', 'energy')}
+          onSell={() => act(sell(game, 'player', pick.card.uid), 'coin')}
+          onBuy={() => {
+            bought.current = true
+            act(buy(game, 'player', pick.card.uid), 'coin')
+          }}
+          onTakeBack={() => act(takeBack(game, 'player', pick.card.uid), 'pick')}
         />
       ) : null}
+      {compare ? <Compare g={game} onClose={() => setCompare(false)} /> : null}
       {rules ? <Rules onClose={() => setRules(false)} /> : null}
+    </div>
+  )
+}
+
+const MOVE_SFX: Record<Move['kind'], (m: Move) => Sfx> = {
+  achat: () => 'coin',
+  vente: () => 'coin',
+  jet: () => 'discard',
+  jeu: (m) => (m.card.kind === 'crise' ? 'crisis' : 'play'),
+}
+
+/** Les cartes qui viennent d'arriver (pour les animer) : celles qu'on ne voyait pas au rendu précédent. */
+function useFresh(uids: string[]): Set<string> {
+  const seen = useRef<Set<string>>(new Set())
+  const [fresh, setFresh] = useState<Set<string>>(new Set())
+  const key = uids.join(',')
+  useLayoutEffect(() => {
+    const now = key ? key.split(',') : []
+    const added = now.filter((uid) => !seen.current.has(uid))
+    seen.current = new Set(now)
+    if (added.length) {
+      setFresh(new Set(added))
+      const id = window.setTimeout(() => setFresh(new Set()), 900 + added.length * 90)
+      return () => window.clearTimeout(id)
+    }
+  }, [key])
+  return fresh
+}
+
+/** La place d'une carte dans la main en éventail : son angle, et de combien elle descend sur les bords. */
+function fanOf(i: number, n: number): React.CSSProperties {
+  const mid = (n - 1) / 2
+  const x = mid ? (i - mid) / mid : 0
+  const spread = Math.min(5, 28 / Math.max(n, 1))
+  return { '--i': i, '--n': n, '--rot': `${(i - mid) * spread}deg`, '--drop': `${Math.round(x * x * 10)}px` } as React.CSSProperties
+}
+
+/** Les réglages : le son. */
+function Settings({ onClose }: { onClose: () => void }) {
+  const [on, setOn] = useState(soundOn)
+  return (
+    <div className="dlg-settings" role="dialog" aria-label="Réglages">
+      <strong>⚙️ Réglages</strong>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        className={`dl-switch ${on ? 'is-on' : ''}`}
+        onClick={() => {
+          setSoundOn(!on)
+          setOn(!on)
+          if (!on) {
+            sfx('coin')
+          }
+        }}
+      >
+        <span>{on ? '🔊' : '🔇'} Son</span>
+        <i aria-hidden="true" />
+      </button>
+      <button type="button" className="ghost small" onClick={onClose}>
+        Fermer
+      </button>
     </div>
   )
 }
@@ -271,7 +379,7 @@ function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, year
         <h1>{titles[step]}</h1>
         <p>
           {step === 1
-            ? 'Deux présidents, deux France : la même au départ, en 2027. Mesures pour votre pays, crises pour le sien, une pioche commune et un marché. Le modèle fait vivre les deux France.'
+            ? 'Deux présidents, deux France : la même au départ, en 2027. Les mêmes cartes pour les deux : mesures pour votre pays, crises pour le sien, et un marché. Le modèle fait vivre les deux France.'
             : step === 2
               ? 'Un candidat (version parodique, avec son programme), ou le Bot, qui se fait son propre programme.'
               : 'Le meilleur bilan gagne à la fin. Faillite ou révolte : défaite immédiate.'}
@@ -287,6 +395,7 @@ function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, year
                 sub={p.candidate?.family ?? 'Un programme tiré au sort'}
                 selected={me?.name === p.name}
                 onClick={() => {
+                  sfx('click')
                   setMe(p)
                   setFoe(null)
                   setStep(2)
@@ -303,6 +412,7 @@ function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, year
                 sub={p.candidate?.family ?? 'Sans parti, son propre programme'}
                 selected={foe?.name === p.name}
                 onClick={() => {
+                  sfx('click')
                   setFoe(p)
                   setStep(3)
                 }}
@@ -318,13 +428,23 @@ function Setup({ onStart, onExit }: { onStart: (player: Player, ai: Player, year
             </div>
             <div className="dl-years" role="radiogroup" aria-label="Durée de la partie">
               {[5, 10].map((n) => (
-                <button key={n} type="button" role="radio" aria-checked={years === n} className={years === n ? 'is-selected' : ''} onClick={() => setYears(n)}>
+                <button key={n} type="button" role="radio" aria-checked={years === n} className={years === n ? 'is-selected' : ''} onClick={() => {
+                    sfx('click')
+                    setYears(n)
+                  }}>
                   <strong>{n} ans</strong>
                   <small>{n === 5 ? 'Un mandat, environ 10 minutes' : 'Deux mandats, environ 20 minutes'}</small>
                 </button>
               ))}
             </div>
-            <button type="button" className="primary big" onClick={() => onStart(me!, foe!, years)}>
+            <button
+              type="button"
+              className="primary big"
+              onClick={() => {
+                sfx('flip')
+                onStart(me!, foe!, years)
+              }}
+            >
               ⚔️ Commencer le duel
             </button>
           </div>
@@ -437,11 +557,18 @@ function kindOf(g: Game, card: Card, side: Side): { cls: string; label: string }
 
 const signed = (v: number, digits = 0) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${num(Math.abs(v), digits)}`
 
-function HandCard({ g, card, dim, onClick }: { g: Game; card: Card; dim: boolean; onClick: () => void }) {
+function HandCard({ g, card, dim, fan, drawn, up, onClick }: { g: Game; card: Card; dim: boolean; fan: React.CSSProperties; drawn: number | null; up: boolean; onClick: () => void }) {
   const kind = kindOf(g, card, 'player')
   // Les chiffres (effet sur la note, sur les indicateurs) sont dans la fenêtre de la carte : la carte reste lisible.
   return (
-    <button type="button" className={`dl-card hand ${kind.cls} ${dim ? 'is-dim' : ''}`} onClick={onClick} aria-label={`${cardName(card)} : voir la carte`}>
+    <button
+      type="button"
+      className={`dl-card hand ${kind.cls} ${dim ? 'is-dim' : ''} ${drawn !== null ? 'is-drawn' : ''} ${up ? 'is-up' : ''}`}
+      style={drawn !== null ? { ...fan, '--d': `${drawn * 90}ms` } as React.CSSProperties : fan}
+      onClick={onClick}
+      onPointerEnter={(e) => (e.pointerType === 'mouse' && !dim ? sfx('hover') : undefined)}
+      aria-label={`${cardName(card)} : voir la carte`}
+    >
       <span className="dl-cost">⚡{cardCost(g, 'player', card)}</span>
       <span className="dl-kind">{kind.label}</span>
       <span className="dl-art" aria-hidden="true">
@@ -454,10 +581,10 @@ function HandCard({ g, card, dim, onClick }: { g: Game; card: Card; dim: boolean
   )
 }
 
-function Mini({ g, card, side, badge, seller, flip, onClick }: { g: Game; card: Card; side: Side; badge: string; seller?: string; flip?: boolean; onClick: () => void }) {
+function Mini({ g, card, side, badge, seller, flip, landed, onClick }: { g: Game; card: Card; side: Side; badge: string; seller?: string; flip?: boolean; landed?: boolean; onClick: () => void }) {
   const kind = kindOf(g, card, side)
   return (
-    <button type="button" className={`dl-card mini ${kind.cls} ${flip ? 'is-flip' : ''}`} onClick={onClick} title={kind.label}>
+    <button type="button" className={`dl-card mini ${kind.cls} ${flip ? 'is-flip' : ''} ${landed ? 'is-landed' : ''}`} onClick={onClick} title={kind.label}>
       <span className="dl-cost">{badge}</span>
       {seller ? <span className="dl-seller">{seller}</span> : null}
       <span className="dl-art" aria-hidden="true">
@@ -709,26 +836,105 @@ function Actions({ g, pick, canAct, onPlay, onDiscard, onSell, onBuy, onTakeBack
 
 // — Les fenêtres de fin d'année et de fin de partie
 
-function YearReport({ g, report, onClose }: { g: Game; report: Report; onClose: () => void }) {
+/** Les chiffres clés d'une France, pour comparer les deux : la valeur, et dans quel sens c'est mieux. */
+type Stat = { id: string; label: string; unit: string; digits: number; better: 'up' | 'down'; value: (s: YearState, start: YearState) => number }
+
+const STATS: Stat[] = [
+  { id: 'note', label: 'Note de santé', unit: '/100', digits: 0, better: 'up', value: (s, start) => health(s, start) },
+  { id: 'chomage', label: 'Chômage', unit: ' %', digits: 1, better: 'down', value: (s) => s.unemployment * 100 },
+  { id: 'croissance', label: 'Croissance', unit: ' %', digits: 1, better: 'up', value: (s) => s.growth * 100 },
+  { id: 'pouvoir', label: 'Pouvoir d’achat depuis 2027', unit: ' %', digits: 1, better: 'up', value: (s, start) => (s.medianIncome / start.medianIncome - 1) * 100 },
+  { id: 'deficit', label: 'Déficit (% du PIB)', unit: ' %', digits: 1, better: 'down', value: (s) => (s.deficit / s.gdp) * 100 },
+  { id: 'dette', label: 'Dette (% du PIB)', unit: ' %', digits: 0, better: 'down', value: (s) => s.debtRatio * 100 },
+  { id: 'colere', label: 'Colère', unit: '', digits: 0, better: 'down', value: (s) => Math.max(0, s.discontent * 100) },
+  { id: 'popularite', label: 'Popularité', unit: ' %', digits: 0, better: 'up', value: (s) => popularity(s) },
+]
+
+const stateAt = (g: Game, side: Side, year: number) => g.seats[side].states.find((x) => x.year === year)!
+const startOf = (g: Game, side: Side) => stateAt(g, side, START_YEAR)
+
+/** Une valeur, et ce qu'elle a bougé : en vert si c'est mieux pour le pays. */
+function StatCell({ stat, now, before }: { stat: Stat; now: number; before?: number }) {
+  const delta = before === undefined ? 0 : now - before
+  const shown = Math.abs(delta) >= 0.5 * 10 ** -stat.digits
+  const good = stat.better === 'up' ? delta > 0 : delta < 0
+  return (
+    <td>
+      <b>
+        {num(now, stat.digits)}
+        <small>{stat.unit}</small>
+      </b>
+      {before !== undefined ? <span className={`dl-delta ${shown ? (good ? 'good' : 'bad') : ''}`}>{shown ? signed(delta, stat.digits) : '='}</span> : null}
+    </td>
+  )
+}
+
+/** Une carte en une ligne : son dessin, son nom. */
+function CardLine({ g, card, side, cost }: { g: Game; card: Card; side: Side; cost?: number }) {
+  const kind = kindOf(g, card, side)
+  return (
+    <li className={`dl-cardline ${kind.cls}`}>
+      <span aria-hidden="true">{cardArt(card)}</span> {cardName(card)}
+      {cost !== undefined ? <small> ⚡{cost}</small> : null}
+    </li>
+  )
+}
+
+function YearReport({ g, report, onClose, onCompare }: { g: Game; report: Report; onClose: () => void; onCompare: () => void }) {
+  const mine = report.sides.player
+  useEffect(() => {
+    sfx(mine.kept.length ? 'promise' : mine.health >= mine.before ? 'energy' : 'flip')
+  }, [mine])
+  const name = (side: Side) => (side === 'player' ? 'Vous' : g.seats[side].name)
   return (
     <div className="modal-backdrop on-top" role="presentation">
       <div className="modal dl-report" role="dialog" aria-modal="true" aria-label={`Bilan de ${report.year}`}>
         <p className="eyebrow">📰 Bilan de l’année {report.year}</p>
-        {report.world.length ? <p className="dl-world">🌍 Dans le monde : {report.world.join(', ')}.</p> : null}
+        {report.world.length ? <p className="dl-world">🌍 Dans le monde (pour les deux) : {report.world.join(', ')}.</p> : null}
+        <table className="dl-yeartable">
+          <thead>
+            <tr>
+              <th>En {report.year}</th>
+              {SIDES_ORDER.map((side) => (
+                <th key={side} style={{ '--c': g.seats[side].color } as React.CSSProperties}>
+                  {g.seats[side].emblem} {name(side)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {STATS.map((stat) => (
+              <tr key={stat.id}>
+                <td>{stat.label}</td>
+                {SIDES_ORDER.map((side) => (
+                  <StatCell key={side} stat={stat} now={stat.value(stateAt(g, side, report.year), startOf(g, side))} before={stat.value(stateAt(g, side, report.year - 1), startOf(g, side))} />
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
         <div className="dl-versus">
-          {(['player', 'ai'] as Side[]).map((side) => {
+          {SIDES_ORDER.map((side) => {
             const r = report.sides[side]
             const s = g.seats[side]
-            const delta = r.health - r.before
+            const moves = report.moves.filter((m) => m.side === side)
             return (
               <div key={side} className="dl-side" style={{ '--c': s.color } as React.CSSProperties}>
                 <strong>
-                  {s.emblem} {side === 'player' ? 'Vous' : s.name}
+                  {s.emblem} {side === 'player' ? 'Ce que vous avez fait' : `Ce qu’a fait ${s.name}`}
                 </strong>
-                <p className="dl-big">
-                  {r.health} <small>/ 100</small> <span className={delta >= 0 ? 'up' : 'down'}>{delta >= 0 ? `+${delta}` : `−${-delta}`}</span>
-                </p>
+                <ul className="dl-cardlines">
+                  {r.played.map(({ card, cost }) => (
+                    <CardLine key={card.uid} g={g} card={card} side={side} cost={cost} />
+                  ))}
+                  {!r.played.length ? <li className="dl-none">Aucune carte jouée.</li> : null}
+                </ul>
                 <ul>
+                  {moves.map((m, i) => (
+                    <li key={i} className="dl-move">
+                      {m.kind === 'achat' ? `🛒 Achète « ${cardName(m.card)} » (${m.price} ⚡)` : m.kind === 'vente' ? `🏷️ Met en vente « ${cardName(m.card)} »` : `🗑️ Jette « ${cardName(m.card)} »`}
+                    </li>
+                  ))}
                   {r.received.map((c) => (
                     <li key={c} className="down">
                       {CRISES[c].art} Crise reçue : {CRISES[c].name}
@@ -741,10 +947,10 @@ function YearReport({ g, report, onClose }: { g: Game; report: Report; onClose: 
                   ))}
                   {r.kept.map((k) => (
                     <li key={k} className="up">
-                      ⭐ Promesse tenue : {k} (+2 ⚡)
+                      ⭐ Promesse tenue : {k}
                     </li>
                   ))}
-                  {!r.received.length && !r.parried.length && !r.kept.length ? <li>Une année sans surprise.</li> : null}
+                  {r.earned ? <li className="up">⚡ +{r.earned} d’énergie l’an prochain (promesses, ventes)</li> : null}
                 </ul>
               </div>
             )
@@ -754,14 +960,151 @@ function YearReport({ g, report, onClose }: { g: Game; report: Report; onClose: 
           <button type="button" className="primary" onClick={onClose}>
             Année {report.year + 1} →
           </button>
+          <button type="button" className="ghost" onClick={onCompare}>
+            📊 Comparer depuis le début
+          </button>
         </div>
       </div>
     </div>
   )
 }
 
-function Final({ g, onReplay, onModel, onClose }: { g: Game; onReplay: () => void; onModel: () => void; onClose: () => void }) {
+const SIDES_ORDER: Side[] = ['player', 'ai']
+
+/** Une petite courbe : les deux France, année par année. */
+function Spark({ g, stat }: { g: Game; stat: Stat }) {
+  const series = SIDES_ORDER.map((side) => g.seats[side].states.filter((x) => x.year >= START_YEAR).map((x) => stat.value(x, startOf(g, side))))
+  const all = series.flat()
+  const lo = Math.min(...all)
+  const hi = Math.max(...all)
+  const n = Math.max(2, series[0].length)
+  const w = 96
+  const h = 26
+  const point = (v: number, i: number) => `${((i / (n - 1)) * w).toFixed(1)},${(hi === lo ? h / 2 : h - 2 - ((v - lo) / (hi - lo)) * (h - 4)).toFixed(1)}`
+  return (
+    <svg className="dl-spark" viewBox={`0 0 ${w} ${h}`} width={w} height={h} aria-hidden="true">
+      {series.map((values, k) => (
+        <polyline key={k} points={values.map(point).join(' ')} fill="none" stroke={g.seats[SIDES_ORDER[k]].color} strokeWidth={k === 0 ? 2.2 : 1.6} strokeDasharray={k === 0 ? undefined : '3 2'} />
+      ))}
+    </svg>
+  )
+}
+
+/** Les deux France côte à côte, à tout moment : la note critère par critère, les chiffres clés année par année, les cartes jouées. */
+function Compare({ g, onClose }: { g: Game; onClose: () => void }) {
+  const now = (side: Side) => lastState(g.seats[side])
+  const parts = SIDES_ORDER.map((side) => healthParts(now(side), startOf(g, side)))
+  const name = (side: Side) => (side === 'player' ? 'Vous' : g.seats[side].name)
+  const head = (
+    <tr>
+      <th />
+      {SIDES_ORDER.map((side) => (
+        <th key={side} style={{ '--c': g.seats[side].color } as React.CSSProperties}>
+          {g.seats[side].emblem} {name(side)}
+        </th>
+      ))}
+    </tr>
+  )
+  return (
+    <div className="dl-compare" role="dialog" aria-modal="true" aria-label="Comparer les deux France">
+      <header className="dlg-top">
+        <strong className="dl-year">📊 Les deux France</strong>
+        <button type="button" className="ghost small" onClick={onClose}>
+          ✕ Fermer
+        </button>
+      </header>
+      <div className="dl-compare-body">
+        <section>
+          <h3>Les chiffres clés, de 2027 à aujourd’hui</h3>
+          <p className="note">
+            La courbe : <i className="dl-legend" style={{ '--c': g.seats.player.color } as React.CSSProperties} /> vous,{' '}
+            <i className="dl-legend dashed" style={{ '--c': g.seats.ai.color } as React.CSSProperties} /> {g.seats.ai.name}. L’écart est celui de cette année.
+          </p>
+          <table className="dl-yeartable">
+            <thead>{head}</thead>
+            <tbody>
+              {STATS.map((stat) => {
+                const values = SIDES_ORDER.map((side) => stat.value(now(side), startOf(g, side)))
+                return (
+                  <tr key={stat.id}>
+                    <td>
+                      {stat.label}
+                      <Spark g={g} stat={stat} />
+                    </td>
+                    {SIDES_ORDER.map((side, k) => (
+                      <StatCell key={side} stat={stat} now={values[k]} before={g.reports.length ? stat.value(stateAt(g, side, now(side).year - 1), startOf(g, side)) : undefined} />
+                    ))}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </section>
+        <section>
+          <h3>La note, critère par critère</h3>
+          <table className="dl-breakdown">
+            <thead>{head}</thead>
+            <tbody>
+              {parts[0].map((p, i) => (
+                <tr key={p.id} title={p.explanation}>
+                  <td>
+                    {p.label} <small>/ {p.weight}</small>
+                  </td>
+                  {parts.map((side, k) => (
+                    <td key={k} className={side[i].points >= parts[1 - k][i].points + 0.05 ? 'up' : ''}>
+                      {num(side[i].points, 1)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              <tr className="dl-total">
+                <td>Total</td>
+                {SIDES_ORDER.map((side) => (
+                  <td key={side}>{scoreOf(g.seats[side])}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section>
+          <h3>Les cartes jouées, année par année</h3>
+          {!g.reports.length ? <p className="note">Aucune année jouée pour l’instant.</p> : null}
+          {[...g.reports].reverse().map((r) => (
+            <div key={r.year} className="dl-history">
+              <strong>{r.year}</strong>
+              <div className="dl-versus">
+                {SIDES_ORDER.map((side) => (
+                  <div key={side} className="dl-side" style={{ '--c': g.seats[side].color } as React.CSSProperties}>
+                    <small>
+                      {g.seats[side].emblem} {name(side)} · note {r.sides[side].before} → {r.sides[side].health}
+                    </small>
+                    <ul className="dl-cardlines">
+                      {r.sides[side].played.map(({ card, cost }) => (
+                        <CardLine key={card.uid} g={g} card={card} side={side} cost={cost} />
+                      ))}
+                      {r.sides[side].received.map((c) => (
+                        <li key={c} className="down">
+                          {CRISES[c].art} Reçoit : {CRISES[c].name}
+                        </li>
+                      ))}
+                      {!r.sides[side].played.length && !r.sides[side].received.length ? <li className="dl-none">Rien.</li> : null}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function Final({ g, onReplay, onModel, onCompare, onClose }: { g: Game; onReplay: () => void; onModel: () => void; onCompare: () => void; onClose: () => void }) {
   const o = g.outcome!
+  useEffect(() => {
+    sfx(o.winner === 'player' ? 'victory' : o.winner === 'ai' ? 'defeat' : 'flip')
+  }, [o.winner])
   const title = o.winner === 'nul' ? '🤝 Match nul' : o.winner === 'player' ? '🏆 Vous gagnez !' : `${g.seats.ai.emblem} ${g.seats.ai.name} gagne`
   const parts = (side: Side) => healthParts(lastState(g.seats[side]), g.seats[side].states.find((x) => x.year === START_YEAR)!)
   const mine = parts('player')
@@ -801,6 +1144,9 @@ function Final({ g, onReplay, onModel, onClose }: { g: Game; onReplay: () => voi
           <button type="button" className="primary big" onClick={onReplay}>
             🔁 Nouveau duel
           </button>
+          <button type="button" className="ghost" onClick={onCompare}>
+            📊 Comparer les deux France
+          </button>
           <button type="button" className="ghost" onClick={onModel}>
             🧠 Comprendre le modèle
           </button>
@@ -824,7 +1170,7 @@ function Rules({ onClose }: { onClose: () => void }) {
             <strong>Chacun sa France.</strong> Vous et votre adversaire partez de la même France de 2027. Le modèle fait vivre chaque pays selon les cartes jouées.
           </li>
           <li>
-            <strong>Une pioche commune.</strong> 5 cartes au départ, puis 2 par an. Vos promesses et les siennes sont mêlées dedans : vous pouvez tomber sur les siennes.
+            <strong>Les mêmes cartes pour les deux.</strong> 5 cartes au départ, puis 2 par an, tirées d’une pioche commune : chaque carte tirée est donnée aux deux joueurs, chacun son exemplaire. Vos promesses et les siennes sont dedans. Seul le sondage fait piocher des cartes en plus, pour celui qui le joue.
           </li>
           <li>
             <strong>Touchez une carte :</strong> elle s’ouvre en grand, avec son effet expliqué par le modèle, et ce que vous pouvez en faire : la jouer, la jeter (+{DISCARD_GAIN} ⚡ tout de suite) ou la vendre au marché (l’acheteur paie, vous touchez l’énergie l’an prochain). L’adversaire peut vendre et acheter lui aussi.
