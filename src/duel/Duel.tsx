@@ -1147,7 +1147,7 @@ const NODE_ICON: Record<string, string> = {
  * L'effet d'une carte en pastilles : la note, puis les indicateurs qui bougent le plus.
  * Les couleurs se lisent de votre point de vue : une crise qui fait mal à l'adversaire est en vert.
  */
-function Effects({ impact, max = 3 }: { impact: Impact | null; max?: number }) {
+function Effects({ impact, max = 3, who }: { impact: Impact | null; max?: number; who?: string }) {
   if (!impact) {
     return null
   }
@@ -1155,17 +1155,18 @@ function Effects({ impact, max = 3 }: { impact: Impact | null; max?: number }) {
   const tone = (good: boolean) => (good !== foe ? 'good' : 'bad')
   return (
     <ul className="dl-fx" aria-label="L’effet prévu l’an prochain">
+      {foe ? <li className="dl-fx-where">🎯 Chez {who ?? 'lui'}</li> : null}
       <li className={`dl-fx-note ${impact.health ? tone(impact.health > 0) : ''}`} title={foe ? 'Sa note l’an prochain' : 'Votre note l’an prochain'}>
-        {foe ? '🎯 Sa note' : '📊 Note'} <b>{signed(impact.health)}</b>
+        {foe ? 'Sa note' : '📊 Votre note'} <b>{signed(impact.health)}</b>
       </li>
       {impact.indicators.slice(0, max).map((i) => (
         <li key={i.node} className={tone(i.good)} title={i.label}>
-          {NODE_ICON[i.node] ?? '•'} {i.text}
+          {NODE_ICON[i.node] ?? '•'} {i.label} {i.text}
         </li>
       ))}
       {Math.abs(impact.popularity) >= 1 ? (
         <li className={tone(impact.popularity > 0)} title="Popularité">
-          😊 {signed(impact.popularity)} %
+          😊 Popularité {signed(impact.popularity)} %
         </li>
       ) : null}
     </ul>
@@ -1217,7 +1218,7 @@ function CardModal({ g, pick, canAct, onClose, onWhy, ...actions }: { g: Game; p
                 </span>
               ) : null}
             </p>
-            {impact ? <Effects impact={impact} max={4} /> : <p className="dl-fx-rule">🎴 Change les règles du duel</p>}
+            {impact ? <Effects impact={impact} max={4} who={g.seats[impact.target].name} /> : <p className="dl-fx-rule">🎴 Change les règles du duel</p>}
             <button type="button" className="dl-why-link" onClick={onWhy}>
               🔍 Pourquoi ?
             </button>

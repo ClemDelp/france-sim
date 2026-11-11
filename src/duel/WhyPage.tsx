@@ -73,6 +73,7 @@ export function WhyPage({ g, card, side, kind, onBack }: { g: Game; card: Card; 
             </p>
           </section>
         ) : null}
+        {impact && card.kind !== 'mesure' && Math.abs(impact.budget.spending - impact.budget.revenue) >= 0.1 ? <BudgetLines impact={impact} whose={whose} /> : null}
         {card.kind === 'action' && ACTIONS[card.action].spend ? (
           <section>
             <h3>💶 Le budget de l’État cette année</h3>
@@ -146,6 +147,38 @@ function BudgetLine({ g, card, played }: { g: Game; card: Card; played: boolean 
         <b className={after < 0 ? 'bad' : 'good'}>{num(after, 0)} Md€</b>
         {after < 0 ? ` : au-delà de la marge, les marchés s’inquiètent (−${overshootMalus(-after)} ⚡ l’an prochain${-after >= ALERT_AT ? ', et Bruxelles sanctionne' : ''}).` : '.'}
       </p>
+    </section>
+  )
+}
+
+/**
+ * Le budget de l'État d'une crise ou d'un événement : le déficit bouge par ses postes (moins d'activité, moins de recettes ;
+ * plus de chômage, plus d'allocations), sans que personne n'ait rien voté.
+ */
+function BudgetLines({ impact, whose }: { impact: Impact; whose: string }) {
+  const { spending, revenue, lines } = impact.budget
+  const deficit = spending - revenue
+  const md = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${num(Math.abs(v), Math.abs(v) < 10 ? 1 : 0)} Md€`
+  return (
+    <section>
+      <h3>💶 Le budget de l’État ({whose})</h3>
+      <p>
+        Le déficit {deficit > 0 ? 'se creuse' : 'se réduit'} de <b className={deficit > 0 ? 'bad' : 'good'}>{num(Math.abs(deficit), Math.abs(deficit) < 10 ? 1 : 0)} Md€</b> : recettes{' '}
+        {md(revenue)}, dépenses {md(spending)}. Personne n’a rien voté : c’est l’économie qui bouge le budget (moins d’activité, moins d’impôts ; plus de chômage, plus d’allocations).
+      </p>
+      {lines.length ? (
+        <ul className="dl-moves">
+          {lines.slice(0, 6).map((l) => {
+            // Une dépense en plus ou une recette en moins creuse le déficit.
+            const worse = l.spending ? l.delta > 0 : l.delta < 0
+            return (
+              <li key={`${l.spending}-${l.label}`} className={worse ? 'bad' : 'good'}>
+                {l.spending ? '🧾' : '💰'} {l.label} : <b>{md(l.delta)}</b>
+              </li>
+            )
+          })}
+        </ul>
+      ) : null}
     </section>
   )
 }
