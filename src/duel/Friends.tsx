@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { cardName } from './cards'
-import { Intro, Setup, Table, type Stage } from './Duel'
+import { Intro, ResumeScreen, Setup, Table, type Stage } from './Duel'
 import { newGame, other, resolveYear, type Game, type Player, type Side } from './engine'
 import { GuestMatch, HostMatch, type Saved } from './match'
 import { actorOf, applyIntent, entrantPlayer, isCode, newCode, viewFor, type Entrant, type Intent } from './online'
 import { openGuest, openHost, type NetState } from './peer'
+import { loadGame, LOCAL_KEY, saveGame } from './save'
 import { sfx } from './sound'
 import './duel.css'
 
@@ -443,12 +444,23 @@ function lastMoves(g: Game, side: Side): string[] {
   return out
 }
 
+/** Ce qu'on garde en plus de la partie à deux : qui tient le téléphone, et ce que chacun a déjà vu. */
+type LocalExtra = { holder: Side; seen: Record<Side, { reports: number; year: number }> }
+
 export function HotSeat({ onExit }: { onExit: () => void }) {
+  /** La partie à deux gardée dans le navigateur, qu'on propose de reprendre. */
+  const [saved, setSaved] = useState(() => loadGame<LocalExtra>(LOCAL_KEY))
   const [game, setGame] = useState<Game | null>(null)
   /** Qui tient le téléphone (la table est vue de sa place). */
   const [holder, setHolder] = useState<Side>('player')
   /** Ce que chacun a déjà vu : les bilans d'année, et la conjoncture de quelle année. */
   const [seen, setSeen] = useState<Record<Side, { reports: number; year: number }>>({ player: { reports: 0, year: 0 }, ai: { reports: 0, year: 0 } })
+
+  useEffect(() => {
+    if (game) {
+      saveGame<LocalExtra>(LOCAL_KEY, game, { holder, seen })
+    }
+  }, [game, holder, seen])
 
   // Les deux ont passé : l'année se joue.
   useEffect(() => {
@@ -459,6 +471,20 @@ export function HotSeat({ onExit }: { onExit: () => void }) {
     return () => window.clearTimeout(id)
   }, [game])
 
+  if (!game && saved) {
+    return (
+      <ResumeScreen
+        game={saved.game}
+        onResume={() => {
+          setHolder(saved.extra.holder)
+          setSeen(saved.extra.seen)
+          setGame(saved.game)
+        }}
+        onNew={() => setSaved(null)}
+        onExit={onExit}
+      />
+    )
+  }
   if (!game) {
     return (
       <Setup
@@ -523,7 +549,11 @@ export function HotSeat({ onExit }: { onExit: () => void }) {
       initialStage={initial}
       onIntent={(i: Intent) => setGame(applyIntent(game, holder, i))}
       onExit={onExit}
-      onReplay={() => setGame(null)}
+      onReplay={() => {
+        setSaved(null)
+        setGame(null)
+      }}
+      saved
       onStage={(stage) => {
         if (stage === 'play' && (mine.reports < game.reports.length || mine.year < game.year)) {
           setSeen((s) => ({ ...s, [holder]: { reports: game.reports.length, year: game.year } }))

@@ -35,7 +35,18 @@ function InstallCard() {
 }
 
 /** L'écran d'accueil : jouer un duel (contre l'IA ou un ami), ou lire « À propos du jeu » (d'où l'on ouvre le modèle). */
-export function Home({ onDuel, onFriends, onAbout }: { onDuel: () => void; onFriends: () => void; onAbout: () => void }) {
+export function Home({
+  onDuel,
+  onFriends,
+  onAbout,
+  resume = null,
+}: {
+  onDuel: () => void
+  onFriends: () => void
+  onAbout: () => void
+  /** Une partie contre l'IA en cours : la reprendre d'un geste. */
+  resume?: { label: string; go: () => void } | null
+}) {
   return (
     <div className="home" role="dialog" aria-modal="true" aria-label="Accueil">
       <div className="home-inner">
@@ -49,6 +60,13 @@ export function Home({ onDuel, onFriends, onAbout }: { onDuel: () => void; onFri
           <p>Deux présidents, deux France, un jeu de cartes. Derrière chaque carte, un vrai modèle de l’économie française.</p>
         </header>
         <section className="home-menu">
+          {resume ? (
+            <button type="button" className="menu-card menu-resume" onClick={resume.go}>
+              <span>▶️</span>
+              <strong>Reprendre la partie</strong>
+              <small>💾 {resume.label}</small>
+            </button>
+          ) : null}
           <button type="button" className="menu-card menu-duel" onClick={onDuel}>
             <span>🃏</span>
             <strong>Jouer un duel</strong>

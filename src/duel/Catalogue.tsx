@@ -6,6 +6,7 @@ import { CONTEXTS, type ContextId } from './contexts'
 import { baseCost, budgetCost, neutralGame } from './engine'
 import { cardImpact, type Impact } from './why'
 import { WhyPage } from './WhyPage'
+import { useBack } from './back'
 
 /**
  * Toutes les cartes du jeu, pour comprendre (et déboguer) le duel : les mesures, les promesses de chaque candidat,
@@ -102,6 +103,8 @@ export function Catalogue({ onClose }: { onClose: () => void }) {
   const [who, setWho] = useState('')
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState<Entry | null>(null)
+  // Le retour du téléphone referme la carte ouverte, pas tout le catalogue.
+  useBack(!!open, () => setOpen(null))
   const [computed, setComputed] = useState<Map<string, Computed>>(() => new Map())
 
   // Le modèle calcule chaque carte à son tour, sans bloquer l'écran.
@@ -237,7 +240,18 @@ export function Catalogue({ onClose }: { onClose: () => void }) {
         })}
         {!shown.length && !contexts.length ? <p className="note">Aucune carte ne correspond.</p> : null}
       </div>
-      {open ? <WhyPage g={g} card={open.card} side="player" kind={open.kind} onBack={() => setOpen(null)} backLabel="← Toutes les cartes" neutral /> : null}
+      {open ? (
+        <WhyPage
+          g={g}
+          card={open.card}
+          side="player"
+          kind={open.kind}
+          onBack={() => setOpen(null)}
+          backLabel="← Toutes les cartes"
+          neutral
+          pager={{ index: Math.max(0, shown.findIndex((e) => e.card.uid === open.card.uid)), count: shown.length, onGo: (i) => setOpen(shown[i]) }}
+        />
+      ) : null}
     </div>
   )
 }

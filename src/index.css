@@ -27,6 +27,8 @@ body {
   margin: 0;
   background: radial-gradient(ellipse at top, #18234a 0%, var(--bg) 60%) fixed;
   min-height: 100dvh;
+  /* Pas de rebond ni de « tirer pour recharger » qui ferait perdre la partie. */
+  overscroll-behavior: none;
 }
 
 button {
@@ -2790,6 +2792,12 @@ button.brand {
 .menu-card small,
 .scenario-card small {
   color: var(--muted);
+}
+
+/* Une partie en cours : le premier bouton de l'accueil. */
+.menu-card.menu-resume {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, rgba(245, 183, 0, 0.18), var(--panel) 70%);
 }
 
 .menu-tutorial {

@@ -46,6 +46,9 @@ import { setSoundOn, sfx, soundOn, type Sfx } from './sound'
 import { setTauntsOn, taunt, tauntsOn, type Moment } from './taunts'
 import { cardImpact, contextShift, type Impact } from './why'
 import { WhyPage } from './WhyPage'
+import { unwind, useBack } from './back'
+import { loadGame, saveGame, SOLO_KEY } from './save'
+import { useSwipe } from './swipe'
 import './duel.css'
 
 const AI_DELAY = 1100
@@ -55,10 +58,21 @@ export type Stage = 'context' | 'play' | 'report'
 type Pick = { card: Card; where: 'main' | 'marche' | 'table' | 'adverse' }
 
 /** Le duel contre l'IA : choisir les présidents, puis jouer année après année, chacun son tour, en plein écran. */
-export function Duel({ onExit }: { onExit: () => void }) {
-  const [game, setGame] = useState<Game | null>(null)
+export function Duel({ onExit, resume = false }: { onExit: () => void; resume?: boolean }) {
+  /** La partie gardée dans le navigateur : on la reprend tout de suite (bouton « Reprendre » de l'accueil), ou on propose de la reprendre. */
+  const [saved, setSaved] = useState(() => loadGame<{ stage: Stage }>(SOLO_KEY))
+  const [game, setGame] = useState<Game | null>(() => (resume ? (saved?.game ?? null) : null))
   /** Ce que regarde le joueur : l'IA attend qu'il soit à la table (pas devant la conjoncture ou le bilan). */
-  const [stage, setStage] = useState<Stage>('context')
+  const [stage, setStage] = useState<Stage>(() => (resume && saved ? saved.extra.stage : 'context'))
+  /** La table s'ouvre là où on l'avait laissée. */
+  const [initial, setInitial] = useState<Stage>(stage)
+
+  // Après chaque geste, la partie est gardée (et oubliée une fois finie).
+  useEffect(() => {
+    if (game) {
+      saveGame(SOLO_KEY, game, { stage })
+    }
+  }, [game, stage])
 
   // L'adversaire joue son tour (ou répond à votre crise) après un temps de réflexion ; quand les deux ont passé, l'année se joue.
   useEffect(() => {
@@ -74,6 +88,20 @@ export function Duel({ onExit }: { onExit: () => void }) {
     return () => window.clearTimeout(id)
   }, [game, stage])
 
+  if (!game && saved) {
+    return (
+      <ResumeScreen
+        game={saved.game}
+        onResume={() => {
+          setInitial(saved.extra.stage)
+          setStage(saved.extra.stage)
+          setGame(saved.game)
+        }}
+        onNew={() => setSaved(null)}
+        onExit={onExit}
+      />
+    )
+  }
   if (!game) {
     return (
       <Setup
@@ -81,12 +109,72 @@ export function Duel({ onExit }: { onExit: () => void }) {
         onExit={onExit}
         onStart={(player, ai, years) => {
           setGame(newGame(player, ai!, { seed: Math.floor(Math.random() * 1e9), years }))
+          setInitial('context')
           setStage('context')
         }}
       />
     )
   }
-  return <Table game={game} onIntent={(i) => setGame(applyIntent(game, 'player', i))} onExit={onExit} onReplay={() => setGame(null)} onStage={setStage} taunts />
+  return (
+    <Table
+      key={game.seed}
+      game={game}
+      initialStage={initial}
+      onIntent={(i) => setGame(applyIntent(game, 'player', i))}
+      onExit={onExit}
+      onReplay={() => {
+        setSaved(null)
+        setGame(null)
+      }}
+      onStage={setStage}
+      taunts
+      saved
+    />
+  )
+}
+
+/** Une partie en cours attend : la reprendre là où on l'a laissée, ou en commencer une autre. */
+export function ResumeScreen({ game, onResume, onNew, onExit }: { game: Game; onResume: () => void; onNew: () => void; onExit: () => void }) {
+  const me = game.seats.player
+  const foe = game.seats.ai
+  return (
+    <div className="dlg dlg-setup dlo dlo-solo">
+      <main className="dlo-lobby dl-resume">
+        <p className="dl-resume-vs" aria-hidden="true">
+          <span style={{ '--c': me.color } as React.CSSProperties}>{me.emblem}</span>
+          <b>VS</b>
+          <span style={{ '--c': foe.color } as React.CSSProperties}>{foe.emblem}</span>
+        </p>
+        <p className="dlo-status">💾 Une partie vous attend</p>
+        <p className="dl-resume-score">
+          🗓️ {game.year} · {me.name} <b>{scoreOf(me)}</b> – <b>{scoreOf(foe)}</b> {foe.name}
+        </p>
+        <button
+          type="button"
+          className="primary big"
+          onClick={() => {
+            sfx('select')
+            onResume()
+          }}
+        >
+          ▶ Reprendre la partie
+        </button>
+        <button
+          type="button"
+          className="ghost"
+          onClick={() => {
+            sfx('click')
+            onNew()
+          }}
+        >
+          🆕 Nouvelle partie
+        </button>
+        <button type="button" className="ghost small" onClick={onExit}>
+          ← Accueil
+        </button>
+      </main>
+    </div>
+  )
 }
 
 /**
@@ -103,6 +191,7 @@ export function Table({
   badge,
   status,
   taunts = false,
+  saved = false,
 }: {
   game: Game
   onIntent: (intent: Intent) => void
@@ -116,6 +205,8 @@ export function Table({
   status?: React.ReactNode
   /** L'adversaire est l'IA : elle commente la partie (une bulle au-dessus de sa fiche). */
   taunts?: boolean
+  /** La partie est gardée dans le navigateur : on pourra la reprendre après l'avoir quittée. */
+  saved?: boolean
 }) {
   const [stage, setStage] = useState<Stage>(initialStage)
   const [rules, setRules] = useState(initialStage === 'context' && !game.reports.length)
@@ -133,6 +224,19 @@ export function Table({
   /** La réplique de l'IA en cours (une bulle qui s'efface), et celle du bilan de l'année ou de la fin. */
   const [quip, setQuip] = useState<string | null>(null)
   const [yearQuip, setYearQuip] = useState<string | null>(null)
+  /** Le retour du téléphone sur la table : on demande avant de quitter la partie. */
+  const [quit, setQuit] = useState(false)
+  const leave = () => unwind(onExit)
+  // Le geste « retour » referme d'abord ce qui est ouvert (la garde de la table d'abord : elle est la plus ancienne).
+  useBack(!quit, () => setQuit(true))
+  useBack(quit, () => setQuit(false))
+  useBack(rules, () => setRules(false))
+  useBack(settings, () => setSettings(false))
+  useBack(context, () => setContext(false))
+  useBack(compare, () => setCompare(false))
+  useBack(stage === 'report', () => setStage(game.outcome ? 'play' : 'context'))
+  useBack(!!pick, () => setPick(null))
+  useBack(!!why, () => setWhy(null))
   const quipTimer = useRef(0)
   const say = (moment: Moment) => {
     const line = taunts ? taunt(game.seats.ai.candidate?.id ?? null, moment) : null
@@ -215,7 +319,7 @@ export function Table({
   return (
     <div className="dlg">
       <header className="dlg-top">
-        <button type="button" className="ghost small" onClick={onExit} title="Accueil">
+        <button type="button" className="ghost small" onClick={leave} title="Accueil">
           ←<span className="dlg-lbl"> Accueil</span>
         </button>
         <div className="dlg-mid">
@@ -389,6 +493,8 @@ export function Table({
         <CardModal
           g={game}
           pick={pick}
+          group={groupOf(game, pick)}
+          onGo={(card) => setPick({ card, where: pick.where })}
           canAct={myTurn}
           onClose={() => setPick(null)}
           onWhy={() => setWhy({ g: game, card: pick.card, side: pick.where === 'adverse' ? 'ai' : 'player' })}
@@ -404,7 +510,46 @@ export function Table({
       {compare ? <Compare g={game} onClose={() => setCompare(false)} /> : null}
       {rules ? <Rules onClose={() => setRules(false)} /> : null}
       {why ? <WhyPage g={why.g} card={why.card} side={why.side} kind={kindOf(why.g, why.card, why.side)} onBack={() => setWhy(null)} /> : null}
+      {quit ? <QuitModal saved={saved} onStay={() => setQuit(false)} onLeave={leave} /> : null}
       {status}
+    </div>
+  )
+}
+
+/** Les cartes du même endroit que celle qu'on regarde : votre main, le marché, vos cartes posées, celles de l'adversaire. */
+function groupOf(g: Game, pick: Pick): Card[] {
+  const foe = g.seats.ai
+  switch (pick.where) {
+    case 'main':
+      return g.seats.player.hand
+    case 'marche':
+      return g.market.map((l) => l.card)
+    case 'table':
+      return g.seats.player.played.map((p) => p.card)
+    case 'adverse':
+      return foe.played.some((p) => p.card.uid === pick.card.uid) ? foe.played.map((p) => p.card) : foe.hand
+  }
+}
+
+/** Le retour du téléphone sur la table : quitter vraiment, ou rester. */
+function QuitModal({ saved, onStay, onLeave }: { saved: boolean; onStay: () => void; onLeave: () => void }) {
+  return (
+    <div className="modal-backdrop on-top" role="presentation" onClick={onStay}>
+      <div className="modal dl-quit" role="alertdialog" aria-modal="true" aria-label="Quitter la partie ?" onClick={(e) => e.stopPropagation()}>
+        <p className="dl-quit-icon" aria-hidden="true">
+          🚪
+        </p>
+        <h2>Quitter la partie ?</h2>
+        {saved ? <p className="note">💾 Elle est gardée : reprenez-la depuis l’accueil.</p> : null}
+        <div className="dl-quit-actions">
+          <button type="button" className="primary" onClick={onStay}>
+            ↩️ Rester
+          </button>
+          <button type="button" className="ghost" onClick={onLeave}>
+            🚪 Quitter
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1174,8 +1319,23 @@ function Effects({ impact, max = 3, who }: { impact: Impact | null; max?: number
   )
 }
 
-function CardModal({ g, pick, canAct, onClose, onWhy, ...actions }: { g: Game; pick: Pick; canAct: boolean; onClose: () => void; onWhy: () => void } & CardActions) {
+function CardModal({
+  g,
+  pick,
+  group,
+  onGo,
+  canAct,
+  onClose,
+  onWhy,
+  ...actions
+}: { g: Game; pick: Pick; group: Card[]; onGo: (card: Card) => void; canAct: boolean; onClose: () => void; onWhy: () => void } & CardActions) {
   const { card } = pick
+  // Les autres cartes du même endroit (votre main, le marché…) : on les feuillette d'un geste.
+  const index = Math.max(0, group.findIndex((c) => c.uid === card.uid))
+  const swipe = useSwipe(index, group.length, (i) => {
+    sfx('hover')
+    onGo(group[i])
+  })
   // Une carte de l'adversaire s'explique de son point de vue : sa mesure sur sa France, sa crise sur la vôtre.
   const side: Side = pick.where === 'adverse' ? 'ai' : 'player'
   const impact = useMemo(() => cardImpact(g, side, card), [g, side, card])
@@ -1190,12 +1350,17 @@ function CardModal({ g, pick, canAct, onClose, onWhy, ...actions }: { g: Game; p
   const md = !spends ? null : played ? (played.md ?? 0) : budgetCost(g, side, card)
   return (
     <div className="modal-backdrop on-top" role="presentation" onClick={onClose}>
-      <div className="modal dl-cardmodal" role="dialog" aria-modal="true" aria-label={cardName(card)} onClick={(e) => e.stopPropagation()}>
+      <div className="modal dl-cardmodal dl-swipe" role="dialog" aria-modal="true" aria-label={cardName(card)} onClick={(e) => e.stopPropagation()} {...swipe.handlers}>
         <button type="button" className="dl-close" onClick={onClose} aria-label="Fermer">
           ✕
         </button>
+        <Pager index={index} count={group.length} onGo={(i) => onGo(group[i])} />
         <div className="dl-cardmodal-body">
-          <div className={`dl-card big ${kind.cls} ${rarityClass(card)}`}>
+          <div
+            key={swipe.turn}
+            className={`dl-card big ${kind.cls} ${rarityClass(card)} ${swipe.dx ? 'is-dragged' : ''} ${swipe.from ? `from-${swipe.from}` : ''}`}
+            style={swipe.dx ? { transform: `translateX(${swipe.dx}px) rotate(${swipe.dx / 40}deg)` } : undefined}
+          >
             <span className="dl-cost">{listing ? `${listing.price} ⚡` : `⚡${cost}`}</span>
             <span className="dl-kind">{kind.label}</span>
             {/* L'emplacement de l'illustration : un emoji pour l'instant, une image plus tard. */}
@@ -1231,6 +1396,33 @@ function CardModal({ g, pick, canAct, onClose, onWhy, ...actions }: { g: Game; p
         </footer>
       </div>
     </div>
+  )
+}
+
+/** Où l'on est dans le paquet feuilleté : « 3/7 », des points, et des flèches (à la souris). */
+export function Pager({ index, count, onGo }: { index: number; count: number; onGo: (index: number) => void }) {
+  if (count < 2) {
+    return null
+  }
+  return (
+    <p className="dl-pager" aria-label={`Carte ${index + 1} sur ${count}`}>
+      <button type="button" className="dl-pager-arrow" disabled={index === 0} onClick={() => onGo(index - 1)} aria-label="Carte précédente">
+        ‹
+      </button>
+      {count <= 10 ? (
+        <span className="dl-dots" aria-hidden="true">
+          {Array.from({ length: count }, (_, i) => (
+            <i key={i} className={i === index ? 'is-on' : ''} />
+          ))}
+        </span>
+      ) : null}
+      <small>
+        {index + 1}/{count}
+      </small>
+      <button type="button" className="dl-pager-arrow" disabled={index === count - 1} onClick={() => onGo(index + 1)} aria-label="Carte suivante">
+        ›
+      </button>
+    </p>
   )
 }
 

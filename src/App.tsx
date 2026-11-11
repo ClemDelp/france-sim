@@ -9,6 +9,8 @@ import { UpdateBanner } from './ui/game/UpdateBanner'
 import { Duel } from './duel/Duel'
 import { Friends, GuestScreen, HostScreen, HotSeat } from './duel/Friends'
 import { Catalogue } from './duel/Catalogue'
+import { useBack } from './duel/back'
+import { loadGame, resumeLabel, SOLO_KEY } from './duel/save'
 
 /**
  * Les écrans : l'accueil, le duel contre l'IA (lien #duel), « À propos du jeu » (#apropos), et jouer avec un ami (#ami) :
@@ -33,6 +35,13 @@ function App() {
   /** Le modèle ouvert, et la variable à montrer (ou null : la vue d'ensemble). */
   const [model, setModel] = useState<{ focus: string | null } | null>(() => (window.location.hash === '#modele' ? { focus: null } : null))
   const [cards, setCards] = useState(() => window.location.hash === '#cartes')
+  /** « Reprendre la partie » depuis l'accueil : le duel s'ouvre directement sur la partie gardée. */
+  const [resume, setResume] = useState(false)
+  // La partie gardée, qu'on propose de reprendre sur l'accueil (relue à chaque retour à l'accueil).
+  const saved = useMemo(() => (screen === 'accueil' ? loadGame(SOLO_KEY) : null), [screen])
+  // Ouverts par-dessus un écran (pas par leur lien) : le retour du téléphone les referme, sans quitter l'écran.
+  useBack(cards && window.location.hash !== '#cartes', () => setCards(false))
+  useBack(!!model && window.location.hash !== '#modele', () => setModel(null))
   useEffect(() => {
     const onHash = () => {
       setRoute(fromHash())
@@ -59,8 +68,28 @@ function App() {
 
   return (
     <>
-      {screen === 'accueil' ? <Home onDuel={() => go('duel')} onFriends={() => go('ami')} onAbout={() => go('apropos')} /> : null}
-      {screen === 'duel' ? <Duel onExit={() => go('accueil')} /> : null}
+      {screen === 'accueil' ? (
+        <Home
+          onDuel={() => {
+            setResume(false)
+            go('duel')
+          }}
+          resume={
+            saved
+              ? {
+                  label: resumeLabel(saved.game),
+                  go: () => {
+                    setResume(true)
+                    go('duel')
+                  },
+                }
+              : null
+          }
+          onFriends={() => go('ami')}
+          onAbout={() => go('apropos')}
+        />
+      ) : null}
+      {screen === 'duel' ? <Duel resume={resume} onExit={() => go('accueil')} /> : null}
       {screen === 'ami' ? <Friends onExit={() => go('accueil')} onHost={(c) => go('heberger', c)} onJoin={(c) => go('rejoindre', c)} onLocal={() => go('local')} /> : null}
       {screen === 'heberger' ? <HostScreen key={code} code={code} onExit={() => go('accueil')} /> : null}
       {screen === 'rejoindre' ? <GuestScreen key={code} code={code} onExit={() => go('accueil')} /> : null}

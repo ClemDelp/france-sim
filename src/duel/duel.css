@@ -3269,3 +3269,161 @@ button.dlc-row:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* — Feuilleter les cartes d'un geste : la carte suit le doigt, puis la suivante arrive du côté opposé */
+
+.dl-swipe {
+  /* Le défilement vertical reste au navigateur ; le geste horizontal est à nous. */
+  touch-action: pan-y;
+}
+.dl-swipe .dl-card.big {
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.dl-swipe .dl-card.big.is-dragged {
+  transition: none;
+}
+.dl-card.big.from-droite {
+  animation: dl-from-right 0.26s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.dl-card.big.from-gauche {
+  animation: dl-from-left 0.26s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes dl-from-right {
+  from {
+    transform: translateX(70%) rotate(4deg);
+    opacity: 0;
+  }
+}
+@keyframes dl-from-left {
+  from {
+    transform: translateX(-70%) rotate(-4deg);
+    opacity: 0;
+  }
+}
+.dl-pager {
+  align-self: center;
+  margin: -6px 0 -4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.dl-pager small {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.dl-dots {
+  display: flex;
+  gap: 5px;
+}
+.dl-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+.dl-dots i.is-on {
+  opacity: 1;
+  background: var(--gold);
+  transform: scale(1.35);
+}
+/* Les flèches : seulement à la souris (au doigt, on glisse). */
+.dl-pager-arrow {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 761px) {
+  .dl-pager-arrow {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 26px;
+    border: 1px solid var(--rule);
+    border-radius: 9px;
+    background: none;
+    color: var(--ink);
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+  .dl-pager-arrow:hover:not(:disabled) {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .dl-pager-arrow:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dl-card.big.from-droite,
+  .dl-card.big.from-gauche {
+    animation: none;
+  }
+  .dl-swipe .dl-card.big {
+    transition: none;
+  }
+}
+
+/* — Le retour du téléphone sur la table : quitter, ou rester */
+
+.modal.dl-quit {
+  width: min(340px, calc(100vw - 32px));
+  padding: 22px 20px 18px;
+  text-align: center;
+  display: grid;
+  gap: 8px;
+}
+.dl-quit h2 {
+  margin: 0;
+}
+.dl-quit .note {
+  margin: 0;
+}
+.dl-quit-icon {
+  margin: 0;
+  font-size: 2.4rem;
+}
+.dl-quit-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* — Reprendre une partie gardée */
+
+.dl-resume {
+  gap: 14px;
+}
+.dl-resume-vs {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 3rem;
+}
+.dl-resume-vs span {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 20px;
+  border: 2px solid var(--c);
+  background: color-mix(in srgb, var(--c) 25%, transparent);
+}
+.dl-resume-vs b {
+  font-size: 2rem;
+  font-style: italic;
+  color: var(--gold);
+}
+.dl-resume-score {
+  margin: 0;
+  color: var(--muted);
+}
+.dl-resume-score b {
+  color: var(--ink);
+  font-size: 1.3rem;
+}

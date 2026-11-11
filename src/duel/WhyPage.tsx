@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { num } from '../ui/format'
 import { ACTIONS, cardArt, cardName, CRISES, crisisEvent, inModel, type Card } from './cards'
 import { ALERT_AT, budgetCost, contextOf, marginLeft, overshootMalus, type Game, type Side } from './engine'
+import { useSwipe } from './swipe'
 import { cardImpact, contextShift, CRITERION_NODE, crisisEffects, leverChanges, openCatalogue, openModel, startNodes, whyTree, type Detail, type Impact, type Indicator, type WhyNode } from './why'
 
 const signed = (v: number, digits = 0) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${num(Math.abs(v), digits)}`
@@ -20,6 +21,7 @@ export function WhyPage({
   onBack,
   backLabel = '← Retour au jeu',
   neutral = false,
+  pager,
 }: {
   g: Game
   card: Card
@@ -29,7 +31,10 @@ export function WhyPage({
   backLabel?: string
   /** Hors partie (le catalogue) : une France de 2027 neutre, sans conjoncture ni marge à surveiller. */
   neutral?: boolean
+  /** Feuilleter une liste de cartes d'un geste (le catalogue) : où l'on est, et aller à une autre. */
+  pager?: { index: number; count: number; onGo: (index: number) => void }
 }) {
+  const swipe = useSwipe(pager?.index ?? 0, pager?.count ?? 0, (i) => pager?.onGo(i))
   const impact = useMemo(() => cardImpact(g, side, card), [g, side, card])
   const levers = card.kind === 'mesure' ? leverChanges(g, side, card) : []
   const starts = startNodes(g, side, card)
@@ -47,9 +52,28 @@ export function WhyPage({
           {backLabel}
         </button>
         <strong className="dl-year">🔍 Pourquoi ?</strong>
-        <span />
+        {pager && pager.count > 1 ? (
+          <span className="dl-whypager">
+            <button type="button" className="ghost small" disabled={pager.index === 0} onClick={() => pager.onGo(pager.index - 1)} aria-label="Carte précédente">
+              ‹
+            </button>
+            <small>
+              {pager.index + 1}/{pager.count}
+            </small>
+            <button type="button" className="ghost small" disabled={pager.index === pager.count - 1} onClick={() => pager.onGo(pager.index + 1)} aria-label="Carte suivante">
+              ›
+            </button>
+          </span>
+        ) : (
+          <span />
+        )}
       </header>
-      <div className="dl-whypage-body dl-explain">
+      <div
+        key={swipe.turn}
+        className={`dl-whypage-body dl-explain ${pager ? 'dl-swipe' : ''} ${swipe.from ? `from-${swipe.from}` : ''}`}
+        style={swipe.dx ? { transform: `translateX(${swipe.dx}px)`, transition: 'none' } : undefined}
+        {...(pager ? swipe.handlers : {})}
+      >
         <section className={`dl-whyhead ${kind.cls}`}>
           <span className="dl-whyhead-art" aria-hidden="true">
             {cardArt(card)}
