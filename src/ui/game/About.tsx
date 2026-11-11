@@ -16,7 +16,7 @@ const FILES: { file: string; what: string }[] = [
  * À propos du jeu : d'où il vient, comment marche le modèle derrière les cartes, et comment aider à l'améliorer.
  * C'est d'ici (et seulement d'ici) qu'on ouvre le modèle : le jeu, lui, reste un jeu.
  */
-export function About({ onBack, onModel }: { onBack: () => void; onModel: () => void }) {
+export function About({ onBack, onModel, onCards }: { onBack: () => void; onModel: () => void; onCards: () => void }) {
   return (
     <div className="home about" role="dialog" aria-modal="true" aria-label="À propos du jeu">
       <div className="home-inner">
@@ -49,6 +49,9 @@ export function About({ onBack, onModel }: { onBack: () => void; onModel: () => 
           </p>
           <button type="button" className="primary big" onClick={onModel}>
             🧠 Explorer le modèle : le graphe des causes, les paramètres, les sources
+          </button>
+          <button type="button" className="ghost big" onClick={onCards}>
+            🃏 Toutes les cartes du jeu : coût, budget, effets, et dans quelles parties elles sont
           </button>
         </section>
         <section className="about-block">

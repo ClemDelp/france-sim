@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { num } from '../ui/format'
 import { ACTIONS, cardArt, cardName, CRISES, crisisEvent, inModel, type Card } from './cards'
 import { ALERT_AT, budgetCost, contextOf, marginLeft, overshootMalus, type Game, type Side } from './engine'
-import { cardImpact, contextShift, CRITERION_NODE, crisisEffects, leverChanges, openModel, startNodes, whyTree, type Detail, type Impact, type Indicator, type WhyNode } from './why'
+import { cardImpact, contextShift, CRITERION_NODE, crisisEffects, leverChanges, openCatalogue, openModel, startNodes, whyTree, type Detail, type Impact, type Indicator, type WhyNode } from './why'
 
 const signed = (v: number, digits = 0) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${num(Math.abs(v), digits)}`
 const arrow = (up: boolean | null) => (up === null ? '↕' : up ? '↑' : '↓')
@@ -12,7 +12,24 @@ const arrow = (up: boolean | null) => (up === null ? '↕' : up ? '↑' : '↓')
  * Ce que la carte change, le budget, la note critère par critère, les indicateurs, et l'histoire dans le modèle.
  * La partie reste en dessous, telle quelle : « Retour » y ramène.
  */
-export function WhyPage({ g, card, side, kind, onBack }: { g: Game; card: Card; side: Side; kind: { cls: string; label: string }; onBack: () => void }) {
+export function WhyPage({
+  g,
+  card,
+  side,
+  kind,
+  onBack,
+  backLabel = '← Retour au jeu',
+  neutral = false,
+}: {
+  g: Game
+  card: Card
+  side: Side
+  kind: { cls: string; label: string }
+  onBack: () => void
+  backLabel?: string
+  /** Hors partie (le catalogue) : une France de 2027 neutre, sans conjoncture ni marge à surveiller. */
+  neutral?: boolean
+}) {
   const impact = useMemo(() => cardImpact(g, side, card), [g, side, card])
   const levers = card.kind === 'mesure' ? leverChanges(g, side, card) : []
   const starts = startNodes(g, side, card)
@@ -27,7 +44,7 @@ export function WhyPage({ g, card, side, kind, onBack }: { g: Game; card: Card; 
     <div className="dl-whypage" role="dialog" aria-modal="true" aria-label={`Pourquoi : ${cardName(card)}`}>
       <header className="dlg-top">
         <button type="button" className="ghost small dl-back-btn" onClick={onBack}>
-          ← Retour au jeu
+          {backLabel}
         </button>
         <strong className="dl-year">🔍 Pourquoi ?</strong>
         <span />
@@ -56,8 +73,8 @@ export function WhyPage({ g, card, side, kind, onBack }: { g: Game; card: Card; 
             </ul>
           </section>
         ) : null}
-        {card.kind === 'mesure' && side === 'player' ? <BudgetLine g={g} card={card} played={played} /> : null}
-        {shift ? (
+        {card.kind === 'mesure' && side === 'player' ? <BudgetLine g={g} card={card} played={played} neutral={neutral} impact={impact} /> : null}
+        {shift && !neutral ? (
           <p className="dl-ctxnote">
             {ctx.art} {ctx.name} : {shift < 0 ? `${-shift} ⚡ de moins` : `${shift} ⚡ de plus`} cette année. {ctx.rule}
           </p>
@@ -127,6 +144,11 @@ export function WhyPage({ g, card, side, kind, onBack }: { g: Game; card: Card; 
           <button type="button" className="ghost" onClick={() => openModel(starts[0]?.node ?? null)}>
             🧠 Explorer le modèle
           </button>
+          {neutral ? null : (
+            <button type="button" className="ghost" onClick={openCatalogue}>
+              🃏 Toutes les cartes
+            </button>
+          )}
         </section>
       </div>
     </div>
@@ -134,7 +156,7 @@ export function WhyPage({ g, card, side, kind, onBack }: { g: Game; card: Card; 
 }
 
 /** Ce que la mesure coûte au budget, et ce qu'il reste de la marge de l'année si on la joue. */
-function BudgetLine({ g, card, played }: { g: Game; card: Card; played: boolean }) {
+function BudgetLine({ g, card, played, neutral, impact }: { g: Game; card: Card; played: boolean; neutral: boolean; impact: Impact | null }) {
   const s = g.seats.player
   const md = played ? (s.played.find((p) => p.card.uid === card.uid)?.md ?? 0) : budgetCost(g, 'player', card)
   const after = played ? marginLeft(s) : marginLeft(s) - md
@@ -143,10 +165,15 @@ function BudgetLine({ g, card, played }: { g: Game; card: Card; played: boolean 
       <h3>💶 Le budget de l’État cette année</h3>
       <p>
         La mesure {md > 0.05 ? 'coûte' : md < -0.05 ? 'rapporte' : 'ne change presque rien :'} <b className={md > 0.05 ? 'bad' : 'good'}>{num(Math.abs(md), Math.abs(md) < 10 ? 1 : 0)} Md€</b>
-        {md > 0.05 ? ' de déficit en plus' : md < -0.05 ? ' (déficit en moins)' : ''}, selon le modèle. Marge restante {played ? '' : 'après elle '}:{' '}
-        <b className={after < 0 ? 'bad' : 'good'}>{num(after, 0)} Md€</b>
-        {after < 0 ? ` : au-delà de la marge, les marchés s’inquiètent (−${overshootMalus(-after)} ⚡ l’an prochain${-after >= ALERT_AT ? ', et Bruxelles sanctionne' : ''}).` : '.'}
+        {md > 0.05 ? ' de déficit en plus' : md < -0.05 ? ' (déficit en moins)' : ''}, selon le modèle{neutral ? ', la première année, sur la France de 2027.' : '. '}
+        {neutral ? null : (
+          <>
+            Marge restante {played ? '' : 'après elle '}: <b className={after < 0 ? 'bad' : 'good'}>{num(after, 0)} Md€</b>
+            {after < 0 ? ` : au-delà de la marge, les marchés s’inquiètent (−${overshootMalus(-after)} ⚡ l’an prochain${-after >= ALERT_AT ? ', et Bruxelles sanctionne' : ''}).` : '.'}
+          </>
+        )}
       </p>
+      {impact ? <LineList lines={impact.budget.lines} /> : null}
     </section>
   )
 }
@@ -158,7 +185,6 @@ function BudgetLine({ g, card, played }: { g: Game; card: Card; played: boolean 
 function BudgetLines({ impact, whose }: { impact: Impact; whose: string }) {
   const { spending, revenue, lines } = impact.budget
   const deficit = spending - revenue
-  const md = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${num(Math.abs(v), Math.abs(v) < 10 ? 1 : 0)} Md€`
   return (
     <section>
       <h3>💶 Le budget de l’État ({whose})</h3>
@@ -166,20 +192,30 @@ function BudgetLines({ impact, whose }: { impact: Impact; whose: string }) {
         Le déficit {deficit > 0 ? 'se creuse' : 'se réduit'} de <b className={deficit > 0 ? 'bad' : 'good'}>{num(Math.abs(deficit), Math.abs(deficit) < 10 ? 1 : 0)} Md€</b> : recettes{' '}
         {md(revenue)}, dépenses {md(spending)}. Personne n’a rien voté : c’est l’économie qui bouge le budget (moins d’activité, moins d’impôts ; plus de chômage, plus d’allocations).
       </p>
-      {lines.length ? (
-        <ul className="dl-moves">
-          {lines.slice(0, 6).map((l) => {
-            // Une dépense en plus ou une recette en moins creuse le déficit.
-            const worse = l.spending ? l.delta > 0 : l.delta < 0
-            return (
-              <li key={`${l.spending}-${l.label}`} className={worse ? 'bad' : 'good'}>
-                {l.spending ? '🧾' : '💰'} {l.label} : <b>{md(l.delta)}</b>
-              </li>
-            )
-          })}
-        </ul>
-      ) : null}
+      <LineList lines={lines} />
     </section>
+  )
+}
+
+const md = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${num(Math.abs(v), Math.abs(v) < 10 ? 1 : 0)} Md€`
+
+/** Les postes du budget qui bougent le plus : 🧾 une dépense, 💰 une recette ; en rouge ce qui creuse le déficit. */
+function LineList({ lines }: { lines: Impact['budget']['lines'] }) {
+  if (!lines.length) {
+    return null
+  }
+  return (
+    <ul className="dl-moves">
+      {lines.slice(0, 6).map((l) => {
+        // Une dépense en plus ou une recette en moins creuse le déficit.
+        const worse = l.spending ? l.delta > 0 : l.delta < 0
+        return (
+          <li key={`${l.spending}-${l.label}`} className={worse ? 'bad' : 'good'}>
+            {l.spending ? '🧾' : '💰'} {l.label} : <b>{md(l.delta)}</b>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 

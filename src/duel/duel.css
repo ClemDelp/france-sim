@@ -1,7 +1,8 @@
 /* Le duel des présidents : une table de jeu plein écran, des cartes en papier crème, un cadre de couleur par famille. */
 
 .dl,
-.dlg {
+.dlg,
+.dlc {
   --paper: #fbf6ea;
   --paper-ink: #1d2233;
   --paper-muted: #5d6478;
@@ -3103,4 +3104,164 @@
   border-color: transparent;
   background: rgba(200, 50, 58, 0.22);
   color: #ffc9c4;
+}
+
+/* — Toutes les cartes : un catalogue pour comprendre et déboguer le jeu (filtres, recherche, une ligne par carte) */
+
+.dlc {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 8px;
+  padding: max(8px, env(safe-area-inset-top, 0px)) 12px 0;
+  background: var(--bg, #0b1020);
+  color: var(--ink);
+}
+.dlc > * {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.dlc-count {
+  min-width: 2.5em;
+  text-align: right;
+  color: var(--muted);
+}
+.dlc-filters {
+  display: grid;
+  gap: 6px;
+}
+.dlc-groups {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.dlc-groups button {
+  flex: 0 0 auto;
+  padding: 5px 11px;
+  border-radius: 99px;
+  border: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.dlc-groups button.is-on {
+  border-color: var(--gold);
+  background: rgba(255, 196, 64, 0.18);
+  color: var(--gold);
+}
+.dlc-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+.dlc-search input,
+.dlc-search select {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+.dlc-search select {
+  max-width: 44vw;
+}
+.dlc-list {
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  align-content: start;
+  gap: 8px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+.dlc-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--c, var(--rule));
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+button.dlc-row {
+  cursor: pointer;
+}
+button.dlc-row:hover {
+  border-color: var(--gold);
+}
+.dlc-row .dl-card.mini {
+  width: 64px;
+  height: 84px;
+  pointer-events: none;
+}
+.dlc-row .dl-card.mini .dl-art {
+  font-size: 1.9rem;
+}
+.dlc-info {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.dlc-info strong {
+  line-height: 1.2;
+}
+.dlc-kind {
+  color: var(--muted);
+  font-weight: 700;
+}
+.dlc-copies {
+  color: var(--gold);
+  font-size: 0.74rem;
+  line-height: 1.25;
+}
+.dlc-rule {
+  color: #8fe3e3;
+  font-weight: 700;
+}
+.dlc-fx {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dlc-fx i {
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid var(--rule);
+  font-size: 0.74rem;
+  font-style: normal;
+  font-weight: 800;
+}
+.dlc-fx i.good {
+  border-color: #3ccf7e;
+  color: #7ff0ae;
+}
+.dlc-fx i.bad {
+  border-color: #ff6b5e;
+  color: #ffa49b;
+}
+@media (max-width: 760px) {
+  .dlc {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+  .dlc-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

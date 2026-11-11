@@ -451,6 +451,9 @@ export function whyTree(starts: { node: string; up: boolean }[], impact: Impact)
 /** Ouvrir le modèle (le graphe des causes) par-dessus le jeu : l'application l'écoute. */
 export const openModel = (focus: string | null = null) => window.dispatchEvent(new CustomEvent('duel:modele', { detail: focus }))
 
+/** Ouvrir le catalogue de toutes les cartes, par-dessus ce qui est à l'écran (la partie reste en dessous). */
+export const openCatalogue = () => window.dispatchEvent(new CustomEvent('duel:cartes'))
+
 /** Le changement de coût qu'apporte la conjoncture de l'année à une carte (en ⚡), ou 0. */
 export function contextShift(g: Game, card: Card): number {
   const ctx = contextOf(g)

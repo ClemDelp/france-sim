@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { simulate } from '../model/sim'
 import { CANDIDATES, candidateById, MEASURES } from '../game/candidates'
-import { ACTIONS, buildDeck, CRISES, inModel, programmeOf, PROGRAMME_SIZE, rarityOf, type ActionId, type Card, type CrisisId } from './cards'
+import { ACTIONS, buildDeck, copiesOf, CRISES, generic, inModel, programmeOf, PROGRAMME_SIZE, rarityOf, type ActionId, type Card, type CrisisId } from './cards'
 import {
   ALERT_AT,
   BOT,
@@ -18,6 +18,7 @@ import {
   lawLimit,
   LAWS_PER_YEAR,
   marginLeft,
+  neutralGame,
   newGame,
   outcomeOf,
   pass,
@@ -428,5 +429,23 @@ describe('les candidats fantaisie et leurs coups signature', () => {
     const harmony = simulate({ decisions: [], events: [{ year: 2028, id: 'cosmic-harmony' }], until: 2028 }).at(-1)!
     const calm = simulate({ decisions: [], events: [], until: 2028 }).at(-1)!
     expect(harmony.discontent).toBeLessThan(calm.discontent)
+  })
+})
+
+describe('le catalogue de toutes les cartes', () => {
+  it('regarde chaque carte sur une France de 2027 neutre : rien de joué, aucune conjoncture dans le modèle', () => {
+    const g = neutralGame()
+    expect(g.world).toEqual([])
+    expect(g.seats.player.events).toEqual([])
+    expect(g.seats.player.programme).toEqual([])
+    // La mesure d'immigration coûte au budget : contrôles et reconduites.
+    const card: Card = { kind: 'mesure', pledge: generic('immigration'), uid: 'cat-immigration' }
+    expect(cardImpact(g, 'player', card)!.budget.lines.find((l) => l.label.startsWith('Immigration'))!.delta).toBeGreaterThan(0.5)
+  })
+
+  it('dit combien d’exemplaires de chaque carte sont dans la pioche', () => {
+    expect(copiesOf({ kind: 'crise', crisis: 'financial-crisis' })).toBe(1)
+    expect(copiesOf({ kind: 'action', action: 'cellule' })).toBe(3)
+    expect(copiesOf({ kind: 'action', action: 'ippon' })).toBe(2)
   })
 })

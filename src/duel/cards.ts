@@ -356,7 +356,7 @@ export function cardName(c: CardDef): string {
 }
 
 /** Une mesure générale (hors programme), avec son montant par défaut. */
-const generic = (id: string): Pledge => {
+export const generic = (id: string): Pledge => {
   const m = MEASURES[id]
   return { key: `mesure-${id}`, measure: m, amount: null, quote: m.summary, source: '' }
 }
@@ -437,7 +437,11 @@ const ACTION_COUNT: Record<ActionId, number> = {
 const SIGNATURE_COUNT = 2
 
 /** Les mesures générales mises dans la pioche, en plus des deux programmes. */
-const GENERIC_MEASURES = 16
+export const GENERIC_MEASURES = 16
+
+/** Combien d'exemplaires d'un coup ou d'une action dans la pioche (un coup signature : seulement si son candidat joue). */
+export const copiesOf = (c: CardDef): number =>
+  c.kind === 'crise' ? CRISIS_COUNT[c.crisis] : c.kind === 'action' ? (ACTIONS[c.action].signature ? SIGNATURE_COUNT : ACTION_COUNT[c.action]) : 1
 
 /** Le haut de la pioche, où sont mêlées les promesses des deux joueurs : les deux mains de départ et les trois premières pioches. */
 const TOP = 22

@@ -328,6 +328,27 @@ export function cardCost(g: Game, side: Side, card: Card): number {
   return Math.max(1, Math.max(LAW_COST, planCost(promiseRemaining(card.pledge, BASE_POLICY, planned), policyAt(s.decisions, g.year))) + shift)
 }
 
+/**
+ * Une France de 2027 neutre, pour regarder une carte hors partie (le catalogue) : personne n'a rien joué,
+ * et la conjoncture de 2028 ne déclenche rien dans le modèle (les européennes ne changent que l'énergie).
+ */
+export function neutralGame(): Game {
+  const g = newGame({ candidate: null, name: 'Votre France', emblem: '🇫🇷', color: '#5b8def' }, { candidate: null, name: 'l’adversaire', emblem: '🎯', color: '#e05a5a' }, { seed: 1, years: 5 })
+  const blank = (s: Seat): Seat => ({ ...s, events: [], programme: [] })
+  return { ...g, contexts: ['europeennes'], world: [], seats: { player: blank(g.seats.player), ai: blank(g.seats.ai) } }
+}
+
+/** Le coût en énergie d'une carte hors partie : sans conjoncture, sur la France de départ. */
+export function baseCost(card: Card): number {
+  if (card.kind === 'crise') {
+    return CRISES[card.crisis].cost
+  }
+  if (card.kind === 'action') {
+    return ACTIONS[card.action].cost
+  }
+  return Math.max(LAW_COST, planCost(promiseRemaining(card.pledge, BASE_POLICY, BASE_POLICY), BASE_POLICY))
+}
+
 /** Le prix d'une carte au marché : son coût de base, plus un si c'est la promesse de quelqu'un (elle vaut cher à son auteur). */
 export function marketPrice(g: Game, card: Card): number {
   const base = card.kind === 'crise' ? CRISES[card.crisis].cost : card.kind === 'action' ? ACTIONS[card.action].cost : 2

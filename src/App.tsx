@@ -8,11 +8,13 @@ import { Home } from './ui/game/Home'
 import { UpdateBanner } from './ui/game/UpdateBanner'
 import { Duel } from './duel/Duel'
 import { Friends, GuestScreen, HostScreen, HotSeat } from './duel/Friends'
+import { Catalogue } from './duel/Catalogue'
 
 /**
  * Les écrans : l'accueil, le duel contre l'IA (lien #duel), « À propos du jeu » (#apropos), et jouer avec un ami (#ami) :
  * créer une partie en ligne (#heberger/CODE), la rejoindre par le lien reçu (#rejoindre/CODE), ou à deux sur ce téléphone (#local).
  * Le modèle s'ouvre par-dessus, depuis « À propos » (ou le lien #modele) : le jeu, lui, reste un jeu.
+ * Toutes les cartes (#cartes) aussi : depuis « À propos » ou la page « Pourquoi ? » d'une carte, sans quitter la partie.
  */
 type Screen = 'accueil' | 'duel' | 'apropos' | 'ami' | 'heberger' | 'rejoindre' | 'local'
 type Route = { screen: Screen; code: string }
@@ -30,15 +32,24 @@ function App() {
   const [{ screen, code }, setRoute] = useState<Route>(fromHash)
   /** Le modèle ouvert, et la variable à montrer (ou null : la vue d'ensemble). */
   const [model, setModel] = useState<{ focus: string | null } | null>(() => (window.location.hash === '#modele' ? { focus: null } : null))
+  const [cards, setCards] = useState(() => window.location.hash === '#cartes')
   useEffect(() => {
-    const onHash = () => setRoute(fromHash())
+    const onHash = () => {
+      setRoute(fromHash())
+      if (window.location.hash === '#cartes') {
+        setCards(true)
+      }
+    }
     // Depuis la page « Pourquoi ? » d'une carte : le modèle s'ouvre par-dessus la partie, sans la quitter.
     const onModel = (e: Event) => setModel({ focus: (e as CustomEvent<string | null>).detail })
+    const onCards = () => setCards(true)
     window.addEventListener('hashchange', onHash)
     window.addEventListener('duel:modele', onModel)
+    window.addEventListener('duel:cartes', onCards)
     return () => {
       window.removeEventListener('hashchange', onHash)
       window.removeEventListener('duel:modele', onModel)
+      window.removeEventListener('duel:cartes', onCards)
     }
   }, [])
   const go = (s: Screen, c = '') => {
@@ -54,7 +65,17 @@ function App() {
       {screen === 'heberger' ? <HostScreen key={code} code={code} onExit={() => go('accueil')} /> : null}
       {screen === 'rejoindre' ? <GuestScreen key={code} code={code} onExit={() => go('accueil')} /> : null}
       {screen === 'local' ? <HotSeat onExit={() => go('accueil')} /> : null}
-      {screen === 'apropos' ? <About onBack={() => go('accueil')} onModel={() => setModel({ focus: null })} /> : null}
+      {screen === 'apropos' ? <About onBack={() => go('accueil')} onModel={() => setModel({ focus: null })} onCards={() => setCards(true)} /> : null}
+      {cards ? (
+        <Catalogue
+          onClose={() => {
+            setCards(false)
+            if (window.location.hash === '#cartes') {
+              go('accueil')
+            }
+          }}
+        />
+      ) : null}
       {model ? <Model focus={model.focus} onClose={() => setModel(null)} /> : null}
       <UpdateBanner />
     </>
