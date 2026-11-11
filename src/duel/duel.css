@@ -432,11 +432,12 @@
 /* — La table de jeu : tout l'écran, sans défiler */
 
 .dlg {
-  height: 100vh;
-  height: 100dvh;
+  /* Toute la fenêtre, exactement : collée aux bords (pas de 100dvh, que Safari iOS calcule mal avec ses barres), les encoches en marge. */
+  position: fixed;
+  inset: 0;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 6px 12px;
+  padding: max(6px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(6px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   gap: 6px;
@@ -1727,7 +1728,8 @@
     height: 64px;
     font-size: 2.8rem;
   }
-  .dl-explain {
+  /* Dans la fenêtre d'une carte, c'est le corps de la fenêtre qui défile (pas la page « Pourquoi ? », qui défile toute seule). */
+  .dl-cardmodal-body .dl-explain {
     overflow: visible;
   }
   .dl-cardmodal-actions .primary,
@@ -2567,7 +2569,7 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 6px;
-  padding: 8px 12px;
+  padding: max(8px, env(safe-area-inset-top, 0px)) 12px 0;
   background: var(--bg, #0b1020);
   color: var(--ink);
   animation: dl-slide-in 0.25s ease-out both;
@@ -2581,8 +2583,14 @@
 .dl-whypage-body {
   width: 100%;
   max-width: 760px;
+  min-height: 0;
   margin: 0 auto;
-  padding-bottom: 20px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  /* La page défile toute seule, au doigt aussi (iOS). */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 .dl-whyhead {
   display: flex;
@@ -2937,7 +2945,8 @@
     grid-column: 1 / -1;
   }
   .dl-whypage {
-    padding: 4px 8px;
+    padding-right: 8px;
+    padding-left: 8px;
   }
   .dl-whyhead-art {
     font-size: 2rem;
