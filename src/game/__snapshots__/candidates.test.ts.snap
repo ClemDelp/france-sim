@@ -120,6 +120,36 @@ exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Raph
 }
 `;
 
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Sylvain Dhurif : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 7,
+  "croissance": 0.6,
+  "dette": 133,
+  "déficit": 7.7,
+  "fin": "réélu·e",
+  "inflation": 2.6,
+  "pauvreté": 14.6,
+  "popularité": 60,
+  "promessesAppliquées": "5 / 5",
+  "émissions": 354,
+}
+`;
+
+exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Teddy Rêneur : le modèle reste sain, photo de fin de mandat 1`] = `
+{
+  "chômage": 7,
+  "croissance": 0.9,
+  "dette": 129,
+  "déficit": 6.1,
+  "fin": "réélu·e",
+  "inflation": 2.2,
+  "pauvreté": 14.8,
+  "popularité": 60,
+  "promessesAppliquées": "5 / 5",
+  "émissions": 362,
+}
+`;
+
 exports[`le mandat de chaque candidat, joué à la lettre de 2027 à 2032 > Édouard Philippus : le modèle reste sain, photo de fin de mandat 1`] = `
 {
   "chômage": 7.9,

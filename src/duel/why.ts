@@ -279,7 +279,7 @@ export function cardImpact(g: Game, side: Side, card: Card): Impact | null {
   if (!def.events?.length && !def.spend) {
     return null
   }
-  // Le tweet tombe d'un côté ou de l'autre : on montre le bon côté, la carte dit que c'est pile ou face.
+  // Le tweet et l'alignement cosmique tombent d'un côté ou de l'autre : on montre le bon côté, la carte dit que c'est au hasard.
   const events = (def.events ?? []).slice(0, 1).map((id) => ({ year: g.year, id }))
   const s = g.seats[side]
   const policy = plannedPolicy(s, g.year)

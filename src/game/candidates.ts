@@ -45,6 +45,8 @@ export type Candidate = {
   summary: string
   program: { label: string; url: string; date: string }
   caveats: string
+  /** Un candidat fantaisie : un personnage connu qui ne se présente pas, au programme imaginé pour le jeu (sans source). */
+  fantasy: boolean
   promises: Pledge[]
 }
 
@@ -86,6 +88,7 @@ export const CANDIDATES: Candidate[] = parseCsv(candidatsCsv).map((r) => ({
   summary: r.resume,
   program: { label: r.programme, url: r.lien, date: r.date },
   caveats: r.reserves ?? '',
+  fantasy: r.fantaisie === 'oui',
   promises: parseCsv(promessesCsv)
     .filter((p) => p.candidat === r.id)
     .map((p, i) => ({ key: `${r.id}-${i}`, measure: p.mesure ? (MEASURES[p.mesure] ?? null) : null, amount: opt(p.montant), quote: p.citation, source: p.source })),
@@ -93,7 +96,10 @@ export const CANDIDATES: Candidate[] = parseCsv(candidatsCsv).map((r) => ({
 
 /** La mention qui accompagne partout les personnages. */
 export const PARODY_NOTE =
-  'Personnages parodiques, inspirés des programmes réellement publiés pour 2027 : chaque promesse cite sa source. Tous jouent avec les mêmes règles, et le modèle reste un simulateur, pas une prévision.'
+  'Personnages parodiques, inspirés des programmes réellement publiés pour 2027 : chaque promesse cite sa source. Les candidats fantaisie (🎭) ne se présentent pas : leur programme est imaginé pour le jeu. Tous jouent avec les mêmes règles, et le modèle reste un simulateur, pas une prévision.'
+
+/** Ce que disent les promesses d'un candidat fantaisie à la place d'une source. */
+export const FANTASY_SOURCE = 'programme imaginaire, personnage parodique'
 
 export const candidateById = (id: string | null | undefined) => CANDIDATES.find((c) => c.id === id)
 

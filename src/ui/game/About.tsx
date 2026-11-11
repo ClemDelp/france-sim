@@ -32,7 +32,8 @@ export function About({ onBack, onModel }: { onBack: () => void; onModel: () => 
           <p>
             Deux présidents, deux France, la même au départ. Les mesures, les crises, les scandales et les coups de théâtre passent tous par le même modèle : quand une carte fait
             monter le chômage ou baisser la dette, c’est le modèle qui le calcule, et la carte vous explique pourquoi. Les candidats sont des parodies, mais leurs promesses viennent de
-            leurs programmes publiés, chacune avec sa source.
+            leurs programmes publiés, chacune avec sa source. Seuls les deux candidats fantaisie (🎭 Teddy Rêneur et Sylvain Dhurif) ont un programme imaginé pour le jeu : ils ne se
+            présentent pas, et leurs promesses le disent.
           </p>
           <p>
             On joue contre l’IA, ou avec un ami : en ligne, le téléphone de celui qui crée la partie fait l’arbitre, et les deux navigateurs se parlent en direct (WebRTC). Le service

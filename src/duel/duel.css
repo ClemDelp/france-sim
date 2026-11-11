@@ -2955,3 +2955,136 @@
     animation: none;
   }
 }
+
+/* — L'humour : les répliques de l'IA (une bulle au-dessus de sa fiche), les petites phrases des cartes, les candidats fantaisie, les confettis */
+
+.dlg-quip {
+  position: absolute;
+  z-index: 6;
+  top: calc(100% + 4px);
+  left: 12px;
+  max-width: min(78vw, 360px);
+  padding: 6px 12px;
+  border-radius: 14px;
+  border: 2px solid var(--c);
+  background: #fffaf0;
+  color: #1c2238;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.25;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  animation: dl-quip 2.8s ease both;
+}
+.dlg-quip::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 14px;
+  border: 7px solid transparent;
+  border-top: 0;
+  border-bottom-color: var(--c);
+}
+@keyframes dl-quip {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.6) rotate(-4deg);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0) scale(1.06) rotate(1deg);
+  }
+  16% {
+    transform: scale(1) rotate(0);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.dlr-quip {
+  margin: 2px auto 0;
+  max-width: 92%;
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  animation: dlv-pop 0.4s 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.dlr-quip span {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 14px;
+  background: #fffaf0;
+  color: #1c2238;
+}
+.dl-tagline {
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #6b5a3a;
+}
+.dlv-fantasy {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 196, 64, 0.18);
+  color: var(--gold);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+.dlv-tile {
+  position: relative;
+}
+.dlv-fun {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.7rem;
+  font-style: normal;
+}
+.dlf-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.dlf > :not(.dlf-confetti) {
+  position: relative;
+  z-index: 1;
+}
+.dlf-confetti span {
+  position: absolute;
+  top: -10%;
+  left: var(--x);
+  font-size: 1.4rem;
+  animation: dl-confetti var(--t) var(--d) linear infinite;
+}
+@keyframes dl-confetti {
+  0% {
+    transform: translateY(0) rotate(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(115vh) rotate(540deg);
+    opacity: 0.6;
+  }
+}
+/* Le K.O. : le titre tremble comme un coup de poing encaissé. */
+.dlf.is-ko .dlf-title {
+  animation:
+    dlv-slam 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both,
+    dlv-shake 0.5s 0.5s 2 both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dlg-quip,
+  .dlr-quip,
+  .dlf.is-ko .dlf-title {
+    animation: none;
+  }
+  .dlf-confetti {
+    display: none;
+  }
+}

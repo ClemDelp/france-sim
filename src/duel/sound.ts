@@ -4,7 +4,7 @@
  * Rien ne joue avant le premier geste du joueur : les navigateurs l'interdisent, et c'est plus poli.
  */
 
-export type Sfx = 'click' | 'hover' | 'pick' | 'draw' | 'play' | 'discard' | 'coin' | 'energy' | 'crisis' | 'promise' | 'flip' | 'victory' | 'defeat' | 'select' | 'vs' | 'fight'
+export type Sfx = 'click' | 'hover' | 'pick' | 'draw' | 'play' | 'discard' | 'coin' | 'energy' | 'crisis' | 'promise' | 'flip' | 'victory' | 'defeat' | 'select' | 'vs' | 'fight' | 'quip' | 'boing' | 'cosmic' | 'quack'
 
 const KEY = 'duel-son'
 const VOLUME = 0.22
@@ -161,6 +161,25 @@ const SOUNDS: Record<Sfx, (t: number) => void> = {
     tone(t, 466, 0.9, { type: 'triangle', gain: 0.2 })
     noise(t, 0.12, { freq: 1800, gain: 0.5 })
     notes(t + 0.15, [392, 523, 659], 0.07, 0.2, 'square', 0.14)
+  },
+  // Pour rire : la bulle d'une réplique (un « bla-bla »), l'ippon (un ressort), l'alignement cosmique, le Canard enchaîné.
+  quip: (t) => {
+    tone(t, 520, 0.07, { type: 'square', to: 700, gain: 0.1 })
+    tone(t + 0.09, 640, 0.07, { type: 'square', to: 480, gain: 0.1 })
+    tone(t + 0.18, 560, 0.09, { type: 'square', to: 760, gain: 0.1 })
+  },
+  boing: (t) => {
+    tone(t, 180, 0.45, { type: 'sine', to: 720, gain: 0.5 })
+    tone(t + 0.05, 360, 0.35, { type: 'triangle', to: 90, gain: 0.25 })
+    noise(t, 0.1, { freq: 700, to: 200, q: 0.8, gain: 0.8 })
+  },
+  cosmic: (t) => {
+    notes(t, [880, 1109, 1319, 1760, 2217], 0.07, 0.6, 'sine', 0.18)
+    tone(t, 110, 1.2, { type: 'sine', to: 220, gain: 0.25 })
+  },
+  quack: (t) => {
+    tone(t, 520, 0.12, { type: 'sawtooth', to: 380, gain: 0.25 })
+    tone(t + 0.16, 500, 0.14, { type: 'sawtooth', to: 340, gain: 0.25 })
   },
   defeat: (t) => {
     notes(t, [392, 370, 349], 0.22, 0.24, 'sawtooth', 0.18)

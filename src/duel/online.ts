@@ -174,7 +174,7 @@ export function isMessage(x: unknown): x is Message {
 const isEntrant = (x: unknown): x is Entrant =>
   !!x && typeof x === 'object' && typeof (x as Entrant).nick === 'string' && ((x as Entrant).candidate === null || typeof (x as Entrant).candidate === 'string')
 
-const ANSWERS: (Answer | null)[] = ['cellule', 'commission', 'communication', 'conseil', null]
+const ANSWERS: (Answer | null)[] = ['cellule', 'commission', 'communication', 'conseil', 'ippon', null]
 
 export function isIntent(x: unknown): x is Intent {
   if (!x || typeof x !== 'object') {

@@ -52,12 +52,14 @@ export const RELANCE_MARGIN = 20
 export const CENSURE_BELOW = 35
 /** Au-dessus de ce niveau de popularité, le référendum est gagné. */
 export const REFERENDUM_ABOVE = 50
+/** Les chances d'harmonie de l'alignement cosmique (sinon, l'éclipse). */
+export const COSMIC_ODDS = 0.6
 
 /** Une carte posée : son coût en énergie et en Md€ ; une loi peut être censurée (elle ne s'applique pas) ou doublée (référendum gagné). */
 export type Played = { card: Card; cost: number; md: number; cancelled?: boolean; doubled?: boolean }
 
 /** Les parades : on les joue en réponse, jamais pendant son tour. */
-export type Answer = 'cellule' | 'commission' | 'communication' | 'conseil'
+export type Answer = 'cellule' | 'commission' | 'communication' | 'conseil' | 'ippon'
 
 export type Seat = {
   /** Le candidat incarné, ou null : un programme tiré au sort (le joueur) ou le bot. */
@@ -207,7 +209,7 @@ export function newGame(player: Player, ai: Player, options: { seed: number; yea
     years: options.years,
     year: START_YEAR + 1,
     seats: { player: seatFor(player, mine, states), ai: seatFor(ai, theirs, states) },
-    deck: buildDeck([mine, theirs], options.seed),
+    deck: buildDeck([mine, theirs], options.seed, [player.candidate?.id ?? null, ai.candidate?.id ?? null]),
     discard: [],
     market: [],
     contexts: contextDeck(options.seed),
@@ -430,6 +432,9 @@ function actionEffect(g: Game, side: Side, card: Card, action: ActionId): Game {
     case 'tweet':
       events = [chance(next, card, 'tweet') < 0.5 ? 'tweet-up' : 'tweet-down']
       break
+    case 'alignement':
+      events = [chance(next, card, 'alignement') < COSMIC_ODDS ? 'cosmic-harmony' : 'cosmic-eclipse']
+      break
     case 'relance-ue':
       next = seat(next, side, { margin: s().margin + RELANCE_MARGIN })
       break
@@ -476,7 +481,7 @@ export function answersOf(g: Game, side: Side): Answer[] {
     return []
   }
   const { family } = CRISES[card.crisis]
-  const fits: Answer[] = family === 'politique' ? [] : family === 'scandale' ? ['commission', 'cellule', 'communication'] : ['cellule', 'communication']
+  const fits: Answer[] = family === 'politique' ? [] : family === 'scandale' ? ['commission', 'cellule', 'ippon', 'communication'] : ['cellule', 'ippon', 'communication']
   return fits.filter((a) => can(a) && (a !== 'communication' || crisisEvent(card.crisis) !== null))
 }
 
@@ -507,6 +512,13 @@ export function respond(g: Game, side: Side, answer: Answer | null): Game {
     return seat(next, side, { parried: [...t.parried, card.crisis] })
   }
   const event = crisisEvent(card.crisis)
+  if (answer === 'ippon') {
+    // Ippon : le coup est paré, et projeté sur l'envoyeur. C'est sa France qui le prend.
+    next = seat(next, side, { parried: [...t.parried, card.crisis] })
+    const f = next.seats[from]
+    next = seat(next, from, { received: [...f.received, card.crisis], events: event ? [...f.events, { year: g.year, id: event }] : f.events })
+    return hit(next, from, side, card)
+  }
   const half = answer === 'communication'
   next = seat(next, side, {
     received: [...t.received, card.crisis],

@@ -376,3 +376,57 @@ describe('le prix des crises suit leur gravité dans le modèle', () => {
     expect(order.map((id) => CRISES[id].cost)).toEqual([...order.map((id) => CRISES[id].cost)].sort((a, b) => b - a))
   })
 })
+
+describe('les candidats fantaisie et leurs coups signature', () => {
+  it('Teddy Rêneur et Sylvain Dhurif jouent un vrai programme, tiré de leurs promesses imaginaires', () => {
+    for (const id of ['teddy', 'durif']) {
+      const c = candidateById(id)!
+      expect(c.fantasy).toBe(true)
+      const programme = programmeOf(c, 1, 'joueur')
+      expect(programme).toHaveLength(PROGRAMME_SIZE)
+      // Les cinq promesses viennent de son programme (aucune ajoutée par le jeu).
+      expect(programme.every((p) => p.source !== 'ajout'), id).toBe(true)
+    }
+  })
+
+  it('le coup signature n’est dans la pioche que si son candidat joue (en deux exemplaires, que n’importe qui peut piocher)', () => {
+    const count = (g: Game, a: ActionId) => [...g.deck, ...g.seats.player.hand, ...g.seats.ai.hand].filter((c) => c.kind === 'action' && c.action === a).length
+    const teddy = newGame(as('teddy'), as('durif'), { seed: 4, years: 5 })
+    expect(count(teddy, 'ippon')).toBe(2)
+    expect(count(teddy, 'alignement')).toBe(2)
+    const other = newGame(as('melenchon'), BOT, { seed: 4, years: 5 })
+    expect(count(other, 'ippon') + count(other, 'alignement')).toBe(0)
+    expect(buildDeck([], 1, ['teddy']).filter((c) => c.kind === 'action' && c.action === 'ippon')).toHaveLength(2)
+  })
+
+  it('l’ippon pare une crise et la projette sur l’envoyeur : c’est sa France qui la prend', () => {
+    const g0 = newGame(as('attal'), as('teddy'), { seed: 5, years: 5 })
+    const g = play(rich(g0, [coup('recession')], [action('ippon')]), 'player', coup('recession'))
+    expect(answersOf(g, 'ai')).toContain('ippon')
+    const thrown = respond(g, 'ai', 'ippon')
+    expect(thrown.seats.ai.parried).toEqual(['recession'])
+    expect(thrown.seats.player.received).toEqual(['recession'])
+    expect(thrown.seats.player.events.some((e) => e.id === 'recession')).toBe(true)
+    expect(thrown.seats.ai.events.some((e) => e.id === 'recession')).toBe(false)
+    // Un coup qui ne passe pas par le modèle repart aussi : la fuite fait jeter une carte à celui qui l'a lancée.
+    const leak = play(rich(g0, [coup('fuite')], [action('ippon')]), 'player', coup('fuite'))
+    const before = leak.seats.player.hand.length
+    expect(respond(leak, 'ai', 'ippon').seats.player.hand.length).toBe(before - 1)
+  })
+
+  it('l’alignement cosmique passe par le modèle : harmonie (la colère retombe) ou éclipse, au hasard de la graine', () => {
+    expect(inModel({ kind: 'action', action: 'alignement' })).toBe(true)
+    const outcomes = new Set<string>()
+    for (let seed = 1; seed <= 12; seed += 1) {
+      const g0 = newGame(as('durif'), BOT, { seed, years: 5 })
+      const g = play(rich(g0, [action('alignement')]), 'player', action('alignement'))
+      const fired = g.seats.player.events.filter((e) => e.id.startsWith('cosmic-')).map((e) => e.id)
+      expect(fired).toHaveLength(1)
+      outcomes.add(fired[0])
+    }
+    expect([...outcomes].sort()).toEqual(['cosmic-eclipse', 'cosmic-harmony'])
+    const harmony = simulate({ decisions: [], events: [{ year: 2028, id: 'cosmic-harmony' }], until: 2028 }).at(-1)!
+    const calm = simulate({ decisions: [], events: [], until: 2028 }).at(-1)!
+    expect(harmony.discontent).toBeLessThan(calm.discontent)
+  })
+})

@@ -3,7 +3,7 @@ import { BASE_POLICY } from '../model/calibration'
 import { chanceOf, EVENTS } from '../model/events'
 import { simulate } from '../model/sim'
 import { LEVER_GROUPS } from '../ui/levers'
-import { CANDIDATES, isPlayable, MEASURES, partialPatch, pledgeGoal, promisePatch, promisesKept, promiseStatus, votedPolicy } from './candidates'
+import { CANDIDATES, FANTASY_SOURCE, isPlayable, MEASURES, partialPatch, pledgeGoal, promisePatch, promisesKept, promiseStatus, votedPolicy } from './candidates'
 import { planCost } from './session'
 import { MANDATE_END, playMandate } from './mandate'
 import { electionAt, popularity } from './score'
@@ -11,8 +11,9 @@ import { electionAt, popularity } from './score'
 const LEVER_KEYS = new Set<string>([...LEVER_GROUPS.flatMap((g) => g.levers.map((l) => l.key)), 'cancelShare', 'cancelHolder'])
 
 describe('les candidats et leurs promesses (modele/candidats.csv, promesses.csv, mesures.csv, mesures-leviers.csv)', () => {
-  it('dix personnages, chacun avec au moins trois promesses jouables', () => {
-    expect(CANDIDATES).toHaveLength(10)
+  it('dix personnages et deux candidats fantaisie, chacun avec au moins trois promesses jouables', () => {
+    expect(CANDIDATES.filter((c) => !c.fantasy)).toHaveLength(10)
+    expect(CANDIDATES.filter((c) => c.fantasy).map((c) => c.id)).toEqual(['teddy', 'durif'])
     for (const c of CANDIDATES) {
       expect(c.promises.filter(isPlayable).length, c.id).toBeGreaterThanOrEqual(3)
     }
@@ -29,11 +30,13 @@ describe('les candidats et leurs promesses (modele/candidats.csv, promesses.csv,
     }
   })
 
-  it('chaque promesse cite sa source, et renvoie à une mesure connue quand elle en nomme une', () => {
+  it('chaque promesse cite sa source, et renvoie à une mesure connue quand elle en nomme une (un candidat fantaisie le dit, sans lien inventé)', () => {
     for (const c of CANDIDATES) {
       for (const p of c.promises) {
         expect(p.quote, `${c.id} ${p.key}`).toBeTruthy()
-        if (p.measure) {
+        if (c.fantasy) {
+          expect(p.source, `${c.id} ${p.key}`).toBe(FANTASY_SOURCE)
+        } else if (p.measure) {
           expect(p.source, `${c.id} ${p.key}`).toMatch(/^https?:\/\//)
         }
       }

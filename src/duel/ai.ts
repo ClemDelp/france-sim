@@ -88,6 +88,12 @@ function actionValue(g: Game, side: Side, card: Card): number {
     case 'communication':
     case 'conseil':
       return 2.5
+    case 'ippon':
+      // Mieux qu'une cellule : le coup repart chez l'adversaire. On la garde en main.
+      return 3
+    case 'alignement':
+      // 6 chances sur 10 : +4 points de popularité ; sinon −2.
+      return 1.2
     case 'sondage':
       return me.hand.length < 4 ? 2 : 0.5
     case 'remaniement':
@@ -170,10 +176,15 @@ export function aiAnswer(g: Game, side: Side = 'ai'): Answer | null {
   if (card.kind !== 'crise') {
     return null
   }
+  // L'ippon ne se refuse pas : même un petit coup, renvoyé, fait mal à l'envoyeur.
+  if (options.includes('ippon')) {
+    return 'ippon'
+  }
   const hurts = CRISES[card.crisis].cost >= 2 || lastState(g.seats[side]).discontent > 0.35 || crisisEvent(card.crisis) === null
   if (!hurts) {
     return null
   }
+  // La commission d'abord (elle coûte moins), puis la cellule, la communication.
   return options.includes('commission') ? 'commission' : options.includes('cellule') ? 'cellule' : 'communication'
 }
 

@@ -69,6 +69,7 @@ export function WhyPage({ g, card, side, kind, onBack }: { g: Game; card: Card; 
               {effects.text.join(', ')}
               {effects.years > 1 ? `, pendant ${effects.years} ans` : ''}.
               {card.kind === 'action' && card.action === 'tweet' ? ' Pile ou face : ci-dessous, le bon côté ; le mauvais fait l’inverse.' : ''}
+              {card.kind === 'action' && card.action === 'alignement' ? ' 6 chances sur 10 d’harmonie (ci-dessous) ; sinon l’éclipse : −2 points de popularité.' : ''}
             </p>
           </section>
         ) : null}

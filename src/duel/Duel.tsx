@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { CANDIDATES, PARODY_NOTE } from '../game/candidates'
+import { CANDIDATES, candidateById, PARODY_NOTE } from '../game/candidates'
 import { popularity } from '../game/score'
 import { num } from '../ui/format'
 import { aiStep } from './ai'
-import { ACTIONS, cardArt, cardName, CRISES, isAdded, rarityOf, type Card } from './cards'
+import { ACTIONS, cardArt, cardName, CRISES, isAdded, rarityOf, taglineOf, type Card } from './cards'
 import { CONTEXTS } from './contexts'
 import {
   BOT,
@@ -42,6 +42,7 @@ import { health, healthParts } from './health'
 import { fighterStats, STAT_AXES } from './fighters'
 import { applyIntent, type Intent } from './online'
 import { setSoundOn, sfx, soundOn, type Sfx } from './sound'
+import { setTauntsOn, taunt, tauntsOn, type Moment } from './taunts'
 import { cardImpact, contextShift, type Impact } from './why'
 import { WhyPage } from './WhyPage'
 import './duel.css'
@@ -84,7 +85,7 @@ export function Duel({ onExit }: { onExit: () => void }) {
       />
     )
   }
-  return <Table game={game} onIntent={(i) => setGame(applyIntent(game, 'player', i))} onExit={onExit} onReplay={() => setGame(null)} onStage={setStage} />
+  return <Table game={game} onIntent={(i) => setGame(applyIntent(game, 'player', i))} onExit={onExit} onReplay={() => setGame(null)} onStage={setStage} taunts />
 }
 
 /**
@@ -100,6 +101,7 @@ export function Table({
   initialStage = 'context',
   badge,
   status,
+  taunts = false,
 }: {
   game: Game
   onIntent: (intent: Intent) => void
@@ -111,6 +113,8 @@ export function Table({
   badge?: React.ReactNode
   /** Ce qu'on ajoute par-dessus la table (l'ami déconnecté). */
   status?: React.ReactNode
+  /** L'adversaire est l'IA : elle commente la partie (une bulle au-dessus de sa fiche). */
+  taunts?: boolean
 }) {
   const [stage, setStage] = useState<Stage>(initialStage)
   const [rules, setRules] = useState(initialStage === 'context' && !game.reports.length)
@@ -125,6 +129,20 @@ export function Table({
   const [why, setWhy] = useState<{ g: Game; card: Card; side: Side } | null>(null)
   /** La table juste avant la dernière année jouée : ce qu'on explique depuis le bilan. */
   const [yearGame, setYearGame] = useState<Game | null>(null)
+  /** La réplique de l'IA en cours (une bulle qui s'efface), et celle du bilan de l'année ou de la fin. */
+  const [quip, setQuip] = useState<string | null>(null)
+  const [yearQuip, setYearQuip] = useState<string | null>(null)
+  const quipTimer = useRef(0)
+  const say = (moment: Moment) => {
+    const line = taunts ? taunt(game.seats.ai.candidate?.id ?? null, moment) : null
+    if (line) {
+      window.clearTimeout(quipTimer.current)
+      setQuip(line)
+      window.setTimeout(() => sfx('quip'), 350)
+      quipTimer.current = window.setTimeout(() => setQuip(null), QUIP_MS)
+    }
+  }
+  useEffect(() => () => window.clearTimeout(quipTimer.current), [])
   /** Une carte achetée arrive en main : pas de bruit de pioche par-dessus celui des pièces. */
   const bought = useRef(false)
   const hand = useFresh(game.seats.player.hand.map((c) => c.uid))
@@ -154,6 +172,10 @@ export function Table({
         sfx('flip')
         setYearGame(prev)
         setStage('report')
+        const last = game.reports.at(-1)!
+        const diff = last.sides.ai.health - last.sides.player.health
+        const moment: Moment | null = game.outcome ? (game.outcome.winner === 'ai' ? 'win' : game.outcome.winner === 'player' ? 'lose' : null) : diff > 0 ? 'lead' : diff < 0 ? 'behind' : null
+        setYearQuip(taunts && moment ? taunt(game.seats.ai.candidate?.id ?? null, moment) : null)
       } else {
         setStage('context')
       }
@@ -164,6 +186,12 @@ export function Table({
       setNews(said.text)
       sfx(said.sound)
     }
+    const moment = quipMoment(prev, game)
+    if (moment) {
+      say(moment)
+    }
+    // say() lit la partie du rendu : on ne réagit qu'au changement de partie.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [game])
 
   const act = (intent: Intent, ...sounds: Sfx[]) => {
@@ -210,7 +238,7 @@ export function Table({
         {settings ? <Settings onClose={() => setSettings(false)} /> : null}
       </header>
 
-      <Strip g={game} side="ai" turn={playing && (game.pending ? game.pending.from === 'player' : game.turn === 'ai')} />
+      <Strip g={game} side="ai" turn={playing && (game.pending ? game.pending.from === 'player' : game.turn === 'ai')} quip={playing ? quip : null} />
 
       <main className="dlg-board">
         <section className="dlg-pile" aria-label="La pioche commune">
@@ -337,17 +365,19 @@ export function Table({
         <Incoming
           g={game}
           onAnswer={(answer) => {
-            act({ kind: 'respond', answer }, answer ? 'energy' : game.pending?.card.kind === 'crise' ? 'crisis' : 'play')
+            // L'ippon s'annonce sur la table, avec son ressort.
+            act({ kind: 'respond', answer }, ...(answer === 'ippon' ? [] : [answer ? 'energy' : game.pending?.card.kind === 'crise' ? 'crisis' : 'play'] as Sfx[]))
           }}
         />
       ) : null}
       {stage === 'report' && report ? (
         game.outcome ? (
-          <Final g={game} onReplay={onReplay} onCompare={() => setCompare(true)} onClose={() => setStage('play')} />
+          <Final g={game} quip={yearQuip} onReplay={onReplay} onCompare={() => setCompare(true)} onClose={() => setStage('play')} />
         ) : (
           <Verdict
             g={game}
             report={report}
+            quip={yearQuip}
             onCompare={() => setCompare(true)}
             onClose={() => setStage('context')}
             onWhy={yearGame ? (card, side) => setWhy({ g: yearGame, card, side }) : null}
@@ -361,7 +391,7 @@ export function Table({
           canAct={myTurn}
           onClose={() => setPick(null)}
           onWhy={() => setWhy({ g: game, card: pick.card, side: pick.where === 'adverse' ? 'ai' : 'player' })}
-          onPlay={() => act({ kind: 'play', uid: pick.card.uid }, pick.card.kind === 'crise' ? 'crisis' : rarityOf(pick.card) === 'legendaire' ? 'promise' : 'play')}
+          onPlay={() => act({ kind: 'play', uid: pick.card.uid }, playSound(pick.card))}
           onDiscard={() => act({ kind: 'discard', uid: pick.card.uid }, 'discard', 'energy')}
           onSell={() => act({ kind: 'sell', uid: pick.card.uid }, 'coin')}
           onBuy={() => {
@@ -378,18 +408,43 @@ export function Table({
   )
 }
 
+/** Le bruit d'une carte posée : une crise gronde, le Canard fait coin-coin, les astres scintillent, une légende sonne. */
+const playSound = (card: Card): Sfx =>
+  card.kind === 'crise' ? (card.crisis === 'fuite' ? 'quack' : 'crisis') : card.kind === 'action' && card.action === 'alignement' ? 'cosmic' : rarityOf(card) === 'legendaire' ? 'promise' : 'play'
+
+/** Combien de temps reste la bulle d'une réplique. */
+const QUIP_MS = 2800
+
+/** Ce que l'IA commente : sa carte posée, son coup, votre parade, le coup qu'elle prend, celui qu'elle pare. */
+function quipMoment(before: Game, after: Game): Moment | null {
+  if (before.pending && !after.pending) {
+    const parade = after.moves.length > before.moves.length ? after.moves.at(-1) : undefined
+    const parried = parade?.kind === 'parade' && !!parade.answer
+    if (before.pending.card.kind !== 'crise') {
+      return null
+    }
+    return before.pending.from === 'ai' ? (parried ? 'parried' : null) : parried ? 'block' : 'hit'
+  }
+  const m = after.moves.length > before.moves.length ? after.moves.at(-1)! : null
+  if (!m || m.side !== 'ai' || m.kind !== 'jeu') {
+    return null
+  }
+  return m.card?.kind === 'crise' ? 'crisis' : 'play'
+}
+
 /** Ce que l'adversaire vient de faire, à annoncer (et le son qui va avec), ou null (rien, ou c'était vous). */
 function foeNews(before: Game, after: Game): { text: string; sound: Sfx } | null {
   const ai = after.seats.ai
   const who = `${ai.emblem} ${ai.name}`
   if (before.pending && !after.pending) {
-    if (before.pending.from !== 'player') {
-      return null
-    }
     const name = cardName(before.pending.card)
     const parade = after.moves.length > before.moves.length ? after.moves.at(-1) : undefined
+    if (before.pending.from !== 'player') {
+      // Votre ippon : la crise repart chez lui, ça mérite d'être annoncé.
+      return parade?.kind === 'parade' && parade.answer === 'ippon' ? { text: `🥋 IPPON ! ${name} repart chez ${ai.name}`, sound: 'boing' } : null
+    }
     if (parade?.kind === 'parade' && parade.answer) {
-      return { text: `${ACTIONS[parade.answer].art} ${who} : ${ACTIONS[parade.answer].name} !`, sound: parade.answer === 'conseil' ? 'crisis' : 'energy' }
+      return { text: `${ACTIONS[parade.answer].art} ${who} : ${ACTIONS[parade.answer].name} !`, sound: parade.answer === 'conseil' ? 'crisis' : parade.answer === 'ippon' ? 'boing' : 'energy' }
     }
     return before.pending.card.kind === 'crise' ? { text: `💥 ${name} frappe ${ai.name} !`, sound: 'crisis' } : null
   }
@@ -411,7 +466,9 @@ function foeNews(before: Game, after: Game): { text: string; sound: Sfx } | null
       return null
     case 'jeu':
       return m.card?.kind === 'crise'
-        ? { text: `💥 ${who} → vous : ${name} !`, sound: 'crisis' }
+        ? { text: `💥 ${who} → vous : ${name} !`, sound: m.card.crisis === 'fuite' ? 'quack' : 'crisis' }
+        : m.card?.kind === 'action' && m.card.action === 'alignement'
+        ? { text: `🪐 ${who} aligne les planètes`, sound: 'cosmic' }
         : { text: `${m.card && rarityOf(m.card) === 'legendaire' ? '🌟' : '📜'} ${who} joue ${name}`, sound: m.card && rarityOf(m.card) === 'legendaire' ? 'promise' : 'play' }
   }
 }
@@ -452,6 +509,7 @@ const ANSWER_TEXT: Record<Answer, string> = {
   commission: 'la commission d’enquête désamorce le scandale',
   communication: 'la communication de crise en divise les effets par deux',
   conseil: 'le Conseil constitutionnel censure la loi',
+  ippon: 'ippon : le coup repart chez l’envoyeur',
 }
 
 /**
@@ -479,6 +537,7 @@ function Incoming({ g, onAnswer }: { g: Game; onAnswer: (answer: Answer | null) 
             {cardArt(card)}
           </span>
           <strong className="dl-name">{cardName(card)}</strong>
+          {taglineOf(card) ? <em className="dl-tagline">{taglineOf(card)}</em> : null}
           {rule ? <span className="dl-rule">{rule}</span> : null}
         </div>
         <Effects impact={impact} />
@@ -537,9 +596,10 @@ function fanOf(i: number, n: number): React.CSSProperties {
   return { '--i': i, '--n': n, '--rot': `${(i - mid) * spread}deg`, '--drop': `${Math.round(x * x * 10)}px` } as React.CSSProperties
 }
 
-/** Les réglages : le son. */
+/** Les réglages : le son, les répliques de l'IA. */
 function Settings({ onClose }: { onClose: () => void }) {
   const [on, setOn] = useState(soundOn)
+  const [talk, setTalk] = useState(tauntsOn)
   return (
     <div className="dlg-settings" role="dialog" aria-label="Réglages">
       <strong>⚙️ Réglages</strong>
@@ -557,6 +617,20 @@ function Settings({ onClose }: { onClose: () => void }) {
         }}
       >
         <span>{on ? '🔊' : '🔇'} Son</span>
+        <i aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={talk}
+        className={`dl-switch ${talk ? 'is-on' : ''}`}
+        onClick={() => {
+          setTauntsOn(!talk)
+          setTalk(!talk)
+          sfx('click')
+        }}
+      >
+        <span>{talk ? '💬' : '🤐'} Répliques</span>
         <i aria-hidden="true" />
       </button>
       <button type="button" className="ghost small" onClick={onClose}>
@@ -724,6 +798,11 @@ export function Setup({
                 >
                   <span aria-hidden="true">{p.emblem}</span>
                   <small>{shortName(p)}</small>
+                  {p.candidate?.fantasy ? (
+                    <i className="dlv-fun" aria-hidden="true">
+                      🎭
+                    </i>
+                  ) : null}
                 </button>
               )
             })}
@@ -755,7 +834,7 @@ export function Setup({
         </section>
       )}
       <p className="note dlg-setup-foot" title={PARODY_NOTE}>
-        🎭 Personnages parodiques · programmes réels sourcés
+        🎭 Personnages parodiques · programmes réels sourcés (sauf fantaisie)
       </p>
       {intro && me && foe ? <Intro me={me} foe={foe} meTag={mode === 'local' ? 'Joueur 1' : 'Vous'} onDone={() => onStart(me, foe, years)} /> : null}
     </div>
@@ -801,6 +880,11 @@ function Fighter({
       </span>
       <strong className="dlv-name">{p ? (p.candidate ? p.name : p === BOT ? 'Le Bot' : 'Programme surprise') : active ? 'À choisir…' : waiting ? 'Votre ami' : '???'}</strong>
       <small className="dlv-family">{p ? (p.candidate?.family ?? (p === BOT ? '🤖 Sans parti' : '🎲 5 mesures au hasard')) : waiting ? '⏳ Il choisit en arrivant' : ''}</small>
+      {p?.candidate?.fantasy ? (
+        <small className="dlv-fantasy" title="Il ne se présente pas : programme imaginé pour le jeu, sans source">
+          🎭 Candidat fantaisie
+        </small>
+      ) : null}
       <ul className="dlv-stats">
         {STAT_AXES.map((a) => (
           <li key={a.id} title={a.hint}>
@@ -882,7 +966,7 @@ function Lead({ g }: { g: Game }) {
   )
 }
 
-function Strip({ g, side, turn }: { g: Game; side: Side; turn: boolean }) {
+function Strip({ g, side, turn, quip }: { g: Game; side: Side; turn: boolean; quip?: string | null }) {
   const s = g.seats[side]
   const st = lastState(s)
   const kept = new Set(keptPromises(s, g.year - 1).map((p) => p.key))
@@ -891,6 +975,11 @@ function Strip({ g, side, turn }: { g: Game; side: Side; turn: boolean }) {
   return (
     <section className={`dlg-strip strip-${side} ${turn ? 'is-turn' : ''}`} style={{ '--c': s.color } as React.CSSProperties}>
       <span className="dl-emblem">{s.emblem}</span>
+      {quip ? (
+        <span className="dlg-quip" role="status" key={quip}>
+          {quip}
+        </span>
+      ) : null}
       <div className="dlg-name">
         <strong>{side === 'player' ? `Vous · ${s.name === 'Vous' ? 'programme surprise' : s.name}` : s.name}</strong>
         <small>
@@ -960,6 +1049,9 @@ function kindOf(g: Game, card: Card, side: Side): { cls: string; label: string }
     const def = ACTIONS[card.action]
     if (rarityOf(card) === 'legendaire') {
       return { cls: 'kind-action', label: '🌟 Légendaire' }
+    }
+    if (def.signature) {
+      return { cls: 'kind-action', label: `${candidateById(def.signature)?.emblem ?? '✨'} Signature` }
     }
     return { cls: 'kind-action', label: def.reaction ? '🛡️ Parade' : def.events?.length ? '🎉 Événement' : '🎴 Action' }
   }
@@ -1109,6 +1201,7 @@ function CardModal({ g, pick, canAct, onClose, onWhy, ...actions }: { g: Game; p
               {cardArt(card)}
             </span>
             <strong className="dl-name">{cardName(card)}</strong>
+            {taglineOf(card) ? <em className="dl-tagline">{taglineOf(card)}</em> : null}
             <span className="dl-desc">{description}</span>
             {card.kind === 'crise' && CRISES[card.crisis].rule ? <span className="dl-rule">{CRISES[card.crisis].rule}</span> : null}
           </div>
@@ -1267,12 +1360,15 @@ function highlights(r: Report['sides'][Side]): { text: string; tone: '' | 'good'
 function Verdict({
   g,
   report,
+  quip,
   onClose,
   onCompare,
   onWhy,
 }: {
   g: Game
   report: Report
+  /** La réplique de l'IA sur l'année (ou null). */
+  quip?: string | null
   onClose: () => void
   onCompare: () => void
   /** Ouvrir la page « Pourquoi ? » d'une carte jouée cette année (null : la table de l'année n'est plus là). */
@@ -1293,6 +1389,11 @@ function Verdict({
         🗓️ {report.year} · {ctx.art} {ctx.name}
       </p>
       <h2 className="dlr-title">{lead > 0 ? '🔥 Vous menez' : lead < 0 ? '😬 Vous êtes mené' : '🤝 Égalité'}</h2>
+      {quip ? (
+        <p className="dlr-quip">
+          {g.seats.ai.emblem} <span>{quip}</span>
+        </p>
+      ) : null}
       <p className="dlr-score">
         <b style={{ '--c': g.seats.player.color } as React.CSSProperties}>{a.health}</b>
         <span>–</span>
@@ -1492,7 +1593,7 @@ function Compare({ g, onClose }: { g: Game; onClose: () => void }) {
  * La fin du duel, façon jeu de combat : la bannière (VICTOIRE, DÉFAITE, K.O. quand un pays s'effondre, MATCH NUL),
  * les deux présidents face à face avec leur note, puis chaque critère en bras de fer : la barre du meilleur s'allume à sa couleur.
  */
-function Final({ g, onReplay, onCompare, onClose }: { g: Game; onReplay: () => void; onCompare: () => void; onClose: () => void }) {
+function Final({ g, quip, onReplay, onCompare, onClose }: { g: Game; quip?: string | null; onReplay: () => void; onCompare: () => void; onClose: () => void }) {
   const o = g.outcome!
   useEffect(() => {
     sfx(o.winner === 'player' ? 'victory' : o.winner === 'ai' ? 'defeat' : 'flip')
@@ -1503,11 +1604,17 @@ function Final({ g, onReplay, onCompare, onClose }: { g: Game; onReplay: () => v
   const parts = SIDES_ORDER.map((side) => healthParts(lastState(g.seats[side]), startOf(g, side)))
   const name = (side: Side) => (side === 'player' ? 'Vous' : g.seats[side].name)
   return (
-    <div className={`dlf ${o.winner === 'player' ? 'is-won' : o.winner === 'ai' ? 'is-lost' : 'is-draw'}`} role="dialog" aria-modal="true" aria-label="Fin du duel">
+    <div className={`dlf ${o.winner === 'player' ? 'is-won' : o.winner === 'ai' ? 'is-lost' : 'is-draw'} ${ko ? 'is-ko' : ''}`} role="dialog" aria-modal="true" aria-label="Fin du duel">
       <header className="dlf-banner">
         <p className="dlf-title">{banner}</p>
         <p className="dlf-verdict">{verdict}</p>
+        {quip ? (
+          <p className="dlr-quip">
+            {g.seats.ai.emblem} <span>{quip}</span>
+          </p>
+        ) : null}
       </header>
+      {o.winner === 'player' ? <Confetti /> : null}
       <section className="dlf-faceoff" aria-label="Les notes finales">
         {SIDES_ORDER.map((side, k) => {
           const s = g.seats[side]
@@ -1646,6 +1753,21 @@ function Rules({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+/** Des confettis pour la victoire (quelques emojis qui tombent ; rien si le mouvement est réduit). */
+const CONFETTI = ['🎉', '⭐', '🎊', '🏆', '✨', '🥳']
+
+function Confetti() {
+  return (
+    <div className="dlf-confetti" aria-hidden="true">
+      {Array.from({ length: 18 }, (_, i) => (
+        <span key={i} style={{ '--x': `${(i * 37) % 100}%`, '--d': `${(i % 6) * 0.35}s`, '--t': `${2.6 + (i % 4) * 0.5}s` } as React.CSSProperties}>
+          {CONFETTI[i % CONFETTI.length]}
+        </span>
+      ))}
     </div>
   )
 }
