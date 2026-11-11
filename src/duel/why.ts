@@ -45,7 +45,7 @@ export type Impact = {
 }
 
 /** Ce qui fait bouger un indicateur : une phrase, puis les contributions qui comptent (en vert ce qui aide le pays). */
-export type Detail = { text: string; lines: { label: string; value: string; good: boolean }[] }
+export type Detail = { text: string; lines: { label: string; value: string; good: boolean; delta: number }[] }
 
 const LEVERS: Record<string, LeverDef> = Object.fromEntries(LEVER_GROUPS.flatMap((g) => g.levers.map((l) => [l.key, l])))
 
@@ -121,7 +121,7 @@ function keep(lines: Line[], unit: string, digits: number): Detail['lines'] {
     .filter((l) => Math.abs(l.delta) >= floor)
     .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
     .slice(0, 6)
-    .map((l) => ({ label: l.label, value: `${signed(l.delta, digits)}${unit}`, good: l.good }))
+    .map((l) => ({ label: l.label, value: `${signed(l.delta, digits)}${unit}`, good: l.good, delta: l.delta }))
 }
 
 /** Ce qui change entre deux décompositions (mêmes clés), poste par poste. */

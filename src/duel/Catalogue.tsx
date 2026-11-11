@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CANDIDATES, candidateById, type Candidate } from '../game/candidates'
+import { CANDIDATES, candidateById, pledgeText, type Candidate } from '../game/candidates'
 import { num } from '../ui/format'
 import { ACTIONS, cardArt, cardName, copiesOf, CRISES, generic, GENERIC_MEASURES, isAdded, PLAYABLE_MEASURES, programmeOf, rarityOf, taglineOf, type ActionId, type Card, type CrisisId } from './cards'
+import { contextBrief } from './brief'
 import { CONTEXTS, type ContextId } from './contexts'
 import { baseCost, budgetCost, neutralGame } from './engine'
 import { cardImpact, type Impact } from './why'
@@ -147,7 +148,7 @@ export function Catalogue({ onClose }: { onClose: () => void }) {
     (e) =>
       (group === 'tout' || group === e.group) &&
       (!who || e.owner?.id === who || e.promisedBy.some((c) => c.id === who)) &&
-      matches(`${cardName(e.card)} ${e.kind.label} ${taglineOf(e.card) ?? ''} ${e.card.kind === 'mesure' ? e.card.pledge.quote : ''}`),
+      matches(`${cardName(e.card)} ${e.kind.label} ${taglineOf(e.card) ?? ''} ${e.card.kind === 'mesure' ? pledgeText(e.card.pledge) : ''}`),
   )
   const contexts = (Object.keys(CONTEXTS) as ContextId[]).filter((id) => (group === 'tout' || group === 'contexte') && !who && matches(`${CONTEXTS[id].name} ${CONTEXTS[id].rule}`))
 
@@ -233,6 +234,7 @@ export function Catalogue({ onClose }: { onClose: () => void }) {
                 <strong>{ctx.name}</strong>
                 <small className="dlc-kind">🌍 Conjoncture · ×1, une par année</small>
                 <small>{ctx.text}</small>
+                <small className="dlc-brief">💡 {contextBrief(ctx.event)}</small>
                 <small className="dlc-rule">{ctx.rule}</small>
               </span>
             </div>

@@ -1,7 +1,7 @@
 import { BASE_POLICY } from '../model/calibration'
 import { policyAt, simulate } from '../model/sim'
 import type { Decision, FiredEvent, Policy, YearState } from '../model/types'
-import { promisePatch, promiseRemaining, promiseStatus, type Candidate, type Pledge } from '../game/candidates'
+import { pledgeTitle, promisePatch, promiseRemaining, promiseStatus, type Candidate, type Pledge } from '../game/candidates'
 import { random } from '../model/events'
 import { popularity } from '../game/score'
 import { planCost } from '../game/session'
@@ -771,7 +771,7 @@ export function resolveYear(g: Game): Game {
       received: s.received,
       parried: s.parried,
       softened: s.softened,
-      kept: kept.map((p) => p.measure!.name),
+      kept: kept.map((p) => pledgeTitle(p)),
       health: scoreOf(next.seats[side]),
       before,
       played: s.played,

@@ -25,6 +25,11 @@ export type Measure = {
   effects: { lever: PolicyKey | 'cancelHolder'; operation: 'fixe' | 'ajout'; base: 'valeur' | 'montant'; factor: number | string; years: number | null }[]
   /** Ce que le moteur approche ou ne représente pas encore. */
   notes: string[]
+  /**
+   * Le titre et le texte de la carte, avec le montant ({valeur}, ou {nombre} sans signe) : celui du dessous du pivot
+   * (« moins ») quand la mesure va dans les deux sens (créer ou supprimer des postes…). Vide : le nom de la mesure.
+   */
+  card: { title: string; titleMinus: string; pivot: number; text: string; textMinus: string }
 }
 
 export type Pledge = {
@@ -74,6 +79,7 @@ export const MEASURES: Record<string, Measure> = Object.fromEntries(
           years: opt(l.annees),
         })),
       notes: rows.map((l) => l.note).filter(Boolean),
+      card: { title: r.titre ?? '', titleMinus: r.titre_moins ?? '', pivot: opt(r.pivot) ?? 0, text: r.texte ?? '', textMinus: r.texte_moins ?? '' },
     }
     return [r.id, measure]
   }),
@@ -102,6 +108,32 @@ export const PARODY_NOTE =
 export const FANTASY_SOURCE = 'programme imaginaire, personnage parodique'
 
 export const candidateById = (id: string | null | undefined) => CANDIDATES.find((c) => c.id === id)
+
+/** Le montant d'une promesse : le sien, sinon celui de la mesure par défaut. */
+export const pledgeAmount = (p: Pledge) => p.amount ?? p.measure?.param?.default ?? null
+
+/** Un montant dans l'unité de la mesure : les milliers en clair (« 100 000 »), le reste tel quel (« 2,5 »). */
+function amountText(v: number, unit: string): string {
+  return unit.startsWith('milliers') ? Math.round(v * 1000).toLocaleString('fr-FR') : v.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
+}
+
+/** Le gabarit de la carte rempli : dans le bon sens (au-dessus ou au-dessous du pivot), avec le montant. */
+function filled(p: Pledge, plus: string, minus: string): string {
+  const m = p.measure!
+  const v = pledgeAmount(p)
+  if (v === null || !plus) {
+    return ''
+  }
+  const unit = m.param?.unit ?? ''
+  const template = v < m.card.pivot && minus ? minus : plus
+  return template.replace('{nombre}', amountText(Math.abs(v), unit)).replace('{valeur}', `${v < 0 ? '−' : ''}${amountText(Math.abs(v), unit)}`)
+}
+
+/** Le titre d'une promesse, dans son sens et avec son montant (« Supprimer 100 000 postes de fonctionnaires »). */
+export const pledgeTitle = (p: Pledge) => (p.measure ? filled(p, p.measure.card.title, p.measure.card.titleMinus) || p.measure.name : '')
+
+/** Le texte de la carte : la citation du candidat, sinon ce que fait la mesure dans son sens. */
+export const pledgeText = (p: Pledge) => p.quote || (p.measure ? filled(p, p.measure.card.text, p.measure.card.textMinus) || p.measure.summary : '')
 
 /** Une promesse (« pledge ») que le moteur sait jouer : au moins un levier. */
 export const isPlayable = (p: Pledge) => !!p.measure && p.measure.effects.length > 0

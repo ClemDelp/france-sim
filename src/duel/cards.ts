@@ -1,5 +1,5 @@
 import { random } from '../model/events'
-import { isPlayable, MEASURES, type Candidate, type Pledge } from '../game/candidates'
+import { isPlayable, MEASURES, pledgeTitle, type Candidate, type Pledge } from '../game/candidates'
 
 /**
  * Les cartes du duel. Trois familles :
@@ -353,13 +353,13 @@ export function cardArt(c: CardDef): string {
 }
 
 export function cardName(c: CardDef): string {
-  return c.kind === 'crise' ? CRISES[c.crisis].name : c.kind === 'action' ? ACTIONS[c.action].name : c.pledge.measure!.name
+  return c.kind === 'crise' ? CRISES[c.crisis].name : c.kind === 'action' ? ACTIONS[c.action].name : pledgeTitle(c.pledge)
 }
 
 /** Une mesure générale (hors programme), avec son montant par défaut. */
 export const generic = (id: string): Pledge => {
   const m = MEASURES[id]
-  return { key: `mesure-${id}`, measure: m, amount: null, quote: m.summary, source: '' }
+  return { key: `mesure-${id}`, measure: m, amount: null, quote: '', source: '' }
 }
 
 /** Les mesures que le moteur sait jouer. */

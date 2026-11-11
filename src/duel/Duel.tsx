@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { CANDIDATES, candidateById, PARODY_NOTE } from '../game/candidates'
+import { CANDIDATES, candidateById, PARODY_NOTE, pledgeText, pledgeTitle } from '../game/candidates'
 import { popularity } from '../game/score'
 import { num } from '../ui/format'
 import { aiStep } from './ai'
@@ -45,7 +45,7 @@ import { applyIntent, type Intent } from './online'
 import { setSoundOn, sfx, soundOn, type Sfx } from './sound'
 import { setTauntsOn, taunt, tauntsOn, type Moment } from './taunts'
 import { cardImpact, contextShift, type Impact } from './why'
-import { WhyPage } from './WhyPage'
+import { Brief, WhyPage } from './WhyPage'
 import { unwind, useBack } from './back'
 import { loadGame, saveGame, SOLO_KEY } from './save'
 import { useSwipe } from './swipe'
@@ -1160,7 +1160,7 @@ function Strip({ g, side, turn, quip }: { g: Game; side: Side; turn: boolean; qu
               <ul>
                 {s.programme.map((p) => (
                   <li key={p.key} className={kept.has(p.key) ? 'is-kept' : ''}>
-                    {kept.has(p.key) ? '✅' : '⬜'} {p.measure!.name}
+                    {kept.has(p.key) ? '✅' : '⬜'} {pledgeTitle(p)}
                     {isAdded(p) ? <small title="Ajoutée par le jeu : le programme publié en compte moins de cinq que le moteur sait jouer."> ➕</small> : null}
                   </li>
                 ))}
@@ -1340,7 +1340,7 @@ function CardModal({
   const side: Side = pick.where === 'adverse' ? 'ai' : 'player'
   const impact = useMemo(() => cardImpact(g, side, card), [g, side, card])
   const kind = kindOf(g, card, side)
-  const description = card.kind === 'crise' ? CRISES[card.crisis].text : card.kind === 'action' ? ACTIONS[card.action].text : card.pledge.quote || card.pledge.measure!.summary
+  const description = card.kind === 'crise' ? CRISES[card.crisis].text : card.kind === 'action' ? ACTIONS[card.action].text : pledgeText(card.pledge)
   const listing = g.market.find((l) => l.card.uid === card.uid)
   const ctx = contextOf(g)
   const shift = contextShift(g, card)
@@ -1384,7 +1384,8 @@ function CardModal({
                 </span>
               ) : null}
             </p>
-            {impact ? <Effects impact={impact} max={4} who={g.seats[impact.target].name} /> : <p className="dl-fx-rule">🎴 Change les règles du duel</p>}
+            <Brief g={g} side={side} card={card} impact={impact} />
+            {impact ? <Effects impact={impact} max={4} who={g.seats[impact.target].name} /> : null}
             <button type="button" className="dl-why-link" onClick={onWhy}>
               🔍 Pourquoi ?
             </button>

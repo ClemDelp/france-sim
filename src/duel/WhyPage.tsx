@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
+import { pledgeText } from '../game/candidates'
 import { num } from '../ui/format'
 import { ACTIONS, cardArt, cardName, CRISES, crisisEvent, inModel, type Card } from './cards'
 import { ALERT_AT, budgetCost, contextOf, marginLeft, overshootMalus, type Game, type Side } from './engine'
+import { brief } from './brief'
 import { useSwipe } from './swipe'
 import { cardImpact, contextShift, CRITERION_NODE, crisisEffects, leverChanges, openCatalogue, openModel, startNodes, whyTree, type Detail, type Impact, type Indicator, type WhyNode } from './why'
 
@@ -39,7 +41,7 @@ export function WhyPage({
   const levers = card.kind === 'mesure' ? leverChanges(g, side, card) : []
   const starts = startNodes(g, side, card)
   const whose = impact ? (impact.target === 'player' ? 'votre France' : `la France de ${g.seats[impact.target].name}`) : ''
-  const description = card.kind === 'crise' ? CRISES[card.crisis].text : card.kind === 'action' ? ACTIONS[card.action].text : card.pledge.quote || card.pledge.measure!.summary
+  const description = card.kind === 'crise' ? CRISES[card.crisis].text : card.kind === 'action' ? ACTIONS[card.action].text : pledgeText(card.pledge)
   const event = card.kind === 'crise' ? crisisEvent(card.crisis) : card.kind === 'action' ? (ACTIONS[card.action].events?.[0] ?? null) : null
   const effects = event ? crisisEffects(event) : null
   const shift = contextShift(g, card)
@@ -85,86 +87,90 @@ export function WhyPage({
           </div>
         </section>
 
-        {levers.length ? (
-          <section>
-            <h3>🎚️ Ce que la carte change</h3>
-            <ul className="dl-levers">
-              {levers.map((l) => (
-                <li key={l.key}>
-                  {l.label} : {l.from} → <b>{l.to}</b>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-        {card.kind === 'mesure' && side === 'player' ? <BudgetLine g={g} card={card} played={played} neutral={neutral} impact={impact} /> : null}
-        {shift && !neutral ? (
-          <p className="dl-ctxnote">
-            {ctx.art} {ctx.name} : {shift < 0 ? `${-shift} ⚡ de moins` : `${shift} ⚡ de plus`} cette année. {ctx.rule}
-          </p>
-        ) : null}
-        {effects?.text.length ? (
-          <section>
-            <h3>🌍 Ce que la carte déclenche dans le modèle</h3>
-            <p>
-              {effects.text.join(', ')}
-              {effects.years > 1 ? `, pendant ${effects.years} ans` : ''}.
-              {card.kind === 'action' && card.action === 'tweet' ? ' Pile ou face : ci-dessous, le bon côté ; le mauvais fait l’inverse.' : ''}
-              {card.kind === 'action' && card.action === 'alignement' ? ' 6 chances sur 10 d’harmonie (ci-dessous) ; sinon l’éclipse : −2 points de popularité.' : ''}
-            </p>
-          </section>
-        ) : null}
-        {impact && card.kind !== 'mesure' && Math.abs(impact.budget.spending - impact.budget.revenue) >= 0.1 ? <BudgetLines impact={impact} whose={whose} /> : null}
-        {card.kind === 'action' && ACTIONS[card.action].spend ? (
-          <section>
-            <h3>💶 Le budget de l’État cette année</h3>
-            <p>{ACTIONS[card.action].spend!.amount} Md€ d’argent public en plus cette année (comptés dans la marge budgétaire), puis plus rien.</p>
-          </section>
-        ) : null}
-        {!inModel(card) ? (
-          <section>
-            <h3>{card.kind === 'crise' ? '🎯 Un coup qui change la partie' : '🎴 Une carte qui change la partie'}</h3>
-            <p>
-              {card.kind === 'crise' ? CRISES[card.crisis].rule : card.kind === 'action' ? ACTIONS[card.action].text : ''} Elle ne passe pas par le modèle : elle ne change ni l’économie ni la
-              société, seulement les règles du duel.
-            </p>
-          </section>
-        ) : null}
-        {impact ? (
-          <>
+        <Brief g={g} side={side} card={card} impact={impact} effects={3} />
+
+        <details className="dl-more">
+          <summary>🔬 Le détail</summary>
+          {levers.length ? (
             <section>
-              <h3>
-                📊 Note de {whose} l’an prochain : {signed(impact.health)} point{Math.abs(impact.health) > 1 ? 's' : ''}
-              </h3>
-              <p className="note">En points de note (sur 100), critère par critère. Sous chaque critère, ce qui le fait bouger.</p>
-              <div className="dl-parts">
-                {impact.parts.map((p) => (
-                  <details key={p.id} className="dl-part-row" open>
-                    <summary className="dl-part">
-                      <span>{p.label}</span>
-                      <i className={p.delta >= 0 ? 'up' : 'down'} style={{ width: `${Math.min(100, Math.abs(p.delta) * 25)}%` }} />
-                      <b className={p.delta >= 0 ? 'good' : 'bad'}>{signed(p.delta, 1)}</b>
-                    </summary>
-                    <DetailView detail={impact.details[CRITERION_NODE[p.id]]} />
-                  </details>
-                ))}
-                {!impact.parts.length ? <p className="note">Presque rien la première année : l’effet est lent, ou trop petit pour bouger la note.</p> : null}
-              </div>
-            </section>
-            <section>
-              <h3>📈 Ce qui bouge dans {whose}</h3>
-              <ul className="dl-moves">
-                {impact.indicators.map((ind) => (
-                  <Move key={ind.node} ind={ind} />
+              <h3>🎚️ Ce que la carte change</h3>
+              <ul className="dl-levers">
+                {levers.map((l) => (
+                  <li key={l.key}>
+                    {l.label} : {l.from} → <b>{l.to}</b>
+                  </li>
                 ))}
               </ul>
-              {!impact.indicators.length ? <p className="note">Rien ne bouge assez dès la première année : l’effet est lent ou très petit.</p> : null}
             </section>
-            <Why starts={starts} impact={impact} />
-          </>
-        ) : null}
+          ) : null}
+          {card.kind === 'mesure' && side === 'player' ? <BudgetLine g={g} card={card} played={played} neutral={neutral} impact={impact} /> : null}
+          {shift && !neutral ? (
+            <p className="dl-ctxnote">
+              {ctx.art} {ctx.name} : {shift < 0 ? `${-shift} ⚡ de moins` : `${shift} ⚡ de plus`} cette année. {ctx.rule}
+            </p>
+          ) : null}
+          {effects?.text.length ? (
+            <section>
+              <h3>🌍 Ce que la carte déclenche dans le modèle</h3>
+              <p>
+                {effects.text.join(', ')}
+                {effects.years > 1 ? `, pendant ${effects.years} ans` : ''}.
+                {card.kind === 'action' && card.action === 'tweet' ? ' Pile ou face : ci-dessous, le bon côté ; le mauvais fait l’inverse.' : ''}
+                {card.kind === 'action' && card.action === 'alignement' ? ' 6 chances sur 10 d’harmonie (ci-dessous) ; sinon l’éclipse : −2 points de popularité.' : ''}
+              </p>
+            </section>
+          ) : null}
+          {impact && card.kind !== 'mesure' && Math.abs(impact.budget.spending - impact.budget.revenue) >= 0.1 ? <BudgetLines impact={impact} whose={whose} /> : null}
+          {card.kind === 'action' && ACTIONS[card.action].spend ? (
+            <section>
+              <h3>💶 Le budget de l’État cette année</h3>
+              <p>{ACTIONS[card.action].spend!.amount} Md€ d’argent public en plus cette année (comptés dans la marge budgétaire), puis plus rien.</p>
+            </section>
+          ) : null}
+          {!inModel(card) ? (
+            <section>
+              <h3>{card.kind === 'crise' ? '🎯 Un coup qui change la partie' : '🎴 Une carte qui change la partie'}</h3>
+              <p>
+                {card.kind === 'crise' ? CRISES[card.crisis].rule : card.kind === 'action' ? ACTIONS[card.action].text : ''} Elle ne passe pas par le modèle : elle ne change ni l’économie ni la
+                société, seulement les règles du duel.
+              </p>
+            </section>
+          ) : null}
+          {impact ? (
+            <>
+              <section>
+                <h3>
+                  📊 Note de {whose} l’an prochain : {signed(impact.health)} point{Math.abs(impact.health) > 1 ? 's' : ''}
+                </h3>
+                <div className="dl-parts">
+                  {impact.parts.map((p) => (
+                    <details key={p.id} className="dl-part-row" open>
+                      <summary className="dl-part">
+                        <span>{p.label}</span>
+                        <i className={p.delta >= 0 ? 'up' : 'down'} style={{ width: `${Math.min(100, Math.abs(p.delta) * 25)}%` }} />
+                        <b className={p.delta >= 0 ? 'good' : 'bad'}>{signed(p.delta, 1)}</b>
+                      </summary>
+                      <DetailView detail={impact.details[CRITERION_NODE[p.id]]} />
+                    </details>
+                  ))}
+                  {!impact.parts.length ? <p className="note">Presque rien la première année : l’effet est lent, ou trop petit pour bouger la note.</p> : null}
+                </div>
+              </section>
+              <section>
+                <h3>📈 Ce qui bouge dans {whose}</h3>
+                <ul className="dl-moves">
+                  {impact.indicators.map((ind) => (
+                    <Move key={ind.node} ind={ind} />
+                  ))}
+                </ul>
+                {!impact.indicators.length ? <p className="note">Rien ne bouge assez dès la première année : l’effet est lent ou très petit.</p> : null}
+              </section>
+              <Why starts={starts} impact={impact} />
+            </>
+          ) : null}
+        </details>
         <section className="dl-whyfoot">
-          <p className="note">Calculé par le modèle : l’année qui vient, jouée avec et sans la carte (à côté des cartes déjà posées). Les liens de cause à effet viennent de modele/liens.csv.</p>
+          <p className="note">Calculé par le modèle : l’année qui vient, jouée avec et sans la carte.</p>
           <button type="button" className="ghost" onClick={() => openModel(starts[0]?.node ?? null)}>
             🧠 Explorer le modèle
           </button>
@@ -175,6 +181,24 @@ export function WhyPage({
           )}
         </section>
       </div>
+    </div>
+  )
+}
+
+/** « En bref » : la carte en quelques lignes simples, de la cause à l'effet (calculées par le modèle). */
+export function Brief({ g, side, card, impact, effects = 2 }: { g: Game; side: Side; card: Card; impact: Impact | null; effects?: number }) {
+  const lines = brief(g, side, card, impact, effects)
+  if (!lines.length) {
+    return null
+  }
+  return (
+    <div className="dl-brief">
+      <strong>💡 En bref</strong>
+      <ul>
+        {lines.map((l) => (
+          <li key={l}>{l}</li>
+        ))}
+      </ul>
     </div>
   )
 }

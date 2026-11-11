@@ -3427,3 +3427,36 @@ button.dlc-row:hover {
   color: var(--ink);
   font-size: 1.3rem;
 }
+
+/* — « En bref » : la carte en quelques lignes, de la cause à l'effet */
+
+.dl-brief {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--gold);
+}
+.dl-brief > strong {
+  font-size: 0.9rem;
+}
+.dl-brief ul {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+.dl-more > summary {
+  cursor: pointer;
+  font-weight: 800;
+  padding: 8px 0;
+}
+.dl-more[open] > summary {
+  margin-bottom: 8px;
+}
+.dlc-brief {
+  font-weight: 700;
+}
