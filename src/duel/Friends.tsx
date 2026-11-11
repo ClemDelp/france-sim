@@ -87,7 +87,7 @@ export function Friends({ onExit, onHost, onJoin, onLocal }: { onExit: () => voi
           <button type="button" className="dlo-card is-resume" onClick={() => onHost(resumable.code)}>
             <span aria-hidden="true">▶</span>
             <strong>Reprendre la partie {resumable.code}</strong>
-            <small>Votre ami rouvre le même lien, et vous reprenez où vous en étiez.</small>
+            <small>🔗 Même lien, même partie</small>
           </button>
         ) : null}
         <button
@@ -100,7 +100,7 @@ export function Friends({ onExit, onHost, onJoin, onLocal }: { onExit: () => voi
         >
           <span aria-hidden="true">🌐</span>
           <strong>Créer une partie en ligne</strong>
-          <small>Choisissez votre président, puis envoyez le lien à votre ami (SMS, WhatsApp…).</small>
+          <small>📨 Un lien à envoyer</small>
         </button>
         <form
           className="dlo-card dlo-join"
@@ -131,10 +131,10 @@ export function Friends({ onExit, onHost, onJoin, onLocal }: { onExit: () => voi
         >
           <span aria-hidden="true">📱</span>
           <strong>À deux sur ce téléphone</strong>
-          <small>Chacun son tour : on se passe le téléphone, et chacun cache sa main.</small>
+          <small>🔄 On se passe le téléphone</small>
         </button>
       </main>
-      <p className="note dlg-setup-foot">En ligne, vos deux téléphones se parlent en direct (WebRTC) : pas de compte, aucune donnée gardée ailleurs.</p>
+      <p className="note dlg-setup-foot" title="En ligne, vos deux téléphones se parlent en direct (WebRTC) : pas de compte, aucune donnée gardée ailleurs.">🔒 Sans compte · en direct</p>
     </div>
   )
 }
@@ -309,12 +309,12 @@ export function HostScreen({ code, onExit }: { code: string; onExit: () => void 
             {net.status === 'courtier'
               ? 'Ouverture de la partie…'
               : net.status === 'attente'
-                ? `Envoyez le lien (ou le code) à votre ami. La partie commence quand il a choisi son président. ${match.years} rounds.`
+                ? `📨 Envoyez le lien · ${match.years} rounds`
                 : net.status === 'connecte'
-                  ? `${friend} est là : il choisit son président…`
+                  ? `✋ ${friend} choisit son président…`
                   : net.message}
           </p>
-          <small className="note">Gardez cette page ouverte : c’est votre téléphone qui fait l’arbitre.</small>
+          <small className="note" title="C’est votre téléphone qui fait l’arbitre.">📱 Gardez cette page ouverte</small>
         </main>
       </div>
     )
@@ -408,7 +408,7 @@ export function GuestScreen({ code, onExit }: { code: string; onExit: () => void
             {picked ? '🥊' : '📡'}
           </p>
           <p className="dlo-status">{picked ? 'Le combat va commencer…' : (net.message ?? 'Connexion à la partie de votre ami…')}</p>
-          {net.status === 'erreur' ? <small className="note">Le code est-il le bon ? Votre ami doit garder la page de la partie ouverte.</small> : null}
+          {net.status === 'erreur' ? <small className="note">🔑 Bon code ? Page de l’ami ouverte ?</small> : null}
         </main>
       </div>
     )
@@ -496,7 +496,7 @@ export function HotSeat({ onExit }: { onExit: () => void }) {
               ))}
             </ul>
           ) : null}
-          {game.pending && game.pending.from !== actor ? <p className="note">Une carte vous vise : vous pouvez y répondre.</p> : null}
+          {game.pending && game.pending.from !== actor ? <p className="note">🎯 Une carte vous vise !</p> : null}
           <button
             type="button"
             className="primary big"

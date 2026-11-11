@@ -3,7 +3,7 @@ import { CANDIDATES, PARODY_NOTE } from '../game/candidates'
 import { popularity } from '../game/score'
 import { num } from '../ui/format'
 import { aiStep } from './ai'
-import { ACTIONS, cardArt, cardName, CRISES, crisisEvent, inModel, isAdded, rarityOf, type Card } from './cards'
+import { ACTIONS, cardArt, cardName, CRISES, isAdded, rarityOf, type Card } from './cards'
 import { CONTEXTS } from './contexts'
 import {
   BOT,
@@ -24,7 +24,6 @@ import {
   marketPrice,
   MARKET_SIZE,
   newGame,
-  overshootMalus,
   answersOf,
   PROGRAMME_GOAL,
   promiseOwner,
@@ -34,7 +33,6 @@ import {
   yourTurn,
   type Answer,
   type Game,
-  type Move,
   type Player,
   type Report,
   type Side,
@@ -44,7 +42,8 @@ import { health, healthParts } from './health'
 import { fighterStats, STAT_AXES } from './fighters'
 import { applyIntent, type Intent } from './online'
 import { setSoundOn, sfx, soundOn, type Sfx } from './sound'
-import { cardImpact, CRITERION_NODE, crisisEffects, leverChanges, startNodes, whyTree, type Detail, type Impact, type Indicator, type WhyNode } from './why'
+import { cardImpact, contextShift, type Impact } from './why'
+import { WhyPage } from './WhyPage'
 import './duel.css'
 
 const AI_DELAY = 1100
@@ -122,6 +121,10 @@ export function Table({
   const [settings, setSettings] = useState(false)
   /** Revoir la conjoncture de l'année (sans relancer l'année). */
   const [context, setContext] = useState(false)
+  /** La page « Pourquoi ? » d'une carte, par-dessus la table : la partie où on l'a ouverte, la carte, et à qui elle est. */
+  const [why, setWhy] = useState<{ g: Game; card: Card; side: Side } | null>(null)
+  /** La table juste avant la dernière année jouée : ce qu'on explique depuis le bilan. */
+  const [yearGame, setYearGame] = useState<Game | null>(null)
   /** Une carte achetée arrive en main : pas de bruit de pioche par-dessus celui des pièces. */
   const bought = useRef(false)
   const hand = useFresh(game.seats.player.hand.map((c) => c.uid))
@@ -149,6 +152,7 @@ export function Table({
       setPick(null)
       if (game.reports.length > prev.reports.length) {
         sfx('flip')
+        setYearGame(prev)
         setStage('report')
       } else {
         setStage('context')
@@ -182,12 +186,15 @@ export function Table({
   return (
     <div className="dlg">
       <header className="dlg-top">
-        <button type="button" className="ghost small" onClick={onExit}>
-          ← Accueil
+        <button type="button" className="ghost small" onClick={onExit} title="Accueil">
+          ←<span className="dlg-lbl"> Accueil</span>
         </button>
-        <strong className="dl-year">
-          {game.outcome ? 'Partie terminée' : `Année ${game.year}`} <small>· {Math.min(game.year, endYear(game)) - START_YEAR}/{game.years}</small>
-        </strong>
+        <div className="dlg-mid">
+          <strong className="dl-year">
+            {game.outcome ? '🏁 Fin' : `🗓️ ${game.year}`} <small>{Math.min(game.year, endYear(game)) - START_YEAR}/{game.years}</small>
+          </strong>
+          <Lead g={game} />
+        </div>
         <span className="dlg-top-right">
           {badge}
           <button type="button" className="ghost small" onClick={() => setCompare(true)} title="Comparer les deux France">
@@ -210,7 +217,7 @@ export function Table({
           <div className="dl-back big" title="La pioche commune : ce que vous piochez, l’adversaire ne l’a pas">
             <span>{game.deck.length}</span>
           </div>
-          <small>Pioche commune</small>
+          <small>Pioche</small>
           <div className="dl-back discard" title="Les cartes jouées et jetées">
             <span>{game.discard.length}</span>
           </div>
@@ -218,43 +225,42 @@ export function Table({
         </section>
 
         <section className="dlg-table">
-          <button type="button" className="dlg-context" onClick={() => setContext(true)} title="La conjoncture de l’année : touchez pour la revoir">
+          <button type="button" className="dlg-context" onClick={() => setContext(true)} title={`${ctx.name} : ${ctx.rule}`}>
             <span aria-hidden="true">{ctx.art}</span>
             <strong>{ctx.name}</strong>
-            <small>{ctx.rule}</small>
           </button>
           <div className="dlg-zone">
             <p>
-              {game.seats.ai.emblem} Cartes de {game.seats.ai.name} {aiPassed && playing ? <small>· a passé</small> : null}
+              {game.seats.ai.emblem} {game.seats.ai.name} {aiPassed && playing ? <small>· ⏭ passe</small> : null}
             </p>
             <div className="dlg-row">
               {game.seats.ai.played.map((p) => (
                 <Mini key={p.card.uid} g={game} card={p.card} side="ai" badge={`⚡${p.cost}`} stamp={stampOf(p)} flip={landed.has(p.card.uid)} onClick={() => open({ card: p.card, where: 'adverse' })} />
               ))}
-              {!game.seats.ai.played.length ? <p className="dlg-hint">Rien de posé cette année.</p> : null}
+              {!game.seats.ai.played.length ? <p className="dlg-hint">—</p> : null}
             </div>
           </div>
           {me.peek && playing ? (
             <div className="dlg-zone peek">
-              <p>🕵️ Sa main (sondage truqué)</p>
+              <p>🕵️ Sa main</p>
               <div className="dlg-row">
                 {game.seats.ai.hand.map((card) => (
                   <Mini key={card.uid} g={game} card={card} side="ai" badge={`⚡${cardCost(game, 'ai', card)}`} onClick={() => open({ card, where: 'adverse' })} />
                 ))}
-                {!game.seats.ai.hand.length ? <p className="dlg-hint">Sa main est vide.</p> : null}
+                {!game.seats.ai.hand.length ? <p className="dlg-hint">Vide</p> : null}
               </div>
             </div>
           ) : null}
           {news && playing ? <div className="dlg-news">{news}</div> : null}
           <div className="dlg-zone mine">
             <p>
-              Vos cartes de l’année <small>· 📜 {lawsOf(me)}/{lawLimit(me)} lois</small>
+              🫵 Vous <small>· 📜 {lawsOf(me)}/{lawLimit(me)} lois</small>
             </p>
             <div className="dlg-row">
               {me.played.map((p) => (
                 <Mini key={p.card.uid} g={game} card={p.card} side="player" badge={`⚡${p.cost}`} stamp={stampOf(p)} landed={landed.has(p.card.uid)} onClick={() => open({ card: p.card, where: 'table' })} />
               ))}
-              {!me.played.length ? <p className="dlg-hint">{myTurn ? 'À vous : touchez une carte de votre main, ou passez.' : 'Attendez votre tour.'}</p> : null}
+              {!me.played.length ? <p className="dlg-hint">{myTurn ? '👇 À vous !' : '⏳'}</p> : null}
             </div>
           </div>
         </section>
@@ -267,7 +273,7 @@ export function Table({
             {game.market.map((l) => (
               <Mini key={l.card.uid} g={game} card={l.card} side="player" badge={`${l.price} ⚡`} seller={game.seats[l.seller].emblem} onClick={() => open({ card: l.card, where: 'marche' })} />
             ))}
-            {!game.market.length ? <p className="dlg-hint">Vendez ici les cartes dont vous ne voulez pas : l’adversaire peut les acheter.</p> : null}
+            {!game.market.length ? <p className="dlg-hint" title="Vendez ici les cartes dont vous ne voulez pas : l’adversaire peut les acheter.">Vide</p> : null}
           </div>
         </section>
       </main>
@@ -339,7 +345,13 @@ export function Table({
         game.outcome ? (
           <Final g={game} onReplay={onReplay} onCompare={() => setCompare(true)} onClose={() => setStage('play')} />
         ) : (
-          <YearReport g={game} report={report} onCompare={() => setCompare(true)} onClose={() => setStage('context')} />
+          <Verdict
+            g={game}
+            report={report}
+            onCompare={() => setCompare(true)}
+            onClose={() => setStage('context')}
+            onWhy={yearGame ? (card, side) => setWhy({ g: yearGame, card, side }) : null}
+          />
         )
       ) : null}
       {pick ? (
@@ -348,6 +360,7 @@ export function Table({
           pick={pick}
           canAct={myTurn}
           onClose={() => setPick(null)}
+          onWhy={() => setWhy({ g: game, card: pick.card, side: pick.where === 'adverse' ? 'ai' : 'player' })}
           onPlay={() => act({ kind: 'play', uid: pick.card.uid }, pick.card.kind === 'crise' ? 'crisis' : rarityOf(pick.card) === 'legendaire' ? 'promise' : 'play')}
           onDiscard={() => act({ kind: 'discard', uid: pick.card.uid }, 'discard', 'energy')}
           onSell={() => act({ kind: 'sell', uid: pick.card.uid }, 'coin')}
@@ -359,6 +372,7 @@ export function Table({
       ) : null}
       {compare ? <Compare g={game} onClose={() => setCompare(false)} /> : null}
       {rules ? <Rules onClose={() => setRules(false)} /> : null}
+      {why ? <WhyPage g={why.g} card={why.card} side={why.side} kind={kindOf(why.g, why.card, why.side)} onBack={() => setWhy(null)} /> : null}
       {status}
     </div>
   )
@@ -375,9 +389,9 @@ function foeNews(before: Game, after: Game): { text: string; sound: Sfx } | null
     const name = cardName(before.pending.card)
     const parade = after.moves.length > before.moves.length ? after.moves.at(-1) : undefined
     if (parade?.kind === 'parade' && parade.answer) {
-      return { text: `${ACTIONS[parade.answer].art} ${who} répond à « ${name} » : ${ANSWER_TEXT[parade.answer]}`, sound: parade.answer === 'conseil' ? 'crisis' : 'energy' }
+      return { text: `${ACTIONS[parade.answer].art} ${who} : ${ACTIONS[parade.answer].name} !`, sound: parade.answer === 'conseil' ? 'crisis' : 'energy' }
     }
-    return before.pending.card.kind === 'crise' ? { text: `💥 Votre coup frappe ${ai.name} : ${name} !`, sound: 'crisis' } : null
+    return before.pending.card.kind === 'crise' ? { text: `💥 ${name} frappe ${ai.name} !`, sound: 'crisis' } : null
   }
   const m = after.moves.length > before.moves.length ? after.moves.at(-1)! : null
   if (!m || m.side !== 'ai') {
@@ -386,19 +400,19 @@ function foeNews(before: Game, after: Game): { text: string; sound: Sfx } | null
   const name = m.card ? cardName(m.card) : ''
   switch (m.kind) {
     case 'achat':
-      return { text: `${who} achète « ${name} » au marché (${m.price} ⚡)`, sound: 'coin' }
+      return { text: `🛒 ${who} achète ${name}`, sound: 'coin' }
     case 'vente':
-      return { text: `${who} met « ${name} » en vente`, sound: 'coin' }
+      return { text: `🏷️ ${who} vend ${name}`, sound: 'coin' }
     case 'jet':
-      return { text: `${who} jette une carte (+${DISCARD_GAIN} ⚡)`, sound: 'discard' }
+      return { text: `🗑️ ${who} jette une carte`, sound: 'discard' }
     case 'passe':
-      return { text: `${who} passe`, sound: 'click' }
+      return { text: `⏭ ${who} passe`, sound: 'click' }
     case 'parade':
       return null
     case 'jeu':
       return m.card?.kind === 'crise'
-        ? { text: `${who} vous envoie : ${name} !`, sound: 'crisis' }
-        : { text: `${who} joue « ${name} »${m.card && rarityOf(m.card) === 'legendaire' ? ' : carte légendaire !' : ''}`, sound: m.card && rarityOf(m.card) === 'legendaire' ? 'promise' : 'play' }
+        ? { text: `💥 ${who} → vous : ${name} !`, sound: 'crisis' }
+        : { text: `${m.card && rarityOf(m.card) === 'legendaire' ? '🌟' : '📜'} ${who} joue ${name}`, sound: m.card && rarityOf(m.card) === 'legendaire' ? 'promise' : 'play' }
   }
 }
 
@@ -412,19 +426,17 @@ function ContextModal({ g, onGo }: { g: Game; onGo: () => void }) {
   return (
     <div className="modal-backdrop on-top" role="presentation">
       <div className="modal dl-ctxmodal" role="dialog" aria-modal="true" aria-label={`Conjoncture ${g.year}`}>
-        <p className="eyebrow">🌍 Conjoncture {g.year} · la même pour les deux</p>
-        <div className="dl-card big kind-contexte is-flip">
+        <p className="eyebrow">🌍 {g.year}</p>
+        <div className="dl-card big kind-contexte is-flip" title={ctx.text}>
           <span className="dl-kind">🌍 Contexte</span>
           <span className="dl-art" aria-hidden="true">
             {ctx.art}
           </span>
           <strong className="dl-name">{ctx.name}</strong>
-          <span className="dl-desc">{ctx.text}</span>
           <span className="dl-rule">{ctx.rule}</span>
         </div>
         <p className="dl-ctx-turn">
-          ⚡ {g.seats.player.energy} d’énergie · 💶 {num(g.seats.player.margin, 0)} Md€ de marge ·{' '}
-          {first === 'player' ? 'Vous ouvrez l’année.' : `${g.seats.ai.name} ouvre l’année.`}
+          ⚡ {g.seats.player.energy} · 💶 {num(g.seats.player.margin, 0)} Md€ · {first === 'player' ? '🫵 Vous commencez' : `${g.seats.ai.emblem} ${g.seats.ai.name} commence`}
         </p>
         <button type="button" className="primary big" onClick={onGo}>
           ▶ Jouer {g.year}
@@ -454,14 +466,12 @@ function Incoming({ g, onAnswer }: { g: Game; onAnswer: (answer: Answer | null) 
   const law = card.kind === 'mesure'
   const rule = card.kind === 'crise' ? CRISES[card.crisis].rule : undefined
   const family = card.kind === 'crise' ? CRISES[card.crisis].family : null
-  const what = law ? 'fait voter une loi' : family === 'politique' ? 'vous porte un coup politique' : family === 'scandale' ? 'lance un scandale contre vous' : 'vous envoie une crise'
-  // Une loi adverse : ce qui est bon pour lui est mauvais pour vous.
-  const tone = (good: boolean) => (good !== law ? 'good' : 'bad')
+  const what = law ? 'vote une loi' : family === 'politique' ? 'vous attaque !' : family === 'scandale' ? 'lance un scandale !' : 'vous envoie une crise !'
   return (
     <div className="modal-backdrop on-top" role="presentation">
       <div className="modal dl-incoming" role="dialog" aria-modal="true" aria-label={law ? 'Une loi de l’adversaire' : 'Un coup arrive'}>
         <p className="eyebrow">
-          {law ? '⚖️' : '💥'} {g.seats.ai.emblem} {g.seats.ai.name} {what} !
+          {law ? '⚖️' : family === 'politique' ? '🎯' : family === 'scandale' ? '🗞️' : '💥'} {g.seats.ai.emblem} {g.seats.ai.name} {what}
         </p>
         <div className={`dl-card big ${kind.cls} ${rarityClass(card)} is-flip`}>
           <span className="dl-kind">{kind.label}</span>
@@ -469,41 +479,31 @@ function Incoming({ g, onAnswer }: { g: Game; onAnswer: (answer: Answer | null) 
             {cardArt(card)}
           </span>
           <strong className="dl-name">{cardName(card)}</strong>
-          <span className="dl-desc">{card.kind === 'mesure' ? card.pledge.quote || card.pledge.measure!.summary : card.kind === 'crise' ? CRISES[card.crisis].text : ''}</span>
           {rule ? <span className="dl-rule">{rule}</span> : null}
         </div>
-        {impact ? (
-          <p className="dl-incoming-hit">
-            {law ? `Effet prévu sur la note de ${g.seats.ai.name} l’an prochain` : 'Effet prévu sur votre note l’an prochain'} :{' '}
-            <b className={tone(impact.health >= 0)}>
-              {signed(impact.health)} point{Math.abs(impact.health) > 1 ? 's' : ''}
-            </b>
-            {impact.indicators.slice(0, 3).map((i) => (
-              <span key={i.node} className={tone(i.good)}>
-                {' '}
-                · {i.label} {i.text}
-              </span>
-            ))}
-          </p>
-        ) : null}
+        <Effects impact={impact} />
         <div className="verdict-actions">
           {answers.map((a) => (
             <button key={a} type="button" className="primary" onClick={() => onAnswer(a)} title={ANSWER_TEXT[a]}>
-              {ACTIONS[a].art} {ACTIONS[a].name} ({ACTIONS[a].cost} ⚡)
+              {ACTIONS[a].art} {ACTIONS[a].name} · {ACTIONS[a].cost} ⚡
             </button>
           ))}
           <button type="button" className="ghost" onClick={() => onAnswer(null)}>
-            {law ? 'Laisser passer' : 'Encaisser'}
+            {law ? '👍 Laisser passer' : '😤 Encaisser'}
           </button>
         </div>
         {!answers.length && !law ? (
-          <small className="dl-locked">
-            🔒{' '}
-            {family === 'politique'
-              ? 'Un coup politique ne se pare pas.'
-              : family === 'scandale'
-                ? 'Il vous faudrait une commission d’enquête, une cellule ou une communication de crise en main (et l’énergie pour la jouer).'
-                : 'Il vous faudrait une cellule ou une communication de crise en main (et l’énergie pour la jouer).'}
+          <small
+            className="dl-locked"
+            title={
+              family === 'politique'
+                ? 'Un coup politique ne se pare pas.'
+                : family === 'scandale'
+                  ? 'Il vous faudrait une commission d’enquête, une cellule ou une communication de crise en main (et l’énergie pour la jouer).'
+                  : 'Il vous faudrait une cellule ou une communication de crise en main (et l’énergie pour la jouer).'
+            }
+          >
+            🔒 {family === 'politique' ? 'Imparable' : 'Pas de parade en main'}
           </small>
         ) : null}
       </div>
@@ -745,7 +745,7 @@ export function Setup({
                 }}
               >
                 <strong>{n}</strong>
-                <small>rounds · {n} ans</small>
+                <small>ans</small>
               </button>
             ))}
           </div>
@@ -754,7 +754,9 @@ export function Setup({
           </button>
         </section>
       )}
-      <p className="note dlg-setup-foot">{PARODY_NOTE}</p>
+      <p className="note dlg-setup-foot" title={PARODY_NOTE}>
+        🎭 Personnages parodiques · programmes réels sourcés
+      </p>
       {intro && me && foe ? <Intro me={me} foe={foe} meTag={mode === 'local' ? 'Joueur 1' : 'Vous'} onDone={() => onStart(me, foe, years)} /> : null}
     </div>
   )
@@ -798,7 +800,7 @@ function Fighter({
         {p?.emblem ?? '?'}
       </span>
       <strong className="dlv-name">{p ? (p.candidate ? p.name : p === BOT ? 'Le Bot' : 'Programme surprise') : active ? 'À choisir…' : waiting ? 'Votre ami' : '???'}</strong>
-      <small className="dlv-family">{p ? (p.candidate?.family ?? (p === BOT ? 'Sans parti, son propre programme' : 'Cinq mesures tirées au sort')) : waiting ? 'Il choisira son président en arrivant' : ''}</small>
+      <small className="dlv-family">{p ? (p.candidate?.family ?? (p === BOT ? '🤖 Sans parti' : '🎲 5 mesures au hasard')) : waiting ? '⏳ Il choisit en arrivant' : ''}</small>
       <ul className="dlv-stats">
         {STAT_AXES.map((a) => (
           <li key={a.id} title={a.hint}>
@@ -811,7 +813,7 @@ function Fighter({
           </li>
         ))}
       </ul>
-      {p && !values ? <small className="dlv-mystery">Programme tiré au sort : ses forces se découvrent en jouant.</small> : null}
+      {p && !values ? <small className="dlv-mystery">❓ Mystère</small> : null}
     </div>
   )
 }
@@ -867,6 +869,19 @@ export function Intro({ me, foe, meTag = 'Vous', onDone }: { me: Player; foe: Pl
 
 // — Un président et sa France, en une ligne
 
+/** Qui mène, toujours en vue dans la barre du haut : « 🔥 Vous 58 · 52 🏝️ ». */
+function Lead({ g }: { g: Game }) {
+  const a = scoreOf(g.seats.player)
+  const b = scoreOf(g.seats.ai)
+  return (
+    <span className={`dlg-lead ${a > b ? 'is-ahead' : a < b ? 'is-behind' : 'is-even'}`} title={a > b ? 'Vous menez' : a < b ? 'Vous êtes mené' : 'Égalité'}>
+      {a > b ? '🔥' : a < b ? '😬' : '🤝'} Vous <b>{a}</b>
+      <i style={{ '--p': `${a + b > 0 ? (a / (a + b)) * 100 : 50}%`, '--a': g.seats.player.color, '--b': g.seats.ai.color } as React.CSSProperties} />
+      <b>{b}</b> {g.seats.ai.emblem}
+    </span>
+  )
+}
+
 function Strip({ g, side, turn }: { g: Game; side: Side; turn: boolean }) {
   const s = g.seats[side]
   const st = lastState(s)
@@ -895,8 +910,8 @@ function Strip({ g, side, turn }: { g: Game; side: Side; turn: boolean }) {
           😠 {Math.max(0, Math.round(st.discontent * 100))}
         </li>
       </ul>
-      <button type="button" className="dlg-prog" onClick={() => setOpen(open === 'programme' ? null : 'programme')} title="Le programme : touchez pour le détail">
-        ⭐ {kept.size}/5 <small>(objectif {PROGRAMME_GOAL})</small>
+      <button type="button" className="dlg-prog" onClick={() => setOpen(open === 'programme' ? null : 'programme')} title={`Promesses tenues : il en faut ${PROGRAMME_GOAL} sur 5. Touchez pour le détail.`}>
+        ⭐ {kept.size}/{PROGRAMME_GOAL}
       </button>
       {open ? (
         <div className="dlg-pop" role="dialog" aria-label={open === 'note' ? 'La note de santé' : 'Le programme'}>
@@ -905,20 +920,20 @@ function Strip({ g, side, turn }: { g: Game; side: Side; turn: boolean }) {
           </button>
           {open === 'programme' ? (
             <>
-              <strong>⭐ Programme de {side === 'player' ? 'vous' : s.name}</strong>
+              <strong>⭐ {side === 'player' ? 'Votre programme' : s.name}</strong>
               <ul>
                 {s.programme.map((p) => (
                   <li key={p.key} className={kept.has(p.key) ? 'is-kept' : ''}>
                     {kept.has(p.key) ? '✅' : '⬜'} {p.measure!.name}
-                    {isAdded(p) ? <small> (ajoutée par le jeu : le programme publié en compte moins de cinq que le moteur sait jouer)</small> : null}
+                    {isAdded(p) ? <small title="Ajoutée par le jeu : le programme publié en compte moins de cinq que le moteur sait jouer."> ➕</small> : null}
                   </li>
                 ))}
               </ul>
-              <small>Une promesse est tenue quand la mesure est appliquée. Chacune rapporte +2 ⚡ la première fois.</small>
+              <small>🎯 {PROGRAMME_GOAL} pour gagner · +2 ⚡ chacune</small>
             </>
           ) : (
             <>
-              <strong>Note de santé : {scoreOf(s)} / 100</strong>
+              <strong>📊 {scoreOf(s)} / 100</strong>
               <ul>
                 {healthParts(st, s.states.find((x) => x.year === START_YEAR)!).map((p) => (
                   <li key={p.id} title={p.explanation}>
@@ -926,7 +941,6 @@ function Strip({ g, side, turn }: { g: Game; side: Side; turn: boolean }) {
                   </li>
                 ))}
               </ul>
-              <small>Les critères et leurs poids sont dans modele/note-pays.csv : discutables, comme tout le modèle.</small>
             </>
           )}
         </div>
@@ -1020,25 +1034,66 @@ function Mini({ g, card, side, badge, seller, stamp, flip, landed, onClick }: { 
   )
 }
 
-// — Une carte en grand : la carte, ce qu'elle fait et pourquoi, et ce qu'on peut en faire
+// — Une carte en grand : la carte, son effet en quelques pastilles, et ce qu'on peut en faire. Le détail est sur la page « Pourquoi ? ».
 
 type CardActions = { onPlay: () => void; onDiscard: () => void; onSell: () => void; onBuy: () => void }
 
-function CardModal({ g, pick, canAct, onClose, ...actions }: { g: Game; pick: Pick; canAct: boolean; onClose: () => void } & CardActions) {
+/** Un emoji par indicateur, pour dire l'effet d'une carte sans phrase. */
+const NODE_ICON: Record<string, string> = {
+  unemployment: '👷',
+  gdp: '📈',
+  inflation: '🏷️',
+  deficit: '💶',
+  debt: '🏦',
+  disposableIncome: '🛒',
+  poverty: '🥖',
+  discontent: '😡',
+  frenchEmissions: '🏭',
+}
+
+/**
+ * L'effet d'une carte en pastilles : la note, puis les indicateurs qui bougent le plus.
+ * Les couleurs se lisent de votre point de vue : une crise qui fait mal à l'adversaire est en vert.
+ */
+function Effects({ impact, max = 3 }: { impact: Impact | null; max?: number }) {
+  if (!impact) {
+    return null
+  }
+  const foe = impact.target !== 'player'
+  const tone = (good: boolean) => (good !== foe ? 'good' : 'bad')
+  return (
+    <ul className="dl-fx" aria-label="L’effet prévu l’an prochain">
+      <li className={`dl-fx-note ${impact.health ? tone(impact.health > 0) : ''}`} title={foe ? 'Sa note l’an prochain' : 'Votre note l’an prochain'}>
+        {foe ? '🎯 Sa note' : '📊 Note'} <b>{signed(impact.health)}</b>
+      </li>
+      {impact.indicators.slice(0, max).map((i) => (
+        <li key={i.node} className={tone(i.good)} title={i.label}>
+          {NODE_ICON[i.node] ?? '•'} {i.text}
+        </li>
+      ))}
+      {Math.abs(impact.popularity) >= 1 ? (
+        <li className={tone(impact.popularity > 0)} title="Popularité">
+          😊 {signed(impact.popularity)} %
+        </li>
+      ) : null}
+    </ul>
+  )
+}
+
+function CardModal({ g, pick, canAct, onClose, onWhy, ...actions }: { g: Game; pick: Pick; canAct: boolean; onClose: () => void; onWhy: () => void } & CardActions) {
   const { card } = pick
   // Une carte de l'adversaire s'explique de son point de vue : sa mesure sur sa France, sa crise sur la vôtre.
   const side: Side = pick.where === 'adverse' ? 'ai' : 'player'
   const impact = useMemo(() => cardImpact(g, side, card), [g, side, card])
-  const levers = card.kind === 'mesure' ? leverChanges(g, side, card) : []
-  const starts = startNodes(g, side, card)
   const kind = kindOf(g, card, side)
-  const whose = impact ? (impact.target === 'player' ? 'votre France' : `la France de ${g.seats[impact.target].name}`) : ''
   const description = card.kind === 'crise' ? CRISES[card.crisis].text : card.kind === 'action' ? ACTIONS[card.action].text : card.pledge.quote || card.pledge.measure!.summary
-  const event = card.kind === 'crise' ? crisisEvent(card.crisis) : card.kind === 'action' ? (ACTIONS[card.action].events?.[0] ?? null) : null
   const listing = g.market.find((l) => l.card.uid === card.uid)
   const ctx = contextOf(g)
-  const shift = card.kind === 'crise' ? (ctx.crisis ?? 0) : card.kind === 'mesure' && ctx.domains?.names.includes(card.pledge.measure!.domain) ? ctx.domains.delta : 0
-  const cost = pick.where === 'table' ? g.seats.player.played.find((p) => p.card.uid === card.uid)?.cost : pick.where === 'adverse' ? g.seats.ai.played.find((p) => p.card.uid === card.uid)?.cost : cardCost(g, 'player', card)
+  const shift = contextShift(g, card)
+  const played = pick.where === 'table' ? g.seats.player.played.find((p) => p.card.uid === card.uid) : pick.where === 'adverse' ? g.seats.ai.played.find((p) => p.card.uid === card.uid) : undefined
+  const cost = played ? played.cost : cardCost(g, 'player', card)
+  const spends = card.kind === 'mesure' || (card.kind === 'action' && !!ACTIONS[card.action].spend)
+  const md = !spends ? null : played ? (played.md ?? 0) : budgetCost(g, side, card)
   return (
     <div className="modal-backdrop on-top" role="presentation" onClick={onClose}>
       <div className="modal dl-cardmodal" role="dialog" aria-modal="true" aria-label={cardName(card)} onClick={(e) => e.stopPropagation()}>
@@ -1047,7 +1102,7 @@ function CardModal({ g, pick, canAct, onClose, ...actions }: { g: Game; pick: Pi
         </button>
         <div className="dl-cardmodal-body">
           <div className={`dl-card big ${kind.cls} ${rarityClass(card)}`}>
-            <span className="dl-cost">{listing ? `${listing.price} ⚡` : `⚡${cost ?? '?'}`}</span>
+            <span className="dl-cost">{listing ? `${listing.price} ⚡` : `⚡${cost}`}</span>
             <span className="dl-kind">{kind.label}</span>
             {/* L'emplacement de l'illustration : un emoji pour l'instant, une image plus tard. */}
             <span className="dl-art" aria-hidden="true">
@@ -1058,83 +1113,21 @@ function CardModal({ g, pick, canAct, onClose, ...actions }: { g: Game; pick: Pi
             {card.kind === 'crise' && CRISES[card.crisis].rule ? <span className="dl-rule">{CRISES[card.crisis].rule}</span> : null}
           </div>
 
-          <div className="dl-explain">
-            {levers.length ? (
-              <section>
-                <h3>🎚️ Ce que la carte change</h3>
-                <ul className="dl-levers">
-                  {levers.map((l) => (
-                    <li key={l.key}>
-                      {l.label} : {l.from} → <b>{l.to}</b>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-            {card.kind === 'mesure' && pick.where !== 'adverse' ? <BudgetLine g={g} card={card} played={pick.where === 'table'} /> : null}
-            {shift ? (
-              <p className="dl-ctxnote">
-                {contextOf(g).art} {contextOf(g).name} : {shift < 0 ? `${-shift} ⚡ de moins` : `${shift} ⚡ de plus`} cette année.
-              </p>
-            ) : null}
-            {event && crisisEffects(event).text.length ? (
-              <section>
-                <h3>🌍 Ce que la carte déclenche dans le modèle</h3>
-                <p>
-                  {crisisEffects(event).text.join(', ')}
-                  {crisisEffects(event).years > 1 ? `, pendant ${crisisEffects(event).years} ans` : ''}.
-                  {card.kind === 'action' && card.action === 'tweet' ? ' Pile ou face : ci-dessous, le bon côté ; le mauvais fait l’inverse.' : ''}
-                </p>
-              </section>
-            ) : null}
-            {card.kind === 'action' && ACTIONS[card.action].spend ? (
-              <section>
-                <h3>💶 Le budget de l’État cette année</h3>
-                <p>{ACTIONS[card.action].spend!.amount} Md€ d’argent public en plus cette année (comptés dans la marge budgétaire), puis plus rien.</p>
-              </section>
-            ) : null}
-            {!inModel(card) ? (
-              <section>
-                <h3>{card.kind === 'crise' ? '🎯 Un coup qui change la partie' : '🎴 Une carte qui change la partie'}</h3>
-                <p>
-                  {card.kind === 'crise' ? CRISES[card.crisis].rule : card.kind === 'action' ? ACTIONS[card.action].text : ''} Elle ne passe pas par le modèle : elle ne change ni l’économie
-                  ni la société, seulement les règles du duel.
-                </p>
-              </section>
-            ) : null}
-            {impact ? (
-              <>
-                <section>
-                  <h3>
-                    📊 Note de {whose} l’an prochain : {signed(impact.health)} point{Math.abs(impact.health) > 1 ? 's' : ''}
-                  </h3>
-                  <p className="note">En points de note (sur 100), critère par critère. Sous chaque critère, ce qui le fait bouger.</p>
-                  <div className="dl-parts">
-                    {impact.parts.map((p) => (
-                      <details key={p.id} className="dl-part-row" open>
-                        <summary className="dl-part">
-                          <span>{p.label}</span>
-                          <i className={p.delta >= 0 ? 'up' : 'down'} style={{ width: `${Math.min(100, Math.abs(p.delta) * 25)}%` }} />
-                          <b className={p.delta >= 0 ? 'good' : 'bad'}>{signed(p.delta, 1)}</b>
-                        </summary>
-                        <DetailView detail={impact.details[CRITERION_NODE[p.id]]} />
-                      </details>
-                    ))}
-                    {!impact.parts.length ? <p className="note">Presque rien la première année : l’effet est lent, ou trop petit pour bouger la note.</p> : null}
-                  </div>
-                </section>
-                <section>
-                  <h3>📈 Ce qui bouge dans {whose}</h3>
-                  <ul className="dl-moves">
-                    {impact.indicators.map((ind) => (
-                      <Move key={ind.node} ind={ind} />
-                    ))}
-                  </ul>
-                  {!impact.indicators.length ? <p className="note">Rien ne bouge assez dès la première année : l’effet est lent ou très petit.</p> : null}
-                </section>
-                <Why starts={starts} impact={impact} />
-              </>
-            ) : null}
+          <div className="dl-quick">
+            <p className="dl-quick-cost">
+              <span title="Le coût en énergie">⚡ {listing ? listing.price : cost}</span>
+              {md !== null ? <MdBadge md={md} /> : null}
+              {shift ? (
+                <span className="dl-quick-ctx" title={`${ctx.name} : ${ctx.rule}`}>
+                  {ctx.art} {shift > 0 ? '+' : '−'}
+                  {Math.abs(shift)} ⚡
+                </span>
+              ) : null}
+            </p>
+            {impact ? <Effects impact={impact} max={4} /> : <p className="dl-fx-rule">🎴 Change les règles du duel</p>}
+            <button type="button" className="dl-why-link" onClick={onWhy}>
+              🔍 Pourquoi ?
+            </button>
           </div>
         </div>
 
@@ -1146,115 +1139,17 @@ function CardModal({ g, pick, canAct, onClose, ...actions }: { g: Game; pick: Pi
   )
 }
 
-/** Ce que la mesure coûte au budget, et ce qu'il reste de la marge de l'année si on la joue. */
-function BudgetLine({ g, card, played }: { g: Game; card: Card; played: boolean }) {
-  const s = g.seats.player
-  const md = played ? (s.played.find((p) => p.card.uid === card.uid)?.md ?? 0) : budgetCost(g, 'player', card)
-  const after = played ? marginLeft(s) : marginLeft(s) - md
-  return (
-    <section>
-      <h3>💶 Le budget de l’État cette année</h3>
-      <p>
-        La mesure {md > 0.05 ? 'coûte' : md < -0.05 ? 'rapporte' : 'ne change presque rien :'} <b className={md > 0.05 ? 'bad' : 'good'}>{num(Math.abs(md), Math.abs(md) < 10 ? 1 : 0)} Md€</b>
-        {md > 0.05 ? ' de déficit en plus' : md < -0.05 ? ' (déficit en moins)' : ''}, selon le modèle. Marge restante {played ? '' : 'après elle '}:{' '}
-        <b className={after < 0 ? 'bad' : 'good'}>{num(after, 0)} Md€</b>
-        {after < 0 ? ` : au-delà de la marge, les marchés s’inquiètent (−${overshootMalus(-after)} ⚡ l’an prochain${-after >= ALERT_AT ? ', et Bruxelles sanctionne' : ''}).` : '.'}
-      </p>
-    </section>
-  )
-}
-
-const arrow = (up: boolean | null) => (up === null ? '↕' : up ? '↑' : '↓')
-
-/** Un indicateur qui bouge : sa flèche, de combien, en vert si c'est bon pour le pays. */
-function Move({ ind }: { ind: Indicator }) {
-  return (
-    <li className={ind.good ? 'good' : 'bad'}>
-      {ind.label} {arrow(ind.up)} <b>{ind.amount}</b>
-    </li>
-  )
-}
-
-/** Pourquoi : une seule histoire, de la carte jusqu'aux indicateurs, les chemins communs montrés une fois. */
-function Why({ starts, impact }: { starts: { node: string; up: boolean }[]; impact: Impact }) {
-  const { roots, other } = whyTree(starts, impact)
-  // Les indicateurs de la note sont déjà décomposés plus haut, critère par critère : ici, seulement les autres.
-  const rest = other.filter((ind) => !impact.parts.some((p) => CRITERION_NODE[p.id] === ind.node))
-  if (!roots.length && !rest.length) {
-    return null
-  }
-  return (
-    <section>
-      <h3>🔗 Pourquoi ? L’histoire dans le modèle</h3>
-      {roots.length ? <WhyList nodes={roots} /> : null}
-      {rest.map((ind) => (
-        <div key={ind.node} className="dl-other">
-          <b className={ind.good ? 'good' : 'bad'}>
-            {ind.label} {arrow(ind.up)} {ind.amount}
-          </b>{' '}
-          : plusieurs effets s’additionnent.
-          <DetailView detail={impact.details[ind.node]} />
-        </div>
-      ))}
-      <p className="note">Calculé par le modèle : l’année qui vient, jouée avec et sans la carte (à côté des cartes déjà posées). Les liens viennent de modele/liens.csv.</p>
-    </section>
-  )
-}
-
-/** Pourquoi un indicateur bouge : une phrase, puis chaque contribution (en vert ce qui aide le pays). */
-function DetailView({ detail }: { detail: Detail | undefined }) {
-  if (!detail) {
-    return null
-  }
-  return (
-    <div className="dl-detail">
-      <p>{detail.text}</p>
-      {detail.lines.length ? (
-        <ul>
-          {detail.lines.map((l) => (
-            <li key={l.label} className={l.good ? 'good' : 'bad'}>
-              <span>{l.label}</span>
-              <b>{l.value}</b>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </div>
-  )
-}
-
-function WhyList({ nodes }: { nodes: WhyNode[] }) {
-  return (
-    <ul className="dl-tree">
-      {nodes.map((n) => (
-        <li key={`${n.node}-${String(n.up)}`}>
-          <span className="dl-node">
-            {n.name} {arrow(n.up)}
-          </span>
-          {n.hits.map((ind) => (
-            <b key={ind.node} className={`dl-hit ${ind.good ? 'good' : 'bad'}`}>
-              {ind.label} {arrow(ind.up)} {ind.amount}
-            </b>
-          ))}
-          {n.explanation ? <small> {n.explanation}</small> : null}
-          {n.children.length ? <WhyList nodes={n.children} /> : null}
-        </li>
-      ))}
-    </ul>
-  )
-}
-
 /** Ce qu'on peut faire de la carte, selon où elle est. */
 function Actions({ g, pick, canAct, onPlay, onDiscard, onSell, onBuy }: { g: Game; pick: Pick; canAct: boolean } & CardActions) {
   const { card } = pick
   if (pick.where === 'adverse') {
-    return <small className="dl-locked">Une carte de {g.seats.ai.name} : vous ne pouvez que la regarder.</small>
+    return <small className="dl-locked">👀 Carte de {g.seats.ai.name}</small>
   }
   if (pick.where === 'table') {
-    return <small className="dl-locked">Posée cette année : l’adversaire l’a vue, elle ne se reprend pas.</small>
+    return <small className="dl-locked">✅ Posée cette année</small>
   }
   if (!canAct) {
-    return <small className="dl-locked">{g.outcome ? 'La partie est finie.' : `🔒 ${yourTurn(g, 'player') ?? 'Attendez votre tour'}.`}</small>
+    return <small className="dl-locked">{g.outcome ? '🏁 Partie finie' : `⏳ ${yourTurn(g, 'player') ?? 'Pas votre tour'}`}</small>
   }
   if (pick.where === 'marche') {
     const why = canBuy(g, 'player', card.uid)
@@ -1262,7 +1157,7 @@ function Actions({ g, pick, canAct, onPlay, onDiscard, onSell, onBuy }: { g: Gam
     return (
       <>
         <button type="button" className="primary" disabled={!!why} onClick={onBuy}>
-          🛒 Acheter ({listing?.price} ⚡)
+          🛒 Acheter · {listing?.price} ⚡
         </button>
         {why ? <small className="dl-locked">🔒 {why}</small> : null}
       </>
@@ -1273,14 +1168,13 @@ function Actions({ g, pick, canAct, onPlay, onDiscard, onSell, onBuy }: { g: Gam
   return (
     <>
       <button type="button" className="primary" disabled={!!playWhy} onClick={onPlay}>
-        ▶ {card.kind === 'crise' ? 'Envoyer' : 'Jouer'} (⚡{cardCost(g, 'player', card)}
-        {card.kind === 'mesure' || (card.kind === 'action' && ACTIONS[card.action].spend) ? ` · 💶 ${mdText(budgetCost(g, 'player', card))}` : ''})
+        {card.kind === 'crise' ? '💥 Envoyer' : '▶ Jouer'} · ⚡{cardCost(g, 'player', card)}
       </button>
-      <button type="button" className="ghost" onClick={onDiscard}>
-        🗑️ Jeter (+{DISCARD_GAIN} ⚡)
+      <button type="button" className="ghost" onClick={onDiscard} title="Jeter la carte : +1 ⚡ tout de suite">
+        🗑️ +{DISCARD_GAIN} ⚡
       </button>
-      <button type="button" className="ghost" disabled={!!sellWhy} onClick={onSell}>
-        🏷️ Vendre au marché ({marketPrice(g, card)} ⚡)
+      <button type="button" className="ghost" disabled={!!sellWhy} onClick={onSell} title="La mettre au marché : l’adversaire peut l’acheter, vous touchez l’énergie l’an prochain">
+        🏷️ Vendre · {marketPrice(g, card)} ⚡
       </button>
       {playWhy || sellWhy ? <small className="dl-locked">🔒 {playWhy ?? sellWhy}</small> : null}
     </>
@@ -1293,14 +1187,14 @@ function Actions({ g, pick, canAct, onPlay, onDiscard, onSell, onBuy }: { g: Gam
 type Stat = { id: string; label: string; unit: string; digits: number; better: 'up' | 'down'; value: (s: YearState, start: YearState) => number }
 
 const STATS: Stat[] = [
-  { id: 'note', label: 'Note de santé', unit: '/100', digits: 0, better: 'up', value: (s, start) => health(s, start) },
-  { id: 'chomage', label: 'Chômage', unit: ' %', digits: 1, better: 'down', value: (s) => s.unemployment * 100 },
-  { id: 'croissance', label: 'Croissance', unit: ' %', digits: 1, better: 'up', value: (s) => s.growth * 100 },
-  { id: 'pouvoir', label: 'Pouvoir d’achat depuis 2027', unit: ' %', digits: 1, better: 'up', value: (s, start) => (s.medianIncome / start.medianIncome - 1) * 100 },
-  { id: 'deficit', label: 'Déficit (% du PIB)', unit: ' %', digits: 1, better: 'down', value: (s) => (s.deficit / s.gdp) * 100 },
-  { id: 'dette', label: 'Dette (% du PIB)', unit: ' %', digits: 0, better: 'down', value: (s) => s.debtRatio * 100 },
-  { id: 'colere', label: 'Colère', unit: '', digits: 0, better: 'down', value: (s) => Math.max(0, s.discontent * 100) },
-  { id: 'popularite', label: 'Popularité', unit: ' %', digits: 0, better: 'up', value: (s) => popularity(s) },
+  { id: 'note', label: '📊 Note', unit: '/100', digits: 0, better: 'up', value: (s, start) => health(s, start) },
+  { id: 'chomage', label: '👷 Chômage', unit: ' %', digits: 1, better: 'down', value: (s) => s.unemployment * 100 },
+  { id: 'croissance', label: '📈 Croissance', unit: ' %', digits: 1, better: 'up', value: (s) => s.growth * 100 },
+  { id: 'pouvoir', label: '🛒 Pouvoir d’achat', unit: ' %', digits: 1, better: 'up', value: (s, start) => (s.medianIncome / start.medianIncome - 1) * 100 },
+  { id: 'deficit', label: '💶 Déficit', unit: ' %', digits: 1, better: 'down', value: (s) => (s.deficit / s.gdp) * 100 },
+  { id: 'dette', label: '🏦 Dette', unit: ' %', digits: 0, better: 'down', value: (s) => s.debtRatio * 100 },
+  { id: 'colere', label: '😡 Colère', unit: '', digits: 0, better: 'down', value: (s) => Math.max(0, s.discontent * 100) },
+  { id: 'popularite', label: '😊 Popularité', unit: ' %', digits: 0, better: 'up', value: (s) => popularity(s) },
 ]
 
 const stateAt = (g: Game, side: Side, year: number) => g.seats[side].states.find((x) => x.year === year)!
@@ -1334,105 +1228,131 @@ function CardLine({ g, card, side, cost, stamp }: { g: Game; card: Card; side: S
   )
 }
 
-function YearReport({ g, report, onClose, onCompare }: { g: Game; report: Report; onClose: () => void; onCompare: () => void }) {
-  const mine = report.sides.player
+/** Un pays au bord du gouffre : les seuils de fin de partie du modèle, approchés aux trois quarts. */
+function dangers(st: YearState): string[] {
+  const out: string[] = []
+  if (st.discontent >= 0.75) {
+    out.push('🔥 Révolte proche')
+  }
+  if (st.riskPremium >= 0.06 || st.interest / st.revenue >= 0.19) {
+    out.push('💥 Faillite proche')
+  }
+  if (st.unemployment >= 0.16) {
+    out.push('📉 Dépression proche')
+  }
+  if (st.inflation >= 0.15) {
+    out.push('🎈 Hyperinflation proche')
+  }
+  return out
+}
+
+/** Ce qui a marqué l'année d'un président, en pastilles. */
+function highlights(r: Report['sides'][Side]): { text: string; tone: '' | 'good' | 'bad' }[] {
+  const laws = r.played.filter((p) => p.card.kind === 'mesure' && !p.cancelled).length
+  return [
+    ...(laws ? [{ text: `🏛️ ${laws} loi${laws > 1 ? 's' : ''}`, tone: '' as const }] : []),
+    ...r.kept.map(() => ({ text: '⭐ Promesse tenue', tone: 'good' as const })),
+    ...r.received.map((c) => ({ text: `${CRISES[c].art} ${CRISES[c].name}${r.softened.includes(c) ? ' ½' : ''}`, tone: 'bad' as const })),
+    ...r.parried.map((c) => ({ text: `🛡️ ${CRISES[c].name} paré`, tone: 'good' as const })),
+    ...(r.earned ? [{ text: `⚡ +${r.earned}`, tone: 'good' as const }] : []),
+    ...(r.malus ? [{ text: `📉 −${r.malus} ⚡`, tone: 'bad' as const }] : []),
+    ...(r.alert ? [{ text: '🚨 Bruxelles', tone: 'bad' as const }] : []),
+  ]
+}
+
+/**
+ * La fin d'une année, façon écran de résultat : qui mène, de combien, si l'écart se creuse, la course aux promesses,
+ * les dangers, et ce qui s'est passé en pastilles. Le tableau détaillé est dans « Comparer ».
+ */
+function Verdict({
+  g,
+  report,
+  onClose,
+  onCompare,
+  onWhy,
+}: {
+  g: Game
+  report: Report
+  onClose: () => void
+  onCompare: () => void
+  /** Ouvrir la page « Pourquoi ? » d'une carte jouée cette année (null : la table de l'année n'est plus là). */
+  onWhy: ((card: Card, side: Side) => void) | null
+}) {
+  const a = report.sides.player
+  const b = report.sides.ai
+  const lead = a.health - b.health
+  const swing = lead - (a.before - b.before)
   useEffect(() => {
-    sfx(mine.kept.length ? 'promise' : mine.health >= mine.before ? 'energy' : 'flip')
-  }, [mine])
-  const name = (side: Side) => (side === 'player' ? 'Vous' : g.seats[side].name)
+    sfx(lead > 0 ? 'promise' : lead < 0 ? 'defeat' : 'flip')
+  }, [lead])
+  const share = a.health + b.health > 0 ? (a.health / (a.health + b.health)) * 100 : 50
+  const ctx = CONTEXTS[report.context]
   return (
-    <div className="modal-backdrop on-top" role="presentation">
-      <div className="modal dl-report" role="dialog" aria-modal="true" aria-label={`Bilan de ${report.year}`}>
-        <p className="eyebrow">📰 Bilan de l’année {report.year}</p>
-        <p className="dl-world">
-          🌍 Conjoncture (pour les deux) : {CONTEXTS[report.context].art} {CONTEXTS[report.context].name}.
-        </p>
-        <table className="dl-yeartable">
-          <thead>
-            <tr>
-              <th>En {report.year}</th>
-              {SIDES_ORDER.map((side) => (
-                <th key={side} style={{ '--c': g.seats[side].color } as React.CSSProperties}>
-                  {g.seats[side].emblem} {name(side)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {STATS.map((stat) => (
-              <tr key={stat.id}>
-                <td>{stat.label}</td>
-                {SIDES_ORDER.map((side) => (
-                  <StatCell key={side} stat={stat} now={stat.value(stateAt(g, side, report.year), startOf(g, side))} before={stat.value(stateAt(g, side, report.year - 1), startOf(g, side))} />
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="dl-versus">
-          {SIDES_ORDER.map((side) => {
-            const r = report.sides[side]
-            const s = g.seats[side]
-            const moves = report.moves.filter((m) => m.side === side)
-            return (
-              <div key={side} className="dl-side" style={{ '--c': s.color } as React.CSSProperties}>
-                <strong>
-                  {s.emblem} {side === 'player' ? 'Ce que vous avez fait' : `Ce qu’a fait ${s.name}`}
-                </strong>
-                <ul className="dl-cardlines">
-                  {r.played.map((p) => (
-                    <CardLine key={p.card.uid} g={g} card={p.card} side={side} cost={p.cost} stamp={stampOf(p)} />
-                  ))}
-                  {!r.played.length ? <li className="dl-none">Aucune carte jouée.</li> : null}
-                </ul>
-                <ul>
-                  {moves.map((m, i) => (
-                    <li key={i} className="dl-move">
-                      {m.kind === 'achat'
-                        ? `🛒 Achète « ${cardName(m.card!)} » (${m.price} ⚡)`
-                        : m.kind === 'vente'
-                          ? `🏷️ Met en vente « ${cardName(m.card!)} »`
-                          : m.note === 'fuite'
-                            ? `🦆 Perd « ${cardName(m.card!)} » (fuite dans la presse)`
-                            : `🗑️ Jette « ${cardName(m.card!)} »`}
-                    </li>
-                  ))}
-                  {r.received.map((c, i) => (
-                    <li key={`${c}-${i}`} className="down">
-                      {CRISES[c].art} Reçu : {CRISES[c].name}
-                      {r.softened.includes(c) ? ' (à moitié, grâce à la communication de crise)' : ''}
-                    </li>
-                  ))}
-                  {r.parried.map((c, i) => (
-                    <li key={`${c}-${i}`} className="up">
-                      🛡️ Paré : {CRISES[c].name}
-                    </li>
-                  ))}
-                  {r.kept.map((k) => (
-                    <li key={k} className="up">
-                      ⭐ Promesse tenue : {k}
-                    </li>
-                  ))}
-                  {r.earned ? <li className="up">⚡ +{r.earned} d’énergie l’an prochain (promesses, ventes)</li> : null}
-                  <li className={r.spent > r.margin ? 'down' : ''}>
-                    💶 Budget : {mdText(r.spent)} engagés, pour une marge de {num(r.margin, 0)} Md€
-                    {r.malus ? ` : les marchés s’inquiètent, −${r.malus} ⚡ l’an prochain` : ''}
-                  </li>
-                  {r.alert ? <li className="down">🚨 Alerte de Bruxelles et des marchés : sanction pour déficit excessif</li> : null}
-                </ul>
-              </div>
-            )
-          })}
-        </div>
-        <div className="verdict-actions">
-          <button type="button" className="primary" onClick={onClose}>
-            Année {report.year + 1} →
-          </button>
-          <button type="button" className="ghost" onClick={onCompare}>
-            📊 Comparer depuis le début
-          </button>
-        </div>
+    <div className={`dlr ${lead > 0 ? 'is-ahead' : lead < 0 ? 'is-behind' : 'is-even'}`} role="dialog" aria-modal="true" aria-label={`Bilan ${report.year}`}>
+      <p className="dlr-year">
+        🗓️ {report.year} · {ctx.art} {ctx.name}
+      </p>
+      <h2 className="dlr-title">{lead > 0 ? '🔥 Vous menez' : lead < 0 ? '😬 Vous êtes mené' : '🤝 Égalité'}</h2>
+      <p className="dlr-score">
+        <b style={{ '--c': g.seats.player.color } as React.CSSProperties}>{a.health}</b>
+        <span>–</span>
+        <b style={{ '--c': g.seats.ai.color } as React.CSSProperties}>{b.health}</b>
+      </p>
+      <p className={`dlr-swing ${swing > 0 ? 'good' : swing < 0 ? 'bad' : ''}`} title="Comment l’écart a bougé cette année">
+        {swing > 0 ? `▲ +${swing}` : swing < 0 ? `▼ −${-swing}` : '= 0'} <small>écart</small>
+      </p>
+      <div className="dlr-tug" style={{ '--p': `${share}%`, '--a': g.seats.player.color, '--b': g.seats.ai.color } as React.CSSProperties} aria-hidden="true">
+        <i />
       </div>
+      <div className="dlr-sides">
+        {SIDES_ORDER.map((side) => {
+          const r = report.sides[side]
+          const s = g.seats[side]
+          const delta = r.health - r.before
+          const kept = keptPromises(s, report.year).length
+          return (
+            <section key={side} className="dlr-side" style={{ '--c': s.color } as React.CSSProperties}>
+              <header>
+                <span aria-hidden="true">{s.emblem}</span>
+                <strong>{side === 'player' ? 'Vous' : s.name}</strong>
+                <b className={delta > 0 ? 'good' : delta < 0 ? 'bad' : ''}>{delta > 0 ? `▲ +${delta}` : delta < 0 ? `▼ −${-delta}` : '='}</b>
+              </header>
+              <p className={`dlr-stars ${kept >= PROGRAMME_GOAL ? 'is-done' : ''}`} title={`Promesses tenues : il en faut ${PROGRAMME_GOAL}`}>
+                {Array.from({ length: PROGRAMME_GOAL }, (_, i) => (i < kept ? '⭐' : '☆')).join('')} <small>{Math.min(kept, 5)}/{PROGRAMME_GOAL}</small>
+              </p>
+              {dangers(stateAt(g, side, report.year)).map((d) => (
+                <p key={d} className="dlr-danger">
+                  {d}
+                </p>
+              ))}
+              <ul className="dlr-chips">
+                {highlights(r).map((h, i) => (
+                  <li key={i} className={h.tone}>
+                    {h.text}
+                  </li>
+                ))}
+                {r.played.map((p) => (
+                  <li key={p.card.uid} className="dlr-card">
+                    <button type="button" disabled={!onWhy} onClick={() => onWhy?.(p.card, side)} title={`${cardName(p.card)} : pourquoi ?`}>
+                      {cardArt(p.card)}
+                      {stampOf(p) ? <small>{stampOf(p)}</small> : null}
+                    </button>
+                  </li>
+                ))}
+                {!r.played.length && !highlights(r).length ? <li className="dl-none">😴 Rien</li> : null}
+              </ul>
+            </section>
+          )
+        })}
+      </div>
+      <footer className="dlr-actions">
+        <button type="button" className="primary big" onClick={onClose}>
+          ▶ {report.year + 1}
+        </button>
+        <button type="button" className="ghost" onClick={onCompare}>
+          📊 Détails
+        </button>
+      </footer>
     </div>
   )
 }
@@ -1483,10 +1403,10 @@ function Compare({ g, onClose }: { g: Game; onClose: () => void }) {
       </header>
       <div className="dl-compare-body">
         <section>
-          <h3>Les chiffres clés, de 2027 à aujourd’hui</h3>
+          <h3>📈 Depuis 2027</h3>
           <p className="note">
-            La courbe : <i className="dl-legend" style={{ '--c': g.seats.player.color } as React.CSSProperties} /> vous,{' '}
-            <i className="dl-legend dashed" style={{ '--c': g.seats.ai.color } as React.CSSProperties} /> {g.seats.ai.name}. L’écart est celui de cette année.
+            <i className="dl-legend" style={{ '--c': g.seats.player.color } as React.CSSProperties} /> Vous · <i className="dl-legend dashed" style={{ '--c': g.seats.ai.color } as React.CSSProperties} />{' '}
+            {g.seats.ai.name}
           </p>
           <table className="dl-yeartable">
             <thead>{head}</thead>
@@ -1509,7 +1429,7 @@ function Compare({ g, onClose }: { g: Game; onClose: () => void }) {
           </table>
         </section>
         <section>
-          <h3>La note, critère par critère</h3>
+          <h3>🧮 La note</h3>
           <table className="dl-breakdown">
             <thead>{head}</thead>
             <tbody>
@@ -1535,8 +1455,8 @@ function Compare({ g, onClose }: { g: Game; onClose: () => void }) {
           </table>
         </section>
         <section>
-          <h3>Les cartes jouées, année par année</h3>
-          {!g.reports.length ? <p className="note">Aucune année jouée pour l’instant.</p> : null}
+          <h3>🃏 Les cartes jouées</h3>
+          {!g.reports.length ? <p className="note">Rien encore.</p> : null}
           {[...g.reports].reverse().map((r) => (
             <div key={r.year} className="dl-history">
               <strong>{r.year}</strong>
@@ -1544,7 +1464,7 @@ function Compare({ g, onClose }: { g: Game; onClose: () => void }) {
                 {SIDES_ORDER.map((side) => (
                   <div key={side} className="dl-side" style={{ '--c': g.seats[side].color } as React.CSSProperties}>
                     <small>
-                      {g.seats[side].emblem} {name(side)} · note {r.sides[side].before} → {r.sides[side].health}
+                      {g.seats[side].emblem} {name(side)} · 📊 {r.sides[side].before} → {r.sides[side].health}
                     </small>
                     <ul className="dl-cardlines">
                       {r.sides[side].played.map((p) => (
@@ -1552,10 +1472,10 @@ function Compare({ g, onClose }: { g: Game; onClose: () => void }) {
                       ))}
                       {r.sides[side].received.map((c, i) => (
                         <li key={`${c}-${i}`} className="down">
-                          {CRISES[c].art} Reçoit : {CRISES[c].name}
+                          {CRISES[c].art} {CRISES[c].name}
                         </li>
                       ))}
-                      {!r.sides[side].played.length && !r.sides[side].received.length ? <li className="dl-none">Rien.</li> : null}
+                      {!r.sides[side].played.length && !r.sides[side].received.length ? <li className="dl-none">—</li> : null}
                     </ul>
                   </div>
                 ))}
@@ -1653,53 +1573,79 @@ function Final({ g, onReplay, onCompare, onClose }: { g: Game; onReplay: () => v
   )
 }
 
+/** Les règles en cinq gestes : l'essentiel d'un coup d'œil, le reste replié. */
+const STEPS: { icon: string; title: string; text: string }[] = [
+  { icon: '🃏', title: 'Chacun son tour', text: 'Une carte, ou ⏭ passer' },
+  { icon: '⚡', title: 'Énergie et budget', text: '2 lois par an · 💶 marge' },
+  { icon: '📜', title: 'Votre France', text: '💥 Les crises : la sienne' },
+  { icon: '🛡️', title: 'Parez ses coups', text: 'Gardez une parade' },
+  { icon: '🏆', title: `⭐ ${PROGRAMME_GOAL} promesses`, text: 'Puis la meilleure note · 💀 faillite = perdu' },
+]
+
 function Rules({ onClose }: { onClose: () => void }) {
   return (
     <div className="modal-backdrop on-top" role="presentation" onClick={onClose}>
       <div className="modal dl-rules" role="dialog" aria-modal="true" aria-label="Les règles" onClick={(e) => e.stopPropagation()}>
-        <p className="eyebrow">📖 Les règles</p>
-        <h2>Le duel des présidents</h2>
-        <ol>
-          <li>
-            <strong>Chacun sa France.</strong> Vous et votre adversaire partez de la même France de 2027. Le modèle fait vivre chaque pays selon les cartes jouées.
-          </li>
-          <li>
-            <strong>La conjoncture.</strong> Chaque année commence par une carte contexte, la même pour les deux : récession, hausse des taux, élections européennes… Elle frappe vraiment les deux France (dans le modèle) et change le prix de certaines cartes.
-          </li>
-          <li>
-            <strong>Une pioche commune.</strong> 5 cartes au départ, puis 3 par an (8 en main au plus). Ce que vous piochez, l’adversaire ne l’a pas, sauf si vous le mettez en vente au marché. Vos promesses et les siennes sont mêlées dedans.
-          </li>
-          <li>
-            <strong>Chacun son tour.</strong> On pose une carte à la fois, ou on passe. Quand les deux passent de suite, l’année se joue. Celui dont le pays va le moins bien ouvre l’année. Acheter, vendre et jeter ne prennent pas votre tour.
-          </li>
-          <li>
-            <strong>Deux ressources.</strong> L’énergie ⚡ (votre capital politique : 3 par an, plus si vous êtes populaire, +2 par promesse tenue) paie les cartes ; deux lois au plus par an. La marge budgétaire 💶 (en Md€, plus large si le déficit et la dette sont bas) : chaque mesure coûte ou rapporte des milliards. Dépasser la marge est permis, mais les marchés s’inquiètent : moins d’énergie l’an prochain, et au-delà de {ALERT_AT} Md€, Bruxelles sanctionne.
-          </li>
-          <li>
-            📜 une <em>mesure</em> change votre France · ⭐ une <em>promesse</em> est une mesure de votre programme · 💥 une <em>crise</em>, 🗞️ un <em>scandale</em> ou 🎯 un{' '}
-            <em>coup politique</em> (fuite, motion de censure, débauchage) frappe l’adversaire · 🛡️ les <em>parades</em> se gardent en main et se jouent quand le coup arrive : cellule de crise,
-            commission d’enquête (scandales), communication de crise (effets divisés par deux), Conseil constitutionnel (censure une loi adverse) · 🎉 les <em>événements</em> (JO, Coupe du
-            monde, selfie avec un panda…) passent par le modèle · 🎴 les <em>actions</em> (sondage, discours, remaniement, 49.3…) changent la partie · 🌟 les cartes <em>légendaires</em>{' '}
-            (référendum, dissolution, plan de relance européen) sont uniques.
-          </li>
-          <li>
-            <strong>Touchez une carte :</strong> elle s’ouvre en grand, avec son effet expliqué par le modèle, et ce que vous pouvez en faire : la jouer, la jeter (+{DISCARD_GAIN} ⚡ tout de suite) ou la vendre au marché (l’acheteur paie, vous touchez l’énergie l’an prochain).
-          </li>
-          <li>
-            <strong>Avec un ami :</strong> en ligne, chacun joue sur son téléphone et ne voit que sa main (sauf sondage truqué) ; à deux sur le même
-            téléphone, on se le passe à chaque tour, et l’écran cache la main de l’autre.
-          </li>
-          <li>
-            <strong>Pour gagner :</strong> si votre pays fait faillite ou se révolte, vous perdez tout de suite. À la fin, celui qui a tenu au moins {PROGRAMME_GOAL} promesses sur 5 bat celui qui ne l’a pas fait. Sinon, la meilleure note de santé (sur 100) l’emporte.
-          </li>
+        <h2>🃏 Le duel des présidents</h2>
+        <ol className="dl-steps">
+          {STEPS.map((step, i) => (
+            <li key={step.icon} style={{ '--i': i } as React.CSSProperties}>
+              <span aria-hidden="true">{step.icon}</span>
+              <strong>{step.title}</strong>
+              <small>{step.text}</small>
+            </li>
+          ))}
         </ol>
+        <details className="dl-rules-more">
+          <summary>📖 Toutes les règles</summary>
+          <ol>
+            <li>
+              <strong>Chacun sa France.</strong> Vous et votre adversaire partez de la même France de 2027. Le modèle fait vivre chaque pays selon les cartes jouées.
+            </li>
+            <li>
+              <strong>La conjoncture.</strong> Chaque année commence par une carte contexte, la même pour les deux : récession, hausse des taux, élections européennes… Elle frappe vraiment
+              les deux France (dans le modèle) et change le prix de certaines cartes.
+            </li>
+            <li>
+              <strong>Une pioche commune.</strong> 5 cartes au départ, puis 3 par an (8 en main au plus). Ce que vous piochez, l’adversaire ne l’a pas, sauf si vous le mettez en vente au
+              marché. Vos promesses et les siennes sont mêlées dedans.
+            </li>
+            <li>
+              <strong>Chacun son tour.</strong> On pose une carte à la fois, ou on passe. Quand les deux passent de suite, l’année se joue. Celui dont le pays va le moins bien ouvre l’année.
+              Acheter, vendre et jeter ne prennent pas votre tour.
+            </li>
+            <li>
+              <strong>Deux ressources.</strong> L’énergie ⚡ (votre capital politique : 3 par an, plus si vous êtes populaire, +2 par promesse tenue) paie les cartes ; deux lois au plus
+              par an. La marge budgétaire 💶 (en Md€, plus large si le déficit et la dette sont bas) : chaque mesure coûte ou rapporte des milliards. Dépasser la marge est permis, mais
+              les marchés s’inquiètent : moins d’énergie l’an prochain, et au-delà de {ALERT_AT} Md€, Bruxelles sanctionne.
+            </li>
+            <li>
+              📜 une <em>mesure</em> change votre France · ⭐ une <em>promesse</em> est une mesure de votre programme · 💥 une <em>crise</em>, 🗞️ un <em>scandale</em> ou 🎯 un{' '}
+              <em>coup politique</em> (fuite, motion de censure, débauchage) frappe l’adversaire · 🛡️ les <em>parades</em> se gardent en main et se jouent quand le coup arrive : cellule
+              de crise, commission d’enquête (scandales), communication de crise (effets divisés par deux), Conseil constitutionnel (censure une loi adverse) · 🎉 les{' '}
+              <em>événements</em> (JO, Coupe du monde, selfie avec un panda…) passent par le modèle · 🎴 les <em>actions</em> (sondage, discours, remaniement, 49.3…) changent la partie ·
+              🌟 les cartes <em>légendaires</em> (référendum, dissolution, plan de relance européen) sont uniques.
+            </li>
+            <li>
+              <strong>Touchez une carte :</strong> elle s’ouvre en grand, avec son effet en un coup d’œil (🔍 « Pourquoi ? » pour le détail), et ce que vous pouvez en faire : la jouer, la
+              jeter (+{DISCARD_GAIN} ⚡ tout de suite) ou la vendre au marché (l’acheteur paie, vous touchez l’énergie l’an prochain).
+            </li>
+            <li>
+              <strong>Avec un ami :</strong> en ligne, chacun joue sur son téléphone et ne voit que sa main (sauf sondage truqué) ; à deux sur le même téléphone, on se le passe à chaque
+              tour, et l’écran cache la main de l’autre.
+            </li>
+            <li>
+              <strong>Pour gagner :</strong> si votre pays fait faillite ou se révolte, vous perdez tout de suite. À la fin, celui qui a tenu au moins {PROGRAMME_GOAL} promesses sur 5
+              bat celui qui ne l’a pas fait. Sinon, la meilleure note de santé (sur 100) l’emporte.
+            </li>
+          </ol>
+        </details>
         <div className="verdict-actions">
           <button type="button" className="primary big" onClick={onClose}>
-            C’est parti
+            ⚔️ C’est parti
           </button>
         </div>
       </div>
     </div>
   )
 }
-

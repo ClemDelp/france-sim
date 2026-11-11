@@ -1105,8 +1105,8 @@ button.kpi:focus-visible {
 .brain {
   position: fixed;
   inset: 0;
-  /* Au-dessus de l'accueil et de « À propos », d'où on l'ouvre. */
-  z-index: 45;
+  /* Au-dessus de l'accueil, de « À propos » et de la partie (la page « Pourquoi ? » d'une carte), d'où on l'ouvre. */
+  z-index: 130;
   overflow-y: auto;
   padding: 0 0 30px;
   background: var(--bg);

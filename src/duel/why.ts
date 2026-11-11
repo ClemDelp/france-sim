@@ -7,7 +7,7 @@ import { promiseRemaining } from '../game/candidates'
 import { popularity } from '../game/score'
 import { formatLever, LEVER_GROUPS, type LeverDef } from '../ui/levers'
 import { ACTIONS, crisisEvent, type Card } from './cards'
-import { other, plannedPolicy, startState, type Game, type Side } from './engine'
+import { contextOf, other, plannedPolicy, startState, type Game, type Side } from './engine'
 import { healthParts } from './health'
 
 /**
@@ -446,4 +446,13 @@ export function whyTree(starts: { node: string; up: boolean }[], impact: Impact)
     at.hits.push(ind)
   }
   return { roots, other }
+}
+
+/** Ouvrir le modèle (le graphe des causes) par-dessus le jeu : l'application l'écoute. */
+export const openModel = (focus: string | null = null) => window.dispatchEvent(new CustomEvent('duel:modele', { detail: focus }))
+
+/** Le changement de coût qu'apporte la conjoncture de l'année à une carte (en ⚡), ou 0. */
+export function contextShift(g: Game, card: Card): number {
+  const ctx = contextOf(g)
+  return card.kind === 'crise' ? (ctx.crisis ?? 0) : card.kind === 'mesure' && ctx.domains?.names.includes(card.pledge.measure!.domain) ? ctx.domains.delta : 0
 }

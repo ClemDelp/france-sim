@@ -25,9 +25,9 @@ const SILENT_AFTER = 10000
 const OPEN_TIMEOUT = 15000
 const RETRY_EVERY = 4000
 
-const NO_BROKER = 'Impossible de joindre le service de mise en relation. Vérifiez votre connexion internet.'
-const BLOCKED = 'La connexion directe entre vos deux téléphones ne passe pas : certains réseaux (4G, Wi-Fi d’entreprise) la bloquent. Essayez en Wi-Fi, ou sur un autre réseau. Nouvelle tentative…'
-const OLD_BROWSER = 'Ce navigateur ne sait pas jouer en direct (WebRTC). Essayez avec Safari, Chrome ou Firefox à jour.'
+const NO_BROKER = '📡 Pas de connexion internet ?'
+const BLOCKED = '🚧 Ce réseau bloque la connexion : essayez en Wi-Fi. On réessaie…'
+const OLD_BROWSER = '🌐 Navigateur trop ancien : essayez Safari, Chrome ou Firefox à jour.'
 const BROKER_ERRORS = ['network', 'server-error', 'socket-error', 'socket-closed']
 
 const loadPeer = async () => (await import('peerjs')).Peer
@@ -99,7 +99,7 @@ export function openHost(code: string, match: HostMatch, onState: (s: NetState) 
           match.disconnect(link)
           current = null
           stopBeat()
-          set('perdu', 'Votre ami s’est déconnecté. La partie l’attend : il lui suffit de rouvrir le lien.')
+          set('perdu', '🔌 Ami déconnecté : il rouvre le lien pour revenir.')
         }
       }
       conn.on('close', lost)
@@ -212,7 +212,7 @@ export function openGuest(code: string, match: GuestMatch, onState: (s: NetState
       if (opened && conn === c && !closed) {
         conn = null
         stopBeat()
-        set('perdu', 'La connexion avec votre ami est coupée. Nouvelle tentative…')
+        set('perdu', '🔌 Connexion coupée. On réessaie…')
         retry.set(join, RETRY_EVERY / 2)
       }
     })
@@ -239,7 +239,7 @@ export function openGuest(code: string, match: GuestMatch, onState: (s: NetState
         // L'hôte n'est pas (ou plus) là : il a peut-être fermé l'onglet ou rechargé la page.
         opening.clear()
         conn = null
-        set('perdu', 'Votre ami n’est pas en ligne pour l’instant (il a peut-être fermé la page). On réessaie…')
+        set('perdu', '💤 Votre ami n’est pas en ligne. On réessaie…')
         retry.set(join, RETRY_EVERY)
       } else if (BROKER_ERRORS.includes(e.type)) {
         if (!conn?.open) {

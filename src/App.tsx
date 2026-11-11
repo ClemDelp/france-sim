@@ -32,8 +32,14 @@ function App() {
   const [model, setModel] = useState<{ focus: string | null } | null>(() => (window.location.hash === '#modele' ? { focus: null } : null))
   useEffect(() => {
     const onHash = () => setRoute(fromHash())
+    // Depuis la page « Pourquoi ? » d'une carte : le modèle s'ouvre par-dessus la partie, sans la quitter.
+    const onModel = (e: Event) => setModel({ focus: (e as CustomEvent<string | null>).detail })
     window.addEventListener('hashchange', onHash)
-    return () => window.removeEventListener('hashchange', onHash)
+    window.addEventListener('duel:modele', onModel)
+    return () => {
+      window.removeEventListener('hashchange', onHash)
+      window.removeEventListener('duel:modele', onModel)
+    }
   }, [])
   const go = (s: Screen, c = '') => {
     window.location.hash = s === 'accueil' ? '' : c ? `${s}/${c}` : s

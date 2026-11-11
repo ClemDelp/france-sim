@@ -1139,12 +1139,10 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.dl-report .up,
 .dl-part i.up {
   background: #cdeedb;
   color: #11552f;
 }
-.dl-report .down,
 .dl-part i.down {
   background: #f8d3d3;
   color: #8a1c1c;
@@ -1289,16 +1287,9 @@
 .dl-incoming .dl-desc {
   -webkit-line-clamp: 6;
 }
-.dl-ctx-turn,
-.dl-incoming-hit {
+.dl-ctx-turn {
   margin: 0;
   font-size: 0.9rem;
-}
-.dl-incoming-hit .bad {
-  color: #ff9b9b;
-}
-.dl-incoming-hit .good {
-  color: #9be3b8;
 }
 .dl-incoming .eyebrow {
   color: #ff9b9b;
@@ -1455,13 +1446,9 @@
 
 /* — Les fenêtres de fin d'année et de fin de partie */
 
-.dl-report,
 .dl-rules {
   max-height: 92vh;
   overflow-y: auto;
-}
-.dl-world {
-  margin: 0 0 8px;
 }
 .dl-versus {
   display: grid;
@@ -1485,21 +1472,6 @@
 .dl-side li {
   padding: 3px 8px;
   border-radius: 8px;
-}
-.dl-big {
-  margin: 4px 0 8px;
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: var(--gold);
-}
-.dl-big small {
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-.dl-big span {
-  font-size: 1rem;
-  padding: 1px 8px;
-  border-radius: 99px;
 }
 .dl-breakdown {
   width: 100%;
@@ -1885,13 +1857,11 @@
 .dl-none {
   color: var(--muted);
 }
-.dl-move {
-  color: var(--muted);
-}
 .dl-compare {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  /* Au-dessus du bilan et de la fin de partie, d'où on l'ouvre ; sous la page « Pourquoi ? ». */
+  z-index: 65;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 6px;
@@ -2424,6 +2394,564 @@
 @media (prefers-reduced-motion: reduce) {
   .dlo-mini.is-waiting,
   .dlo-spinner {
+    animation: none;
+  }
+}
+
+/* — Épuré : qui mène, en haut, toujours en vue */
+
+.dlg-mid {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+.dlg-mid .dl-year {
+  font-size: 0.9rem;
+  line-height: 1.1;
+}
+.dlg-lead {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 9px;
+  border-radius: 99px;
+  border: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.dlg-lead b {
+  font-size: 0.95rem;
+}
+.dlg-lead.is-ahead {
+  border-color: #3ccf7e;
+  box-shadow: 0 0 10px rgba(60, 207, 126, 0.3);
+}
+.dlg-lead.is-behind {
+  border-color: #ff6b5e;
+  box-shadow: 0 0 10px rgba(255, 107, 94, 0.3);
+}
+/* Le bras de fer : votre couleur pousse depuis la gauche. */
+.dlg-lead i,
+.dlr-tug {
+  position: relative;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--b);
+}
+.dlg-lead i {
+  width: 38px;
+  height: 6px;
+}
+.dlg-lead i::before,
+.dlr-tug i {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--p);
+  background: var(--a);
+  transition: width 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* — La carte en grand : l'effet en pastilles */
+
+.modal.dl-cardmodal {
+  width: min(640px, calc(100vw - 24px));
+}
+.dl-quick {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding-top: 6px;
+}
+.dl-quick-cost {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+.dl-quick-cost > span:first-child {
+  padding: 3px 12px;
+  border-radius: 99px;
+  background: var(--gold);
+  color: #241b00;
+}
+.dl-quick .dl-md {
+  position: static;
+  padding: 3px 10px;
+  font-size: 0.9rem;
+  box-shadow: none;
+}
+.dl-quick-ctx {
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--contexte) 35%, transparent);
+  font-size: 0.85rem;
+}
+.dl-fx {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dl-fx li {
+  padding: 5px 11px;
+  border-radius: 99px;
+  border: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  animation: dlv-pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.dl-fx li:nth-child(2) {
+  animation-delay: 0.05s;
+}
+.dl-fx li:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.dl-fx li:nth-child(4) {
+  animation-delay: 0.15s;
+}
+.dl-fx li:nth-child(5) {
+  animation-delay: 0.2s;
+}
+.dl-fx li.good {
+  border-color: #3ccf7e;
+  background: rgba(60, 207, 126, 0.16);
+  color: #9be3b8;
+}
+.dl-fx li.bad {
+  border-color: #ff6b5e;
+  background: rgba(255, 107, 94, 0.16);
+  color: #ffb1a9;
+}
+.dl-fx-note {
+  font-size: 1.1rem !important;
+}
+.dl-fx-rule {
+  margin: 0;
+  font-weight: 800;
+}
+.dl-why-link {
+  justify-self: start;
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: 1px dashed var(--muted);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dl-why-link:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.dl-incoming .dl-fx {
+  justify-content: center;
+}
+
+/* — La page « Pourquoi ? » : à part, en plein écran, la partie en dessous */
+
+.dl-whypage {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg, #0b1020);
+  color: var(--ink);
+  animation: dl-slide-in 0.25s ease-out both;
+}
+@keyframes dl-slide-in {
+  from {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+}
+.dl-whypage-body {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding-bottom: 20px;
+}
+.dl-whyhead {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--rule);
+  border-left: 5px solid var(--frame, var(--gold));
+  background: var(--panel);
+}
+.dl-whyhead-art {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+.dl-whyhead small {
+  color: var(--muted);
+  font-weight: 700;
+}
+.dl-whyhead h2 {
+  margin: 2px 0 6px;
+  font-size: 1.2rem;
+}
+.dl-whyhead p {
+  margin: 0;
+  color: #c9d2e8;
+  font-size: 0.9rem;
+}
+.dl-whyfoot {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+}
+
+/* — Le bilan de l'année : un écran de résultat */
+
+.dlr {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  /* Tout au centre de l'écran ; si les deux colonnes débordent, elles défilent seules. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  gap: 8px;
+  padding: 14px max(14px, calc((100vw - 760px) / 2));
+  overflow: hidden;
+  color: var(--ink);
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 196, 64, 0.14), transparent 55%), #0b1020;
+}
+.dlr.is-ahead {
+  background: radial-gradient(ellipse at 50% 0%, rgba(60, 207, 126, 0.2), transparent 55%), #0b1020;
+}
+.dlr.is-behind {
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 90, 77, 0.2), transparent 55%), #0b1020;
+}
+.dlr-year {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.dlr-title {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.9rem, 8vw, 3.2rem);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1.05;
+  text-align: center;
+  color: var(--gold);
+  text-shadow:
+    0 0 22px rgba(255, 170, 0, 0.55),
+    0 4px 0 #8a3c00;
+  animation: dlv-slam 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.dlr.is-ahead .dlr-title {
+  color: #5fe39a;
+  text-shadow:
+    0 0 22px rgba(60, 207, 126, 0.55),
+    0 4px 0 #0f5a32;
+}
+.dlr.is-behind .dlr-title {
+  color: #ff6b5e;
+  text-shadow:
+    0 0 22px rgba(255, 60, 40, 0.5),
+    0 4px 0 #5c0f08;
+}
+.dlr-score {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: clamp(2.4rem, 11vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1;
+  animation: dlv-pop 0.45s 0.2s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.dlr-score b {
+  min-width: 1.6em;
+  padding: 4px 10px;
+  border-radius: 14px;
+  text-align: center;
+  background: color-mix(in srgb, var(--c) 35%, #10172b);
+  border: 2px solid color-mix(in srgb, var(--c) 70%, white);
+}
+.dlr-score span {
+  color: var(--muted);
+}
+.dlr-swing {
+  margin: 0;
+  font-weight: 900;
+  font-size: 1.05rem;
+}
+.dlr-swing small {
+  color: var(--muted);
+  font-weight: 600;
+}
+.dlr-swing.good,
+.dlr-side .good,
+.dlr-chips .good {
+  color: #5fe39a;
+}
+.dlr-swing.bad,
+.dlr-side .bad,
+.dlr-chips .bad {
+  color: #ff8a7f;
+}
+.dlr-tug {
+  width: min(420px, 100%);
+  height: 12px;
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.4);
+}
+.dlr-tug i {
+  animation: dlr-pull 0.8s 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes dlr-pull {
+  from {
+    width: 50%;
+  }
+}
+.dlr-sides {
+  flex: 0 1 auto;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
+  gap: 10px;
+  padding-top: 6px;
+}
+.dlr-side {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 2px solid color-mix(in srgb, var(--c) 55%, #2a3350);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 30%, #10172b), #10172b 70%);
+}
+.dlr-side header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dlr-side header span {
+  font-size: 1.5rem;
+}
+.dlr-side header strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dlr-stars {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 1px;
+}
+.dlr-stars small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0;
+}
+.dlr-stars.is-done {
+  text-shadow: 0 0 10px rgba(245, 183, 10, 0.8);
+}
+.dlr-danger {
+  margin: 0;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(255, 60, 40, 0.22);
+  color: #ffb1a9;
+  font-weight: 900;
+  font-size: 0.85rem;
+  animation: dlr-blink 1s ease-in-out 3;
+}
+@keyframes dlr-blink {
+  50% {
+    opacity: 0.45;
+  }
+}
+.dlr-chips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.dlr-chips li {
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.dlr-chips li.dlr-card {
+  padding: 0;
+  background: none;
+}
+.dlr-card button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font: inherit;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+.dlr-card button:disabled {
+  cursor: default;
+}
+.dlr-card small {
+  font-size: 0.65rem;
+}
+.dlr-actions {
+  flex-shrink: 0;
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* — Les règles en cinq gestes */
+
+.dl-rules h2 {
+  margin: 0 0 10px;
+  text-align: center;
+}
+.dl-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+.dl-steps li {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  text-align: center;
+  animation: dlv-pop 0.35s calc(var(--i) * 0.07s) cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.dl-steps li > span {
+  font-size: 1.8rem;
+}
+.dl-steps li strong {
+  font-size: 0.9rem;
+}
+.dl-steps li small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.dl-rules-more {
+  margin-top: 10px;
+}
+.dl-rules-more summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 700;
+}
+.dl-rules-more ol {
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 760px) {
+  .dlg-mid .dl-year {
+    font-size: 0.8rem;
+  }
+  .dlg-lead {
+    font-size: 0.7rem;
+    padding: 0 7px;
+  }
+  .dlg-lead b {
+    font-size: 0.85rem;
+  }
+  .dlg-lead i {
+    width: 26px;
+  }
+  .dl-quick {
+    justify-items: center;
+    text-align: center;
+  }
+  .dl-quick .dl-fx {
+    justify-content: center;
+  }
+  .dl-why-link {
+    justify-self: center;
+  }
+  .dl-fx li {
+    font-size: 0.85rem;
+    padding: 4px 9px;
+  }
+  .dlr {
+    padding: 10px 10px;
+    gap: 4px;
+  }
+  .dlr-sides {
+    gap: 6px;
+  }
+  .dlr-side {
+    padding: 8px;
+  }
+  .dlr-actions .big {
+    flex: 1 1 100%;
+  }
+  .dl-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+  .dl-steps li:last-child {
+    grid-column: 1 / -1;
+  }
+  .dl-whypage {
+    padding: 4px 8px;
+  }
+  .dl-whyhead-art {
+    font-size: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-fx li,
+  .dl-whypage,
+  .dlr-title,
+  .dlr-score,
+  .dlr-tug i,
+  .dlr-danger,
+  .dl-steps li {
     animation: none;
   }
 }
