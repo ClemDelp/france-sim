@@ -7,7 +7,7 @@ import { programmeOf } from './cards'
 
 /**
  * Les « statistiques » d'un candidat sur l'écran de sélection, comme dans un jeu de combat. Elles viennent du modèle :
- * son programme du duel (ses cinq promesses) appliqué en 2028, puis la France de 2032 comparée à celle sans rien changer.
+ * son programme du duel (toutes ses promesses jouables) appliqué en 2028, puis la France de 2032 comparée à celle sans rien changer.
  * Chaque barre est relative aux autres candidats : le plus fort sur un axe a la barre pleine.
  */
 

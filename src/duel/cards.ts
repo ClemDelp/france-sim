@@ -338,6 +338,7 @@ const DOMAIN_ART: Record<string, string> = {
   'Énergie & climat': '⚡',
 }
 
+/** Un programme compte au moins cinq promesses (complété par le jeu si le candidat en a moins). */
 export const PROGRAMME_SIZE = 5
 
 /** L'illustration d'une carte (un emoji pour l'instant). */
@@ -370,18 +371,18 @@ export function shuffled<T>(items: T[], seed: number, salt: string): T[] {
 }
 
 /**
- * Le programme : cinq promesses. Celles du candidat (les premières que le moteur sait jouer), complétées si besoin
+ * Le programme : toutes les promesses du candidat que le moteur sait jouer, complétées jusqu'à cinq si besoin
  * par des mesures tirées au sort (signalées : `added`) ; pour le bot, cinq mesures tirées au sort.
  */
 export function programmeOf(candidate: Candidate | null, seed: number, salt: string): Pledge[] {
-  const own = candidate ? candidate.promises.filter(isPlayable).filter((p) => p.measure!.effects.every((e) => e.lever !== 'cancelHolder')).slice(0, PROGRAMME_SIZE) : []
+  const own = candidate ? candidate.promises.filter(isPlayable).filter((p) => p.measure!.effects.every((e) => e.lever !== 'cancelHolder')) : []
   const taken = new Set(own.map((p) => p.measure!.id))
   const extra = shuffled(
     PLAYABLE_MEASURES.filter((m) => !taken.has(m.id)),
     seed,
     `${salt}:programme`,
   )
-    .slice(0, PROGRAMME_SIZE - own.length)
+    .slice(0, Math.max(0, PROGRAMME_SIZE - own.length))
     .map((m) => ({ ...generic(m.id), key: `${salt}-ajout-${m.id}`, source: candidate ? 'ajout' : '' }))
   return [...own, ...extra]
 }
@@ -443,8 +444,8 @@ export const GENERIC_MEASURES = 16
 export const copiesOf = (c: CardDef): number =>
   c.kind === 'crise' ? CRISIS_COUNT[c.crisis] : c.kind === 'action' ? (ACTIONS[c.action].signature ? SIGNATURE_COUNT : ACTION_COUNT[c.action]) : 1
 
-/** Le haut de la pioche, où sont mêlées les promesses des deux joueurs : les deux mains de départ et les trois premières pioches. */
-const TOP = 22
+/** Le haut de la pioche, où sont mêlées les promesses des deux joueurs : autant d'autres cartes que de promesses et de coups signature, plus douze. */
+const TOP_EXTRA = 12
 
 const times = <T>(n: number, x: T): T[] => Array.from({ length: n }, () => x)
 
@@ -475,6 +476,6 @@ export function buildDeck(programmes: Pledge[][], seed: number, candidates: (str
     'reste',
   )
   // Les promesses sont mêlées aux premières cartes : on les a toutes vues vers la 4e année (le hasard décide qui les pioche).
-  const top = shuffled([...promises, ...rest.slice(0, TOP - promises.length)], seed, 'haut')
-  return [...top, ...rest.slice(TOP - promises.length)].map((d, i) => ({ ...d, uid: `carte-${i}` }))
+  const top = shuffled([...promises, ...rest.slice(0, TOP_EXTRA)], seed, 'haut')
+  return [...top, ...rest.slice(TOP_EXTRA)].map((d, i) => ({ ...d, uid: `carte-${i}` }))
 }

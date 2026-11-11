@@ -16,7 +16,7 @@ import { health } from './health'
  * des mesures pour sa France (deux lois par an au plus), des crises pour celle de l'adversaire, qu'il peut parer sur-le-champ.
  * Deux ressources : l'énergie (le capital politique) et la marge budgétaire (en Md€). Quand les deux passent, l'année se joue
  * dans les deux France, avec le modèle.
- * On perd tout de suite si son pays fait faillite ou se révolte. À la fin, celui qui a tenu au moins 3 promesses sur 5
+ * On perd tout de suite si son pays fait faillite ou se révolte. À la fin, celui qui a tenu au moins 3 promesses de son programme (la moitié s'il est plus long)
  * bat celui qui ne l'a pas fait ; s'ils sont à égalité sur ce point, la meilleure note de santé du pays l'emporte.
  */
 
@@ -34,8 +34,10 @@ export const LAWS_PER_YEAR = 2
 export const LAW_COST = 2
 /** Le capital politique de base, chaque année (plus ou moins un selon la popularité). */
 export const ENERGY_BASE = 3
-/** Le mandat est respecté si l'on tient au moins autant de promesses de son programme à la fin. */
+/** Le mandat est respecté si l'on tient au moins autant de promesses de son programme à la fin… */
 export const PROGRAMME_GOAL = 3
+/** … ou la moitié d'un programme plus long : plus de promesses, c'est plus de façons d'en tenir. */
+export const goalOf = (s: Seat) => Math.max(PROGRAMME_GOAL, Math.ceil(s.programme.length / 2))
 /** L'énergie gagnée la première fois qu'une promesse est tenue. */
 export const PROMISE_BONUS = 2
 /** Jeter une carte rapporte un peu d'énergie, tout de suite. */
@@ -803,10 +805,10 @@ export function outcomeOf(g: Game): Outcome | null {
     return null
   }
   const kept = (side: Side) => keptPromises(g.seats[side], g.year).length
-  const respected = SIDES.filter((side) => kept(side) >= PROGRAMME_GOAL)
+  const respected = SIDES.filter((side) => kept(side) >= goalOf(g.seats[side]))
   if (respected.length === 1) {
     const w = respected[0]
-    return { winner: w, reason: `Fin du mandat en ${g.year}. ${g.seats[w].name} a tenu ${kept(w)} promesses sur 5, ${g.seats[other(w)].name} seulement ${kept(other(w))} : le mandat respecté l’emporte.` }
+    return { winner: w, reason: `Fin du mandat en ${g.year}. ${g.seats[w].name} a tenu ${kept(w)} promesses sur ${g.seats[w].programme.length}, ${g.seats[other(w)].name} seulement ${kept(other(w))} sur ${g.seats[other(w)].programme.length} : le mandat respecté l’emporte.` }
   }
   const a = scoreOf(g.seats.player)
   const b = scoreOf(g.seats.ai)

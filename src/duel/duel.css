@@ -569,6 +569,10 @@
 .dlg-pop small {
   color: var(--muted);
 }
+.dlg-pop > small {
+  display: block;
+  margin-top: 2px;
+}
 .dlg-pop .is-kept {
   color: var(--good);
   font-weight: 700;

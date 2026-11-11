@@ -26,6 +26,7 @@ import {
   newGame,
   answersOf,
   PROGRAMME_GOAL,
+  goalOf,
   promiseOwner,
   resolveYear,
   scoreOf,
@@ -999,8 +1000,8 @@ function Strip({ g, side, turn, quip }: { g: Game; side: Side; turn: boolean; qu
           😠 {Math.max(0, Math.round(st.discontent * 100))}
         </li>
       </ul>
-      <button type="button" className="dlg-prog" onClick={() => setOpen(open === 'programme' ? null : 'programme')} title={`Promesses tenues : il en faut ${PROGRAMME_GOAL} sur 5. Touchez pour le détail.`}>
-        ⭐ {kept.size}/{PROGRAMME_GOAL}
+      <button type="button" className="dlg-prog" onClick={() => setOpen(open === 'programme' ? null : 'programme')} title={`Promesses tenues : il en faut ${goalOf(s)} sur ${s.programme.length}. Touchez pour le détail.`}>
+        ⭐ {kept.size}/{goalOf(s)}
       </button>
       {open ? (
         <div className="dlg-pop" role="dialog" aria-label={open === 'note' ? 'La note de santé' : 'Le programme'}>
@@ -1010,6 +1011,7 @@ function Strip({ g, side, turn, quip }: { g: Game; side: Side; turn: boolean; qu
           {open === 'programme' ? (
             <>
               <strong>⭐ {side === 'player' ? 'Votre programme' : s.name}</strong>
+              <small>🎯 {goalOf(s)} sur {s.programme.length} pour gagner · +2 ⚡ chacune</small>
               <ul>
                 {s.programme.map((p) => (
                   <li key={p.key} className={kept.has(p.key) ? 'is-kept' : ''}>
@@ -1018,7 +1020,6 @@ function Strip({ g, side, turn, quip }: { g: Game; side: Side; turn: boolean; qu
                   </li>
                 ))}
               </ul>
-              <small>🎯 {PROGRAMME_GOAL} pour gagner · +2 ⚡ chacune</small>
             </>
           ) : (
             <>
@@ -1419,8 +1420,8 @@ function Verdict({
                 <strong>{side === 'player' ? 'Vous' : s.name}</strong>
                 <b className={delta > 0 ? 'good' : delta < 0 ? 'bad' : ''}>{delta > 0 ? `▲ +${delta}` : delta < 0 ? `▼ −${-delta}` : '='}</b>
               </header>
-              <p className={`dlr-stars ${kept >= PROGRAMME_GOAL ? 'is-done' : ''}`} title={`Promesses tenues : il en faut ${PROGRAMME_GOAL}`}>
-                {Array.from({ length: PROGRAMME_GOAL }, (_, i) => (i < kept ? '⭐' : '☆')).join('')} <small>{Math.min(kept, 5)}/{PROGRAMME_GOAL}</small>
+              <p className={`dlr-stars ${kept >= goalOf(s) ? 'is-done' : ''}`} title={`Promesses tenues : il en faut ${goalOf(s)} sur ${s.programme.length}`}>
+                {Array.from({ length: goalOf(s) }, (_, i) => (i < kept ? '⭐' : '☆')).join('')} <small>{kept}/{goalOf(s)}</small>
               </p>
               {dangers(stateAt(g, side, report.year)).map((d) => (
                 <p key={d} className="dlr-danger">
@@ -1631,7 +1632,7 @@ function Final({ g, quip, onReplay, onCompare, onClose }: { g: Game; quip?: stri
                 <small>/100</small>
               </b>
               <small>
-                ⭐ {keptPromises(s, g.year).length}/5 promesses{lastState(s).ending ? ' · pays effondré' : ''}
+                ⭐ {keptPromises(s, g.year).length}/{goalOf(s)} · {s.programme.length} promesses{lastState(s).ending ? ' · pays effondré' : ''}
               </small>
               {won ? <span className="dlf-crown">👑</span> : null}
             </div>
@@ -1687,7 +1688,7 @@ const STEPS: { icon: string; title: string; text: string }[] = [
   { icon: '⚡', title: 'Énergie et budget', text: '2 lois par an · 💶 marge' },
   { icon: '📜', title: 'Votre France', text: '💥 Les crises : la sienne' },
   { icon: '🛡️', title: 'Parez ses coups', text: 'Gardez une parade' },
-  { icon: '🏆', title: `⭐ ${PROGRAMME_GOAL} promesses`, text: 'Puis la meilleure note · 💀 faillite = perdu' },
+  { icon: '🏆', title: `⭐ ${PROGRAMME_GOAL}+ promesses`, text: 'Puis la meilleure note · 💀 faillite = perdu' },
 ]
 
 function Rules({ onClose }: { onClose: () => void }) {
@@ -1743,7 +1744,7 @@ function Rules({ onClose }: { onClose: () => void }) {
               tour, et l’écran cache la main de l’autre.
             </li>
             <li>
-              <strong>Pour gagner :</strong> si votre pays fait faillite ou se révolte, vous perdez tout de suite. À la fin, celui qui a tenu au moins {PROGRAMME_GOAL} promesses sur 5
+              <strong>Pour gagner :</strong> si votre pays fait faillite ou se révolte, vous perdez tout de suite. À la fin, celui qui a tenu au moins {PROGRAMME_GOAL} promesses de son programme (la moitié s’il en compte plus de six)
               bat celui qui ne l’a pas fait. Sinon, la meilleure note de santé (sur 100) l’emporte.
             </li>
           </ol>

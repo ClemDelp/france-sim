@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { simulate } from '../model/sim'
-import { CANDIDATES, candidateById, MEASURES } from '../game/candidates'
+import { CANDIDATES, candidateById, isPlayable, MEASURES } from '../game/candidates'
 import { ACTIONS, buildDeck, copiesOf, CRISES, generic, inModel, programmeOf, PROGRAMME_SIZE, rarityOf, type ActionId, type Card, type CrisisId } from './cards'
 import {
   ALERT_AT,
   BOT,
+  goalOf,
+  PROGRAMME_GOAL,
   budgetCost,
   buy,
   canBuy,
@@ -67,14 +69,35 @@ describe('le duel des présidents', () => {
     expect(a.reports.length).toBeGreaterThan(0)
   }, 60_000)
 
-  it('chaque programme a cinq promesses, et celles des deux joueurs sont dans le haut de la pioche commune', () => {
+  it('chaque programme reprend toutes les promesses jouables (au moins cinq), toutes dans le haut de la pioche commune', () => {
     for (const c of CANDIDATES) {
       const mine = programmeOf(c, 3, 'joueur')
       const theirs = programmeOf(null, 3, 'ia')
-      expect(mine).toHaveLength(PROGRAMME_SIZE)
+      const playable = c.promises.filter(isPlayable).filter((p) => p.measure!.effects.every((e) => e.lever !== 'cancelHolder'))
+      expect(mine).toHaveLength(Math.max(PROGRAMME_SIZE, playable.length))
+      expect(theirs).toHaveLength(PROGRAMME_SIZE)
       const deck = buildDeck([mine, theirs], 3)
       const keys = new Set([...mine, ...theirs].map((p) => p.key))
-      expect(deck.slice(0, 22).filter((d) => d.kind === 'mesure' && keys.has(d.pledge.key))).toHaveLength(2 * PROGRAMME_SIZE)
+      const top = mine.length + theirs.length + 12
+      expect(deck.slice(0, top).filter((d) => d.kind === 'mesure' && keys.has(d.pledge.key))).toHaveLength(mine.length + theirs.length)
+    }
+  })
+
+  it('un long programme demande d’en tenir la moitié, un court au moins trois', () => {
+    const goal = (id: string) => goalOf(newGame(as(id), BOT, { seed: 1, years: 5 }).seats.player)
+    expect(goal('ruffin')).toBe(PROGRAMME_GOAL)
+    expect(goal('glucksmann')).toBe(PROGRAMME_GOAL)
+    expect(goal('tondelier')).toBe(PROGRAMME_GOAL)
+    expect(goal('le-pen')).toBe(4)
+    expect(goal('melenchon')).toBe(6)
+  })
+
+  it('l’immigration est dans la pioche quand Le Stylo, Retaillot ou Zémourre jouent : elle fait partie de leur programme', () => {
+    for (const id of ['le-pen', 'retailleau', 'zemmour']) {
+      const g = newGame(as(id), BOT, { seed: 2, years: 5 })
+      const cards = [...g.deck, ...g.seats.player.hand, ...g.seats.ai.hand]
+      const promise = cards.find((c) => c.kind === 'mesure' && c.pledge.measure!.id === 'immigration' && g.seats.player.programme.some((p) => p.key === c.pledge.key))
+      expect(promise, id).toBeDefined()
     }
   })
 
@@ -385,7 +408,7 @@ describe('les candidats fantaisie et leurs coups signature', () => {
       expect(c.fantasy).toBe(true)
       const programme = programmeOf(c, 1, 'joueur')
       expect(programme).toHaveLength(PROGRAMME_SIZE)
-      // Les cinq promesses viennent de son programme (aucune ajoutée par le jeu).
+      // Ses cinq promesses viennent de son programme (aucune ajoutée par le jeu).
       expect(programme.every((p) => p.source !== 'ajout'), id).toBe(true)
     }
   })

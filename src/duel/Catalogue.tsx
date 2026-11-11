@@ -52,7 +52,7 @@ function actionEntry(id: ActionId): Entry {
 }
 
 function allEntries(): Entry[] {
-  // Les promesses jouées : les cinq premières que le moteur sait jouer, pour chaque candidat.
+  // Les promesses jouées : toutes celles que le moteur sait jouer, pour chaque candidat.
   const programmes = CANDIDATES.map((c) => ({ c, pledges: programmeOf(c, 0, 'catalogue').filter((p) => !isAdded(p)) }))
   const promises: Entry[] = programmes.flatMap(({ c, pledges }) =>
     pledges.map((pledge, i) => ({
